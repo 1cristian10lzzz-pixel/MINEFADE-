@@ -1,0 +1,103 @@
+name: Minefade Android APK
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  ANDROID_NDK_VERSION: "28.2.13676358"
+  ANDROID_CMAKE_VERSION: "3.22.1"
+
+jobs:
+  build-debug-apk:
+    name: Build Android debug APK
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Reconstruct Native Engine source package
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat src_bundle/chunk-*.b64 > /tmp/minefade-source.b64
+          base64 --decode /tmp/minefade-source.b64 | tar -xJf -
+          test -f MinefadeNativeEngine/app/build.gradle.kts
+          test -f MinefadeNativeEngine/app/src/main/cpp/CMakeLists.txt
+
+      - name: Generate block catalogue and texture atlas
+        working-directory: MinefadeNativeEngine
+        run: python3 tools/generate_block_catalog.py
+
+      - name: Run native engine tests
+        working-directory: MinefadeNativeEngine
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash tests/run-world-tests.sh
+          python3 tests/test_block_catalog.py
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Gradle 9.6.0
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "9.6.0"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK, NDK and CMake
+        shell: bash
+        run: |
+          set -euo pipefail
+          yes | sdkmanager --licenses >/dev/null || true
+          sdkmanager --install \
+            "platform-tools" \
+            "platforms;android-36" \
+            "build-tools;36.0.0" \
+            "ndk;${ANDROID_NDK_VERSION}" \
+            "cmake;${ANDROID_CMAKE_VERSION}"
+
+      - name: Build installable debug APK
+        working-directory: MinefadeNativeEngine
+        run: gradle --no-daemon --stacktrace :app:assembleDebug
+
+      - name: Verify APK output
+        working-directory: MinefadeNativeEngine
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK="app/build/outputs/apk/debug/app-debug.apk"
+          test -s "$APK"
+          mkdir -p ../release
+          cp "$APK" ../release/Minefade-Native-Engine-0.5.0-alpha.apk
+          file ../release/Minefade-Native-Engine-0.5.0-alpha.apk
+
+      - name: Upload APK build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Minefade-Native-Engine-0.5.0-alpha-APK
+          path: release/Minefade-Native-Engine-0.5.0-alpha.apk
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Publish direct APK download
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          TAG="minefade-native-0.5.0-alpha-${{ github.run_number }}"
+          gh release create "$TAG" \
+            "release/Minefade-Native-Engine-0.5.0-alpha.apk" \
+            --title "Minefade Native Engine 0.5.0 Alpha" \
+            --notes "APK Android instalable de depuración para validar la rama Native Engine 0.5.0. Esta versión alfa no sustituye todavía el APK Alpha anterior ni incluye todos los sistemas pendientes descritos en el proyecto." \
+            --prerelease
