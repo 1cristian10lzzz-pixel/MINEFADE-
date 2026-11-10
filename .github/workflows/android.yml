@@ -29,6 +29,13 @@ jobs:
           test -f MinefadeNativeEngine/app/build.gradle.kts
           test -f MinefadeNativeEngine/app/src/main/cpp/CMakeLists.txt
 
+      - name: Apply JNI sound-event implementation
+        shell: bash
+        run: |
+          set -euo pipefail
+          git apply --check patches/engine_sound_events.patch
+          git apply patches/engine_sound_events.patch
+
       - name: Generate block catalogue and texture atlas
         working-directory: MinefadeNativeEngine
         run: python3 tools/generate_block_catalog.py
