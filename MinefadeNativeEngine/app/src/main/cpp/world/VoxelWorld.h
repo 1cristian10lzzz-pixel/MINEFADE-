@@ -89,8 +89,12 @@ private:
     std::map<std::pair<int, int>, Chunk> chunks_;
     std::deque<std::pair<int, int>> generationQueue_;
     std::set<std::pair<int, int>> queuedChunks_;
-    std::future<Chunk> pendingChunk_;
-    std::pair<int, int> pendingChunkKey_{0, 0};
+    struct ChunkJob {
+        std::pair<int, int> key;
+        std::future<Chunk> future;
+    };
+    static constexpr std::size_t kChunkWorkerCount = 2;
+    std::vector<ChunkJob> pendingChunkJobs_;
 };
 
 void AppendCube(std::vector<WorldVertex>& output, const Vec3& center, const Vec3& half,
