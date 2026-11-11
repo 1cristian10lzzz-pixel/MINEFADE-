@@ -47,6 +47,8 @@ public:
     bool IsSolid(int x, int y, int z) const;
     bool IsOpaque(int x, int y, int z) const;
     int GetSurfaceHeight(int x, int z) const;
+    bool GetRayTargetBlock(const Vec3& origin, const Vec3& direction, float maxDistance,
+                           Vec3* targetBlock = nullptr, BlockId* targetType = nullptr) const;
     bool BreakRay(const Vec3& origin, const Vec3& direction, float maxDistance,
                   Vec3* brokenBlock = nullptr, BlockId* brokenType = nullptr);
     bool PlaceRay(const Vec3& origin, const Vec3& direction, float maxDistance, BlockId block);
