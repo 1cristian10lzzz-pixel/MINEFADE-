@@ -93,6 +93,31 @@ jobs:
           cp "$APK" ../release/Minefade-Native-Engine-0.5.0-alpha.apk
           file ../release/Minefade-Native-Engine-0.5.0-alpha.apk
 
+      - name: Publish expanded source snapshot for review
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          SNAPSHOT_DIR="$(mktemp -d)"
+          mkdir -p "$SNAPSHOT_DIR/MinefadeNativeEngine"
+          rsync -a \
+            --exclude='build/' \
+            --exclude='.gradle/' \
+            --exclude='.cxx/' \
+            --exclude='local.properties' \
+            "$GITHUB_WORKSPACE/MinefadeNativeEngine/" \
+            "$SNAPSHOT_DIR/MinefadeNativeEngine/"
+          cp "$GITHUB_WORKSPACE/README.md" "$SNAPSHOT_DIR/README-repository.md"
+          cd "$SNAPSHOT_DIR"
+          git init -b minefade-source-review
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add MinefadeNativeEngine README-repository.md
+          git commit -m "Publish expanded Minefade Native Engine source for review"
+          git remote add origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git push --force origin minefade-source-review
+
       - name: Upload APK build artifact
         uses: actions/upload-artifact@v4
         with:
