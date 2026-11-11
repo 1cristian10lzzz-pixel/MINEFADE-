@@ -260,6 +260,8 @@ bool Engine::Initialise(float displayDensity, const std::uint8_t* atlasPixels,
     lastStats_ = lastFrame_;
     ready_ = true;
     paused_ = false;
+    thirdPerson_ = false;
+    ui_.SetPerspectiveEnabled(false);
     RefreshInventoryUi();
     ENGINE_LOGI("World ready: %zu chunks, %zu vertices", world_.ChunkCount(), worldMesh_.size());
     return true;
@@ -298,7 +300,7 @@ void Engine::RebuildWorldMesh() {
     // Alpha blending is order-dependent. Sort transparent triangles from far to near
     // so overlapping water/glass surfaces blend more consistently on mobile GPUs.
     if (transparentWorldMesh_.size() < 6u) return;
-    const Vec3 eye = player_.CameraPosition();
+    const Vec3 eye = ViewPosition();
     using Triangle = std::array<WorldVertex, 3>;
     std::vector<std::pair<float, Triangle>> sorted;
     sorted.reserve(transparentWorldMesh_.size() / 3u);
@@ -369,6 +371,7 @@ void Engine::UploadTransparentWorldMesh() {
 void Engine::RebuildEntityMesh() {
     entityMesh_.clear();
     entities_.AppendMesh(entityMesh_);
+    if (thirdPerson_) player_.AppendMesh(entityMesh_);
     droppedItems_.AppendMesh(entityMesh_);
 }
 
@@ -398,6 +401,38 @@ void Engine::UploadEntityMesh() {
 
 double Engine::ElapsedSeconds() const {
     return std::chrono::duration<double>(std::chrono::steady_clock::now().time_since_epoch()).count();
+}
+
+Vec3 Engine::ViewPosition() const {
+    if (!thirdPerson_) return player_.CameraPosition();
+    const Vec3 flatForward{std::cos(player_.yaw), 0.0f, std::sin(player_.yaw)};
+    return {
+        player_.position.x - flatForward.x * 3.8f,
+        player_.position.y + 2.25f,
+        player_.position.z - flatForward.z * 3.8f
+    };
+}
+
+Vec3 Engine::ViewTarget() const {
+    if (!thirdPerson_) {
+        const Vec3 eye = player_.CameraPosition();
+        const Vec3 forward = player_.Forward();
+        return Add(eye, forward);
+    }
+    const Vec3 flatForward{std::cos(player_.yaw), 0.0f, std::sin(player_.yaw)};
+    return {
+        player_.position.x + flatForward.x * 0.35f,
+        player_.position.y + 1.18f + std::sin(player_.pitch) * 0.80f,
+        player_.position.z + flatForward.z * 0.35f
+    };
+}
+
+Vec3 Engine::ViewDirection() const {
+    const Vec3 eye = ViewPosition();
+    const Vec3 target = ViewTarget();
+    const Vec3 delta{target.x - eye.x, target.y - eye.y, target.z - eye.z};
+    const float length = std::sqrt(std::max(delta.x * delta.x + delta.y * delta.y + delta.z * delta.z, 0.000001f));
+    return {delta.x / length, delta.y / length, delta.z / length};
 }
 
 void Engine::Render() {
@@ -454,12 +489,12 @@ void Engine::Render() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     if (worldProgram_ != 0 && worldVertexCount_ > 0) {
-        const Vec3 eye = player_.CameraPosition();
-        const Vec3 forward = player_.Forward();
+        const Vec3 eye = ViewPosition();
+        const Vec3 target = ViewTarget();
         const Mat4 projection = Perspective(68.0f * (kPi / 180.0f),
                                             static_cast<float>(width_) / static_cast<float>(height_),
                                             0.08f, 120.0f);
-        const Mat4 view = LookAt(eye, Add(eye, forward), {0.0f, 1.0f, 0.0f});
+        const Mat4 view = LookAt(eye, target, {0.0f, 1.0f, 0.0f});
         const Mat4 mvp = Multiply(projection, view);
         const auto sun = environment_.SunDirection();
 
@@ -568,7 +603,7 @@ void Engine::Touch(int action, int pointerId, float x, float y) {
             // A brief tap is reserved for placing the selected block. Mining requires
             // a stationary hold; moving the finger turns the gesture into camera look.
             const std::uint16_t selected = inventory_.SelectedItemId();
-            if (selected > 0 && world_.PlaceRay(player_.CameraPosition(), player_.Forward(), 6.0f,
+            if (selected > 0 && world_.PlaceRay(ViewPosition(), ViewDirection(), 6.0f,
                                                 static_cast<BlockId>(selected))) {
                 inventory_.ConsumeSelected();
                 RefreshInventoryUi();
@@ -590,7 +625,12 @@ void Engine::Touch(int action, int pointerId, float x, float y) {
 
 void Engine::HandleUiAction(const std::string& action) {
     soundEvents_.fetch_or(4u, std::memory_order_release);
-    if (action == "inventory") {
+    if (action == "perspective") {
+        thirdPerson_ = !thirdPerson_;
+        ui_.SetPerspectiveEnabled(thirdPerson_);
+        RebuildEntityMesh();
+        UploadEntityMesh();
+    } else if (action == "inventory") {
         inventoryVisible_ = !inventoryVisible_;
         if (inventoryVisible_) RefreshInventoryUi();
         ui_.SetPanelVisible("inventory-panel", inventoryVisible_);
@@ -649,7 +689,7 @@ void Engine::UpdateMining(float deltaSeconds) {
         miningRequired_ = 0.0f;
         Vec3 target{};
         BlockId targetType = BlockId::Air;
-        if (world_.GetRayTargetBlock(player_.CameraPosition(), player_.Forward(), 6.0f,
+        if (world_.GetRayTargetBlock(ViewPosition(), ViewDirection(), 6.0f,
                                      &target, &targetType)) {
             const BlockDefinition* definition = GetBlockDefinition(targetType);
             ui_.SetTargetBlock(definition != nullptr ? definition->nameEs : "", 0.0f);
@@ -706,7 +746,7 @@ void Engine::UpdateMining(float deltaSeconds) {
 
     Vec3 broken{};
     BlockId brokenType = BlockId::Air;
-    if (world_.BreakRay(player_.CameraPosition(), player_.Forward(), 6.0f, &broken, &brokenType)) {
+    if (world_.BreakRay(ViewPosition(), ViewDirection(), 6.0f, &broken, &brokenType)) {
         const BlockDefinition* brokenDefinition = GetBlockDefinition(brokenType);
         if (brokenDefinition != nullptr && brokenDefinition->dropId > 0u) {
             droppedItems_.Spawn({broken.x + 0.5f, broken.y + 0.55f, broken.z + 0.5f},
