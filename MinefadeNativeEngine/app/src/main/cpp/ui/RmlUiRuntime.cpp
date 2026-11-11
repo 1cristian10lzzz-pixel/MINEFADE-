@@ -2,6 +2,7 @@
 
 #include <android/log.h>
 
+#include <algorithm>
 #include <chrono>
 #include <fstream>
 #include <iterator>
@@ -19,57 +20,60 @@ constexpr char kHudDocument[] = R"RML(
 <title>Minefade HUD</title>
 <style>
 body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; font-family: Roboto; color: #f3f6f8; }
-#topbar { position: absolute; top: 12dp; left: 12dp; right: 12dp; height: 42dp; display: flex; align-items: center; justify-content: space-between; pointer-events: none; }
+#topbar { position: absolute; top: 7dp; left: 7dp; right: 7dp; height: 36dp; display: flex; align-items: center; justify-content: flex-end; pointer-events: none; }
 #topbar button { pointer-events: auto; }
-#brand { color: #ffffff; font-size: 18dp; font-weight: bold; text-shadow: 0dp 2dp 4dp #000000; }
-#stats { color: #edf2f5; font-size: 12dp; background: #101923cc; padding: 7dp 11dp; border-radius: 8dp; }
-.actions { display: flex; flex-direction: row; gap: 8dp; }
-button { color: #ffffff; background: #22384cdd; border: 1dp #668098; border-radius: 8dp; padding: 8dp 13dp; font-size: 13dp; }
+#brand { display: none; }
+#stats { color: #edf2f5; font-size: 10dp; background: transparent; padding: 0dp; border: 0dp; border-radius: 0dp; text-shadow: 0dp 1dp 3dp #000000; }
+.actions { display: flex; flex-direction: row; gap: 4dp; }
+button { color: #ffffff; background: #1b2a3733; border: 1dp #b9c9d855; border-radius: 5dp; padding: 5dp 7dp; font-size: 12dp; }
 button:hover { background: #365a77; }
 button:active { background: #47789b; }
 #crosshair { position: absolute; left: 50%; top: 50%; width: 12dp; height: 12dp; margin-left: -6dp; margin-top: -6dp; pointer-events: none; }
 #crosshair-v { position: absolute; left: 5dp; top: 0dp; width: 2dp; height: 12dp; background: #ffffffcc; }
 #crosshair-h { position: absolute; left: 0dp; top: 5dp; width: 12dp; height: 2dp; background: #ffffffcc; }
-#hint { position: absolute; bottom: 12dp; left: 50%; margin-left: -110dp; width: 220dp; text-align: center; color: #ffffff; font-size: 11dp; background: #10192399; border-radius: 8dp; padding: 6dp; pointer-events: none; }
+#hint { display: none; }
 .panel { position: absolute; left: 50%; top: 50%; width: 310dp; margin-left: -155dp; margin-top: -112dp; padding: 18dp; background: #111d2af2; border: 1dp #607b91; border-radius: 12dp; display: none; }
 .panel h1 { font-size: 20dp; margin: 0dp 0dp 10dp 0dp; color: #ffffff; }
 .panel p { font-size: 12dp; color: #c8d3db; margin: 3dp 0dp 12dp 0dp; }
 .panel .actions { flex-wrap: wrap; }
-#quickbar { position: absolute; bottom: 16dp; left: 50%; margin-left: -146dp; display: flex; flex-direction: row; gap: 4dp; }
-.slot { min-width: 27dp; height: 27dp; text-align: center; padding: 5dp 4dp; background: #101923aa; border: 1dp #75889866; border-radius: 5dp; color: #ffffff; font-size: 11dp; }
-#jump { position: absolute; right: 20dp; bottom: 76dp; width: 58dp; height: 42dp; padding: 7dp; }
-#inventory-panel { left: auto; right: 14dp; top: 68dp; width: 215dp; margin: 0dp; }
+#quickbar { position: absolute; bottom: 10dp; left: 50%; margin-left: -132dp; display: flex; flex-direction: row; gap: 2dp; }
+.slot { width: 27dp; min-width: 27dp; height: 29dp; text-align: center; padding: 3dp 2dp; background: #10192322; border: 1dp #ffffff33; border-radius: 4dp; color: #ffffff; font-size: 9dp; }
+#jump { position: absolute; right: 18dp; bottom: 68dp; width: 38dp; height: 38dp; padding: 2dp; }
+#inventory-panel { left: auto; right: 10dp; top: 52dp; width: 205dp; margin: 0dp; }
 .inventory-row { color: #e0e8ed; font-size: 12dp; padding: 5dp 2dp; border-bottom: 1dp #43576a; }
 #pause-panel { z-index: 10; }
+.panel h1, .panel p { display: none; }
+#target { position: absolute; left: 50%; top: 57%; margin-left: -75dp; min-width: 150dp; text-align: center; color: #ffffff; font-size: 11dp; text-shadow: 0dp 1dp 3dp #000000; display: none; pointer-events: none; }
+#target-progress { width: 84dp; height: 3dp; margin: 4dp auto 0dp auto; background: #ffffff22; }
+#target-progress-fill { height: 3dp; width: 0%; background: #ffffff; }
+#pickup { position: absolute; right: 12dp; bottom: 54dp; color: #ffffff; font-size: 12dp; text-shadow: 0dp 1dp 3dp #000000; background: transparent; padding: 0dp; pointer-events: none; }
+
 #inventory-panel { z-index: 9; }
 </style>
 </head>
 <body>
 <div id="topbar">
-  <div id="brand">MINEFADE <span style="color:#86d18b">NATIVE</span></div>
   <div class="actions">
-    <div id="stats">FPS -- · Chunks -- · Día</div>
-    <button id="inventory">Mochila</button>
-    <button id="pause">Pausa</button>
+    <div id="stats">FPS -- · Chunks --</div>
+    <button id="inventory">⋯</button>
+    <button id="pause">Ⅱ</button>
   </div>
 </div>
 <div id="crosshair"><div id="crosshair-v"></div><div id="crosshair-h"></div></div>
-<div id="hint">Arrastra a la izquierda para moverte · a la derecha para mirar</div>
+<div id="hint"></div>
 <div id="quickbar">
   <button class="slot" id="slot-0">1</button><button class="slot" id="slot-1">2</button><button class="slot" id="slot-2">3</button>
   <button class="slot" id="slot-3">4</button><button class="slot" id="slot-4">5</button><button class="slot" id="slot-5">6</button>
   <button class="slot" id="slot-6">7</button><button class="slot" id="slot-7">8</button><button class="slot" id="slot-8">9</button>
 </div>
-<button id="jump">Saltar</button>
+<button id="jump">↑</button>
+<div id="target"><div id="target-name"></div><div id="target-progress"><div id="target-progress-fill"></div></div></div>
+<div id="pickup"></div>
 <div id="inventory-panel" class="panel">
-  <h1>Inventario</h1>
-  <p>Barra rápida · 9 espacios</p>
   <div id="inventory-items"></div>
   <div class="actions"><button id="inventory-close">Cerrar</button></div>
 </div>
 <div id="pause-panel" class="panel">
-  <h1>Partida pausada</h1>
-  <p>El mundo se guarda en el almacenamiento privado de la aplicación.</p>
   <div class="actions">
     <button id="resume">Continuar</button>
     <button id="save">Guardar mundo</button>
@@ -236,13 +240,37 @@ void RmlUiRuntime::SetStatus(const std::string& status) {
     if (Rml::Element* element = document_->GetElementById("stats")) element->SetInnerRML(status);
 }
 
+void RmlUiRuntime::SetTargetBlock(const std::string& name, float progress) {
+    if (document_ == nullptr) return;
+    Rml::Element* target = document_->GetElementById("target");
+    Rml::Element* label = document_->GetElementById("target-name");
+    Rml::Element* fill = document_->GetElementById("target-progress-fill");
+    if (target == nullptr || label == nullptr || fill == nullptr) return;
+    if (name.empty()) {
+        target->SetProperty("display", "none");
+        return;
+    }
+    label->SetInnerRML(name);
+    target->SetProperty("display", "block");
+    const float percent = std::clamp(progress, 0.0f, 1.0f) * 100.0f;
+    fill->SetProperty("width", std::to_string(percent) + "%");
+}
+
+void RmlUiRuntime::SetPickupToast(const std::string& text) {
+    if (document_ == nullptr) return;
+    if (Rml::Element* element = document_->GetElementById("pickup")) {
+        element->SetInnerRML(text);
+        element->SetProperty("display", text.empty() ? "none" : "block");
+    }
+}
+
 void RmlUiRuntime::SetQuickbarSlot(int slot, const std::string& label, bool selected) {
     if (document_ == nullptr || slot < 0 || slot >= 9) return;
     const std::string id = "slot-" + std::to_string(slot);
     if (Rml::Element* element = document_->GetElementById(id)) {
         element->SetInnerRML(label);
-        element->SetProperty("border", selected ? "2dp #d9e9a4" : "1dp #75889866");
-        element->SetProperty("background-color", selected ? "#405b43dd" : "#101923aa");
+        element->SetProperty("border", selected ? "2dp #d9e9a4" : "1dp #ffffff33");
+        element->SetProperty("background-color", selected ? "#d9e9a422" : "#10192322");
     }
 }
 
