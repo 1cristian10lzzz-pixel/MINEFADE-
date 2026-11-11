@@ -58,6 +58,9 @@ private:
     void SaveWorld();
     void RefreshInventoryUi();
     void UpdateMining(float deltaSeconds);
+    Vec3 ViewPosition() const;
+    Vec3 ViewTarget() const;
+    Vec3 ViewDirection() const;
     double ElapsedSeconds() const;
 
     GLuint worldProgram_{0};
