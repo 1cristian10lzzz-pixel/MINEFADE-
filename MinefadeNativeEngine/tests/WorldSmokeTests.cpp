@@ -146,6 +146,17 @@ int main() {
     collisionPlayer.Update(collisionWorld, 0.05f);
     assert(collisionPlayer.position.x < 8.72f);
 
+    collisionWorld.SetBlock(8, collisionGround + 1, 8, BlockId::Stone);
+    collisionWorld.SetBlock(8, collisionGround + 2, 8, BlockId::Stone);
+    Player recoveredPlayer;
+    recoveredPlayer.position = {8.5f, static_cast<float>(collisionGround) + 1.0f, 8.5f};
+    assert(recoveredPlayer.ResolveSafeSpawn(collisionWorld));
+    assert(!collisionWorld.IsSolid(static_cast<int>(std::floor(recoveredPlayer.position.x)),
+                                   static_cast<int>(std::floor(recoveredPlayer.position.y + 0.65f)),
+                                   static_cast<int>(std::floor(recoveredPlayer.position.z))));
+    assert(recoveredPlayer.position.y > 0.0f);
+    assert(recoveredPlayer.position.y < static_cast<float>(VoxelWorld::kWorldHeight - 2));
+
     EntitySystem entities;
     entities.SpawnInitial(world);
     assert(entities.Count() == 3u);
