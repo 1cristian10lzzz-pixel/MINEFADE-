@@ -84,6 +84,7 @@ private:
     bool paused_{false};
     bool inventoryVisible_{false};
     bool pauseVisible_{false};
+    bool thirdPerson_{false};
     std::string storagePath_;
     VoxelWorld world_;
     Player player_;
