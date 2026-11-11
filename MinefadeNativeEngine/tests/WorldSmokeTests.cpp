@@ -167,6 +167,18 @@ int main() {
     std::vector<WorldVertex> playerMesh;
     renderedPlayer.AppendMesh(playerMesh);
     assert(playerMesh.size() >= 400u);
+    assert(playerMesh.size() % 3u == 0u);
+    for (std::size_t i = 0; i + 2u < playerMesh.size(); i += 3u) {
+        const WorldVertex& a = playerMesh[i];
+        const WorldVertex& b = playerMesh[i + 1u];
+        const WorldVertex& d = playerMesh[i + 2u];
+        const float abx = b.x - a.x, aby = b.y - a.y, abz = b.z - a.z;
+        const float adx = d.x - a.x, ady = d.y - a.y, adz = d.z - a.z;
+        const float nx = aby * adz - abz * ady;
+        const float ny = abz * adx - abx * adz;
+        const float nz = abx * ady - aby * adx;
+        assert(nx * a.nx + ny * a.ny + nz * a.nz > 0.0f);
+    }
     float minX = playerMesh.front().x, maxX = playerMesh.front().x;
     float minZ = playerMesh.front().z, maxZ = playerMesh.front().z;
     for (const WorldVertex& vertex : playerMesh) {
