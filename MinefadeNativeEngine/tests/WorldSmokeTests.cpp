@@ -116,7 +116,7 @@ int main() {
     assert(pickedCount == 1u);
     assert(pickedItemId == static_cast<std::uint16_t>(BlockId::Stone));
     assert(droppedItems.Count() == 0u);
-    assert(dropInventory.counts[0] == 1u);
+    assert(dropInventory.counts[0] == static_cast<std::uint32_t>(BlockId::Stone) * 1000u + 1u);
 
     assert(GetBlockDefinitionCount() == static_cast<std::size_t>(BlockId::Count));
     assert(GetBlockDefinitionCount() == 284u);
