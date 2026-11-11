@@ -9,6 +9,8 @@
         android:fullBackupContent="false"
         android:hasCode="true"
         android:label="@string/app_name"
+        android:icon="@drawable/ic_minefade_launcher"
+        android:roundIcon="@drawable/ic_minefade_launcher"
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         android:usesCleartextTraffic="false">
