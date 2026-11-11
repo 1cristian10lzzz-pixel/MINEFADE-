@@ -590,7 +590,7 @@ public final class MinefadeHomeScreen extends FrameLayout {
             polygon(c, left, x - hw, y, x, y + hh, x, y + hh + depth, x - hw, y + depth);
             polygon(c, right, x, y + hh, x + hw, y, x + hw, y + depth, x, y + hh + depth);
             polygon(c, top, x - hw, y, x, y - hh, x + hw, y, x, y + hh);
-            paint.setColor(0x228ffffff);
+            paint.setColor(0x22ffffff);
             paint.setStyle(Paint.Style.STROKE);
             paint.setStrokeWidth(1f);
             c.drawLine(x - hw, y, x, y + hh, paint);
@@ -685,7 +685,7 @@ public final class MinefadeHomeScreen extends FrameLayout {
         private void box(Canvas c, float x, float y, float w, float h, int color) {
             paint.setColor(color);
             c.drawRoundRect(new RectF(x, y, x + w, y + h), dp(5), dp(5), paint);
-            paint.setColor(0x227ffffff);
+            paint.setColor(0x27ffffff);
             c.drawLine(x + dp(3), y + dp(2), x + w - dp(3), y + dp(2), paint);
         }
         @Override protected void onDraw(Canvas canvas) {
