@@ -155,6 +155,22 @@ La CI de la rama pasó las pruebas nativas y compiló el APK de revisión para `
 - Todos los sistemas de las fases 1–4 pasan regresión en singleplayer y multiplayer.
 - APK release firmado, instalable y probado manualmente; código fuente y notas de versión archivados.
 
+## Revisión de interfaz y arranque — 11 de noviembre de 2026
+
+**Hito de Fase 2 integrado en la rama de revisión (no equivale a cerrar la fase):**
+
+- La Activity presenta primero un menú Android independiente de OpenGL y no carga la biblioteca nativa hasta que el usuario pulsa Jugar.
+- Portada voxel local dibujada en Canvas, con paneles de módulos y botones de tratamientos visuales distintos. No depende de descargar ni decodificar una miniatura externa.
+- Icono del lanzador vectorial local declarado como icono normal y redondo en el manifiesto Android.
+- Pantalla de carga con progreso y timeout; ante error de biblioteca, atlas o inicialización nativa, se presenta diagnóstico y acciones Reintentar / Volver.
+- Atlas RGBA de emergencia determinista cuando falta o está dañado el recurso original.
+- Páginas iniciales de Mundos, Avatar, Multijugador, Ajustes y Logros. Avatar muestra ocho iconos propios en dos filas de cuatro y persiste cambios locales de tono/vestimenta; animación de menú y respuesta táctil se guardan en preferencias.
+- Logros se distribuye en cuatro columnas. Multijugador y parte del editor de avatar se identifican como preparación cuando sus sistemas de motor aún no están conectados.
+
+**Validación:** CI completó pruebas nativas, compilación Android, verificación de APK y carga del artefacto para esta revisión. El APK contiene bibliotecas para `arm64-v8a` y `armeabi-v7a`, atlas de bloques e icono vectorial.
+
+**Pendiente:** prueba visual y táctil física en el teléfono del usuario; conexión del editor de avatar a todas las piezas y estados del modelo 3D; gestor real de varios mundos/creación de mundos; controles de HUD aplicados al motor; inventario completo de siete columnas; pantallas funcionales de cofres/fabricación/chat/muerte y el sistema multijugador LAN. La pantalla de menú se considera un primer hito visual/arranque, no la Fase 2 completa.
+
 ## Orden de ejecución y entregas
 
 | Hito | Resultado obligatorio |
