@@ -381,12 +381,12 @@ bool VoxelWorld::PumpChunkGeneration() {
     bool addedChunk = false;
     for (std::size_t i = 0; i < pendingChunkJobs_.size();) {
         ChunkJob& job = pendingChunkJobs_[i];
-        if (!job.future.valid() ||
+        if (job.future.valid() &&
             job.future.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
-            Chunk chunk = job.future.valid() ? job.future.get() : Chunk{};
+            Chunk chunk = job.future.get();
             queuedChunks_.erase(job.key);
             const auto key = std::make_pair(chunk.x, chunk.z);
-            if (chunks_.find(key) == chunks_.end() && job.future.valid()) {
+            if (chunks_.find(key) == chunks_.end()) {
                 chunks_.emplace(key, std::move(chunk));
                 addedChunk = true;
             }
