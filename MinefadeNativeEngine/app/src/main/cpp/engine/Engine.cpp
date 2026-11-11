@@ -369,6 +369,7 @@ void Engine::UploadTransparentWorldMesh() {
 void Engine::RebuildEntityMesh() {
     entityMesh_.clear();
     entities_.AppendMesh(entityMesh_);
+    droppedItems_.AppendMesh(entityMesh_);
 }
 
 void Engine::UploadEntityMesh() {
@@ -405,9 +406,30 @@ void Engine::Render() {
     const float delta = std::chrono::duration<float>(now - lastFrame_).count();
     lastFrame_ = now;
     if (!paused_) {
-        environment_.Update(delta);
-        player_.Update(world_, delta);
-        entities_.Update(world_, delta);
+        const float safeDelta = std::clamp(delta, 0.0f, 0.05f);
+        environment_.Update(safeDelta);
+        player_.Update(world_, safeDelta);
+        entities_.Update(world_, safeDelta);
+
+        std::uint16_t pickedItemId = 0u;
+        const std::size_t pickedCount =
+            droppedItems_.Update(world_, player_, inventory_, safeDelta, &pickedItemId);
+        if (pickedCount > 0u) {
+            RefreshInventoryUi();
+            const BlockDefinition* pickedDefinition =
+                GetBlockDefinition(static_cast<BlockId>(pickedItemId));
+            const char* pickedName = pickedDefinition != nullptr ? pickedDefinition->nameEs : "Objeto";
+            pickupToastText_ = std::string(pickedName) + " ×" + std::to_string(pickedCount);
+            pickupToastUntil_ = now + std::chrono::milliseconds(1400);
+            ui_.SetPickupToast(pickupToastText_);
+            soundEvents_.fetch_or(1u, std::memory_order_release);
+        }
+        if (!pickupToastText_.empty() && now >= pickupToastUntil_) {
+            pickupToastText_.clear();
+            ui_.SetPickupToast({});
+        }
+
+        UpdateMining(safeDelta);
         if (world_.PumpChunkGeneration()) {
             RebuildWorldMesh();
             UploadWorldMesh();
@@ -507,6 +529,7 @@ void Engine::Touch(int action, int pointerId, float x, float y) {
         state.startedAt = ElapsedSeconds();
         state.uiHandled = !uiUnhandled;
         state.joystick = uiUnhandled && x < static_cast<float>(width_) * 0.42f;
+        state.mining = uiUnhandled && !state.joystick;
         touches_[pointerId] = state;
         if (state.joystick) player_.SetMovement(0.0f, 0.0f);
         return;
@@ -529,44 +552,38 @@ void Engine::Touch(int action, int pointerId, float x, float y) {
         } else {
             const float deltaX = x - state.lastX;
             const float deltaY = y - state.lastY;
-            if (std::abs(x - state.startX) + std::abs(y - state.startY) > 5.0f) state.moved = true;
-            player_.Rotate(deltaX, deltaY);
+            if (std::abs(x - state.startX) + std::abs(y - state.startY) > 7.0f) {
+                state.moved = true;
+                state.mining = false;
+            }
+            if (state.moved) player_.Rotate(deltaX, deltaY);
         }
         state.lastX = x;
         state.lastY = y;
     } else if (action == kUp || action == kCancel) {
-        if (state.joystick) player_.SetMovement(0.0f, 0.0f);
-        else if (action == kUp && !state.moved) {
-            if (ElapsedSeconds() - state.startedAt < 0.28) {
-                Vec3 broken{};
-                BlockId brokenType = BlockId::Air;
-                if (world_.BreakRay(player_.CameraPosition(), player_.Forward(), 6.0f, &broken, &brokenType)) {
-                    const BlockDefinition* brokenDefinition = GetBlockDefinition(brokenType);
-                    const bool hasDrop = brokenDefinition != nullptr &&
-                        (brokenDefinition->flags & BlockPlaceable) != 0u && brokenDefinition->dropId > 0u;
-                    const bool collected = !hasDrop || inventory_.Add(brokenDefinition->dropId);
-                    if (!collected) {
-                        world_.SetBlock(static_cast<int>(broken.x), static_cast<int>(broken.y),
-                                        static_cast<int>(broken.z), brokenType);
-                        ui_.SetStatus("Inventario lleno");
-                    } else {
-                        RefreshInventoryUi();
-                        soundEvents_.fetch_or(1u, std::memory_order_release);
-                    }
-                }
-            } else {
-                const std::uint16_t selected = inventory_.SelectedItemId();
-                if (selected > 0 && world_.PlaceRay(player_.CameraPosition(), player_.Forward(), 6.0f,
-                                                    static_cast<BlockId>(selected))) {
-                    inventory_.ConsumeSelected();
-                    RefreshInventoryUi();
-                    soundEvents_.fetch_or(2u, std::memory_order_release);
-                }
+        if (state.joystick) {
+            player_.SetMovement(0.0f, 0.0f);
+        } else if (action == kUp && !state.moved &&
+                   ElapsedSeconds() - state.startedAt < 0.22) {
+            // A brief tap is reserved for placing the selected block. Mining requires
+            // a stationary hold; moving the finger turns the gesture into camera look.
+            const std::uint16_t selected = inventory_.SelectedItemId();
+            if (selected > 0 && world_.PlaceRay(player_.CameraPosition(), player_.Forward(), 6.0f,
+                                                static_cast<BlockId>(selected))) {
+                inventory_.ConsumeSelected();
+                RefreshInventoryUi();
+                soundEvents_.fetch_or(2u, std::memory_order_release);
+                RebuildWorldMesh();
+                UploadWorldMesh();
+                UploadTransparentWorldMesh();
             }
-            RebuildWorldMesh();
-            UploadWorldMesh();
-            UploadTransparentWorldMesh();
         }
+        if (miningPointerId_ == pointerId) {
+            miningPointerId_ = -1;
+            miningElapsed_ = 0.0f;
+            miningRequired_ = 0.0f;
+        }
+        ui_.SetTargetBlock({}, 0.0f);
         touches_.erase(found);
     }
 }
@@ -620,6 +637,95 @@ void Engine::HandleUiAction(const std::string& action) {
     }
 }
 
+void Engine::UpdateMining(float deltaSeconds) {
+    auto active = std::find_if(touches_.begin(), touches_.end(), [](const auto& entry) {
+        const TouchState& state = entry.second;
+        return state.mining && !state.moved && !state.uiHandled && !state.joystick;
+    });
+
+    if (active == touches_.end()) {
+        miningPointerId_ = -1;
+        miningElapsed_ = 0.0f;
+        miningRequired_ = 0.0f;
+        Vec3 target{};
+        BlockId targetType = BlockId::Air;
+        if (world_.GetRayTargetBlock(player_.CameraPosition(), player_.Forward(), 6.0f,
+                                     &target, &targetType)) {
+            const BlockDefinition* definition = GetBlockDefinition(targetType);
+            ui_.SetTargetBlock(definition != nullptr ? definition->nameEs : "", 0.0f);
+        } else {
+            ui_.SetTargetBlock({}, 0.0f);
+        }
+        return;
+    }
+
+    const int pointerId = active->first;
+    Vec3 target{};
+    BlockId targetType = BlockId::Air;
+    if (!world_.GetRayTargetBlock(player_.CameraPosition(), player_.Forward(), 6.0f,
+                                  &target, &targetType)) {
+        miningPointerId_ = pointerId;
+        miningElapsed_ = 0.0f;
+        miningRequired_ = 0.0f;
+        miningBlockType_ = BlockId::Air;
+        ui_.SetTargetBlock({}, 0.0f);
+        return;
+    }
+
+    const BlockDefinition* definition = GetBlockDefinition(targetType);
+    if (definition == nullptr) {
+        ui_.SetTargetBlock({}, 0.0f);
+        return;
+    }
+
+    const bool changedTarget = miningPointerId_ != pointerId ||
+        miningBlockType_ != targetType ||
+        static_cast<int>(miningBlock_.x) != static_cast<int>(target.x) ||
+        static_cast<int>(miningBlock_.y) != static_cast<int>(target.y) ||
+        static_cast<int>(miningBlock_.z) != static_cast<int>(target.z);
+    if (changedTarget) {
+        miningPointerId_ = pointerId;
+        miningBlock_ = target;
+        miningBlockType_ = targetType;
+        miningElapsed_ = 0.0f;
+        miningRequired_ = 0.0f;
+    }
+
+    if (definition->hardness < 0.0f) {
+        ui_.SetTargetBlock(definition->nameEs, 0.0f);
+        return;
+    }
+
+    // Bare-hand time follows block hardness. Tool tiers and their bonuses are not
+    // available in this nine-slot prototype inventory yet.
+    miningRequired_ = std::clamp(definition->hardness * 1.5f, 0.18f, 10.0f);
+    miningElapsed_ += std::clamp(deltaSeconds, 0.0f, 0.05f);
+    const float progress = std::clamp(miningElapsed_ / miningRequired_, 0.0f, 1.0f);
+    ui_.SetTargetBlock(definition->nameEs, progress);
+    if (progress < 1.0f) return;
+
+    Vec3 broken{};
+    BlockId brokenType = BlockId::Air;
+    if (world_.BreakRay(player_.CameraPosition(), player_.Forward(), 6.0f, &broken, &brokenType)) {
+        const BlockDefinition* brokenDefinition = GetBlockDefinition(brokenType);
+        if (brokenDefinition != nullptr && brokenDefinition->dropId > 0u) {
+            droppedItems_.Spawn({broken.x + 0.5f, broken.y + 0.55f, broken.z + 0.5f},
+                                brokenDefinition->dropId, 1u);
+        }
+        soundEvents_.fetch_or(1u, std::memory_order_release);
+        RebuildWorldMesh();
+        UploadWorldMesh();
+        UploadTransparentWorldMesh();
+    }
+
+    active->second.mining = false;
+    active->second.moved = true;
+    miningPointerId_ = -1;
+    miningElapsed_ = 0.0f;
+    miningRequired_ = 0.0f;
+    ui_.SetTargetBlock({}, 0.0f);
+}
+
 void Engine::RefreshInventoryUi() {
     std::string markup;
     markup.reserve(1800);
@@ -633,11 +739,11 @@ void Engine::RefreshInventoryUi() {
         markup += std::to_string(i + 1u) + ". " + name;
         if (quantity > 0u) markup += " × " + std::to_string(quantity);
         markup += "</div>";
-        std::string label = std::to_string(i + 1u);
+        std::string label = "·";
         if (quantity > 0u) {
             std::string shortName = name;
             if (shortName.size() > 3u) shortName.resize(3u);
-            label += " " + shortName + std::to_string(quantity);
+            label = shortName;
         }
         ui_.SetQuickbarSlot(static_cast<int>(i), label, i == inventory_.selectedSlot);
     }
