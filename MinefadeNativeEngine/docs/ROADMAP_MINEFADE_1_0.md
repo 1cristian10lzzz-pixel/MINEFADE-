@@ -109,7 +109,14 @@ La rama ya contiene una primera implementación y pruebas para recuperación de 
 - Cofre de cobre con estados de oxidación/encerado y persistencia de inventario.
 - Gólem de cobre invocable: recoger desde el cofre de cobre, buscar cofres válidos, clasificar por tipo, priorizar rutas, manejar cofres llenos, dormir/estatúa/oxidación donde corresponda y evitar duplicación/pérdida.
 - Estanterías y otros bloques contenedores con almacenamiento, interacción y representación de los objetos visibles.
-- Añadir contenido moderno verificable en paquetes de trabajo, no como IDs vacíos: Copper Age, Mounts of Mayhem, Tiny Takeover, Chaos Cubed y Wilderness Bound; incluir bloques, entidades, biomas, recetas, sonidos y estructuras que sean compatibles con la arquitectura y el alcance del juego.
+- Añadir contenido moderno verificable en paquetes jugables, no como IDs vacíos:
+  - **Copper Age:** equipo de cobre, cofres de cobre, gólem y estatua, decoraciones, estanterías, oxidación y encerado.
+  - **Mounts of Mayhem:** lanza, nautilus y variantes, monturas/enemigos asociados y armadura de montura compatible con el sistema de combate.
+  - **Tiny Takeover:** modelos/texturas/sonidos de criaturas bebé, diente de león dorado y etiquetas fabricables.
+  - **Chaos Cubed:** cubo de azufre con física e interacción con bloques, cuevas/pozos de azufre, azufre y cinabrio.
+  - **Wilderness Bound:** bosque moteado, campamentos abandonados, álamos y su set de madera, arbusto rojo, hongos de repisa, losas/escaleras de lana, hormigón ampliado, cojines y cama de paja.
+  - Cada paquete incluye generación natural, drops, recetas, sonido, comportamiento, iconos, modelos y compatibilidad de guardado; las funciones que no sean adecuadas para Minefade se documentan y se omiten con motivo.
+- Las funciones que solo aparezcan en Beta/Preview/Experimental se mantienen en una lista separada y no se activan en la versión estable hasta confirmar su publicación y sus reglas finales.
 - Equilibrar progresión: piedra → hierro → cobre como tier según atributos definidos → oro/diamante y materiales avanzados, sin contradicciones en drops/recetas.
 - Añadir pruebas de recetas, herramientas, estados de oxidación, guardado de cofres, selección automática del gólem y migración del catálogo.
 
