@@ -161,6 +161,34 @@ int main() {
     assert(player.verticalVelocity > 0.0f);
     assert(!player.grounded);
 
+    Player renderedPlayer;
+    renderedPlayer.position = {4.0f, 10.0f, 7.0f};
+    renderedPlayer.yaw = 0.0f;
+    std::vector<WorldVertex> playerMesh;
+    renderedPlayer.AppendMesh(playerMesh);
+    assert(playerMesh.size() >= 400u);
+    float minX = playerMesh.front().x, maxX = playerMesh.front().x;
+    float minZ = playerMesh.front().z, maxZ = playerMesh.front().z;
+    for (const WorldVertex& vertex : playerMesh) {
+        minX = std::min(minX, vertex.x);
+        maxX = std::max(maxX, vertex.x);
+        minZ = std::min(minZ, vertex.z);
+        maxZ = std::max(maxZ, vertex.z);
+    }
+    assert((maxZ - minZ) > (maxX - minX) * 1.35f);
+    renderedPlayer.yaw = 1.5707963f;
+    playerMesh.clear();
+    renderedPlayer.AppendMesh(playerMesh);
+    minX = maxX = playerMesh.front().x;
+    minZ = maxZ = playerMesh.front().z;
+    for (const WorldVertex& vertex : playerMesh) {
+        minX = std::min(minX, vertex.x);
+        maxX = std::max(maxX, vertex.x);
+        minZ = std::min(minZ, vertex.z);
+        maxZ = std::max(maxZ, vertex.z);
+    }
+    assert((maxX - minX) > (maxZ - minZ) * 1.35f);
+
     VoxelWorld collisionWorld(44u);
     collisionWorld.GenerateAround(8, 8, 1);
     const int collisionGround = collisionWorld.GetSurfaceHeight(8, 8);
