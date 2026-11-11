@@ -229,6 +229,12 @@ bool Engine::Initialise(float displayDensity, const std::uint8_t* atlasPixels,
     }
     world_.GenerateAround(static_cast<int>(std::floor(player_.position.x)),
                           static_cast<int>(std::floor(player_.position.z)), 1);
+    if (!player_.ResolveSafeSpawn(world_)) {
+        ENGINE_LOGE("Saved spawn is obstructed and no nearby safe position was found");
+        world_.GenerateAround(8, 8, 1);
+        player_.position = {8.0f, static_cast<float>(world_.GetSurfaceHeight(8, 8)) + 1.001f, 8.0f};
+        player_.ResolveSafeSpawn(world_);
+    }
     lastChunkX_ = static_cast<int>(std::floor(player_.position.x / 16.0f));
     lastChunkZ_ = static_cast<int>(std::floor(player_.position.z / 16.0f));
     entities_.SpawnInitial(world_);
