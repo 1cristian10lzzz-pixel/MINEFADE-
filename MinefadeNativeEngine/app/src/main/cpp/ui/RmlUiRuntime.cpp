@@ -38,7 +38,7 @@ button:active { background: #47789b; }
 .panel .actions { flex-wrap: wrap; }
 #quickbar { position: absolute; bottom: 10dp; left: 50%; margin-left: -132dp; display: flex; flex-direction: row; gap: 2dp; }
 .slot { width: 27dp; min-width: 27dp; height: 29dp; text-align: center; padding: 3dp 2dp; background: #10192322; border: 1dp #ffffff33; border-radius: 4dp; color: #ffffff; font-size: 9dp; }
-#inventory, #pause { width: 34dp; height: 34dp; padding: 0dp; text-align: center; }
+#inventory, #pause, #perspective { width: 34dp; height: 34dp; padding: 0dp; text-align: center; }
 #jump { position: absolute; right: 18dp; bottom: 68dp; width: 38dp; height: 38dp; padding: 2dp; text-align: center; }
 #inventory-panel { left: auto; right: 10dp; top: 52dp; width: 205dp; margin: 0dp; }
 .inventory-row { color: #e0e8ed; font-size: 12dp; padding: 5dp 2dp; border-bottom: 1dp #43576a; }
@@ -57,6 +57,7 @@ button:active { background: #47789b; }
   <div class="actions">
     <div id="stats">FPS -- · Chunks --</div>
     <button id="inventory">⋯</button>
+    <button id="perspective">◉</button>
     <button id="pause">Ⅱ</button>
   </div>
 </div>
@@ -169,6 +170,7 @@ bool RmlUiRuntime::Initialise(int width, int height, float displayDensity, Actio
         AttachAction(id.c_str(), id.c_str());
     }
     AttachAction("pause", "pause");
+    AttachAction("perspective", "perspective");
     AttachAction("resume", "resume");
     AttachAction("save", "save");
     AttachAction("save-exit", "save-exit");
@@ -262,6 +264,14 @@ void RmlUiRuntime::SetPickupToast(const std::string& text) {
     if (Rml::Element* element = document_->GetElementById("pickup")) {
         element->SetInnerRML(text);
         element->SetProperty("display", text.empty() ? "none" : "block");
+    }
+}
+
+void RmlUiRuntime::SetPerspectiveEnabled(bool enabled) {
+    if (document_ == nullptr) return;
+    if (Rml::Element* element = document_->GetElementById("perspective")) {
+        element->SetProperty("background-color", enabled ? "#d9e9a455" : "#1b2a3733");
+        element->SetProperty("border", enabled ? "1dp #d9e9a4" : "1dp #b9c9d855");
     }
 }
 
