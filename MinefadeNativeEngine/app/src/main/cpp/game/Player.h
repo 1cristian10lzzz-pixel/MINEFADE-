@@ -22,6 +22,8 @@ public:
     void SetMovement(float x, float y);
     void Rotate(float deltaX, float deltaY);
     void Jump();
+    // Keeps saved player positions out of solid blocks and finds nearby open ground.
+    bool ResolveSafeSpawn(const VoxelWorld& world);
     void Update(const VoxelWorld& world, float deltaSeconds);
 };
 
