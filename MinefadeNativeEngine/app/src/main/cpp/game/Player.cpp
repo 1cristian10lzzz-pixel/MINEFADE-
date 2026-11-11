@@ -7,6 +7,56 @@ namespace minefade {
 namespace {
 constexpr float kPi = 3.14159265358979323846f;
 int FloorToInt(float value) { return static_cast<int>(std::floor(value)); }
+
+Vec3 CrossPlayer(const Vec3& a, const Vec3& b) {
+    return {a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x};
+}
+
+Vec3 PlayerLocalPoint(const Vec3& anchor, float yaw, float x, float y, float z) {
+    const Vec3 right{-std::sin(yaw), 0.0f, std::cos(yaw)};
+    const Vec3 forward{std::cos(yaw), 0.0f, std::sin(yaw)};
+    return {
+        anchor.x + right.x * x + forward.x * z,
+        anchor.y + y,
+        anchor.z + right.z * x + forward.z * z
+    };
+}
+
+void AppendPlayerBox(std::vector<WorldVertex>& output, const Vec3& anchor, float yaw,
+                     const Vec3& localCenter, const Vec3& half,
+                     const std::array<float, 3>& color) {
+    static constexpr std::array<std::array<std::array<float, 3>, 4>, 6> faces{{
+        {{{{1,0,0}},{{1,1,0}},{{1,1,1}},{{1,0,1}}}},
+        {{{{0,0,1}},{{0,1,1}},{{0,1,0}},{{0,0,0}}}},
+        {{{{0,1,1}},{{1,1,1}},{{1,1,0}},{{0,1,0}}}},
+        {{{{0,0,0}},{{1,0,0}},{{1,0,1}},{{0,0,1}}}},
+        {{{{1,0,1}},{{1,1,1}},{{0,1,1}},{{0,0,1}}}},
+        {{{{0,0,0}},{{0,1,0}},{{1,1,0}},{{1,0,0}}}}
+    }};
+    static constexpr std::array<float, 6> shade{{0.84f, 0.84f, 1.0f, 0.56f, 0.91f, 0.91f}};
+    static constexpr std::array<int, 6> order{{0, 1, 2, 0, 2, 3}};
+    for (std::size_t face = 0; face < faces.size(); ++face) {
+        std::array<Vec3, 4> points{};
+        for (std::size_t i = 0; i < points.size(); ++i) {
+            const auto& p = faces[face][i];
+            const float lx = localCenter.x + (p[0] * 2.0f - 1.0f) * half.x;
+            const float ly = localCenter.y + (p[1] * 2.0f - 1.0f) * half.y;
+            const float lz = localCenter.z + (p[2] * 2.0f - 1.0f) * half.z;
+            points[i] = PlayerLocalPoint(anchor, yaw, lx, ly, lz);
+        }
+        const Vec3 edgeA{points[1].x - points[0].x, points[1].y - points[0].y, points[1].z - points[0].z};
+        const Vec3 edgeB{points[2].x - points[0].x, points[2].y - points[0].y, points[2].z - points[0].z};
+        Vec3 normal = CrossPlayer(edgeA, edgeB);
+        const float length = std::sqrt(std::max(normal.x * normal.x + normal.y * normal.y + normal.z * normal.z, 0.000001f));
+        normal = {normal.x / length, normal.y / length, normal.z / length};
+        for (int index : order) {
+            const Vec3& p = points[static_cast<std::size_t>(index)];
+            const float light = shade[face];
+            output.push_back({p.x, p.y, p.z, normal.x, normal.y, normal.z,
+                              color[0] * light, color[1] * light, color[2] * light, 0.5f, 0.5f});
+        }
+    }
+}
 }
 
 Vec3 Player::Forward() const {
@@ -87,6 +137,39 @@ bool Player::ResolveSafeSpawn(const VoxelWorld& world) {
     return false;
 }
 
+void Player::AppendMesh(std::vector<WorldVertex>& output) const {
+    const Vec3 anchor = position;
+    const float stride = (std::abs(movementX) + std::abs(movementY) > 0.05f)
+        ? std::sin(walkPhase) * 0.16f : 0.0f;
+
+    // Original Minefade adventurer silhouette: boots, trousers, tunic, arms, hands,
+    // face and hair. Every part is transformed by the player's yaw, not world axes.
+    const std::array<float, 3> skin{{0.78f, 0.57f, 0.42f}};
+    const std::array<float, 3> hair{{0.25f, 0.18f, 0.14f}};
+    const std::array<float, 3> tunic{{0.18f, 0.43f, 0.62f}};
+    const std::array<float, 3> trim{{0.88f, 0.66f, 0.28f}};
+    const std::array<float, 3> trousers{{0.19f, 0.25f, 0.43f}};
+    const std::array<float, 3> boots{{0.25f, 0.16f, 0.11f}};
+
+    AppendPlayerBox(output, anchor, yaw, {0.0f, 1.08f, 0.0f}, {0.32f, 0.40f, 0.19f}, tunic);
+    AppendPlayerBox(output, anchor, yaw, {0.0f, 1.37f, 0.0f}, {0.33f, 0.10f, 0.195f}, trim);
+
+    const float armSwing = stride * 0.78f;
+    AppendPlayerBox(output, anchor, yaw, {-0.43f, 1.08f, -armSwing}, {0.145f, 0.34f, 0.145f}, tunic);
+    AppendPlayerBox(output, anchor, yaw, { 0.43f, 1.08f,  armSwing}, {0.145f, 0.34f, 0.145f}, tunic);
+    AppendPlayerBox(output, anchor, yaw, {-0.43f, 0.68f, -armSwing}, {0.135f, 0.12f, 0.14f}, skin);
+    AppendPlayerBox(output, anchor, yaw, { 0.43f, 0.68f,  armSwing}, {0.135f, 0.12f, 0.14f}, skin);
+
+    AppendPlayerBox(output, anchor, yaw, {-0.17f, 0.43f,  stride}, {0.16f, 0.37f, 0.16f}, trousers);
+    AppendPlayerBox(output, anchor, yaw, { 0.17f, 0.43f, -stride}, {0.16f, 0.37f, 0.16f}, trousers);
+    AppendPlayerBox(output, anchor, yaw, {-0.17f, 0.105f, stride + 0.025f}, {0.165f, 0.105f, 0.205f}, boots);
+    AppendPlayerBox(output, anchor, yaw, { 0.17f, 0.105f,-stride + 0.025f}, {0.165f, 0.105f, 0.205f}, boots);
+
+    AppendPlayerBox(output, anchor, yaw, {0.0f, 1.63f, 0.015f}, {0.25f, 0.25f, 0.245f}, skin);
+    AppendPlayerBox(output, anchor, yaw, {0.0f, 1.83f, -0.015f}, {0.255f, 0.075f, 0.255f}, hair);
+    AppendPlayerBox(output, anchor, yaw, {0.0f, 1.63f, -0.225f}, {0.255f, 0.10f, 0.045f}, hair);
+}
+
 void Player::Update(const VoxelWorld& world, float deltaSeconds) {
     const float dt = std::clamp(deltaSeconds, 0.0f, 0.05f);
     const float bodyRadius = 0.29f;
@@ -114,6 +197,12 @@ void Player::Update(const VoxelWorld& world, float deltaSeconds) {
     const Vec3 right{-forward.z, 0.0f, forward.x};
     const float moveX = (forward.x * movementY + right.x * movementX) * speed * dt;
     const float moveZ = (forward.z * movementY + right.z * movementX) * speed * dt;
+    if (std::abs(moveX) + std::abs(moveZ) > 0.0001f) {
+        walkPhase += dt * (inFluid ? 5.0f : 8.5f);
+        if (walkPhase > 2.0f * kPi) walkPhase -= 2.0f * kPi;
+    } else {
+        walkPhase = std::fmod(walkPhase, 2.0f * kPi);
+    }
 
     // Substeps keep the player from tunnelling through a thin wall at low frame rates.
     const int horizontalSteps = std::max(1, static_cast<int>(std::ceil(
