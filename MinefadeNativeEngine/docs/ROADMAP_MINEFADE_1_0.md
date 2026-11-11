@@ -40,7 +40,14 @@
 - Pruebas nativas y APK de revisión superados; prueba manual de movimiento, combate, guardado y regreso al mundo.
 
 ### Estado de partida
-La rama ya contiene una primera implementación y pruebas para recuperación de spawn, minado mantenido por dureza base, drops físicos básicos, HUD de objetivo y dos trabajos de chunks simultáneos. Esto es un avance parcial: todavía faltan herramientas con tiers, animaciones completas, tercera persona, combate y validación física en dispositivo.
+**En curso; no cerrada.** A la base previa se añadieron:
+- Recuperación de spawn, minado mantenido por dureza base, drops físicos iniciales y HUD de objetivo sin panel opaco.
+- Hasta dos tareas asíncronas de generación de chunks.
+- Modelo voxel propio del jugador con piezas, balanceo de brazos/piernas y orientación por yaw.
+- Botón de perspectiva en el HUD; cámara trasera y raycast de interacción que usan el mismo origen/dirección de cámara.
+- Pruebas de geometría, giro de 90 grados, normales y winding compatibles con el descarte de caras de OpenGL.
+
+La CI de la rama pasó las pruebas nativas y compiló el APK de revisión para `arm64-v8a` y `armeabi-v7a`. La versión de revisión usa el identificador independiente `com.minefade.nativeengine.review`. Esto no cierra la fase: aún faltan herramientas con tiers, inventario/equipamiento completo, combate, salud/hambre/muerte, animaciones completas, entidades orientables, cámara contra paredes y prueba táctil/visual en dispositivo físico.
 
 ## Fase 2 — Rediseño integral de interfaces y controles
 
