@@ -7,11 +7,11 @@ Android Activity / SurfaceView (Java)
        └─ Engine (C++20)
            ├─ Player: movimiento, gravedad, colisión y salto
            ├─ Inventory: 9 slots, pilas y validación de capacidad
-           ├─ EntitySystem: 3 entidades ambientales provisionales
+           ├─ EntitySystem: 3 entidades ambientales provisionales + objetos caídos
            ├─ EnvironmentSystem: ciclo día/noche, cielo y dirección solar
            ├─ VoxelWorld
            │    ├─ chunks 16×16×96, biomas y cuevas
-           │    ├─ worker asíncrono para generación de un chunk
+           │    ├─ hasta dos tareas asíncronas de generación de chunks
            │    ├─ raycast DDA y reglas de drops/colocación
            │    ├─ malla opaca + malla transparente ordenada
            │    └─ guardado MFVOX002 / lectura MFVOX001
@@ -50,3 +50,30 @@ El catálogo cubre nombres, alias, material/sound, forma aproximada, flags, luz,
 - Las entidades son modelos temporales de cubos y no tienen animación esquelética o IA de producción.
 - El multijugador LAN/Internet, la lluvia, el agua dinámica y las sombras de mapa siguen pendientes.
 - La compilación/instalación del APK necesita Android SDK/NDK/Gradle y una prueba real en un dispositivo; no se marca como validada antes de eso.
+
+
+## Revisión nativa de noviembre de 2026
+
+La rama `minefade-source-review` añade una primera corrección verificable sobre la base 0.5.0:
+
+- **Entrada en mundo segura:** antes de habilitar el juego se comprueba la caja de colisión del jugador. Si el punto guardado está dentro de bloques, se busca un punto despejado en superficies cercanas y existe un punto alternativo de recuperación.
+- **Minado por pulsación mantenida:** un toque breve ya no rompe instantáneamente. Mantener el dedo quieto sobre la zona de mirada acumula progreso en función de la dureza base del bloque; mover el dedo convierte el gesto en giro de cámara y cancela el minado.
+- **Objetos caídos:** los drops se representan como entidades del mundo con gravedad, colisión simplificada, rebote, tiempo mínimo antes de recogerse y recogida por proximidad si hay espacio en el inventario.
+- **HUD compacto:** se ocultan el rótulo superior y la instrucción permanente; se reducen los controles y espacios de la barra rápida, se quitan sus números, y la información del bloque objetivo y los objetos recogidos usa texto/progreso sin una caja opaca.
+- **Carga de chunks:** la generación del terreno permite hasta dos tareas de chunk simultáneas. La construcción de mallas, su carga a OpenGL ES y parte del trabajo de visibilidad todavía ocurren en el hilo de renderizado.
+
+La compilación de revisión se construye como variante de depuración con identificador de paquete separado `com.minefade.nativeengine.review`, para permitir una instalación de prueba paralela a otra instalación.
+
+## Funciones que siguen pendientes
+
+Esta revisión **no** es una reconstrucción completa de la versión clásica de Minefade. La base de repositorio disponible es el Native Engine 0.5.0 Alpha y todavía no contiene los menús clásicos, la personalización de avatar ni todos los sistemas anteriores. Siguen pendientes:
+
+- Modelo del jugador visible y animado en tercera persona; modelos de entidades con esqueleto, animaciones e IA completa.
+- Sistema de herramientas/armadura y bonificaciones de minería; daño, combate, hambre, consumo de alimentos y animación de mano.
+- Inventario de 7 columnas, recetas, cofres/tolvas funcionales y un sistema general de objetos no limitados a bloques.
+- Menús completos de inicio, ajustes, creación de mundos, logros, chat con emoji, muerte, configuración de controles y minimapa top-down.
+- Multijugador LAN/Internet, lluvia, agua dinámica, sombras reales y estructuras de mundo.
+- Mallas por chunk con caché incremental, descarga de chunks lejanos, frustum/occlusion culling y LOD. El worker doble es solo un primer paso, no una solución completa de rendimiento.
+- Catálogo moderno completo de contenido: el registro actual parte de 284 bloques de una fuente Bedrock 1.8. Aún no incluye como sistemas jugables el equipo de cobre, cofres y golem de cobre, oxidación/encerado ni las incorporaciones posteriores de Minecraft.
+
+Las pruebas automatizadas verifican los smoke tests del mundo, la recuperación de spawn, la física básica de drops y el catálogo. La compilación CI verifica que se genera el APK Android. Ninguna de esas comprobaciones sustituye una prueba visual y táctil en un dispositivo físico.
