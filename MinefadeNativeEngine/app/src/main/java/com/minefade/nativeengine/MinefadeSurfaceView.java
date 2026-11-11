@@ -2,7 +2,9 @@ package com.minefade.nativeengine;
 
 import android.content.Context;
 import android.content.res.AssetManager;
+import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
+import android.util.Log;
 import android.view.MotionEvent;
 
 import java.io.ByteArrayOutputStream;
@@ -13,9 +15,19 @@ import java.util.concurrent.TimeUnit;
 
 /** Owns EGL ES 3 and serialises native input/render calls on the GL thread. */
 public final class MinefadeSurfaceView extends GLSurfaceView {
+    public interface InitializationListener {
+        void onEngineReady();
+        void onEngineError(String message);
+    }
+
+    private static final String TAG = "Minefade";
     private volatile boolean nativeReady;
-    public MinefadeSurfaceView(Context context, SoundEffects soundEffects, float displayDensity) {
+    private final InitializationListener initializationListener;
+
+    public MinefadeSurfaceView(Context context, SoundEffects soundEffects, float displayDensity,
+                               InitializationListener listener) {
         super(context);
+        initializationListener = listener;
         setEGLContextClientVersion(3);
         setEGLConfigChooser(8, 8, 8, 8, 16, 0);
         setPreserveEGLContextOnPause(true);
@@ -25,6 +37,16 @@ public final class MinefadeSurfaceView extends GLSurfaceView {
         setFocusableInTouchMode(true);
     }
 
+    private void notifyReady() {
+        if (initializationListener != null) post(initializationListener::onEngineReady);
+    }
+
+    private void notifyError(String message) {
+        if (initializationListener != null) {
+            post(() -> initializationListener.onEngineError(message));
+        }
+    }
+
     /** Pause and save on the GL thread; Engine/world state is not thread-safe. */
     public void pauseNativeEngine() {
         if (!nativeReady) return;
@@ -32,27 +54,40 @@ public final class MinefadeSurfaceView extends GLSurfaceView {
         queueEvent(() -> {
             try {
                 NativeBridge.nativePause();
+            } catch (LinkageError | RuntimeException error) {
+                Log.e(TAG, "Could not pause native engine", error);
             } finally {
                 completed.countDown();
             }
         });
         try {
             if (!completed.await(5, TimeUnit.SECONDS)) {
-                android.util.Log.w("Minefade", "Timed out waiting for native save on GL thread");
+                Log.w(TAG, "Timed out waiting for native save on GL thread");
             }
         } catch (InterruptedException interrupted) {
             Thread.currentThread().interrupt();
-            android.util.Log.w("Minefade", "Interrupted while waiting for native pause", interrupted);
+            Log.w(TAG, "Interrupted while waiting for native pause", interrupted);
         }
     }
 
     /** Resume on the same GL thread used by render, resize and touch callbacks. */
     public void resumeNativeEngine() {
-        if (nativeReady) queueEvent(NativeBridge::nativeResume);
+        if (nativeReady) {
+            queueEvent(() -> {
+                try {
+                    NativeBridge.nativeResume();
+                } catch (LinkageError | RuntimeException error) {
+                    Log.e(TAG, "Could not resume native engine", error);
+                    nativeReady = false;
+                    notifyError("No se pudo reanudar el motor gráfico. Vuelve a intentarlo.");
+                }
+            });
+        }
     }
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
+        if (!nativeReady) return true;
         final int action = event.getActionMasked();
         final int actionIndex = event.getActionIndex();
         if (action == MotionEvent.ACTION_MOVE) {
@@ -84,30 +119,73 @@ public final class MinefadeSurfaceView extends GLSurfaceView {
             default:
                 return true;
         }
-        queueEvent(() -> NativeBridge.nativeTouch(nativeAction, pointerId, x, y));
+        queueEvent(() -> {
+            if (nativeReady) NativeBridge.nativeTouch(nativeAction, pointerId, x, y);
+        });
         return true;
     }
 
     private static byte[] readBlockAtlas(AssetManager assets) {
+        final int expected = 576 * 486 * 4;
         try (InputStream input = assets.open("textures/block_atlas.rgba");
-             ByteArrayOutputStream output = new ByteArrayOutputStream(900_000)) {
+             ByteArrayOutputStream output = new ByteArrayOutputStream(expected)) {
             byte[] buffer = new byte[16 * 1024];
             int read;
             while ((read = input.read(buffer)) != -1) output.write(buffer, 0, read);
             byte[] result = output.toByteArray();
-            return result.length == 576 * 486 * 4 ? result : null;
+            if (result.length == expected) return result;
+            Log.e(TAG, "Block atlas has an invalid size: " + result.length + "; using fallback atlas");
         } catch (IOException error) {
-            android.util.Log.e("Minefade", "Block atlas load failed", error);
-            return null;
+            Log.e(TAG, "Block atlas load failed; using fallback atlas", error);
         }
+        return createFallbackBlockAtlas();
+    }
+
+    /**
+     * A deterministic emergency atlas. The game can still start if an optional
+     * texture asset is absent or damaged; the visible colours make the failure
+     * recoverable instead of leaving the player on a black screen.
+     */
+    private static byte[] createFallbackBlockAtlas() {
+        final int width = 576, height = 486, tile = 16, cell = 18, columns = 32;
+        byte[] atlas = new byte[width * height * 4];
+        for (int index = 0; index < 852; index++) {
+            int block = index / 3;
+            int face = index % 3;
+            int hue = block % 8;
+            int[][] palettes = {
+                    {104, 145, 79}, {126, 130, 136}, {145, 103, 68}, {190, 159, 92},
+                    {68, 153, 177}, {155, 91, 67}, {105, 101, 157}, {148, 158, 161}
+            };
+            int[] base = palettes[hue];
+            int shade = face == 0 ? 12 : (face == 2 ? -22 : 0);
+            int ox = (index % columns) * cell + 1;
+            int oy = (index / columns) * cell + 1;
+            for (int y = 0; y < tile; y++) {
+                for (int x = 0; x < tile; x++) {
+                    int grain = ((x * 7 + y * 11 + block * 13) % 13) - 6;
+                    int at = ((oy + y) * width + ox + x) * 4;
+                    atlas[at] = (byte) clamp(base[0] + shade + grain);
+                    atlas[at + 1] = (byte) clamp(base[1] + shade + grain);
+                    atlas[at + 2] = (byte) clamp(base[2] + shade + grain);
+                    atlas[at + 3] = (byte) 255;
+                }
+            }
+        }
+        return atlas;
+    }
+
+    private static int clamp(int value) {
+        return Math.max(0, Math.min(255, value));
     }
 
     private final class EngineRenderer implements GLSurfaceView.Renderer {
         private final SoundEffects soundEffects;
         private final float displayDensity;
         private final AssetManager assetManager;
+
         EngineRenderer(Context context, SoundEffects soundEffects, float displayDensity) {
-            this.assetManager = context.getAssets();
+            assetManager = context.getAssets();
             this.soundEffects = soundEffects;
             this.displayDensity = displayDensity;
         }
@@ -115,23 +193,55 @@ public final class MinefadeSurfaceView extends GLSurfaceView {
         @Override
         public void onSurfaceCreated(javax.microedition.khronos.opengles.GL10 gl,
                                      javax.microedition.khronos.egl.EGLConfig config) {
-            byte[] atlas = readBlockAtlas(assetManager);
-            if (atlas == null) {
-                android.util.Log.e("Minefade", "Could not read textures/block_atlas.rgba");
-                return;
+            nativeReady = false;
+            GLES20.glClearColor(0.035f, 0.055f, 0.08f, 1.0f);
+            GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
+            try {
+                byte[] atlas = readBlockAtlas(assetManager);
+                nativeReady = NativeBridge.nativeInit(displayDensity, atlas, 576, 486);
+                if (nativeReady) {
+                    Log.i(TAG, "Native renderer initialised successfully");
+                    notifyReady();
+                } else {
+                    Log.e(TAG, "Native engine initialisation returned false");
+                    notifyError("El motor gráfico no pudo iniciarse. Comprueba los recursos y vuelve a intentarlo.");
+                }
+            } catch (LinkageError | RuntimeException error) {
+                nativeReady = false;
+                Log.e(TAG, "Native engine is unavailable", error);
+                notifyError("No se pudo cargar el motor nativo: " + error.getClass().getSimpleName());
             }
-            nativeReady = NativeBridge.nativeInit(displayDensity, atlas, 576, 486);
         }
 
         @Override
         public void onSurfaceChanged(javax.microedition.khronos.opengles.GL10 gl, int width, int height) {
-            NativeBridge.nativeResize(width, height);
+            if (!nativeReady) return;
+            try {
+                NativeBridge.nativeResize(width, height);
+            } catch (LinkageError | RuntimeException error) {
+                nativeReady = false;
+                Log.e(TAG, "Native resize failed", error);
+                notifyError("Falló la configuración de la pantalla. Vuelve a intentarlo.");
+            }
         }
 
         @Override
         public void onDrawFrame(javax.microedition.khronos.opengles.GL10 gl) {
-            NativeBridge.nativeRender();
-            if (soundEffects != null) soundEffects.playEvents(NativeBridge.nativeConsumeSoundEvents());
+            if (!nativeReady) {
+                // Always paint a known colour while the Java loading/error surface is visible.
+                GLES20.glClearColor(0.035f, 0.055f, 0.08f, 1.0f);
+                GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
+                return;
+            }
+            try {
+                NativeBridge.nativeRender();
+                if (soundEffects != null)
+                    soundEffects.playEvents(NativeBridge.nativeConsumeSoundEvents());
+            } catch (LinkageError | RuntimeException error) {
+                nativeReady = false;
+                Log.e(TAG, "Native render failed", error);
+                notifyError("El renderizador dejó de responder. Vuelve al menú y reintenta.");
+            }
         }
     }
 }
