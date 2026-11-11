@@ -21,6 +21,8 @@ public:
     bool Touch(int action, float x, float y);
     void UpdateAndRender();
     void SetStatus(const std::string& status);
+    void SetTargetBlock(const std::string& name, float progress);
+    void SetPickupToast(const std::string& text);
     void SetQuickbarSlot(int slot, const std::string& label, bool selected);
     void SetInventoryContents(const std::string& markup);
     void SetPanelVisible(const char* elementId, bool visible);
