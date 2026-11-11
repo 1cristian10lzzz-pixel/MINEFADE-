@@ -40,6 +40,7 @@ private:
         bool uiHandled{false};
         bool joystick{false};
         bool moved{false};
+        bool mining{false};
     };
 
     static Mat4 Perspective(float fovRadians, float aspect, float nearPlane, float farPlane);
@@ -56,6 +57,7 @@ private:
     void HandleUiAction(const std::string& action);
     void SaveWorld();
     void RefreshInventoryUi();
+    void UpdateMining(float deltaSeconds);
     double ElapsedSeconds() const;
 
     GLuint worldProgram_{0};
@@ -86,6 +88,7 @@ private:
     VoxelWorld world_;
     Player player_;
     Inventory inventory_;
+    DroppedItemSystem droppedItems_;
     EntitySystem entities_;
     EnvironmentSystem environment_;
     RmlUiRuntime ui_;
@@ -93,6 +96,13 @@ private:
     std::vector<WorldVertex> transparentWorldMesh_;
     std::vector<WorldVertex> entityMesh_;
     std::unordered_map<int, TouchState> touches_;
+    int miningPointerId_{-1};
+    Vec3 miningBlock_{};
+    BlockId miningBlockType_{BlockId::Air};
+    float miningElapsed_{0.0f};
+    float miningRequired_{0.0f};
+    std::string pickupToastText_;
+    std::chrono::steady_clock::time_point pickupToastUntil_{};
     std::chrono::steady_clock::time_point lastFrame_{};
     std::chrono::steady_clock::time_point lastStats_{};
     int framesSinceStats_{0};
