@@ -437,6 +437,19 @@ int VoxelWorld::GetSurfaceHeight(int x,int z) const {
     return 0;
 }
 
+bool VoxelWorld::GetRayTargetBlock(const Vec3& origin, const Vec3& direction, float maxDistance,
+                                   Vec3* targetBlock, BlockId* targetType) const {
+    if (maxDistance <= 0.0f) return false;
+    const RayHit hit = TraceVoxelRay(*this, origin, direction, maxDistance);
+    if (!hit.hit) return false;
+    const BlockId block = GetBlock(hit.x, hit.y, hit.z);
+    if (!IsTargetable(block)) return false;
+    if (targetBlock != nullptr)
+        *targetBlock = {static_cast<float>(hit.x), static_cast<float>(hit.y), static_cast<float>(hit.z)};
+    if (targetType != nullptr) *targetType = block;
+    return true;
+}
+
 bool VoxelWorld::BreakRay(const Vec3& origin,const Vec3& direction,float maxDistance,Vec3* brokenBlock,BlockId* brokenType) {
     if(maxDistance<=0.0f)return false;
     const RayHit hit=TraceVoxelRay(*this,origin,direction,maxDistance);if(!hit.hit)return false;
