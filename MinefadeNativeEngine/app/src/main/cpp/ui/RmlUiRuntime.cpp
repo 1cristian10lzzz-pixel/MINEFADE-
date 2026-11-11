@@ -38,7 +38,8 @@ button:active { background: #47789b; }
 .panel .actions { flex-wrap: wrap; }
 #quickbar { position: absolute; bottom: 10dp; left: 50%; margin-left: -132dp; display: flex; flex-direction: row; gap: 2dp; }
 .slot { width: 27dp; min-width: 27dp; height: 29dp; text-align: center; padding: 3dp 2dp; background: #10192322; border: 1dp #ffffff33; border-radius: 4dp; color: #ffffff; font-size: 9dp; }
-#jump { position: absolute; right: 18dp; bottom: 68dp; width: 38dp; height: 38dp; padding: 2dp; }
+#inventory, #pause { width: 34dp; height: 34dp; padding: 0dp; text-align: center; }
+#jump { position: absolute; right: 18dp; bottom: 68dp; width: 38dp; height: 38dp; padding: 2dp; text-align: center; }
 #inventory-panel { left: auto; right: 10dp; top: 52dp; width: 205dp; margin: 0dp; }
 .inventory-row { color: #e0e8ed; font-size: 12dp; padding: 5dp 2dp; border-bottom: 1dp #43576a; }
 #pause-panel { z-index: 10; }
