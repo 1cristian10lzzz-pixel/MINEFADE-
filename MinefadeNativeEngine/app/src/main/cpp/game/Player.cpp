@@ -13,12 +13,14 @@ Vec3 CrossPlayer(const Vec3& a, const Vec3& b) {
 }
 
 Vec3 PlayerLocalPoint(const Vec3& anchor, float yaw, float x, float y, float z) {
+    // x-right, y-up, z-back is a right-handed basis. Keeping this winding is
+    // essential because the world renderer back-face culls OpenGL triangles.
     const Vec3 right{-std::sin(yaw), 0.0f, std::cos(yaw)};
-    const Vec3 forward{std::cos(yaw), 0.0f, std::sin(yaw)};
+    const Vec3 backward{-std::cos(yaw), 0.0f, -std::sin(yaw)};
     return {
-        anchor.x + right.x * x + forward.x * z,
+        anchor.x + right.x * x + backward.x * z,
         anchor.y + y,
-        anchor.z + right.z * x + forward.z * z
+        anchor.z + right.z * x + backward.z * z
     };
 }
 
