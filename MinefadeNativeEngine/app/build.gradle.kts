@@ -43,6 +43,9 @@ android {
 
     buildTypes {
         debug {
+            // Install the review build beside the existing app, preserving its private worlds.
+            applicationIdSuffix = ".review"
+            versionNameSuffix = "-review"
             isMinifyEnabled = false
             isDebuggable = true
         }
