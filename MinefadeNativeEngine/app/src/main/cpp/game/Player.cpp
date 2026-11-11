@@ -36,6 +36,57 @@ void Player::Jump() {
     grounded = false;
 }
 
+bool Player::ResolveSafeSpawn(const VoxelWorld& world) {
+    constexpr float bodyRadius = 0.29f;
+    constexpr float bodyHeight = 1.80f;
+    const auto clearAt = [&world](float x, float y, float z) {
+        const int minX = FloorToInt(x - bodyRadius);
+        const int maxX = FloorToInt(x + bodyRadius);
+        const int minZ = FloorToInt(z - bodyRadius);
+        const int maxZ = FloorToInt(z + bodyRadius);
+        const int minY = FloorToInt(y + 0.06f);
+        const int maxY = FloorToInt(y + bodyHeight - 0.06f);
+        for (int by = minY; by <= maxY; ++by)
+            for (int bz = minZ; bz <= maxZ; ++bz)
+                for (int bx = minX; bx <= maxX; ++bx)
+                    if (world.IsSolid(bx, by, bz)) return false;
+        return true;
+    };
+
+    if (std::isfinite(position.x) && std::isfinite(position.y) && std::isfinite(position.z) &&
+        position.y >= 1.0f && position.y <= static_cast<float>(VoxelWorld::kWorldHeight - 2) &&
+        clearAt(position.x, position.y, position.z)) {
+        return true;
+    }
+
+    const int originX = std::isfinite(position.x) ? FloorToInt(position.x) : 8;
+    const int originZ = std::isfinite(position.z) ? FloorToInt(position.z) : 8;
+    // Search outward from the saved position first, so recovery is minimally disruptive.
+    for (int radius = 0; radius <= 12; ++radius) {
+        for (int dz = -radius; dz <= radius; ++dz) {
+            for (int dx = -radius; dx <= radius; ++dx) {
+                if (std::max(std::abs(dx), std::abs(dz)) != radius) continue;
+                const int x = originX + dx;
+                const int z = originZ + dz;
+                const int surface = world.GetSurfaceHeight(x, z);
+                const float candidateX = static_cast<float>(x) + 0.5f;
+                const float candidateY = static_cast<float>(surface) + 1.001f;
+                const float candidateZ = static_cast<float>(z) + 0.5f;
+                if (surface <= 0 || candidateY >= static_cast<float>(VoxelWorld::kWorldHeight - 2) ||
+                    !clearAt(candidateX, candidateY, candidateZ)) {
+                    continue;
+                }
+                position = {candidateX, candidateY, candidateZ};
+                verticalVelocity = 0.0f;
+                movementX = movementY = 0.0f;
+                grounded = false;
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 void Player::Update(const VoxelWorld& world, float deltaSeconds) {
     const float dt = std::clamp(deltaSeconds, 0.0f, 0.05f);
     const float bodyRadius = 0.29f;
