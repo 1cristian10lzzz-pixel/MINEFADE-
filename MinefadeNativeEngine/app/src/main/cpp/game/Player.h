@@ -17,6 +17,7 @@ public:
     float movementX{0.0f};
     float movementY{0.0f};
     bool grounded{false};
+    float walkPhase{0.0f};
 
     Vec3 Forward() const;
     Vec3 CameraPosition() const;
@@ -26,6 +27,8 @@ public:
     // Keeps saved player positions out of solid blocks and finds nearby open ground.
     bool ResolveSafeSpawn(const VoxelWorld& world);
     void Update(const VoxelWorld& world, float deltaSeconds);
+    // Appends an animated, yaw-oriented voxel character mesh for third-person view.
+    void AppendMesh(std::vector<WorldVertex>& output) const;
 };
 
 class Inventory {
