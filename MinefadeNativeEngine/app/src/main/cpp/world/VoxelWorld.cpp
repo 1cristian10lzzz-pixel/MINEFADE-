@@ -331,14 +331,19 @@ VoxelWorld::Chunk* VoxelWorld::FindChunk(int chunkX,int chunkZ) {
     const auto it=chunks_.find({chunkX,chunkZ});return it==chunks_.end()?nullptr:&it->second;
 }
 void VoxelWorld::StartNextChunkJob() {
-    if (pendingChunk_.valid() || generationQueue_.empty()) return;
-    pendingChunkKey_ = generationQueue_.front();
-    generationQueue_.pop_front();
-    const int chunkX = pendingChunkKey_.first;
-    const int chunkZ = pendingChunkKey_.second;
-    pendingChunk_ = std::async(std::launch::async, [this, chunkX, chunkZ]() {
-        return MakeChunk(chunkX, chunkZ);
-    });
+    // Keep two chunk builds in flight, leaving CPU capacity for rendering and input.
+    while (pendingChunkJobs_.size() < kChunkWorkerCount && !generationQueue_.empty()) {
+        const auto key = generationQueue_.front();
+        generationQueue_.pop_front();
+        const int chunkX = key.first;
+        const int chunkZ = key.second;
+        ChunkJob job;
+        job.key = key;
+        job.future = std::async(std::launch::async, [this, chunkX, chunkZ]() {
+            return MakeChunk(chunkX, chunkZ);
+        });
+        pendingChunkJobs_.push_back(std::move(job));
+    }
 }
 
 void VoxelWorld::RequestGenerateAround(int worldX, int worldZ, int radiusInChunks) {
@@ -353,7 +358,10 @@ void VoxelWorld::RequestGenerateAround(int worldX, int worldZ, int radiusInChunk
         for (int x = centerX - radiusInChunks; x <= centerX + radiusInChunks; ++x) {
             const auto key = std::make_pair(x, z);
             if (chunks_.find(key) != chunks_.end()) continue;
-            if (pendingChunk_.valid() && key == pendingChunkKey_) continue;
+            const bool alreadyBuilding = std::any_of(
+                pendingChunkJobs_.begin(), pendingChunkJobs_.end(),
+                [&key](const ChunkJob& job) { return job.key == key; });
+            if (alreadyBuilding) continue;
             missing.push_back(key);
         }
     }
@@ -371,14 +379,20 @@ void VoxelWorld::RequestGenerateAround(int worldX, int worldZ, int radiusInChunk
 
 bool VoxelWorld::PumpChunkGeneration() {
     bool addedChunk = false;
-    if (pendingChunk_.valid() &&
-        pendingChunk_.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
-        Chunk chunk = pendingChunk_.get();
-        queuedChunks_.erase(pendingChunkKey_);
-        const auto key = std::make_pair(chunk.x, chunk.z);
-        if (chunks_.find(key) == chunks_.end()) {
-            chunks_.emplace(key, std::move(chunk));
-            addedChunk = true;
+    for (std::size_t i = 0; i < pendingChunkJobs_.size();) {
+        ChunkJob& job = pendingChunkJobs_[i];
+        if (!job.future.valid() ||
+            job.future.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
+            Chunk chunk = job.future.valid() ? job.future.get() : Chunk{};
+            queuedChunks_.erase(job.key);
+            const auto key = std::make_pair(chunk.x, chunk.z);
+            if (chunks_.find(key) == chunks_.end() && job.future.valid()) {
+                chunks_.emplace(key, std::move(chunk));
+                addedChunk = true;
+            }
+            pendingChunkJobs_.erase(pendingChunkJobs_.begin() + static_cast<std::ptrdiff_t>(i));
+        } else {
+            ++i;
         }
     }
     StartNextChunkJob();
@@ -386,19 +400,22 @@ bool VoxelWorld::PumpChunkGeneration() {
 }
 
 void VoxelWorld::WaitForChunkGeneration() {
-    while (pendingChunk_.valid() || !generationQueue_.empty()) {
-        if (pendingChunk_.valid()) {
-            Chunk chunk = pendingChunk_.get();
-            queuedChunks_.erase(pendingChunkKey_);
+    while (!pendingChunkJobs_.empty() || !generationQueue_.empty()) {
+        StartNextChunkJob();
+        if (pendingChunkJobs_.empty()) continue;
+        ChunkJob job = std::move(pendingChunkJobs_.front());
+        pendingChunkJobs_.erase(pendingChunkJobs_.begin());
+        if (job.future.valid()) {
+            Chunk chunk = job.future.get();
+            queuedChunks_.erase(job.key);
             const auto key = std::make_pair(chunk.x, chunk.z);
             if (chunks_.find(key) == chunks_.end()) chunks_.emplace(key, std::move(chunk));
         }
-        StartNextChunkJob();
     }
 }
 
 std::size_t VoxelWorld::PendingChunkCount() const {
-    return generationQueue_.size() + (pendingChunk_.valid() ? 1u : 0u);
+    return generationQueue_.size() + pendingChunkJobs_.size();
 }
 
 void VoxelWorld::GenerateAround(int worldX,int worldZ,int radiusInChunks) {
