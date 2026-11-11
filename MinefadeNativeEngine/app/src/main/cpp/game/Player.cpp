@@ -221,6 +221,95 @@ bool Inventory::ConsumeSelected(std::uint16_t amount) {
     return true;
 }
 
+void DroppedItemSystem::Spawn(const Vec3& position, std::uint16_t itemId, std::uint16_t amount) {
+    if (itemId == 0u || amount == 0u || GetBlockDefinition(static_cast<BlockId>(itemId)) == nullptr) return;
+    const float angle = static_cast<float>(++spawnSequence_) * 2.39996323f;
+    DroppedItem item;
+    item.position = position;
+    item.velocity = {std::cos(angle) * 0.85f, 2.25f, std::sin(angle) * 0.85f};
+    item.itemId = itemId;
+    item.amount = amount;
+    item.age = 0.0f;
+    drops_.push_back(item);
+}
+
+std::size_t DroppedItemSystem::Update(const VoxelWorld& world, const Player& player, Inventory& inventory,
+                                      float deltaSeconds, std::uint16_t* lastPickedItemId) {
+    const float dt = std::clamp(deltaSeconds, 0.0f, 0.05f);
+    std::size_t pickedUp = 0u;
+    for (auto it = drops_.begin(); it != drops_.end();) {
+        DroppedItem& item = *it;
+        item.age += dt;
+        if (item.age >= 300.0f || item.position.y < -2.0f) {
+            it = drops_.erase(it);
+            continue;
+        }
+
+        // Small, deterministic item physics: gravity, block collision and a soft bounce.
+        item.velocity.y = std::max(item.velocity.y - 17.5f * dt, -20.0f);
+        const float nextX = item.position.x + item.velocity.x * dt;
+        if (world.IsSolid(FloorToInt(nextX), FloorToInt(item.position.y - 0.10f),
+                          FloorToInt(item.position.z))) {
+            item.velocity.x *= -0.22f;
+        } else {
+            item.position.x = nextX;
+        }
+        const float nextZ = item.position.z + item.velocity.z * dt;
+        if (world.IsSolid(FloorToInt(item.position.x), FloorToInt(item.position.y - 0.10f),
+                          FloorToInt(nextZ))) {
+            item.velocity.z *= -0.22f;
+        } else {
+            item.position.z = nextZ;
+        }
+
+        const float nextY = item.position.y + item.velocity.y * dt;
+        const int feetBlockY = FloorToInt(nextY - 0.12f);
+        if (item.velocity.y <= 0.0f &&
+            world.IsSolid(FloorToInt(item.position.x), feetBlockY, FloorToInt(item.position.z))) {
+            item.position.y = static_cast<float>(feetBlockY + 1) + 0.12f;
+            item.velocity.y *= -0.20f;
+            if (std::abs(item.velocity.y) < 0.55f) item.velocity.y = 0.0f;
+            item.velocity.x *= 0.78f;
+            item.velocity.z *= 0.78f;
+        } else {
+            const int headBlockY = FloorToInt(nextY + 0.12f);
+            if (item.velocity.y > 0.0f &&
+                world.IsSolid(FloorToInt(item.position.x), headBlockY, FloorToInt(item.position.z))) {
+                item.velocity.y = 0.0f;
+            } else {
+                item.position.y = nextY;
+            }
+        }
+
+        if (item.age >= 0.55f) {
+            const float dx = item.position.x - player.position.x;
+            const float dy = item.position.y - (player.position.y + 0.85f);
+            const float dz = item.position.z - player.position.z;
+            if (dx * dx + dy * dy + dz * dz <= 1.65f * 1.65f &&
+                inventory.Add(item.itemId, item.amount)) {
+                pickedUp += item.amount;
+                if (lastPickedItemId != nullptr) *lastPickedItemId = item.itemId;
+                it = drops_.erase(it);
+                continue;
+            }
+        }
+        ++it;
+    }
+    return pickedUp;
+}
+
+void DroppedItemSystem::AppendMesh(std::vector<WorldVertex>& output) const {
+    for (const DroppedItem& item : drops_) {
+        const std::uint32_t hash = static_cast<std::uint32_t>(item.itemId) * 2654435761u;
+        const std::array<float, 3> tint{
+            0.42f + static_cast<float>((hash >>  0u) & 0x3fu) / 180.0f,
+            0.42f + static_cast<float>((hash >>  8u) & 0x3fu) / 180.0f,
+            0.42f + static_cast<float>((hash >> 16u) & 0x3fu) / 180.0f
+        };
+        AppendCube(output, item.position, {0.12f, 0.12f, 0.12f}, tint);
+    }
+}
+
 void EntitySystem::SpawnInitial(const VoxelWorld& world) {
     if (initialized_) return;
     constexpr std::array<Vec3, 3> positions{{{5.0f, 0.0f, 5.0f}, {11.0f, 0.0f, 4.0f}, {18.0f, 0.0f, 12.0f}}};
