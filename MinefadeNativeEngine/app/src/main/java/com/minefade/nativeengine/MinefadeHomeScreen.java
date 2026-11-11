@@ -149,9 +149,9 @@ public final class MinefadeHomeScreen extends FrameLayout {
         FrameLayout iconBox = new FrameLayout(getContext());
         iconBox.setBackground(shape(new int[]{accent | 0x55000000, accent | 0x22000000},
                 11, accent | 0x66000000));
-        TextView glyph = text(icon, 20, white, true);
-        glyph.setGravity(Gravity.CENTER);
-        iconBox.addView(glyph, new FrameLayout.LayoutParams(-1, -1));
+        iconBox.setContentDescription(title);
+        iconBox.addView(new MenuGlyph(getContext(), index, accent),
+                new FrameLayout.LayoutParams(-1, -1));
         content.addView(iconBox, new LinearLayout.LayoutParams(dp(34), dp(34)));
 
         LinearLayout labels = column();
@@ -391,9 +391,8 @@ public final class MinefadeHomeScreen extends FrameLayout {
                 FrameLayout tile = new FrameLayout(getContext());
                 int accent = (index % 2 == 0) ? 0xffa9ee70 : 0xff9ed9f4;
                 tile.setBackground(shape(new int[]{0xff2a4357, 0xff192e42}, 12, 0x66516e83));
-                TextView glyph = text(glyphs[index], 22, accent, true);
-                glyph.setGravity(Gravity.CENTER);
-                tile.addView(glyph, new FrameLayout.LayoutParams(-1, -1));
+                tile.addView(new AvatarIconView(getContext(), index, accent),
+                        new FrameLayout.LayoutParams(-1, -1));
                 tile.setContentDescription(descriptions[index]);
                 tile.setOnClickListener(v -> {
                     haptic(v);
@@ -544,6 +543,188 @@ public final class MinefadeHomeScreen extends FrameLayout {
                 LinearLayout.LayoutParams cell = new LinearLayout.LayoutParams(0, -1, 1f);
                 if (col > 0) cell.leftMargin = dp(6);
                 line.addView(tile, cell);
+            }
+        }
+    }
+
+    /** Vector-drawn menu pictograms; these do not depend on device font glyph coverage. */
+    private static final class MenuGlyph extends View {
+        private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        private final Path path = new Path();
+        private final int kind;
+        private final int tint;
+        MenuGlyph(Context context, int kind, int tint) {
+            super(context);
+            this.kind = kind;
+            this.tint = tint;
+        }
+        private void line(Canvas c, float x1, float y1, float x2, float y2, float width) {
+            paint.setStyle(Paint.Style.STROKE);
+            paint.setStrokeWidth(width);
+            paint.setStrokeCap(Paint.Cap.ROUND);
+            paint.setStrokeJoin(Paint.Join.ROUND);
+            c.drawLine(x1, y1, x2, y2, paint);
+            paint.setStyle(Paint.Style.FILL);
+        }
+        private void polygon(Canvas c, float... p) {
+            path.reset();
+            path.moveTo(p[0], p[1]);
+            for (int i = 2; i < p.length; i += 2) path.lineTo(p[i], p[i + 1]);
+            path.close();
+            c.drawPath(path, paint);
+        }
+        @Override protected void onDraw(Canvas canvas) {
+            super.onDraw(canvas);
+            float s = Math.min(getWidth(), getHeight()) * 0.28f;
+            float x = getWidth() * 0.5f, y = getHeight() * 0.5f;
+            paint.setColor(tint);
+            switch (kind) {
+                case 0: // play
+                    polygon(canvas, x - s * 0.50f, y - s * 0.72f,
+                            x + s * 0.78f, y, x - s * 0.50f, y + s * 0.72f);
+                    break;
+                case 1: // voxel/cube
+                    polygon(canvas, x, y - s * 0.82f, x + s * 0.78f, y - s * 0.38f,
+                            x + s * 0.78f, y + s * 0.42f, x, y + s * 0.86f,
+                            x - s * 0.78f, y + s * 0.42f, x - s * 0.78f, y - s * 0.38f);
+                    paint.setColor(0x66404b58);
+                    line(canvas, x, y, x, y + s * 0.82f, s * 0.075f);
+                    line(canvas, x, y, x + s * 0.78f, y - s * 0.38f, s * 0.075f);
+                    line(canvas, x, y, x - s * 0.78f, y - s * 0.38f, s * 0.075f);
+                    break;
+                case 2: // local network
+                    paint.setStyle(Paint.Style.STROKE);
+                    paint.setStrokeWidth(s * 0.13f);
+                    line(canvas, x, y, x - s * 0.72f, y - s * 0.55f, s * 0.12f);
+                    line(canvas, x, y, x + s * 0.72f, y - s * 0.55f, s * 0.12f);
+                    line(canvas, x, y, x, y + s * 0.77f, s * 0.12f);
+                    paint.setStyle(Paint.Style.FILL);
+                    canvas.drawCircle(x, y, s * 0.25f, paint);
+                    canvas.drawCircle(x - s * 0.72f, y - s * 0.55f, s * 0.20f, paint);
+                    canvas.drawCircle(x + s * 0.72f, y - s * 0.55f, s * 0.20f, paint);
+                    canvas.drawCircle(x, y + s * 0.77f, s * 0.20f, paint);
+                    break;
+                case 3: // settings sliders
+                    for (int i = -1; i <= 1; i++) {
+                        float yy = y + i * s * 0.62f;
+                        line(canvas, x - s * 0.9f, yy, x + s * 0.9f, yy, s * 0.12f);
+                        paint.setColor(0xffeaf4f4);
+                        canvas.drawCircle(x + ((i % 2 == 0) ? -s * 0.25f : s * 0.42f),
+                                yy, s * 0.19f, paint);
+                        paint.setColor(tint);
+                    }
+                    break;
+                default: // achievement star
+                    float[] pts = new float[20];
+                    for (int i = 0; i < 10; i++) {
+                        double a = -Math.PI / 2.0 + i * Math.PI / 5.0;
+                        float radius = (i % 2 == 0) ? s * 0.94f : s * 0.42f;
+                        pts[i * 2] = x + (float) Math.cos(a) * radius;
+                        pts[i * 2 + 1] = y + (float) Math.sin(a) * radius;
+                    }
+                    polygon(canvas, pts);
+                    break;
+            }
+        }
+    }
+
+    /** Small illustrated appearance pictograms, arranged four across without text labels. */
+    private static final class AvatarIconView extends View {
+        private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        private final Path path = new Path();
+        private final int kind;
+        private final int tint;
+        AvatarIconView(Context context, int kind, int tint) {
+            super(context);
+            this.kind = kind;
+            this.tint = tint;
+        }
+        private void poly(Canvas canvas, float... points) {
+            path.reset();
+            path.moveTo(points[0], points[1]);
+            for (int i = 2; i < points.length; i += 2) path.lineTo(points[i], points[i + 1]);
+            path.close();
+            canvas.drawPath(path, paint);
+        }
+        @Override protected void onDraw(Canvas canvas) {
+            super.onDraw(canvas);
+            float cx = getWidth() * 0.5f, cy = getHeight() * 0.5f;
+            float s = Math.min(getWidth(), getHeight()) * 0.30f;
+            paint.setColor(tint);
+            paint.setStyle(Paint.Style.FILL);
+            switch (kind) {
+                case 0: // skin tones
+                    paint.setColor(0xffeac19d); canvas.drawCircle(cx - s * 0.45f, cy, s * 0.43f, paint);
+                    paint.setColor(0xffc58c67); canvas.drawCircle(cx + s * 0.45f, cy, s * 0.43f, paint);
+                    break;
+                case 1: // hair
+                    canvas.drawRoundRect(new RectF(cx - s, cy - s * 0.65f, cx + s, cy + s * 0.8f),
+                            s * 0.4f, s * 0.4f, paint);
+                    paint.setColor(0xffd3a47e);
+                    canvas.drawRoundRect(new RectF(cx - s * 0.66f, cy - s * 0.18f, cx + s * 0.66f, cy + s),
+                            s * 0.25f, s * 0.25f, paint);
+                    paint.setColor(tint);
+                    canvas.drawRoundRect(new RectF(cx - s, cy - s * 0.8f, cx + s, cy - s * 0.12f),
+                            s * 0.3f, s * 0.3f, paint);
+                    break;
+                case 2: // eyes
+                    paint.setColor(0xffdbeaf0);
+                    canvas.drawOval(new RectF(cx - s, cy - s * 0.48f, cx - s * 0.05f, cy + s * 0.48f), paint);
+                    canvas.drawOval(new RectF(cx + s * 0.05f, cy - s * 0.48f, cx + s, cy + s * 0.48f), paint);
+                    paint.setColor(0xff60b7d2);
+                    canvas.drawCircle(cx - s * 0.5f, cy, s * 0.22f, paint);
+                    canvas.drawCircle(cx + s * 0.5f, cy, s * 0.22f, paint);
+                    break;
+                case 3: // face
+                    paint.setColor(0xffd2a17d);
+                    canvas.drawRoundRect(new RectF(cx - s * 0.75f, cy - s, cx + s * 0.75f, cy + s),
+                            s * 0.38f, s * 0.38f, paint);
+                    paint.setColor(0xff49352c);
+                    canvas.drawCircle(cx - s * 0.30f, cy - s * 0.1f, s * 0.10f, paint);
+                    canvas.drawCircle(cx + s * 0.30f, cy - s * 0.1f, s * 0.10f, paint);
+                    paint.setStyle(Paint.Style.STROKE);
+                    paint.setStrokeWidth(s * 0.08f);
+                    canvas.drawArc(new RectF(cx - s * 0.3f, cy + s * 0.05f, cx + s * 0.3f, cy + s * 0.48f),
+                            10, 160, false, paint);
+                    paint.setStyle(Paint.Style.FILL);
+                    break;
+                case 4: // clothes
+                    poly(canvas, cx - s * 0.65f, cy - s * 0.8f, cx - s * 0.20f, cy - s,
+                            cx, cy - s * 0.65f, cx + s * 0.2f, cy - s,
+                            cx + s * 0.65f, cy - s * 0.8f, cx + s, cy - s * 0.3f,
+                            cx + s * 0.65f, cy + s * 0.1f, cx + s * 0.5f, cy,
+                            cx + s * 0.5f, cy + s, cx - s * 0.5f, cy + s,
+                            cx - s * 0.5f, cy, cx - s * 0.65f, cy + s * 0.1f,
+                            cx - s, cy - s * 0.3f);
+                    break;
+                case 5: // armour
+                    poly(canvas, cx - s * 0.85f, cy - s * 0.65f, cx - s * 0.25f, cy - s,
+                            cx, cy - s * 0.62f, cx + s * 0.25f, cy - s,
+                            cx + s * 0.85f, cy - s * 0.65f, cx + s * 0.6f, cy + s,
+                            cx - s * 0.6f, cy + s);
+                    paint.setColor(0xffd5e4ea);
+                    paint.setStyle(Paint.Style.STROKE);
+                    paint.setStrokeWidth(s * 0.10f);
+                    canvas.drawLine(cx, cy - s * 0.58f, cx, cy + s * 0.88f, paint);
+                    canvas.drawLine(cx - s * 0.55f, cy, cx + s * 0.55f, cy, paint);
+                    paint.setStyle(Paint.Style.FILL);
+                    break;
+                case 6: // accessories
+                    paint.setColor(0xffffd177);
+                    canvas.drawCircle(cx, cy, s * 0.80f, paint);
+                    paint.setColor(0xff6d4b34);
+                    canvas.drawCircle(cx, cy, s * 0.50f, paint);
+                    paint.setColor(0xffffd177);
+                    canvas.drawCircle(cx, cy, s * 0.20f, paint);
+                    break;
+                default: // palette/style
+                    paint.setColor(0xffd5a0ef);
+                    canvas.drawCircle(cx - s * 0.32f, cy - s * 0.2f, s * 0.53f, paint);
+                    paint.setColor(0xff70c9e1);
+                    canvas.drawCircle(cx + s * 0.30f, cy - s * 0.23f, s * 0.48f, paint);
+                    paint.setColor(0xff9fdf75);
+                    canvas.drawCircle(cx + s * 0.18f, cy + s * 0.42f, s * 0.48f, paint);
+                    break;
             }
         }
     }
