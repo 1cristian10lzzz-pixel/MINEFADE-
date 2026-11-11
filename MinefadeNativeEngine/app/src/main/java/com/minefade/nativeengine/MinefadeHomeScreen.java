@@ -360,7 +360,7 @@ public final class MinefadeHomeScreen extends FrameLayout {
     }
 
     private void showAvatarPage() {
-        LinearLayout root = pageRoot("AVATAR", "Vista previa del personaje y opciones de apariencia.");
+        LinearLayout root = pageRoot("AVATAR", "Editor visual compacto · cuatro módulos por fila.");
         LinearLayout body = row();
         LinearLayout.LayoutParams bodyParams = new LinearLayout.LayoutParams(-1, 0, 1f);
         bodyParams.topMargin = dp(12);
@@ -370,50 +370,52 @@ public final class MinefadeHomeScreen extends FrameLayout {
         previewCard.setBackground(shape(new int[]{0xff172d42, 0xff101b2c}, 18, 0x665a7b92));
         avatarPreview = new AvatarPreview(getContext());
         previewCard.addView(avatarPreview, new FrameLayout.LayoutParams(-1, -1));
-        body.addView(previewCard, new LinearLayout.LayoutParams(0, -1, 1f));
+        body.addView(previewCard, new LinearLayout.LayoutParams(0, -1, 1.02f));
 
         LinearLayout options = column();
-        options.setPadding(dp(12), 0, 0, 0);
-        body.addView(options, new LinearLayout.LayoutParams(0, -1, 1f));
-        addOption(options, "TONO DE PIEL", "◐", () -> {
-            avatarTone = (avatarTone + 1) % 4;
-            preferences.edit().putInt("avatar_tone", avatarTone).apply();
-            avatarPreview.invalidate();
-        });
-        addOption(options, "VESTIMENTA", "◇", () -> {
-            avatarOutfit = (avatarOutfit + 1) % 5;
-            preferences.edit().putInt("avatar_outfit", avatarOutfit).apply();
-            avatarPreview.invalidate();
-        });
-        addOption(options, "CABELLO", "▰", () -> {
-            avatarTone = (avatarTone + 1) % 4;
-            preferences.edit().putInt("avatar_tone", avatarTone).apply();
-            avatarPreview.invalidate();
-        });
-        TextView note = text("La vista previa guarda tus elecciones. La aplicación completa de ropa y accesorios al modelo del mundo se integra con el editor nativo de avatar.", 9, muted, false);
-        note.setGravity(Gravity.TOP);
-        LinearLayout.LayoutParams noteParams = new LinearLayout.LayoutParams(-1, 0, 1f);
-        noteParams.topMargin = dp(9);
-        options.addView(note, noteParams);
-    }
+        options.setPadding(dp(10), 0, 0, 0);
+        body.addView(options, new LinearLayout.LayoutParams(0, -1, 0.98f));
 
-    private void addOption(LinearLayout parent, String label, String icon, Runnable onClick) {
-        LinearLayout item = row();
-        item.setPadding(dp(10), 0, dp(9), 0);
-        item.setBackground(shape(new int[]{0xff24384b, 0xff18293a}, 11, 0x554c687d));
-        TextView glyph = text(icon, 18, 0xffa9ee70, true);
-        item.addView(glyph, new LinearLayout.LayoutParams(dp(30), dp(38)));
-        TextView title = text(label, 10, white, true);
-        item.addView(title, new LinearLayout.LayoutParams(0, -1, 1f));
-        TextView next = text("›", 22, muted, true);
-        item.addView(next);
-        item.setOnClickListener(v -> {
-            haptic(v);
-            if (onClick != null) onClick.run();
-        });
-        LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(-1, dp(42));
-        p.bottomMargin = dp(6);
-        parent.addView(item, p);
+        String[] glyphs = {"◐", "▰", "◉", "◇", "♜", "✧", "◈", "⌁"};
+        String[] descriptions = {
+                "Tono de piel", "Cabello", "Ojos", "Rasgos",
+                "Vestimenta", "Armadura", "Accesorios", "Estilo"
+        };
+        for (int rowIndex = 0; rowIndex < 2; rowIndex++) {
+            LinearLayout line = row();
+            LinearLayout.LayoutParams lineParams = new LinearLayout.LayoutParams(-1, 0, 1f);
+            lineParams.bottomMargin = dp(7);
+            options.addView(line, lineParams);
+            for (int col = 0; col < 4; col++) {
+                final int index = rowIndex * 4 + col;
+                FrameLayout tile = new FrameLayout(getContext());
+                int accent = (index % 2 == 0) ? 0xffa9ee70 : 0xff9ed9f4;
+                tile.setBackground(shape(new int[]{0xff2a4357, 0xff192e42}, 12, 0x66516e83));
+                TextView glyph = text(glyphs[index], 22, accent, true);
+                glyph.setGravity(Gravity.CENTER);
+                tile.addView(glyph, new FrameLayout.LayoutParams(-1, -1));
+                tile.setContentDescription(descriptions[index]);
+                tile.setOnClickListener(v -> {
+                    haptic(v);
+                    if (index <= 3) {
+                        avatarTone = (avatarTone + 1) % 4;
+                        preferences.edit().putInt("avatar_tone", avatarTone).apply();
+                    } else {
+                        avatarOutfit = (avatarOutfit + 1) % 5;
+                        preferences.edit().putInt("avatar_outfit", avatarOutfit).apply();
+                    }
+                    avatarPreview.invalidate();
+                });
+                LinearLayout.LayoutParams cell = new LinearLayout.LayoutParams(0, -1, 1f);
+                if (col > 0) cell.leftMargin = dp(5);
+                line.addView(tile, cell);
+            }
+        }
+
+        TextView note = text("Toca los iconos para cambiar la vista previa. Los cambios de tono y vestimenta se guardan en este dispositivo; la vinculación con todas las piezas del modelo 3D del mundo seguirá ampliándose dentro de esta fase.", 9, muted, false);
+        note.setGravity(Gravity.TOP);
+        LinearLayout.LayoutParams noteParams = new LinearLayout.LayoutParams(-1, dp(56));
+        options.addView(note, noteParams);
     }
 
     private void showSettingsPage() {
