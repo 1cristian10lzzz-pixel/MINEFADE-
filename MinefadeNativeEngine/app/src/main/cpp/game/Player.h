@@ -4,6 +4,7 @@
 
 #include <array>
 #include <cstdint>
+#include <vector>
 
 namespace minefade {
 
@@ -44,6 +45,27 @@ struct Entity {
     float phase{0.0f};
     float speed{0.5f};
     int kind{0};
+};
+
+struct DroppedItem {
+    Vec3 position;
+    Vec3 velocity;
+    std::uint16_t itemId{0};
+    std::uint16_t amount{1};
+    float age{0.0f};
+};
+
+class DroppedItemSystem {
+public:
+    void Spawn(const Vec3& position, std::uint16_t itemId, std::uint16_t amount = 1);
+    // Returns the number of items picked up and writes the last picked item ID.
+    std::size_t Update(const VoxelWorld& world, const Player& player, Inventory& inventory,
+                       float deltaSeconds, std::uint16_t* lastPickedItemId = nullptr);
+    void AppendMesh(std::vector<WorldVertex>& output) const;
+    std::size_t Count() const { return drops_.size(); }
+private:
+    std::vector<DroppedItem> drops_;
+    std::uint32_t spawnSequence_{0};
 };
 
 class EntitySystem {
