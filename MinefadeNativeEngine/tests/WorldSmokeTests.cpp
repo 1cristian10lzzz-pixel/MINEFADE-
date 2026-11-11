@@ -96,6 +96,28 @@ int main() {
     assert(!full.Add(static_cast<std::uint16_t>(BlockId::Stone), 1));
     assert(full.counts == fullBefore);
 
+    VoxelWorld dropWorld(773u);
+    dropWorld.GenerateAround(8, 8, 0);
+    const int dropGround = dropWorld.GetSurfaceHeight(8, 8);
+    Player dropPlayer;
+    dropPlayer.position = {8.5f, static_cast<float>(dropGround) + 1.0f, 8.5f};
+    Inventory dropInventory;
+    DroppedItemSystem droppedItems;
+    droppedItems.Spawn({8.8f, static_cast<float>(dropGround) + 2.0f, 8.5f},
+                       static_cast<std::uint16_t>(BlockId::Stone), 1);
+    assert(droppedItems.Count() == 1u);
+    std::vector<WorldVertex> droppedItemMesh;
+    droppedItems.AppendMesh(droppedItemMesh);
+    assert(!droppedItemMesh.empty());
+    std::uint16_t pickedItemId = 0u;
+    std::size_t pickedCount = 0u;
+    for (int frame = 0; frame < 40 && droppedItems.Count() > 0u; ++frame)
+        pickedCount += droppedItems.Update(dropWorld, dropPlayer, dropInventory, 0.05f, &pickedItemId);
+    assert(pickedCount == 1u);
+    assert(pickedItemId == static_cast<std::uint16_t>(BlockId::Stone));
+    assert(droppedItems.Count() == 0u);
+    assert(dropInventory.counts[0] == 1u);
+
     assert(GetBlockDefinitionCount() == static_cast<std::size_t>(BlockId::Count));
     assert(GetBlockDefinitionCount() == 284u);
     assert(FindBlockDefinition("seaLantern") != nullptr);
