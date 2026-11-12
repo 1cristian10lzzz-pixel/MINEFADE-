@@ -33,6 +33,8 @@ public final class MainActivity extends Activity {
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private boolean engineReady;
     private boolean activityResumed;
+    private boolean requestedMultiplayer;
+    private int requestedPlayerSlot;
     private final Runnable exitPoll = new Runnable() {
         @Override public void run() {
             if (surfaceView == null || isFinishing()) return;
@@ -143,18 +145,15 @@ public final class MainActivity extends Activity {
 
         showLoading("PREPARANDO MINEFADE", "Comprobando el motor gráfico y los recursos…");
 
-        try {
-            NativeBridge.nativeSetMultiplayerMode(multiplayer, playerSlot);
-            NativeBridge.nativeSetStoragePath(getFilesDir().getAbsolutePath());
-        } catch (LinkageError | RuntimeException error) {
-            android.util.Log.e("Minefade", "Native library could not be loaded", error);
-            showEngineError("No se pudo cargar el motor nativo.",
-                    "La biblioteca de Minefade no está disponible para esta instalación.");
-            return;
-        }
+        requestedMultiplayer = multiplayer;
+        requestedPlayerSlot = Math.max(0, Math.min(31, playerSlot));
 
+        // Native setup now happens on the GLSurfaceView thread immediately before
+        // nativeInit. This keeps all Engine/JNI state changes serialised with GL.
         surfaceView = new MinefadeSurfaceView(this, soundEffects,
-                getResources().getDisplayMetrics().density, multiplayer ? lanMultiplayer : null,
+                getResources().getDisplayMetrics().density,
+                multiplayer, requestedPlayerSlot, getFilesDir().getAbsolutePath(),
+                multiplayer ? lanMultiplayer : null,
                 new MinefadeSurfaceView.InitializationListener() {
                     @Override public void onEngineReady() {
                         engineReady = true;
@@ -294,7 +293,7 @@ public final class MainActivity extends Activity {
         ap.topMargin = dp(16);
         card.addView(actions, ap);
         TextView retry = statusButton("REINTENTAR", true);
-        retry.setOnClickListener(v -> startGame());
+        retry.setOnClickListener(v -> startGame(requestedMultiplayer, requestedPlayerSlot));
         actions.addView(retry, new LinearLayout.LayoutParams(0, -1, 1f));
         TextView back = statusButton("VOLVER", false);
         back.setOnClickListener(v -> showHome());
