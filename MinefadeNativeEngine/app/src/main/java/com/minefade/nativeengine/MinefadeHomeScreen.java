@@ -607,6 +607,9 @@ public final class MinefadeHomeScreen extends FrameLayout {
         scroll.addView(multiplayerGames, new ScrollView.LayoutParams(-1, -2));
         root.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1f));
         setNearbyGames(new ArrayList<>());
+        // Discover Wi-Fi LAN sessions as soon as the LOCAL module is opened.
+        // The search button remains available as a manual refresh action.
+        if (listener != null) listener.onSearchMultiplayer();
 
         LinearLayout serverCard = row();
         serverCard.setPadding(dp(10), dp(6), dp(10), dp(6));
