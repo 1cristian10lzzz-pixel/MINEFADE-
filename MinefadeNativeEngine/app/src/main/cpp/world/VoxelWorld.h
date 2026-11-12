@@ -73,7 +73,7 @@ private:
         std::array<BlockId, kChunkVolume> blocks{};
     };
 
-    enum class Biome : std::uint8_t { Plains, Forest, Desert, Snow, Ocean };
+    enum class Biome : std::uint8_t { Plains, Forest, Desert, Snow, Ocean, Mountains, Swamp, Savanna };
 
     static int FloorDiv(int value, int divisor);
     static int PositiveMod(int value, int divisor);
