@@ -131,6 +131,32 @@ ES.update({
     'yellow_glazed_terracotta':'Terracota vidriada amarilla'
 })
 
+
+ES.update({
+    'copper_ore':'Mena de cobre',
+    'deepslate':'Pizarra profunda',
+    'deepslate_coal_ore':'Mena de carbón de pizarra profunda',
+    'deepslate_iron_ore':'Mena de hierro de pizarra profunda',
+    'deepslate_copper_ore':'Mena de cobre de pizarra profunda',
+    'deepslate_gold_ore':'Mena de oro de pizarra profunda',
+    'deepslate_redstone_ore':'Mena de redstone de pizarra profunda',
+    'deepslate_emerald_ore':'Mena de esmeralda de pizarra profunda',
+    'deepslate_lapis_ore':'Mena de lapislázuli de pizarra profunda',
+    'deepslate_diamond_ore':'Mena de diamante de pizarra profunda',
+    'ancient_debris':'Restos ancestrales',
+    'netherite_block':'Bloque de netherita',
+    'amethyst_block':'Bloque de amatista',
+    'budding_amethyst':'Amatista en brote',
+    'amethyst_cluster':'Cúmulo de amatista',
+    'calcite':'Calcita',
+    'tuff':'Toba',
+    'basalt':'Basalto',
+    'raw_iron_block':'Bloque de hierro en bruto',
+    'raw_gold_block':'Bloque de oro en bruto',
+    'raw_copper_block':'Bloque de cobre en bruto',
+    'copper_block':'Bloque de cobre'
+})
+
 COLOR_NAMES = {
 'white':(220,220,213),'orange':(226,126,55),'magenta':(178,74,190),'light_blue':(103,160,218),
 'yellow':(230,197,58),'lime':(122,190,55),'pink':(215,128,160),'gray':(72,77,82),
