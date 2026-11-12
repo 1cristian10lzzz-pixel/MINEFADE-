@@ -2,7 +2,7 @@
 
 ## Corrección prioritaria
 - La vista OpenGL se crea después de onResume() de Android. La nueva versión activa explícitamente GLSurfaceView al crearla si la Activity ya está reanudada; sin esto el hilo EGL podía permanecer en pausa, impedir onSurfaceCreated() y dejar la entrada al mundo bloqueada.
-- La primera carga genera el chunk de aparición síncronamente y los chunks vecinos quedan en streaming asíncrono.
+- La primera carga genera y valida el chunk de aparición síncronamente; el anillo de ocho chunks vecinos se solicita después de inicializar el motor y se transmite en segundo plano. Así el hilo OpenGL no tiene que generar nueve chunks antes del primer fotograma.
 - Las entidades ambientales iniciales se colocan dentro del chunk de aparición.
 
 ## Interfaz
