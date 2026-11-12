@@ -51,8 +51,8 @@ public final class MainActivity extends Activity {
     };
     private final Runnable engineTimeout = () -> {
         if (!engineReady && surfaceView != null) {
-            showEngineError("El motor está tardando demasiado en responder.",
-                    "Puedes reintentar la carga o volver al menú. Tus mundos no se eliminan.");
+            showEngineError("No se pudo completar el arranque del mundo.",
+                    "Android no terminó de crear la superficie gráfica dentro del tiempo esperado. Comprueba que el dispositivo admite OpenGL ES 3.0 y que hay memoria disponible. Puedes reintentar; tus mundos no se eliminan.");
         }
     };
 
