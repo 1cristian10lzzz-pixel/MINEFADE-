@@ -11,8 +11,8 @@ android {
         applicationId = "com.minefade.nativeengine"
         minSdk = 24
         targetSdk = 36
-        versionCode = 5
-        versionName = "0.5.0-native-alpha"
+        versionCode = 6
+        versionName = "0.5.1-native-alpha"
 
         ndk {
             abiFilters += listOf("arm64-v8a", "armeabi-v7a")
@@ -43,9 +43,10 @@ android {
 
     buildTypes {
         debug {
-            // Install the review build beside the existing app, preserving its private worlds.
-            applicationIdSuffix = ".review"
-            versionNameSuffix = "-review"
+            // A distinct package avoids signature conflicts with older review APKs.
+            // Existing installations and their private world data remain untouched.
+            applicationIdSuffix = ".review2"
+            versionNameSuffix = "-review2"
             isMinifyEnabled = false
             isDebuggable = true
         }
