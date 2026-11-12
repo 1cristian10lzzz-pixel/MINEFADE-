@@ -7,9 +7,11 @@
 #include <vector>
 #include <cstdint>
 #include <exception>
+#include <atomic>
 
 namespace {
 constexpr const char* kTag = "MinefadeNativeJNI";
+std::atomic_bool gEngineFailure{false};
 }
 
 extern "C" JNIEXPORT jboolean JNICALL
@@ -19,6 +21,7 @@ Java_com_minefade_nativeengine_NativeBridge_nativeInit(JNIEnv* env, jclass, jflo
     const jsize length = env->GetArrayLength(atlas);
     if (length <= 0) return JNI_FALSE;
     auto& engine = minefade::GetEngine();
+    gEngineFailure.store(false, std::memory_order_release);
     try {
         std::vector<std::uint8_t> pixels(static_cast<std::size_t>(length));
         env->GetByteArrayRegion(atlas, 0, length, reinterpret_cast<jbyte*>(pixels.data()));
@@ -53,7 +56,24 @@ Java_com_minefade_nativeengine_NativeBridge_nativeResize(JNIEnv*, jclass, jint w
 
 extern "C" JNIEXPORT void JNICALL
 Java_com_minefade_nativeengine_NativeBridge_nativeRender(JNIEnv*, jclass) {
-    minefade::GetEngine().Render();
+    if (gEngineFailure.load(std::memory_order_acquire)) return;
+    auto& engine = minefade::GetEngine();
+    try {
+        engine.Render();
+    } catch (const std::exception& error) {
+        __android_log_print(ANDROID_LOG_ERROR, kTag, "Render failed: %s", error.what());
+        gEngineFailure.store(true, std::memory_order_release);
+        engine.Shutdown();
+    } catch (...) {
+        __android_log_print(ANDROID_LOG_ERROR, kTag, "Render failed with an unknown native exception");
+        gEngineFailure.store(true, std::memory_order_release);
+        engine.Shutdown();
+    }
+}
+
+extern "C" JNIEXPORT jboolean JNICALL
+Java_com_minefade_nativeengine_NativeBridge_nativeConsumeEngineFailure(JNIEnv*, jclass) {
+    return gEngineFailure.exchange(false, std::memory_order_acq_rel) ? JNI_TRUE : JNI_FALSE;
 }
 
 extern "C" JNIEXPORT void JNICALL
