@@ -302,7 +302,7 @@ VoxelWorld::Chunk VoxelWorld::MakeChunk(int chunkX,int chunkZ) const {
         const int wx=chunkX*kChunkSize+x,wz=chunkZ*kChunkSize+z;
         const Biome biome=GetBiome(wx,wz); const int height=TerrainHeight(wx,wz);
         for(int y=0;y<=height;++y) {
-            BlockId block=BlockId::Stone;
+            BlockId block = y < 17 ? BlockId::Deepslate : BlockId::Stone;
             if(y==height) {
                 if(biome==Biome::Desert || biome==Biome::Ocean) block=BlockId::Sand;
                 else if(biome==Biome::Snow || (biome==Biome::Mountains && height>69)) block=BlockId::Snow;
@@ -322,12 +322,25 @@ VoxelWorld::Chunk VoxelWorld::MakeChunk(int chunkX,int chunkZ) const {
                 else {
                     const float ore=Noise2D(static_cast<float>(wx)*0.29f+static_cast<float>(y)*0.13f,
                                             static_cast<float>(wz)*0.29f-static_cast<float>(y)*0.17f);
-                    if(y<18 && ore>0.91f)block=BlockId::DiamondOre;
-                    else if(y<27 && ore<-0.90f)block=BlockId::GoldOre;
-                    else if(y<42 && ore>0.82f)block=BlockId::IronOre;
-                    else if(y<55 && ore<-0.78f)block=BlockId::CoalOre;
-                    else if(y<31 && ore>0.76f && caveB<-0.4f)block=BlockId::RedstoneOre;
-                    else if(y<39 && ore<-0.83f && caveB>0.55f)block=BlockId::LapisOre;
+                    if (y < 17) {
+                        // The deep layer is visually and mechanically distinct.
+                        if(ore>0.91f) block=BlockId::DeepslateDiamondOre;
+                        else if(ore<-0.90f) block=BlockId::DeepslateGoldOre;
+                        else if(ore>0.82f) block=BlockId::DeepslateIronOre;
+                        else if(ore<-0.78f) block=BlockId::DeepslateCoalOre;
+                        else if(y<14 && ore>0.76f && caveB<-0.4f) block=BlockId::DeepslateRedstoneOre;
+                        else if(ore<-0.83f && caveB>0.55f) block=BlockId::DeepslateLapisOre;
+                        else if(ore>0.75f && caveB>0.55f) block=BlockId::DeepslateEmeraldOre;
+                        else if(ore>-0.74f && ore<-0.70f && caveB<-0.25f) block=BlockId::DeepslateCopperOre;
+                    } else {
+                        if(y<18 && ore>0.91f)block=BlockId::DiamondOre;
+                        else if(y<27 && ore<-0.90f)block=BlockId::GoldOre;
+                        else if(y<42 && ore>0.82f)block=BlockId::IronOre;
+                        else if(y<55 && ore<-0.78f)block=BlockId::CoalOre;
+                        else if(y<31 && ore>0.76f && caveB<-0.4f)block=BlockId::RedstoneOre;
+                        else if(y<39 && ore<-0.83f && caveB>0.55f)block=BlockId::LapisOre;
+                        else if(y<58 && ore>0.69f && ore<0.73f)block=BlockId::CopperOre;
+                    }
                 }
             }
             chunk.blocks[Index(x,y,z)]=block;
