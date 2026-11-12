@@ -124,7 +124,7 @@ int main() {
     assert(stoneDropWasPickedUp);
 
     assert(GetBlockDefinitionCount() == static_cast<std::size_t>(BlockId::Count));
-    assert(GetBlockDefinitionCount() == 284u);
+    assert(GetBlockDefinitionCount() == 306u);
     assert(FindBlockDefinition("seaLantern") != nullptr);
     const BlockDefinition* flowingWaterDefinition = GetBlockDefinition(BlockId::FlowingWater);
     assert(flowingWaterDefinition != nullptr);
