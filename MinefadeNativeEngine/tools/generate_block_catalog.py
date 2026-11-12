@@ -401,28 +401,50 @@ def make_tile(key: str, face: int, block_idx: int) -> bytes:
             elif 'log' in k:
                 if face != FACE_SIDE:
                     radius = math.sqrt((x - 7.5) ** 2 + (y - 7.5) ** 2)
-                    n += 18 if int(radius) % 3 == 0 else -5
+                    ring = int(radius * 1.35) % 4
+                    n += 24 if ring == 0 else (-9 if ring == 2 else 0)
+                    if radius < 1.4: n -= 16
                 else:
-                    n += int(math.sin((x + block_idx % 5) * 0.75) * 9)
-                    if x % 5 == 0: n -= 9
+                    grain = math.sin((x + block_idx % 5) * 0.62 + math.sin(y * 0.48) * 0.8)
+                    n += int(grain * 13) + int(math.sin(x * 1.7) * 4)
+                    if x % 6 == 0: n -= 12
             elif 'plank' in k or 'wood' in k or 'door' in k or 'fence' in k or 'chest' in k or 'sign' in k:
-                n += int(math.sin((y + block_idx % 4) * 1.15) * 8)
-                if y % 5 == 0: n -= 10
+                grain = math.sin((y + block_idx % 4) * 1.15)
+                n += int(grain * 10)
+                if y % 5 == 0: n -= 13
+                if (x + block_idx * 3) % 9 in (0, 1) and y in (4, 11):
+                    n += 9
+                if x in (0, 15): n -= 4
             elif 'brick' in k or 'stonebrick' in k:
-                if y in (0, 7, 8, 15) or (x + (7 if y >= 8 else 0)) % 8 == 0: n -= 24
+                row = y // 4
+                mortar = (y % 4 == 0) or ((x + (4 if row % 2 else 0)) % 8 == 0)
+                if mortar: n -= 29
+                elif (x * 5 + y * 3 + block_idx) % 17 == 0: n += 11
             elif 'stone' in k or 'cobble' in k or 'rock' in k or 'andesite' in k or 'granite' in k or 'diorite' in k:
-                if (x * 5 + y * 9 + block_idx) % 19 in (0, 1): n -= 20
-                elif (x * 3 + y * 7 + block_idx) % 23 == 0: n += 24
-            elif 'leaves' in k or 'grass' in k or 'sapling' in k or 'plant' in k or 'bamboo' in k or 'seagrass' in k or 'wheat' in k:
-                if (x * 3 + y * 5 + block_idx) % 7 == 0: n += 27
+                cell_x, cell_y = x // 4, y // 4
+                facet = (cell_x * 7 + cell_y * 11 + block_idx) % 9
+                if facet in (0, 1): n -= 21
+                elif facet in (4, 5): n += 15
+                if (x * 5 + y * 9 + block_idx) % 19 == 0: n -= 14
+            elif 'leaves' in k:
+                cluster = math.sin((x + block_idx) * 0.72) + math.cos((y - block_idx) * 0.61)
+                n += 20 if cluster > 0.55 else (-13 if cluster < -0.8 else 0)
+                if (x * 13 + y * 7 + block_idx) % 23 == 0: n -= 28
+            elif 'grass' in k or 'sapling' in k or 'plant' in k or 'bamboo' in k or 'seagrass' in k or 'wheat' in k:
+                blade = math.sin((x * 0.9 + y * 0.28) + block_idx)
+                n += 24 if blade > 0.68 else (-9 if blade < -0.7 else 0)
                 if (x + y + block_idx) % 11 == 0: n -= 13
             elif 'glass' in k or 'pane' in k or 'ice' in k:
                 if x in (1, 2, 13, 14) or y in (1, 2, 13, 14): n += 28
                 elif (x + y + block_idx) % 9 == 0: n -= 5
             elif 'sand' in k or 'gravel' in k:
-                if (x + y * 3 + block_idx) % 9 == 0: n += 16
+                grain = (x * 17 + y * 29 + block_idx * 7) % 23
+                if grain < 3: n += 17
+                elif grain > 19: n -= 9
             elif 'water' in k:
-                if (y + (x // 4) + block_idx) % 5 == 0: n += 14
+                wave = math.sin(x * 0.68 + math.sin(y * 0.44 + block_idx) * 1.4)
+                n += 24 if wave > 0.62 else (-12 if wave < -0.75 else 0)
+                if (x + y * 2 + block_idx) % 13 == 0: n += 13
             elif 'lava' in k or k == 'fire' or 'magma' in k:
                 if (x * 7 + y * 3 + block_idx) % 11 < 3: n += 42
             elif 'wool' in k or 'carpet' in k:
