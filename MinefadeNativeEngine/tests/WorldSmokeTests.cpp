@@ -27,6 +27,18 @@ int main() {
         }
     }
     assert(deepslateCount > 0u);
+    std::size_t deepslateCount = 0u;
+    for (int x = -16; x < 32; ++x) for (int z = -16; z < 32; ++z) {
+        for (int y = 0; y < 17; ++y) {
+            const BlockId id = world.GetBlock(x, y, z);
+            if (id == BlockId::Deepslate || id == BlockId::DeepslateCoalOre ||
+                id == BlockId::DeepslateIronOre || id == BlockId::DeepslateCopperOre ||
+                id == BlockId::DeepslateGoldOre || id == BlockId::DeepslateRedstoneOre ||
+                id == BlockId::DeepslateEmeraldOre || id == BlockId::DeepslateLapisOre ||
+                id == BlockId::DeepslateDiamondOre) ++deepslateCount;
+        }
+    }
+    assert(deepslateCount > 0u);
     assert(world.ChunkCount() == 9u);
     const int height = world.GetSurfaceHeight(8, 8);
     assert(height >= 3 && height < VoxelWorld::kWorldHeight);
@@ -138,6 +150,14 @@ int main() {
     assert(GetBlockDefinitionCount() == static_cast<std::size_t>(BlockId::Count));
     assert(GetBlockDefinitionCount() == 306u);
     assert(FindBlockDefinition("seaLantern") != nullptr);
+    assert(FindBlockDefinition("copper_ore") != nullptr);
+    assert(FindBlockDefinition("deepslate_diamond_ore") != nullptr);
+    assert(FindBlockDefinition("deepslate_redstone_ore") != nullptr);
+    assert(FindBlockDefinition("ancient_debris") != nullptr);
+    assert(GetBlockDefinition(BlockId::CopperOre)->shape == BlockShape::Cube);
+    assert(GetBlockDefinition(BlockId::DeepslateDiamondOre)->shape == BlockShape::Cube);
+    assert(GetBlockDefinition(BlockId::AmethystCluster)->shape == BlockShape::Thin);
+    assert(GetBlockDefinition(BlockId::BuddingAmethyst)->hardness < 0.0f);
     assert(FindBlockDefinition("copper_ore") != nullptr);
     assert(FindBlockDefinition("deepslate_diamond_ore") != nullptr);
     assert(FindBlockDefinition("deepslate_redstone_ore") != nullptr);
