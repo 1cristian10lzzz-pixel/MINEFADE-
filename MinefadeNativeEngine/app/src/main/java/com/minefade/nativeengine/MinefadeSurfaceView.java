@@ -265,6 +265,12 @@ public final class MinefadeSurfaceView extends GLSurfaceView {
                     NativeBridge.nativeConsumeBlockEdits();
                 }
                 NativeBridge.nativeRender();
+                if (NativeBridge.nativeConsumeEngineFailure()) {
+                    nativeReady = false;
+                    Log.e(TAG, "Native engine reported a recoverable render failure");
+                    notifyError("El motor encontró un error al actualizar el mundo.\nLa sesión se detuvo de forma segura para evitar un cierre inesperado. Vuelve al menú e inténtalo otra vez.");
+                    return;
+                }
                 if (multiplayer != null && multiplayer.isConnected()) {
                     multiplayer.publishLocalState(NativeBridge.nativeGetPlayerState());
                     int[] localEdits = NativeBridge.nativeConsumeBlockEdits();
