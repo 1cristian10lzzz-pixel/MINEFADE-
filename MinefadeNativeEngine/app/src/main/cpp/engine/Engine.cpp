@@ -229,10 +229,16 @@ bool Engine::Initialise(float displayDensity, const std::uint8_t* atlasPixels,
     ENGINE_LOGI("OpenGL version=%s renderer=%s", glVersion != nullptr ? glVersion : "unknown",
                 glRenderer != nullptr ? glRenderer : "unknown");
 
-    if (!CreateWorldProgram()) return false;
+    const auto failInitialisation = [this]() {
+        ENGINE_LOGE("World initialisation failed; releasing partial GL and UI state");
+        Shutdown();
+        return false;
+    };
+
+    if (!CreateWorldProgram()) return failInitialisation();
     if (!UploadBlockAtlas(atlasPixels, atlasBytes, atlasWidth, atlasHeight)) {
         ENGINE_LOGE("Minefade block atlas is missing or invalid");
-        return false;
+        return failInitialisation();
     }
     glGenVertexArrays(1, &worldVao_);
     glGenBuffers(1, &worldVbo_);
@@ -241,7 +247,7 @@ bool Engine::Initialise(float displayDensity, const std::uint8_t* atlasPixels,
     glGenVertexArrays(1, &transparentVao_);
     glGenBuffers(1, &transparentVbo_);
     if (worldVao_ == 0 || worldVbo_ == 0 || entityVao_ == 0 || entityVbo_ == 0 ||
-        transparentVao_ == 0 || transparentVbo_ == 0) return false;
+        transparentVao_ == 0 || transparentVbo_ == 0) return failInitialisation();
 
     if (multiplayerMode_) {
         // All LAN peers start from the same deterministic seed. The host's block
@@ -268,7 +274,10 @@ bool Engine::Initialise(float displayDensity, const std::uint8_t* atlasPixels,
         ENGINE_LOGE("Saved spawn is obstructed and no nearby safe position was found");
         world_.GenerateAround(8, 8, 0);
         player_.position = {8.0f, static_cast<float>(world_.GetSurfaceHeight(8, 8)) + 1.001f, 8.0f};
-        player_.ResolveSafeSpawn(world_);
+        if (!player_.ResolveSafeSpawn(world_)) {
+            ENGINE_LOGE("Fresh spawn recovery failed; generated terrain has no safe player location");
+            return failInitialisation();
+        }
     }
     footstepElapsed_ = 0.0f;
     lastChunkX_ = static_cast<int>(std::floor(player_.position.x / 16.0f));
