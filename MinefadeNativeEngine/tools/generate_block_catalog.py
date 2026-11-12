@@ -269,7 +269,121 @@ def palette(key: str, face: int) -> tuple[int,int,int]:
     if 'glow' in k or 'lantern' in k or 'torch' in k: return (218,169,78)
     return (139,137,126)
 
+
+def make_mineral_tile(key: str, face: int, block_idx: int) -> bytes:
+    """Create a readable, faceted voxel ore texture with connected mineral veins.
+
+    The host rock is shaded independently on top/side/bottom faces. Mineral
+    inclusions are connected irregular clusters with a dark edge, mid-tone body
+    and sparse highlights instead of the old modulo-based speckle pattern.
+    """
+    k = key.lower()
+    if 'deepslate' in k:
+        rock = (57, 61, 68)
+    elif 'quartz' in k or 'ancient_debris' in k:
+        rock = (105, 57, 51)
+    else:
+        rock = (111, 115, 119)
+
+    styles = {
+        'coal': ((24, 27, 30), (44, 48, 52), (88, 94, 99)),
+        'iron': ((111, 72, 49), (190, 145, 101), (238, 211, 164)),
+        'gold': ((130, 91, 19), (235, 183, 36), (255, 226, 91)),
+        'redstone': ((102, 20, 24), (210, 35, 37), (255, 91, 66)),
+        'diamond': ((20, 105, 118), (52, 201, 203), (169, 255, 246)),
+        'emerald': ((20, 91, 49), (40, 181, 84), (145, 255, 157)),
+        'lapis': ((22, 43, 109), (45, 91, 211), (126, 171, 255)),
+        'quartz': ((133, 80, 70), (229, 218, 197), (255, 250, 228)),
+        'copper': ((115, 57, 28), (207, 112, 48), (255, 185, 103)),
+        'ancient_debris': ((70, 42, 31), (151, 91, 49), (221, 168, 91)),
+        'amethyst': ((80, 39, 128), (164, 91, 221), (231, 184, 255)),
+    }
+    material = next((name for name in styles if name in k), 'iron')
+    shadow, body, highlight = styles[material]
+    if 'lit_redstone' in k:
+        body, highlight = (244, 48, 40), (255, 151, 91)
+
+    seed = int.from_bytes(hashlib.sha256(
+        f'minefade-ore:{key}:{face}:{block_idx}'.encode()).digest()[:8], 'big')
+    rng = random.Random(seed)
+    shade = (1.08, 1.0, 0.78)[face]
+    pixels: list[tuple[int, int, int, int]] = []
+    for y in range(TILE):
+        for x in range(TILE):
+            grain = rng.randint(-9, 9)
+            # Subtle angular host-rock facets and occasional dark mineral flecks.
+            facet = ((x // 4) * 3 + (y // 4) * 5 + block_idx) % 7
+            grain += 7 if facet in (0, 1) else (-8 if facet == 5 else 0)
+            if rng.random() < 0.035:
+                grain -= 16
+            rgb = tuple(max(0, min(255, int(channel * shade) + grain))
+                        for channel in rock)
+            pixels.append((rgb[0], rgb[1], rgb[2], 255))
+
+    # Several short, branching, connected clusters. Each mineral vein has
+    # an irregular silhouette rather than isolated regularly-spaced pixels.
+    vein_mask: set[tuple[int, int]] = set()
+    vein_count = 3 if material in ('coal', 'iron', 'gold') else 4
+    for vein in range(vein_count):
+        cx = rng.randint(2, 13)
+        cy = rng.randint(2, 13)
+        length = rng.randint(3, 6)
+        width = 1 if rng.random() < 0.72 else 2
+        dx = rng.choice((-1, 0, 1))
+        dy = rng.choice((-1, 0, 1))
+        for step in range(length):
+            for oy in range(-width, width + 1):
+                for ox in range(-width, width + 1):
+                    if ox * ox + oy * oy > width * width + 1:
+                        continue
+                    if rng.random() < (0.78 if width == 1 else 0.66):
+                        px, py = cx + ox, cy + oy
+                        if 1 <= px < TILE - 1 and 1 <= py < TILE - 1:
+                            vein_mask.add((px, py))
+            cx = min(TILE - 2, max(1, cx + dx + rng.choice((-1, 0, 0, 1))))
+            cy = min(TILE - 2, max(1, cy + dy + rng.choice((-1, 0, 0, 1))))
+            if step % 2 == 1 and rng.random() < 0.45:
+                dx, dy = rng.choice((-1, 0, 1)), rng.choice((-1, 0, 1))
+
+    rim: set[tuple[int, int]] = set()
+    for x, y in vein_mask:
+        for oy in (-1, 0, 1):
+            for ox in (-1, 0, 1):
+                point = (x + ox, y + oy)
+                if point not in vein_mask and 0 <= point[0] < TILE and 0 <= point[1] < TILE:
+                    rim.add(point)
+
+    for x, y in rim:
+        if rng.random() < 0.80:
+            at = y * TILE + x
+            pixels[at] = (shadow[0], shadow[1], shadow[2], 255)
+    for x, y in vein_mask:
+        at = y * TILE + x
+        roll = rng.random()
+        if roll < 0.18:
+            color = highlight
+        elif roll < 0.83:
+            color = body
+        else:
+            color = tuple((body[i] * 2 + highlight[i]) // 3 for i in range(3))
+        pixels[at] = (color[0], color[1], color[2], 255)
+
+    # A few crisp crystal glints make valuable ores readable at a glance.
+    glints = 2 if material in ('coal', 'iron') else 4
+    for _ in range(glints):
+        if not vein_mask:
+            break
+        x, y = rng.choice(tuple(vein_mask))
+        at = y * TILE + x
+        pixels[at] = (highlight[0], highlight[1], highlight[2], 255)
+
+    return b''.join(bytes(px) for px in pixels)
+
+
 def make_tile(key: str, face: int, block_idx: int) -> bytes:
+    mineral_keys = ('_ore', 'ancient_debris', 'amethyst', 'copper_ore')
+    if any(token in key.lower() for token in mineral_keys):
+        return make_mineral_tile(key, face, block_idx)
     base = palette(key, face)
     seed = int.from_bytes(hashlib.sha256(f'{key}:{face}:{block_idx}'.encode()).digest()[:8], 'big')
     rng = random.Random(seed)
