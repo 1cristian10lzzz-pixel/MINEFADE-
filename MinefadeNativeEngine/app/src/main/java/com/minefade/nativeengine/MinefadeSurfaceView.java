@@ -21,6 +21,9 @@ public final class MinefadeSurfaceView extends GLSurfaceView {
     }
 
     private static final String TAG = "Minefade";
+    private static final int ATLAS_WIDTH = 576;
+    private static final int ATLAS_HEIGHT = 522;
+    private static final int ATLAS_TILE_COUNT = 918;
     private volatile boolean nativeReady;
     private final InitializationListener initializationListener;
 
@@ -128,7 +131,7 @@ public final class MinefadeSurfaceView extends GLSurfaceView {
     }
 
     private static byte[] readBlockAtlas(AssetManager assets) {
-        final int expected = 576 * 486 * 4;
+        final int expected = ATLAS_WIDTH * ATLAS_HEIGHT * 4;
         try (InputStream input = assets.open("textures/block_atlas.rgba");
              ByteArrayOutputStream output = new ByteArrayOutputStream(expected)) {
             byte[] buffer = new byte[16 * 1024];
@@ -149,9 +152,9 @@ public final class MinefadeSurfaceView extends GLSurfaceView {
      * recoverable instead of leaving the player on a black screen.
      */
     private static byte[] createFallbackBlockAtlas() {
-        final int width = 576, height = 486, tile = 16, cell = 18, columns = 32;
+        final int width = ATLAS_WIDTH, height = ATLAS_HEIGHT, tile = 16, cell = 18, columns = 32;
         byte[] atlas = new byte[width * height * 4];
-        for (int index = 0; index < 852; index++) {
+        for (int index = 0; index < ATLAS_TILE_COUNT; index++) {
             int block = index / 3;
             int face = index % 3;
             int hue = block % 8;
@@ -213,7 +216,7 @@ public final class MinefadeSurfaceView extends GLSurfaceView {
                 // Set mode and storage on the same GL thread as nativeInit/render.
                 NativeBridge.nativeSetMultiplayerMode(multiplayerMode, playerSlot);
                 NativeBridge.nativeSetStoragePath(storagePath);
-                nativeReady = NativeBridge.nativeInit(displayDensity, atlas, 576, 486);
+                nativeReady = NativeBridge.nativeInit(displayDensity, atlas, ATLAS_WIDTH, ATLAS_HEIGHT);
                 if (nativeReady) {
                     Log.i(TAG, "Native renderer initialised successfully");
                     notifyReady();
