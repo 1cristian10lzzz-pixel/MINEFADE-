@@ -47,6 +47,8 @@ png = (ROOT / "docs/block_atlas_preview.png").read_bytes()
 assert png[:8] == b"\x89PNG\r\n\x1a\n"
 assert struct.unpack(">II", png[16:24]) == (576, expected_height)
 
+by_key = {block["key"]: block for block in blocks}
+
 # Modern mineral additions are appended after the original 284 IDs so saved
 # worlds keep their historical block indices.
 modern_keys = {
