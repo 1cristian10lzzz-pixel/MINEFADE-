@@ -27,18 +27,6 @@ int main() {
         }
     }
     assert(deepslateCount > 0u);
-    std::size_t deepslateCount = 0u;
-    for (int x = -16; x < 32; ++x) for (int z = -16; z < 32; ++z) {
-        for (int y = 0; y < 17; ++y) {
-            const BlockId id = world.GetBlock(x, y, z);
-            if (id == BlockId::Deepslate || id == BlockId::DeepslateCoalOre ||
-                id == BlockId::DeepslateIronOre || id == BlockId::DeepslateCopperOre ||
-                id == BlockId::DeepslateGoldOre || id == BlockId::DeepslateRedstoneOre ||
-                id == BlockId::DeepslateEmeraldOre || id == BlockId::DeepslateLapisOre ||
-                id == BlockId::DeepslateDiamondOre) ++deepslateCount;
-        }
-    }
-    assert(deepslateCount > 0u);
     assert(world.ChunkCount() == 9u);
     const int height = world.GetSurfaceHeight(8, 8);
     assert(height >= 3 && height < VoxelWorld::kWorldHeight);
