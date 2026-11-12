@@ -218,8 +218,14 @@ public final class MinefadeSurfaceView extends GLSurfaceView {
                     Log.i(TAG, "Native renderer initialised successfully");
                     notifyReady();
                 } else {
-                    Log.e(TAG, "Native engine initialisation returned false");
-                    notifyError("El motor gráfico no pudo iniciarse. Comprueba los recursos y vuelve a intentarlo.");
+                    final String glVersion = GLES20.glGetString(GLES20.GL_VERSION);
+                    final String glRenderer = GLES20.glGetString(GLES20.GL_RENDERER);
+                    Log.e(TAG, "Native engine initialisation returned false; GL_VERSION="
+                            + glVersion + "; GL_RENDERER=" + glRenderer);
+                    notifyError("El motor gráfico no pudo iniciarse.\nOpenGL ES: "
+                            + (glVersion != null ? glVersion : "no disponible")
+                            + "\nGPU: " + (glRenderer != null ? glRenderer : "no identificada")
+                            + "\nComprueba la compatibilidad con OpenGL ES 3.0 y vuelve a intentarlo.");
                 }
             } catch (LinkageError | RuntimeException error) {
                 nativeReady = false;
