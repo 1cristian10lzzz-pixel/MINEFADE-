@@ -18,7 +18,7 @@ Android Activity / SurfaceView (Java)
            ├─ OpenGL ES 3.0
            │    ├─ shader 3D, luz direccional y depth buffer
            │    ├─ VAO/VBO mundo opaco, transparencia y entidades
-           │    └─ atlas RGBA Minefade 576×486, 852 tiles
+           │    └─ atlas RGBA Minefade 576×522, 918 tiles
            └─ RmlUiRuntime
                 ├─ Rml::SystemInterface
                 ├─ Rml::RenderInterface
@@ -28,7 +28,7 @@ Android Activity / SurfaceView (Java)
 
 ## Catálogo de bloques
 
-La fuente de referencia incluye 284 entradas vanilla del APK de Minecraft aportado. Minefade asigna IDs consecutivos y tres tiles por bloque (superior/lateral/inferior). Los píxeles son originales y se generan de forma reproducible mediante `tools/generate_block_catalog.py`; la herramienta no copia PNG del juego de referencia.
+La fuente de referencia incluye 284 entradas base del APK de Minecraft aportado y 22 extensiones modernas añadidas por Minefade. El registro conserva el orden de los primeros 284 IDs y alcanza 306 bloques con tres tiles por bloque (superior/lateral/inferior). Los píxeles son originales y se generan de forma reproducible mediante `tools/generate_block_catalog.py`; la herramienta no copia PNG del juego de referencia.
 
 El catálogo cubre nombres, alias, material/sound, forma aproximada, flags, luz, dureza, herramienta, drop y límite de pila. No es paridad con cada estado y orientación de Minecraft: los metadatos no presentes en la fuente son aproximados y varias geometrías todavía usan formas simplificadas.
 
@@ -74,6 +74,6 @@ Esta revisión **no** es una reconstrucción completa de la versión clásica de
 - Menús completos de inicio, ajustes, creación de mundos, logros, chat con emoji, muerte, configuración de controles y minimapa top-down.
 - Multijugador LAN/Internet, lluvia, agua dinámica, sombras reales y estructuras de mundo.
 - Mallas por chunk con caché incremental, descarga de chunks lejanos, frustum/occlusion culling y LOD. El worker doble es solo un primer paso, no una solución completa de rendimiento.
-- Catálogo moderno completo de contenido: el registro actual parte de 284 bloques de una fuente Bedrock 1.8. Aún no incluye como sistemas jugables el equipo de cobre, cofres y golem de cobre, oxidación/encerado ni las incorporaciones posteriores de Minecraft.
+- Catálogo moderno completo de contenido: el registro actual conserva 284 bloques de una fuente Bedrock 1.8 y agrega 22 bloques minerales/modernos. Aún no incluye como sistemas jugables el equipo de cobre, cofres y golem de cobre, oxidación/encerado, geodas completas ni todas las incorporaciones posteriores de Minecraft.
 
 Las pruebas automatizadas verifican los smoke tests del mundo, la recuperación de spawn, la física básica de drops y el catálogo. La compilación CI verifica que se genera el APK Android. Ninguna de esas comprobaciones sustituye una prueba visual y táctil en un dispositivo físico.
