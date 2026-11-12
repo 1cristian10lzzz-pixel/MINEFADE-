@@ -8,19 +8,19 @@ Reconstrucción nativa independiente de Minefade para Android: **C++20**, **Open
 
 ### Bloques: catálogo completo de la fuente aportada
 
-Se registraron **284 de 284 definiciones** incluidas en `assets/resource_packs/vanilla/blocks.json` del APK de referencia que proporcionó el usuario. Cada entrada tiene:
+Se conservaron las **284 definiciones base** del catálogo 1.8-ish del APK de referencia y se añadieron **22 bloques modernos** (cobre, menas de pizarra profunda, restos ancestrales, amatista, calcita, toba y bloques de metal en bruto). El registro actual contiene **306 bloques**; los 284 IDs antiguos mantienen su posición para no invalidar partidas guardadas. Cada entrada tiene:
 
 - ID estable, clave de origen y nombre en español.
 - Material/sonido y alias de textura superior, lateral e inferior.
-- Tres celdas propias en el atlas: **852 tiles únicos**.
+- Tres celdas propias en el atlas: **918 tiles únicos**.
 - Texturas de minerales regeneradas con vetas irregulares conectadas, bordes sombreados y brillos facetados distintos para carbón, hierro, oro, redstone, diamante, lapislázuli, esmeralda y cuarzo. Las caras superior, lateral e inferior se sombrean por separado.
 - Forma aproximada, colisión/render flags, transparencia y fluido.
 - Resistencia, herramienta preferida, nivel de luz, límite de pila y bloque de caída.
 - Reglas específicas para agua/lava corrientes, horno encendido, mineral de redstone encendido, lámpara, losas dobles y otros bloques especiales.
 
-El atlas RGBA de 576×486 se genera con pixel-art procedimental original de Minefade, patrones específicos por material y bordes extendidos para reducir el sangrado de filtrado. **No se han copiado ni empaquetado imágenes de textura originales de Minecraft.**
+El atlas RGBA de 576×522 se genera con pixel-art procedimental original de Minefade, patrones específicos por material y bordes extendidos para reducir el sangrado de filtrado. **No se han copiado ni empaquetado imágenes de textura originales de Minecraft.**
 
-**Alcance exacto:** las 284 entradas corresponden al catálogo antiguo 1.8-ish extraído del APK de referencia; no representan todos los bloques de versiones modernas de Minecraft ni cada estado, orientación o variante de colocación. La resistencia y herramienta preferida son aproximaciones de Minefade cuando `blocks.json` no contiene comportamiento de juego suficiente. Las mallas de escalera, valla, puerta, losa, panel y otros bloques especiales son geometrías base; aún no implementan todos sus estados/orientaciones ni colisión de precisión por forma.
+**Alcance exacto:** el catálogo conserva las 284 entradas originales 1.8-ish y añade 22 bloques modernos, pero todavía no es una recreación completa de todas las versiones actuales de Minecraft ni de cada estado, orientación o variante de colocación. La resistencia y herramienta preferida son aproximaciones de Minefade cuando `blocks.json` no contiene comportamiento de juego suficiente. Las mallas de escalera, valla, puerta, losa, panel y otros bloques especiales son geometrías base; aún no implementan todos sus estados/orientaciones ni colisión de precisión por forma.
 
 ### Arranque y creación del mundo
 
@@ -80,7 +80,7 @@ Limitaciones de RmlUi: la interfaz actual carga su HUD desde memoria y usa una f
 ## Verificaciones ejecutadas
 
 - `tests/run-world-tests.sh`: pruebas C++ nativas de mundo, chunks, raycast, guardado/carga, inventario, colisión básica, entidades, entorno y generación asíncrona.
-- `tests/test_block_catalog.py`: 284 entradas, IDs consecutivos, nombres no vacíos, 852 tiles únicos, tamaños RGBA/PNG, drops especiales y bloques protegidos.
+- `tests/test_block_catalog.py`: 306 entradas, IDs consecutivos, nombres no vacíos, 918 tiles únicos, tamaños RGBA/PNG, texturas minerales por cara, drops especiales y bloques protegidos.
 - Compilación Java 17 con stubs de API Android para comprobar sintaxis/firmas (no sustituye a AGP/D8).
 - Compilación de las pruebas C++ de escritorio con warnings habilitados y ejecución con AddressSanitizer/UBSan.
 - Las pruebas nativas no equivalen a enlazar con Android NDK/RmlUi ni a ejecutar el juego en un teléfono.
@@ -122,7 +122,7 @@ El workflow `.github/workflows/android.yml` configura JDK, Gradle, SDK, NDK y CM
 app/src/main/java/com/minefade/nativeengine/  Host Android, SurfaceView, JNI y audio
 app/src/main/cpp/engine/                      Motor principal y renderizador 3D
 app/src/main/cpp/world/                       Mundo voxel, chunks, raycast, malla y guardado
-app/src/main/cpp/blocks/                      Registro de las 284 definiciones de bloque
+app/src/main/cpp/blocks/                      Registro de las 306 definiciones de bloque
 app/src/main/cpp/game/                        Jugador, inventario, entidades y entorno
 app/src/main/cpp/ui/                          Runtime RmlUi y backend OpenGL ES
 app/src/main/assets/data/                    Catálogo y definiciones de referencia
