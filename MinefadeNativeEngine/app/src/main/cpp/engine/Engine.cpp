@@ -268,8 +268,6 @@ bool Engine::Initialise(float displayDensity, const std::uint8_t* atlasPixels,
         world_.GenerateAround(8, 8, 0);
         player_.position = {8.0f, static_cast<float>(world_.GetSurfaceHeight(8, 8)) + 1.05f, 8.0f};
     }
-    world_.GenerateAround(static_cast<int>(std::floor(player_.position.x)),
-                          static_cast<int>(std::floor(player_.position.z)), 1);
     if (!player_.ResolveSafeSpawn(world_)) {
         ENGINE_LOGE("Saved spawn is obstructed and no nearby safe position was found");
         world_.GenerateAround(8, 8, 0);
@@ -278,6 +276,13 @@ bool Engine::Initialise(float displayDensity, const std::uint8_t* atlasPixels,
             ENGINE_LOGE("Fresh spawn recovery failed; generated terrain has no safe player location");
             return failInitialisation();
         }
+    }
+    if (!multiplayerMode_) {
+        // Stream the nearby ring after the first frame. Synchronously generating
+        // nine 16x16x96 chunks and building their meshes here can stall EGL startup
+        // on lower-end Android GPUs and trigger the world's loading timeout.
+        world_.RequestGenerateAround(static_cast<int>(std::floor(player_.position.x)),
+                                     static_cast<int>(std::floor(player_.position.z)), 1);
     }
     footstepElapsed_ = 0.0f;
     lastChunkX_ = static_cast<int>(std::floor(player_.position.x / 16.0f));
