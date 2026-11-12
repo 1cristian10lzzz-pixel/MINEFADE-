@@ -31,6 +31,7 @@ public final class MainActivity extends Activity {
     private FrameLayout loadingOverlay;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private boolean engineReady;
+    private boolean activityResumed;
     private final Runnable exitPoll = new Runnable() {
         @Override public void run() {
             if (surfaceView == null || isFinishing()) return;
@@ -100,10 +101,14 @@ public final class MainActivity extends Activity {
         surfaceView = null;
         root.removeAllViews();
 
-        homeScreen = new MinefadeHomeScreen(this, this::startGame);
+        homeScreen = new MinefadeHomeScreen(this, this::startGame, this::playMenuClick);
         root.addView(homeScreen, new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
         applyImmersiveMode();
+    }
+
+    private void playMenuClick() {
+        if (soundEffects != null) soundEffects.playMenuClick();
     }
 
     private void startGame() {
@@ -149,6 +154,12 @@ public final class MainActivity extends Activity {
                 });
         root.addView(surfaceView, new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
+        // The GL view is created lazily after Activity.onResume(). Activate it now:
+        // otherwise GLSurfaceView remains paused and onSurfaceCreated() never runs.
+        if (activityResumed) {
+            surfaceView.onResume();
+            android.util.Log.i("Minefade", "Activated newly-created GL surface");
+        }
         if (loadingOverlay != null) root.bringChildToFront(loadingOverlay);
         mainHandler.postDelayed(engineTimeout, ENGINE_TIMEOUT_MS);
         applyImmersiveMode();
@@ -294,6 +305,7 @@ public final class MainActivity extends Activity {
 
     @Override
     protected void onPause() {
+        activityResumed = false;
         mainHandler.removeCallbacks(exitPoll);
         mainHandler.removeCallbacks(engineTimeout);
         if (surfaceView != null) {
@@ -306,6 +318,7 @@ public final class MainActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        activityResumed = true;
         applyImmersiveMode();
         if (surfaceView != null) {
             surfaceView.onResume();

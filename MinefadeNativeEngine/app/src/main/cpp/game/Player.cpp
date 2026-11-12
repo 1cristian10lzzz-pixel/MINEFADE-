@@ -403,7 +403,7 @@ void DroppedItemSystem::AppendMesh(std::vector<WorldVertex>& output) const {
 
 void EntitySystem::SpawnInitial(const VoxelWorld& world) {
     if (initialized_) return;
-    constexpr std::array<Vec3, 3> positions{{{5.0f, 0.0f, 5.0f}, {11.0f, 0.0f, 4.0f}, {18.0f, 0.0f, 12.0f}}};
+    constexpr std::array<Vec3, 3> positions{{{5.0f, 0.0f, 5.0f}, {11.0f, 0.0f, 4.0f}, {13.0f, 0.0f, 12.0f}}};
     for (std::size_t i = 0; i < entities_.size(); ++i) {
         entities_[i].position = positions[i];
         entities_[i].position.y = static_cast<float>(world.GetSurfaceHeight(

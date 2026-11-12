@@ -220,21 +220,22 @@ bool Engine::Initialise(float displayDensity, const std::uint8_t* atlasPixels,
 
     if (!storagePath_.empty()) {
         if (!world_.Load(storagePath_, player_.position, inventory_.counts)) {
-            world_.GenerateAround(8, 8, 1);
+            world_.GenerateAround(8, 8, 0);
             player_.position = {8.0f, static_cast<float>(world_.GetSurfaceHeight(8, 8)) + 1.05f, 8.0f};
         }
     } else {
-        world_.GenerateAround(8, 8, 1);
+        world_.GenerateAround(8, 8, 0);
         player_.position = {8.0f, static_cast<float>(world_.GetSurfaceHeight(8, 8)) + 1.05f, 8.0f};
     }
     world_.GenerateAround(static_cast<int>(std::floor(player_.position.x)),
                           static_cast<int>(std::floor(player_.position.z)), 1);
     if (!player_.ResolveSafeSpawn(world_)) {
         ENGINE_LOGE("Saved spawn is obstructed and no nearby safe position was found");
-        world_.GenerateAround(8, 8, 1);
+        world_.GenerateAround(8, 8, 0);
         player_.position = {8.0f, static_cast<float>(world_.GetSurfaceHeight(8, 8)) + 1.001f, 8.0f};
         player_.ResolveSafeSpawn(world_);
     }
+    footstepElapsed_ = 0.0f;
     lastChunkX_ = static_cast<int>(std::floor(player_.position.x / 16.0f));
     lastChunkZ_ = static_cast<int>(std::floor(player_.position.z / 16.0f));
     entities_.SpawnInitial(world_);
@@ -446,6 +447,22 @@ void Engine::Render() {
         player_.Update(world_, safeDelta);
         entities_.Update(world_, safeDelta);
 
+        const bool walking = player_.grounded &&
+            (std::abs(player_.movementX) + std::abs(player_.movementY) > 0.12f);
+        if (walking) {
+            footstepElapsed_ += safeDelta;
+            const BlockId underPlayer = world_.GetBlock(
+                static_cast<int>(std::floor(player_.position.x)),
+                static_cast<int>(std::floor(player_.position.y + 0.08f)),
+                static_cast<int>(std::floor(player_.position.z)));
+            const float interval = HasBlockFlag(underPlayer, BlockFluid) ? 0.62f : 0.43f;
+            if (footstepElapsed_ >= interval) {
+                soundEvents_.fetch_or(32u, std::memory_order_release);
+                footstepElapsed_ = 0.0f;
+            }
+        } else {
+            footstepElapsed_ = 0.0f;
+        }
         std::uint16_t pickedItemId = 0u;
         const std::size_t pickedCount =
             droppedItems_.Update(world_, player_, inventory_, safeDelta, &pickedItemId);
@@ -457,7 +474,7 @@ void Engine::Render() {
             pickupToastText_ = std::string(pickedName) + " ×" + std::to_string(pickedCount);
             pickupToastUntil_ = now + std::chrono::milliseconds(1400);
             ui_.SetPickupToast(pickupToastText_);
-            soundEvents_.fetch_or(1u, std::memory_order_release);
+            soundEvents_.fetch_or(8u, std::memory_order_release);
         }
         if (!pickupToastText_.empty() && now >= pickupToastUntil_) {
             pickupToastText_.clear();
@@ -667,7 +684,10 @@ void Engine::HandleUiAction(const std::string& action) {
         SaveWorld();
         exitRequested_.store(true, std::memory_order_release);
     } else if (action == "jump") {
+        const bool wasGrounded = player_.grounded;
         player_.Jump();
+        if (wasGrounded && !player_.grounded)
+            soundEvents_.fetch_or(16u, std::memory_order_release);
     } else if (action.rfind("slot-", 0) == 0 && action.size() == 6) {
         const char digit = action[5];
         if (digit >= '0' && digit <= '8') {

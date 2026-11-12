@@ -43,6 +43,7 @@ public final class MinefadeHomeScreen extends FrameLayout {
     }
 
     private final Listener listener;
+    private final Runnable clickSound;
     private final SharedPreferences preferences;
     private final int white = Color.rgb(241, 247, 250);
     private final int muted = Color.rgb(157, 177, 190);
@@ -51,9 +52,10 @@ public final class MinefadeHomeScreen extends FrameLayout {
     private int avatarOutfit = 0;
     private AvatarPreview avatarPreview;
 
-    public MinefadeHomeScreen(Context context, Listener listener) {
+    public MinefadeHomeScreen(Context context, Listener listener, Runnable clickSound) {
         super(context);
         this.listener = listener;
+        this.clickSound = clickSound;
         preferences = context.getSharedPreferences("minefade_ui", Context.MODE_PRIVATE);
         avatarTone = preferences.getInt("avatar_tone", 0);
         avatarOutfit = preferences.getInt("avatar_outfit", 0);
@@ -117,6 +119,7 @@ public final class MinefadeHomeScreen extends FrameLayout {
     }
 
     private void haptic(View view) {
+        if (clickSound != null) clickSound.run();
         if (!preferences.getBoolean("menu_haptics", true)) return;
         try {
             view.performHapticFeedback(android.view.HapticFeedbackConstants.KEYBOARD_TAP);
@@ -273,10 +276,56 @@ public final class MinefadeHomeScreen extends FrameLayout {
     }
 
     private void showWorlds() {
-        showSimplePage("MUNDOS", "Tu partida local está preparada para continuar.",
-                "▣", new int[]{0xff173c35, 0xff13293a},
-                "PARTIDA LOCAL", "El mundo se guarda en el almacenamiento privado de Minefade.",
-                "ENTRAR AL MUNDO", () -> listener.onPlay());
+        LinearLayout root = pageRoot("MUNDOS", "Partidas locales guardadas en este dispositivo.");
+        LinearLayout card = column();
+        card.setPadding(dp(17), dp(15), dp(17), dp(15));
+        card.setBackground(shape(new int[]{0xff1b453a, 0xff122c35}, 18, 0x6676b88d));
+        LinearLayout.LayoutParams cp = new LinearLayout.LayoutParams(-1, 0, 1f);
+        cp.topMargin = dp(13);
+        root.addView(card, cp);
+        LinearLayout top = row();
+        FrameLayout icon = new FrameLayout(getContext());
+        icon.setBackground(shape(new int[]{0xff315d48, 0xff1b473c}, 13, 0x557acb91));
+        TextView glyph = text("▦", 25, 0xffb9f27c, true);
+        glyph.setGravity(Gravity.CENTER);
+        icon.addView(glyph, new FrameLayout.LayoutParams(-1, -1));
+        top.addView(icon, new LinearLayout.LayoutParams(dp(48), dp(48)));
+        LinearLayout identity = column();
+        identity.setPadding(dp(11), 0, 0, 0);
+        identity.addView(text("MUNDO PRINCIPAL", 15, white, true));
+        TextView subtitle = text("Partida local · modo individual", 9, 0xffb7d1c5, false);
+        LinearLayout.LayoutParams sp = new LinearLayout.LayoutParams(-1, -2);
+        sp.topMargin = dp(4);
+        identity.addView(subtitle, sp);
+        top.addView(identity, new LinearLayout.LayoutParams(0, -2, 1f));
+        top.addView(pill("AUTOGUARDADO", 0xffb9f27c), new LinearLayout.LayoutParams(-2, dp(25)));
+        card.addView(top);
+        TextView description = text("Continúa tu aventura. En la primera entrada se generará el mundo; después se cargará desde el guardado local.", 10, 0xffc0d3d9, false);
+        description.setGravity(Gravity.TOP);
+        LinearLayout.LayoutParams dp = new LinearLayout.LayoutParams(-1, -2);
+        dp.topMargin = this.dp(15);
+        card.addView(description, dp);
+        LinearLayout facts = row();
+        facts.setPadding(this.dp(10), this.dp(9), this.dp(10), this.dp(9));
+        facts.setBackground(shape(new int[]{0x332a5a4b, 0x22152d36}, 11, 0x334b8d73));
+        facts.addView(text("ALMACENAMIENTO LOCAL", 8, 0xffd1e6d8, true),
+                new LinearLayout.LayoutParams(0, this.dp(23), 1f));
+        facts.addView(text("SIN CUENTA", 8, 0xffa9c4b6, true));
+        LinearLayout.LayoutParams fp = new LinearLayout.LayoutParams(-1, -2);
+        fp.topMargin = this.dp(12);
+        card.addView(facts, fp);
+        View spacer = new View(getContext());
+        card.addView(spacer, new LinearLayout.LayoutParams(1, 0, 1f));
+        TextView enter = actionButton("ENTRAR AL MUNDO", () -> listener.onPlay());
+        LinearLayout.LayoutParams ep = new LinearLayout.LayoutParams(-1, this.dp(46));
+        ep.topMargin = this.dp(12);
+        card.addView(enter, ep);
+        TextView note = text("No desinstales la aplicación para conservar tus mundos locales.", 8, 0xff9eb9ad, false);
+        note.setGravity(Gravity.CENTER);
+        LinearLayout.LayoutParams np = new LinearLayout.LayoutParams(-1, this.dp(25));
+        np.topMargin = this.dp(5);
+        card.addView(note, np);
+        animateIn(card, 0);
     }
 
     private void showSection(String section) {
@@ -430,13 +479,14 @@ public final class MinefadeHomeScreen extends FrameLayout {
                 "menu_animations", true));
         settings.addView(settingSwitch("Respuesta táctil", "Vibración ligera al pulsar botones.",
                 "menu_haptics", true));
+        settings.addView(soundVolumeControl());
 
         LinearLayout info = column();
         info.setPadding(dp(13), dp(11), dp(13), dp(11));
         info.setBackground(shape(new int[]{0x332e4b60, 0x22162435}, 13, 0x334f7087));
         TextView title = text("PERFILES GRÁFICOS", 10, 0xffb7d4e3, true);
         info.addView(title);
-        TextView body = text("Los perfiles de calidad, distancia de renderizado y sombras se conectarán al panel gráfico del motor en la siguiente parte de la Fase 2. No se muestran controles que todavía no actúan sobre el renderizador.", 9, muted, false);
+        TextView body = text("El volumen se aplica al instante. Los perfiles de calidad, distancia de renderizado y sombras se habilitarán cuando estén conectados al renderizador.", 9, muted, false);
         body.setGravity(Gravity.TOP);
         LinearLayout.LayoutParams bodyParams = new LinearLayout.LayoutParams(-1, -2);
         bodyParams.topMargin = dp(6);
@@ -444,6 +494,42 @@ public final class MinefadeHomeScreen extends FrameLayout {
         LinearLayout.LayoutParams infoParams = new LinearLayout.LayoutParams(-1, -2);
         infoParams.topMargin = dp(4);
         settings.addView(info, infoParams);
+    }
+
+    private View soundVolumeControl() {
+        LinearLayout card = column();
+        card.setPadding(dp(12), dp(9), dp(12), dp(8));
+        card.setBackground(shape(new int[]{0xff1c3043, 0xff142334}, 13, 0x554b6478));
+        LinearLayout heading = row();
+        heading.addView(text("Volumen de efectos", 12, white, true),
+                new LinearLayout.LayoutParams(0, dp(22), 1f));
+        TextView amount = text("", 10, 0xffb9f27c, true);
+        amount.setGravity(Gravity.CENTER);
+        heading.addView(amount, new LinearLayout.LayoutParams(dp(44), dp(22)));
+        card.addView(heading);
+        SeekBar volume = new SeekBar(getContext());
+        volume.setMax(100);
+        int initial = Math.round(preferences.getFloat("sound_volume", 0.82f) * 100f);
+        volume.setProgress(Math.max(0, Math.min(100, initial)));
+        amount.setText(volume.getProgress() + "%");
+        volume.setProgressTintList(ColorStateList.valueOf(0xffa9ee70));
+        volume.setThumbTintList(ColorStateList.valueOf(0xffc7f59a));
+        volume.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override public void onProgressChanged(SeekBar bar, int progress, boolean fromUser) {
+                amount.setText(progress + "%");
+                if (fromUser) preferences.edit().putFloat("sound_volume", progress / 100.0f).apply();
+            }
+            @Override public void onStartTrackingTouch(SeekBar bar) { }
+            @Override public void onStopTrackingTouch(SeekBar bar) { }
+        });
+        LinearLayout.LayoutParams seek = new LinearLayout.LayoutParams(-1, dp(31));
+        seek.topMargin = dp(2);
+        card.addView(volume, seek);
+        card.addView(text("Rotura · colocación · recogida · salto · pasos · interfaz", 8, muted, false));
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(-1, -2);
+        params.bottomMargin = dp(7);
+        card.setLayoutParams(params);
+        return card;
     }
 
     private View settingSwitch(String title, String subtitle, String key, boolean defaultValue) {

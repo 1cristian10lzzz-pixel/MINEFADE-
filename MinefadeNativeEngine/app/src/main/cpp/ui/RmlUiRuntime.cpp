@@ -23,7 +23,7 @@ body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; font-
 #topbar { position: absolute; top: 7dp; left: 7dp; right: 7dp; height: 36dp; display: flex; align-items: center; justify-content: flex-end; pointer-events: none; }
 #topbar button { pointer-events: auto; }
 #brand { display: none; }
-#stats { color: #edf2f5; font-size: 10dp; background: transparent; padding: 0dp; border: 0dp; border-radius: 0dp; text-shadow: 0dp 1dp 3dp #000000; }
+#stats { color: #edf2f5; font-size: 10dp; background: #0b172666; padding: 4dp 7dp; border: 1dp #c3d4dc22; border-radius: 7dp; text-shadow: none; }
 .actions { display: flex; flex-direction: row; gap: 4dp; }
 button { color: #ffffff; background: #1b2a3733; border: 1dp #b9c9d855; border-radius: 5dp; padding: 5dp 7dp; font-size: 12dp; }
 button:hover { background: #365a77; }
@@ -37,12 +37,17 @@ button:active { background: #47789b; }
 .panel p { font-size: 12dp; color: #c8d3db; margin: 3dp 0dp 12dp 0dp; }
 .panel .actions { flex-wrap: wrap; }
 #quickbar { position: absolute; bottom: 10dp; left: 50%; margin-left: -132dp; display: flex; flex-direction: row; gap: 2dp; }
-.slot { width: 27dp; min-width: 27dp; height: 29dp; text-align: center; padding: 3dp 2dp; background: #10192322; border: 1dp #ffffff33; border-radius: 4dp; color: #ffffff; font-size: 9dp; }
-#inventory, #pause, #perspective { width: 34dp; height: 34dp; padding: 0dp; text-align: center; }
-#jump { position: absolute; right: 18dp; bottom: 68dp; width: 38dp; height: 38dp; padding: 2dp; text-align: center; }
+.slot { width: 27dp; min-width: 27dp; height: 29dp; text-align: center; padding: 3dp 2dp; background: #10192388; border: 1dp #d8e6ee55; border-radius: 5dp; color: #ffffff; font-size: 9dp; }
+#inventory, #pause, #perspective { width: 34dp; height: 34dp; padding: 0dp; text-align: center; background: #10192388; border-radius: 8dp; }
+#movement-pad { position: absolute; left: 17dp; bottom: 48dp; width: 92dp; height: 92dp; border-radius: 50%; border: 2dp #ffffff55; background: #10223544; pointer-events: none; }
+#movement-pad-inner { position: absolute; left: 25dp; top: 25dp; width: 42dp; height: 42dp; border-radius: 50%; border: 1dp #d9e9a488; background: #6c9c8c33; }
+#movement-pad-cross { position: absolute; left: 45dp; top: 12dp; width: 2dp; height: 68dp; background: #ffffff22; }
+#jump { position: absolute; right: 21dp; bottom: 67dp; width: 43dp; height: 43dp; padding: 2dp; text-align: center; border-radius: 50%; background: #1e3a4dcc; border: 1dp #d9e9a4aa; }
 #inventory-panel { left: auto; right: 10dp; top: 52dp; width: 205dp; margin: 0dp; }
 .inventory-row { color: #e0e8ed; font-size: 12dp; padding: 5dp 2dp; border-bottom: 1dp #43576a; }
-#pause-panel { z-index: 10; }
+#pause-panel { z-index: 10; width: 270dp; margin-left: -135dp; }
+#pause-panel .actions { justify-content: center; gap: 8dp; }
+#pause-panel button { min-width: 104dp; }
 .panel h1, .panel p { display: none; }
 #target { position: absolute; left: 50%; top: 57%; margin-left: -75dp; min-width: 150dp; text-align: center; color: #ffffff; font-size: 11dp; text-shadow: 0dp 1dp 3dp #000000; display: none; pointer-events: none; }
 #target-progress { width: 84dp; height: 3dp; margin: 4dp auto 0dp auto; background: #ffffff22; }
@@ -62,6 +67,7 @@ button:active { background: #47789b; }
   </div>
 </div>
 <div id="crosshair"><div id="crosshair-v"></div><div id="crosshair-h"></div></div>
+<div id="movement-pad"><div id="movement-pad-inner"></div><div id="movement-pad-cross"></div></div>
 <div id="hint"></div>
 <div id="quickbar">
   <button class="slot" id="slot-0">1</button><button class="slot" id="slot-1">2</button><button class="slot" id="slot-2">3</button>
@@ -78,7 +84,6 @@ button:active { background: #47789b; }
 <div id="pause-panel" class="panel">
   <div class="actions">
     <button id="resume">Continuar</button>
-    <button id="save">Guardar mundo</button>
     <button id="save-exit">Guardar y salir</button>
   </div>
 </div>
