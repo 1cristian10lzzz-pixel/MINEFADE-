@@ -11,6 +11,7 @@ public final class NativeBridge {
     public static native boolean nativeInit(float displayDensity, byte[] blockAtlasRgba, int atlasWidth, int atlasHeight);
     public static native void nativeResize(int width, int height);
     public static native void nativeRender();
+    public static native boolean nativeConsumeEngineFailure();
     public static native void nativeTouch(int action, int pointerId, float x, float y);
     public static native void nativePause();
     public static native void nativeResume();
