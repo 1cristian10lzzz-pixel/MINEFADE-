@@ -13,6 +13,7 @@ Se registraron **284 de 284 definiciones** incluidas en `assets/resource_packs/v
 - ID estable, clave de origen y nombre en español.
 - Material/sonido y alias de textura superior, lateral e inferior.
 - Tres celdas propias en el atlas: **852 tiles únicos**.
+- Texturas de minerales regeneradas con vetas irregulares conectadas, bordes sombreados y brillos facetados distintos para carbón, hierro, oro, redstone, diamante, lapislázuli, esmeralda y cuarzo. Las caras superior, lateral e inferior se sombrean por separado.
 - Forma aproximada, colisión/render flags, transparencia y fluido.
 - Resistencia, herramienta preferida, nivel de luz, límite de pila y bloque de caída.
 - Reglas específicas para agua/lava corrientes, horno encendido, mineral de redstone encendido, lámpara, losas dobles y otros bloques especiales.
@@ -20,6 +21,13 @@ Se registraron **284 de 284 definiciones** incluidas en `assets/resource_packs/v
 El atlas RGBA de 576×486 se genera con pixel-art procedimental original de Minefade, patrones específicos por material y bordes extendidos para reducir el sangrado de filtrado. **No se han copiado ni empaquetado imágenes de textura originales de Minecraft.**
 
 **Alcance exacto:** las 284 entradas corresponden al catálogo antiguo 1.8-ish extraído del APK de referencia; no representan todos los bloques de versiones modernas de Minecraft ni cada estado, orientación o variante de colocación. La resistencia y herramienta preferida son aproximaciones de Minefade cuando `blocks.json` no contiene comportamiento de juego suficiente. Las mallas de escalera, valla, puerta, losa, panel y otros bloques especiales son geometrías base; aún no implementan todos sus estados/orientaciones ni colisión de precisión por forma.
+
+### Arranque y creación del mundo
+
+- La primera zona de aparición se genera y valida antes de habilitar el control del jugador.
+- En modo individual, los ocho chunks vecinos se solicitan después de la inicialización y se generan con los dos workers existentes. Esto evita bloquear el hilo OpenGL durante la pantalla de carga.
+- La sesión LAN conserva su anillo inicial síncrono para que los participantes comiencen con el mismo terreno disponible.
+- Los chunks que falten se regeneran de forma determinista; el guardado puede contener solo los chunks ya terminados y visitados.
 
 ### Mundo y chunks
 
