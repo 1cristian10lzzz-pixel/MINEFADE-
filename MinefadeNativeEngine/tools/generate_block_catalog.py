@@ -17,8 +17,9 @@ OUT_PNG = ROOT / 'docs/block_atlas_preview.png'
 OUT_JSON = ROOT / 'app/src/main/assets/data/minefade_block_catalog.json'
 OUT_MD = ROOT / 'docs/BLOCK_CATALOG_1_8.md'
 
-COLS, ROWS, TILE, GUTTER = 32, 27, 16, 2
+COLS, TILE, GUTTER = 32, 16, 2
 CELL = TILE + GUTTER
+ROWS = 27  # recalculated from the actual catalog in main()
 WIDTH, HEIGHT = COLS * CELL, ROWS * CELL
 FACE_TOP, FACE_SIDE, FACE_BOTTOM = 0, 1, 2
 
@@ -159,7 +160,11 @@ def classify(key: str, block: dict) -> tuple[str,int,float,str,int,int]:
         tex_bottom = str(tex.get('down', tex.get('side', tex_top)))
     else:
         tex_top = tex_side = tex_bottom = str(tex)
-    if k == 'air' or k in {'info_update','info_update2','movingblock','reserved6','pistonarmcollision','structure_void'}:
+    if k == 'budding_amethyst':
+        shape='Cube'; flags=1|2; hardness=-1.0; tool='None'; light=0; stack=64
+    elif k == 'amethyst_cluster':
+        shape='Thin'; flags=1|4; hardness=1.5; tool='Pickaxe'; light=5; stack=64
+    elif k == 'air' or k in {'info_update','info_update2','movingblock','reserved6','pistonarmcollision','structure_void'}:
         shape='None'; flags=0; hardness=0.0; tool='None'; light=0; stack=64
     elif k in {'barrier','invisiblebedrock'}:
         shape='None'; flags=1; hardness=-1.0; tool='None'; light=0; stack=64
@@ -193,7 +198,8 @@ def classify(key: str, block: dict) -> tuple[str,int,float,str,int,int]:
     else:
         shape='Cube'; flags=1|2; tool='Pickaxe'; hardness=1.5; light=0; stack=64
         if k == 'bedrock': hardness=-1.0
-        elif 'obsidian' in k: hardness=50.0
+        elif 'ancient_debris' in k or 'netherite_block' in k or 'obsidian' in k: hardness=50.0
+        elif 'deepslate' in k: hardness=3.0
         elif any(w in k for w in ['dirt','sand','gravel','farmland','path','grass']): hardness=0.6; tool='Shovel'
         elif any(w in k for w in ['log','planks','wood','hay','bookshelf','jukebox','noteblock']): hardness=2.0; tool='Axe'
         elif any(w in k for w in ['ore','stone','brick','prismarine','netherrack','nether_brick','quartz','cobble','furnace']): hardness=3.0 if 'ore' in k else 1.5
@@ -233,6 +239,10 @@ def palette(key: str, face: int) -> tuple[int,int,int]:
     for color, rgb in COLOR_NAMES.items():
         if color in k and any(x in k for x in ['wool','stained','glazed','carpet','banner','concrete','shulker']):
             return rgb
+    if 'deepslate' in k: return (65,69,77)
+    if 'amethyst' in k: return (91,64,119)
+    if 'basalt' in k or 'tuff' in k: return (87,91,88)
+    if 'calcite' in k: return (209,204,194)
     if 'grass' in k or 'leaves' in k or 'sapling' in k or 'bamboo' in k or 'seagrass' in k or 'wheat' in k or 'beetroot' in k:
         return (91,151,61) if face != 2 else (111,169,68)
     if 'dirt' in k or 'podzol' in k or 'farmland' in k or 'mud' in k or 'soul_sand' in k: return (127,88,54)
@@ -280,6 +290,8 @@ def make_mineral_tile(key: str, face: int, block_idx: int) -> bytes:
     k = key.lower()
     if 'deepslate' in k:
         rock = (57, 61, 68)
+    elif 'amethyst' in k:
+        rock = (78, 51, 105)
     elif 'quartz' in k or 'ancient_debris' in k:
         rock = (105, 57, 51)
     else:
@@ -488,9 +500,12 @@ def save_png(path: pathlib.Path, rgba: bytes):
     path.parent.mkdir(parents=True,exist_ok=True); path.write_bytes(data)
 
 def main():
+    global ROWS, HEIGHT
     raw=json.loads(INPUT.read_text(encoding='utf-8'))
     entries=[(k,v) for k,v in raw.items() if k!='format_version']
     if not entries or entries[0][0]!='air': raise SystemExit('Expected air to be block ID 0')
+    ROWS=(len(entries)*3 + COLS - 1)//COLS
+    HEIGHT=ROWS*CELL
     names=[ident(k) for k,_ in entries]
     if len(set(names))!=len(names): raise SystemExit('Enum-name collision found')
     # Assign each block three separate face tiles: top, side and bottom.
@@ -558,10 +573,10 @@ def main():
           'const BlockDefinition* FindBlockDefinition(std::string_view key) noexcept { for (const auto& block:kBlocks) if (key==block.key) return &block; return nullptr; }',
           'std::size_t GetBlockDefinitionCount() noexcept { return kBlocks.size(); }',
           'bool HasBlockFlag(BlockId id, BlockFlags flag) noexcept { const auto* block=GetBlockDefinition(id); return block && (block->flags & static_cast<std::uint16_t>(flag))!=0; }',
-          'void GetAtlasUv(std::uint16_t tile,float& u0,float& v0,float& u1,float& v1) noexcept { const unsigned col=tile%32u,row=tile/32u; const float x=static_cast<float>(col*18u+1u), y=static_cast<float>(row*18u+1u); u0=(x+0.5f)/576.0f; u1=(x+15.5f)/576.0f; v0=1.0f-(y+15.5f)/486.0f; v1=1.0f-(y+0.5f)/486.0f; }',
+          f'void GetAtlasUv(std::uint16_t tile,float& u0,float& v0,float& u1,float& v1) noexcept {{ const unsigned col=tile%{COLS}u,row=tile/{COLS}u; const float x=static_cast<float>(col*{CELL}u+1u), y=static_cast<float>(row*{CELL}u+1u); u0=(x+0.5f)/{WIDTH}.0f; u1=(x+15.5f)/{WIDTH}.0f; v0=1.0f-(y+15.5f)/{HEIGHT}.0f; v1=1.0f-(y+0.5f)/{HEIGHT}.0f; }}',
           '} // namespace minefade']
     OUT_CPP.write_text('\n'.join(c)+'\n',encoding='utf-8')
-    md=['# Minefade — catálogo de bloques 1.8','',f'**Entradas registradas: {len(catalogue)}.** Cada ID tiene nombre en español, clase geométrica, propiedades físicas, resistencia, herramienta preferida, sonido de material, alias de textura y tres celdas propias de atlas (superior/lateral/inferior).','', 'Las definiciones de nombres y alias proceden del `blocks.json` del APK aportado. Las texturas del atlas son pixel-art procedimental original generado por Minefade; no se redistribuyen los PNG de Minecraft.','', '| ID | Nombre Minefade | Clave de origen | Forma | Resistencia | Herramienta |','|---:|---|---|---|---:|---|']
+    md=['# Minefade — catálogo de bloques base 1.8 y extensiones modernas','',f'**Entradas registradas: {len(catalogue)}.** Cada ID tiene nombre en español, clase geométrica, propiedades físicas, resistencia, herramienta preferida, sonido de material, alias de textura y tres celdas propias de atlas (superior/lateral/inferior).','', 'Las definiciones de nombres y alias proceden del `blocks.json` del APK aportado. Las texturas del atlas son pixel-art procedimental original generado por Minefade; no se redistribuyen los PNG de Minecraft.','', '| ID | Nombre Minefade | Clave de origen | Forma | Resistencia | Herramienta |','|---:|---|---|---|---:|---|']
     for d in catalogue: md.append(f"| {d['id']} | {d['name_es']} | `{d['key']}` | {d['shape']} | {d['hardness']} | {d['tool']} |")
     OUT_MD.write_text('\n'.join(md)+'\n',encoding='utf-8')
     print(f'Generated {len(catalogue)} blocks, atlas {WIDTH}x{HEIGHT} ({len(atlas)} bytes)')
