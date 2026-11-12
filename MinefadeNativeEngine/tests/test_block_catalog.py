@@ -14,7 +14,7 @@ block_count = len(source_keys)
 assert len(blocks) == block_count == catalog["count"]
 assert block_count >= 306
 assert [block["key"] for block in blocks] == source_keys
-assert [block["id"] for block in blocks] == list(range(284))
+assert [block["id"] for block in blocks] == list(range(block_count))
 
 all_tiles: set[int] = set()
 for block in blocks:
