@@ -894,7 +894,7 @@ void Engine::SetRemotePlayers(const float* values, std::size_t floatCount) {
         remotePlayers_.clear();
         return;
     }
-    const std::size_t count = std::min(floatCount - (floatCount % 4u), 32u);
+    const std::size_t count = std::min<std::size_t>(floatCount - (floatCount % 4u), static_cast<std::size_t>(32u));
     remotePlayers_.assign(values, values + count);
 }
 
