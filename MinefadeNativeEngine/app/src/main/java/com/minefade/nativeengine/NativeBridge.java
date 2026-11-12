@@ -17,4 +17,9 @@ public final class NativeBridge {
     public static native void nativeSetStoragePath(String path);
     public static native boolean nativeConsumeExitRequest();
     public static native int nativeConsumeSoundEvents();
+    public static native void nativeSetMultiplayerMode(boolean enabled, int playerSlot);
+    public static native float[] nativeGetPlayerState();
+    public static native void nativeSetRemotePlayers(float[] values);
+    public static native int[] nativeConsumeBlockEdits();
+    public static native void nativeApplyRemoteBlockEdits(int[] values);
 }

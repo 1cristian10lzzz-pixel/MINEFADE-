@@ -40,6 +40,9 @@ import java.util.List;
 public final class MinefadeHomeScreen extends FrameLayout {
     public interface Listener {
         void onPlay();
+        void onHostMultiplayer();
+        void onSearchMultiplayer();
+        void onJoinMultiplayer(LanMultiplayerService.GameInfo game);
     }
 
     private final Listener listener;
@@ -51,6 +54,8 @@ public final class MinefadeHomeScreen extends FrameLayout {
     private int avatarTone = 0;
     private int avatarOutfit = 0;
     private AvatarPreview avatarPreview;
+    private TextView multiplayerStatus;
+    private LinearLayout multiplayerGames;
 
     public MinefadeHomeScreen(Context context, Listener listener, Runnable clickSound) {
         super(context);
@@ -563,36 +568,86 @@ public final class MinefadeHomeScreen extends FrameLayout {
     }
 
     private void showMultiplayerPage() {
-        LinearLayout root = pageRoot("MULTIJUGADOR", "Conexiones locales y juego en red.");
-        LinearLayout grid = row();
-        LinearLayout.LayoutParams gridParams = new LinearLayout.LayoutParams(-1, 0, 1f);
-        gridParams.topMargin = dp(12);
-        root.addView(grid, gridParams);
-        grid.addView(moduleCard("⌁", "LOCAL", "Descubrir partidas cercanas automáticamente.", 0xff24506a),
-                new LinearLayout.LayoutParams(0, -1, 1f));
-        View spacer = new View(getContext());
-        grid.addView(spacer, new LinearLayout.LayoutParams(dp(9), 1));
-        grid.addView(moduleCard("◎", "SERVIDORES", "Conexión a mundos remotos y lista de amigos.", 0xff51432c),
-                new LinearLayout.LayoutParams(0, -1, 1f));
+        LinearLayout root = pageRoot("LOCAL", "Juega con otros dispositivos conectados a tu Wi-Fi.");
+        LinearLayout actionRow = row();
+        LinearLayout.LayoutParams actionParams = new LinearLayout.LayoutParams(-1, dp(48));
+        actionParams.topMargin = dp(12);
+        root.addView(actionRow, actionParams);
+
+        TextView host = actionButton("CREAR PARTIDA", () -> {
+            if (listener != null) listener.onHostMultiplayer();
+        });
+        actionRow.addView(host, new LinearLayout.LayoutParams(0, -1, 1f));
+        TextView search = actionButton("BUSCAR PARTIDAS", () -> {
+            if (listener != null) listener.onSearchMultiplayer();
+        });
+        LinearLayout.LayoutParams searchParams = new LinearLayout.LayoutParams(0, -1, 1f);
+        searchParams.leftMargin = dp(8);
+        actionRow.addView(search, searchParams);
+
+        multiplayerStatus = text("Conecta los teléfonos a la misma red Wi-Fi y busca partidas.", 9, 0xffb9cbd6, false);
+        multiplayerStatus.setGravity(Gravity.CENTER_VERTICAL);
+        multiplayerStatus.setPadding(dp(10), 0, dp(10), 0);
+        multiplayerStatus.setBackground(shape(new int[]{0x332c4658, 0x22172535}, 9, 0x444d6979));
+        LinearLayout.LayoutParams statusParams = new LinearLayout.LayoutParams(-1, dp(34));
+        statusParams.topMargin = dp(9);
+        root.addView(multiplayerStatus, statusParams);
+
+        TextView nearbyTitle = text("PARTIDAS ENCONTRADAS", 9, 0xffa9ee70, true);
+        LinearLayout.LayoutParams titleParams = new LinearLayout.LayoutParams(-1, dp(26));
+        titleParams.topMargin = dp(7);
+        root.addView(nearbyTitle, titleParams);
+
+        ScrollView scroll = new ScrollView(getContext());
+        scroll.setFillViewport(true);
+        multiplayerGames = column();
+        scroll.addView(multiplayerGames, new ScrollView.LayoutParams(-1, -2));
+        root.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1f));
+        setNearbyGames(new ArrayList<>());
+
+        LinearLayout serverCard = row();
+        serverCard.setPadding(dp(10), dp(6), dp(10), dp(6));
+        serverCard.setBackground(shape(new int[]{0xff263141, 0xff182333}, 10, 0x444b6074));
+        serverCard.addView(text("SERVIDORES PÚBLICOS", 8, 0xffd5e0e8, true),
+                new LinearLayout.LayoutParams(0, dp(25), 1f));
+        serverCard.addView(pill("NO DISPONIBLE", 0xffffce72), new LinearLayout.LayoutParams(-2, dp(23)));
+        LinearLayout.LayoutParams serverParams = new LinearLayout.LayoutParams(-1, dp(36));
+        serverParams.topMargin = dp(8);
+        root.addView(serverCard, serverParams);
     }
 
-    private View moduleCard(String icon, String title, String description, int accent) {
-        LinearLayout card = column();
-        card.setPadding(dp(14), dp(14), dp(14), dp(14));
-        card.setBackground(shape(new int[]{0xff20384b, 0xff13263a}, 16, 0x664f7087));
-        card.addView(text(icon, 25, accent | 0xff000000, true));
-        TextView name = text(title, 14, white, true);
-        LinearLayout.LayoutParams np = new LinearLayout.LayoutParams(-1, -2);
-        np.topMargin = dp(8);
-        card.addView(name, np);
-        TextView detail = text(description, 10, muted, false);
-        detail.setGravity(Gravity.TOP);
-        LinearLayout.LayoutParams dp = new LinearLayout.LayoutParams(-1, 0, 1f);
-        dp.topMargin = dp(6);
-        card.addView(detail, dp);
-        TextView status = pill("EN PREPARACIÓN", 0xffffce72);
-        card.addView(status, new LinearLayout.LayoutParams(-2, dp(25)));
-        return card;
+    public void setMultiplayerStatus(String status) {
+        if (multiplayerStatus != null) multiplayerStatus.setText(status == null ? "" : status);
+    }
+
+    public void setNearbyGames(List<LanMultiplayerService.GameInfo> games) {
+        if (multiplayerGames == null) return;
+        multiplayerGames.removeAllViews();
+        if (games == null || games.isEmpty()) {
+            TextView empty = text("No se encontraron partidas todavía. Pulsa BUSCAR PARTIDAS.", 9, muted, false);
+            empty.setGravity(Gravity.CENTER);
+            multiplayerGames.addView(empty, new LinearLayout.LayoutParams(-1, dp(62)));
+            return;
+        }
+        for (LanMultiplayerService.GameInfo game : games) {
+            LinearLayout item = row();
+            item.setPadding(dp(10), dp(7), dp(10), dp(7));
+            item.setBackground(shape(new int[]{0xff20384b, 0xff14263a}, 11, 0x554d6b80));
+            LinearLayout details = column();
+            details.addView(text(game.name, 11, white, true));
+            TextView address = text(game.host + ":" + game.port, 8, muted, false);
+            LinearLayout.LayoutParams addressParams = new LinearLayout.LayoutParams(-1, -2);
+            addressParams.topMargin = dp(3);
+            details.addView(address, addressParams);
+            item.addView(details, new LinearLayout.LayoutParams(0, -2, 1f));
+            TextView join = actionButton("UNIRSE", () -> {
+                if (listener != null) listener.onJoinMultiplayer(game);
+            });
+            item.addView(join, new LinearLayout.LayoutParams(dp(88), dp(36)));
+            LinearLayout.LayoutParams itemParams = new LinearLayout.LayoutParams(-1, dp(58));
+            itemParams.bottomMargin = dp(6);
+            multiplayerGames.addView(item, itemParams);
+        }
     }
 
     private void showAchievementsPage() {

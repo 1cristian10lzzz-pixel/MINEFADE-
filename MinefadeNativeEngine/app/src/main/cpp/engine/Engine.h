@@ -28,6 +28,11 @@ public:
     void SetStoragePath(std::string path);
     bool ConsumeExitRequest();
     std::uint32_t ConsumeSoundEvents();
+    void SetMultiplayerMode(bool enabled, int playerSlot);
+    void GetPlayerState(float output[4]) const;
+    void SetRemotePlayers(const float* values, std::size_t floatCount);
+    void ApplyRemoteBlockEdits(const int* values, std::size_t valueCount);
+    std::vector<int> ConsumeLocalBlockEdits();
 
 private:
     struct Mat4 { std::array<float, 16> v{}; };
@@ -85,6 +90,10 @@ private:
     int height_{1};
     bool ready_{false};
     bool paused_{false};
+    bool multiplayerMode_{false};
+    int multiplayerSlot_{0};
+    bool pendingMultiplayerMode_{false};
+    int pendingMultiplayerSlot_{0};
     bool inventoryVisible_{false};
     bool pauseVisible_{false};
     bool thirdPerson_{false};
@@ -99,6 +108,8 @@ private:
     std::vector<WorldVertex> worldMesh_;
     std::vector<WorldVertex> transparentWorldMesh_;
     std::vector<WorldVertex> entityMesh_;
+    std::vector<float> remotePlayers_;
+    std::vector<int> pendingBlockEdits_;
     std::unordered_map<int, TouchState> touches_;
     int miningPointerId_{-1};
     Vec3 miningBlock_{};

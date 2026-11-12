@@ -28,6 +28,7 @@ public final class MainActivity extends Activity {
     private MinefadeHomeScreen homeScreen;
     private MinefadeSurfaceView surfaceView;
     private SoundEffects soundEffects;
+    private LanMultiplayerService lanMultiplayer;
     private FrameLayout loadingOverlay;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private boolean engineReady;
@@ -69,6 +70,7 @@ public final class MainActivity extends Activity {
         root.setBackgroundColor(0xff0b1726);
         setContentView(root);
         soundEffects = new SoundEffects(this);
+        lanMultiplayer = new LanMultiplayerService(this);
 
         // Deliberately do not touch NativeBridge here. The menu must still work
         // if the native library is missing on a device or an ABI is unsupported.
@@ -101,7 +103,16 @@ public final class MainActivity extends Activity {
         surfaceView = null;
         root.removeAllViews();
 
-        homeScreen = new MinefadeHomeScreen(this, this::startGame, this::playMenuClick);
+        if (lanMultiplayer != null) {
+            lanMultiplayer.close();
+            lanMultiplayer = new LanMultiplayerService(this);
+        }
+        homeScreen = new MinefadeHomeScreen(this, new MinefadeHomeScreen.Listener() {
+            @Override public void onPlay() { startGame(false, 0); }
+            @Override public void onHostMultiplayer() { startLanHost(); }
+            @Override public void onSearchMultiplayer() { searchLanGames(); }
+            @Override public void onJoinMultiplayer(LanMultiplayerService.GameInfo game) { joinLanGame(game); }
+        }, this::playMenuClick);
         root.addView(homeScreen, new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
         applyImmersiveMode();
@@ -112,6 +123,10 @@ public final class MainActivity extends Activity {
     }
 
     private void startGame() {
+        startGame(false, 0);
+    }
+
+    private void startGame(boolean multiplayer, int playerSlot) {
         mainHandler.removeCallbacks(engineTimeout);
         mainHandler.removeCallbacks(exitPoll);
         if (surfaceView != null) {
@@ -129,6 +144,7 @@ public final class MainActivity extends Activity {
         showLoading("PREPARANDO MINEFADE", "Comprobando el motor gráfico y los recursos…");
 
         try {
+            NativeBridge.nativeSetMultiplayerMode(multiplayer, playerSlot);
             NativeBridge.nativeSetStoragePath(getFilesDir().getAbsolutePath());
         } catch (LinkageError | RuntimeException error) {
             android.util.Log.e("Minefade", "Native library could not be loaded", error);
@@ -138,7 +154,7 @@ public final class MainActivity extends Activity {
         }
 
         surfaceView = new MinefadeSurfaceView(this, soundEffects,
-                getResources().getDisplayMetrics().density,
+                getResources().getDisplayMetrics().density, multiplayer ? lanMultiplayer : null,
                 new MinefadeSurfaceView.InitializationListener() {
                     @Override public void onEngineReady() {
                         engineReady = true;
@@ -163,6 +179,41 @@ public final class MainActivity extends Activity {
         if (loadingOverlay != null) root.bringChildToFront(loadingOverlay);
         mainHandler.postDelayed(engineTimeout, ENGINE_TIMEOUT_MS);
         applyImmersiveMode();
+    }
+
+    private LanMultiplayerService.Listener createLanListener(boolean host) {
+        return new LanMultiplayerService.Listener() {
+            @Override public void onStatus(String status) {
+                if (homeScreen != null) homeScreen.setMultiplayerStatus(status);
+            }
+            @Override public void onGamesChanged(java.util.List<LanMultiplayerService.GameInfo> games) {
+                if (homeScreen != null) homeScreen.setNearbyGames(games);
+            }
+            @Override public void onConnected(int localPlayerId) {
+                if (host || localPlayerId > 0) startGame(true, localPlayerId);
+            }
+            @Override public void onDisconnected(String reason) {
+                if (homeScreen != null) homeScreen.setMultiplayerStatus(reason);
+            }
+        };
+    }
+
+    private void startLanHost() {
+        if (lanMultiplayer == null) return;
+        lanMultiplayer.startHost("Jugador", createLanListener(true));
+        if (homeScreen != null) homeScreen.setMultiplayerStatus("Creando partida y publicándola en la red local…");
+    }
+
+    private void searchLanGames() {
+        if (lanMultiplayer == null) return;
+        lanMultiplayer.discover(createLanListener(false));
+        if (homeScreen != null) homeScreen.setNearbyGames(java.util.Collections.emptyList());
+    }
+
+    private void joinLanGame(LanMultiplayerService.GameInfo game) {
+        if (lanMultiplayer == null) return;
+        lanMultiplayer.join(game, "Jugador", createLanListener(false));
+        if (homeScreen != null) homeScreen.setMultiplayerStatus("Conectando a " + game.name + "…");
     }
 
     private void showLoading(String title, String detail) {
@@ -331,6 +382,7 @@ public final class MainActivity extends Activity {
     protected void onDestroy() {
         mainHandler.removeCallbacks(exitPoll);
         mainHandler.removeCallbacks(engineTimeout);
+        if (lanMultiplayer != null) lanMultiplayer.close();
         if (soundEffects != null) soundEffects.release();
         super.onDestroy();
     }

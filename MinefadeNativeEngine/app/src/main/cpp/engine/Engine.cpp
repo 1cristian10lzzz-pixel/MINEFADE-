@@ -198,6 +198,8 @@ bool Engine::UploadBlockAtlas(const std::uint8_t* pixels, std::size_t bytes, int
 bool Engine::Initialise(float displayDensity, const std::uint8_t* atlasPixels,
                         std::size_t atlasBytes, int atlasWidth, int atlasHeight) {
     Shutdown();
+    multiplayerMode_ = pendingMultiplayerMode_;
+    multiplayerSlot_ = pendingMultiplayerSlot_;
     ENGINE_LOGI("Starting Minefade Native Engine C++20 / OpenGL ES 3");
     const auto* glVersion = reinterpret_cast<const char*>(glGetString(GL_VERSION));
     const auto* glRenderer = reinterpret_cast<const char*>(glGetString(GL_RENDERER));
@@ -218,7 +220,17 @@ bool Engine::Initialise(float displayDensity, const std::uint8_t* atlasPixels,
     if (worldVao_ == 0 || worldVbo_ == 0 || entityVao_ == 0 || entityVbo_ == 0 ||
         transparentVao_ == 0 || transparentVbo_ == 0) return false;
 
-    if (!storagePath_.empty()) {
+    if (multiplayerMode_) {
+        // All LAN peers start from the same deterministic seed. The host's block
+        // edits are then replicated as authoritative block-change events.
+        world_ = VoxelWorld(0x4D464445u);
+        world_.GenerateAround(8, 8, 1);
+        const int spawnX = 8 + (multiplayerSlot_ % 4) * 2;
+        const int spawnZ = 8 + ((multiplayerSlot_ / 4) % 4) * 2;
+        player_.position = {static_cast<float>(spawnX),
+                            static_cast<float>(world_.GetSurfaceHeight(spawnX, spawnZ)) + 1.05f,
+                            static_cast<float>(spawnZ)};
+    } else if (!storagePath_.empty()) {
         if (!world_.Load(storagePath_, player_.position, inventory_.counts)) {
             world_.GenerateAround(8, 8, 0);
             player_.position = {8.0f, static_cast<float>(world_.GetSurfaceHeight(8, 8)) + 1.05f, 8.0f};
@@ -373,6 +385,15 @@ void Engine::RebuildEntityMesh() {
     entityMesh_.clear();
     entities_.AppendMesh(entityMesh_);
     if (thirdPerson_) player_.AppendMesh(entityMesh_);
+    // Remote players use the same articulated voxel model as the local avatar.
+    for (std::size_t i = 0; i + 3u < remotePlayers_.size(); i += 4u) {
+        Player remote;
+        remote.position = {remotePlayers_[i], remotePlayers_[i + 1u], remotePlayers_[i + 2u]};
+        remote.yaw = remotePlayers_[i + 3u];
+        remote.movementX = 0.25f;
+        remote.walkPhase = static_cast<float>(ElapsedSeconds() * 5.0);
+        remote.AppendMesh(entityMesh_);
+    }
     droppedItems_.AppendMesh(entityMesh_);
 }
 
@@ -620,8 +641,13 @@ void Engine::Touch(int action, int pointerId, float x, float y) {
             // A brief tap is reserved for placing the selected block. Mining requires
             // a stationary hold; moving the finger turns the gesture into camera look.
             const std::uint16_t selected = inventory_.SelectedItemId();
+            Vec3 placed{};
             if (selected > 0 && world_.PlaceRay(ViewPosition(), ViewDirection(), 6.0f,
-                                                static_cast<BlockId>(selected))) {
+                                                static_cast<BlockId>(selected), &placed)) {
+                pendingBlockEdits_.insert(pendingBlockEdits_.end(), {
+                    static_cast<int>(placed.x), static_cast<int>(placed.y), static_cast<int>(placed.z),
+                    static_cast<int>(selected)
+                });
                 inventory_.ConsumeSelected();
                 RefreshInventoryUi();
                 soundEvents_.fetch_or(2u, std::memory_order_release);
@@ -767,6 +793,10 @@ void Engine::UpdateMining(float deltaSeconds) {
     Vec3 broken{};
     BlockId brokenType = BlockId::Air;
     if (world_.BreakRay(ViewPosition(), ViewDirection(), 6.0f, &broken, &brokenType)) {
+        pendingBlockEdits_.insert(pendingBlockEdits_.end(), {
+            static_cast<int>(broken.x), static_cast<int>(broken.y), static_cast<int>(broken.z),
+            static_cast<int>(BlockId::Air)
+        });
         const BlockDefinition* brokenDefinition = GetBlockDefinition(brokenType);
         if (brokenDefinition != nullptr && brokenDefinition->dropId > 0u) {
             droppedItems_.Spawn({broken.x + 0.5f, broken.y + 0.55f, broken.z + 0.5f},
@@ -811,6 +841,7 @@ void Engine::RefreshInventoryUi() {
 }
 
 void Engine::SaveWorld() {
+    if (multiplayerMode_) return; // LAN sessions are transient until full host-world persistence is added.
     if (storagePath_.empty()) {
         ENGINE_LOGE("Cannot save: Android private storage path has not been supplied");
         return;
@@ -837,6 +868,68 @@ void Engine::SetStoragePath(std::string path) { storagePath_ = std::move(path) +
 
 bool Engine::ConsumeExitRequest() {
     return exitRequested_.exchange(false, std::memory_order_acq_rel);
+}
+
+void Engine::SetMultiplayerMode(bool enabled, int playerSlot) {
+    pendingMultiplayerMode_ = enabled;
+    pendingMultiplayerSlot_ = std::clamp(playerSlot, 0, 31);
+    if (!ready_) {
+        multiplayerMode_ = pendingMultiplayerMode_;
+        multiplayerSlot_ = pendingMultiplayerSlot_;
+    }
+    remotePlayers_.clear();
+    pendingBlockEdits_.clear();
+}
+
+void Engine::GetPlayerState(float output[4]) const {
+    if (output == nullptr) return;
+    output[0] = player_.position.x;
+    output[1] = player_.position.y;
+    output[2] = player_.position.z;
+    output[3] = player_.yaw;
+}
+
+void Engine::SetRemotePlayers(const float* values, std::size_t floatCount) {
+    if (values == nullptr || floatCount < 4u) {
+        remotePlayers_.clear();
+        return;
+    }
+    const std::size_t count = std::min(floatCount - (floatCount % 4u), 32u);
+    remotePlayers_.assign(values, values + count);
+}
+
+void Engine::ApplyRemoteBlockEdits(const int* values, std::size_t valueCount) {
+    if (values == nullptr || valueCount < 4u) return;
+    bool changed = false;
+    for (std::size_t i = 0; i + 3u < valueCount; i += 4u) {
+        const int x = values[i], y = values[i + 1u], z = values[i + 2u], id = values[i + 3u];
+        if (id < 0 || id >= static_cast<int>(GetBlockDefinitionCount())) continue;
+        const BlockId previous = world_.GetBlock(x, y, z);
+        if (world_.SetBlock(x, y, z, static_cast<BlockId>(id))) {
+            changed = true;
+            if (multiplayerMode_ && multiplayerSlot_ == 0 && id == static_cast<int>(BlockId::Air)
+                    && previous != BlockId::Air) {
+                const BlockDefinition* definition = GetBlockDefinition(previous);
+                if (definition != nullptr && definition->dropId > 0u) {
+                    droppedItems_.Spawn({static_cast<float>(x) + 0.5f,
+                                         static_cast<float>(y) + 0.55f,
+                                         static_cast<float>(z) + 0.5f},
+                                        definition->dropId, 1u);
+                }
+            }
+        }
+    }
+    if (changed && ready_) {
+        RebuildWorldMesh();
+        UploadWorldMesh();
+        UploadTransparentWorldMesh();
+    }
+}
+
+std::vector<int> Engine::ConsumeLocalBlockEdits() {
+    std::vector<int> result;
+    result.swap(pendingBlockEdits_);
+    return result;
 }
 
 } // namespace minefade

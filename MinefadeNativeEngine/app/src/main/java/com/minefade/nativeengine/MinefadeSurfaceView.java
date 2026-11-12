@@ -25,13 +25,13 @@ public final class MinefadeSurfaceView extends GLSurfaceView {
     private final InitializationListener initializationListener;
 
     public MinefadeSurfaceView(Context context, SoundEffects soundEffects, float displayDensity,
-                               InitializationListener listener) {
+                               LanMultiplayerService multiplayer, InitializationListener listener) {
         super(context);
         initializationListener = listener;
         setEGLContextClientVersion(3);
         setEGLConfigChooser(8, 8, 8, 8, 16, 0);
         setPreserveEGLContextOnPause(true);
-        setRenderer(new EngineRenderer(context, soundEffects, displayDensity));
+        setRenderer(new EngineRenderer(context, soundEffects, displayDensity, multiplayer));
         setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);
         setFocusable(true);
         setFocusableInTouchMode(true);
@@ -183,11 +183,14 @@ public final class MinefadeSurfaceView extends GLSurfaceView {
         private final SoundEffects soundEffects;
         private final float displayDensity;
         private final AssetManager assetManager;
+        private final LanMultiplayerService multiplayer;
 
-        EngineRenderer(Context context, SoundEffects soundEffects, float displayDensity) {
+        EngineRenderer(Context context, SoundEffects soundEffects, float displayDensity,
+                       LanMultiplayerService multiplayer) {
             assetManager = context.getAssets();
             this.soundEffects = soundEffects;
             this.displayDensity = displayDensity;
+            this.multiplayer = multiplayer;
         }
 
         @Override
@@ -234,7 +237,21 @@ public final class MinefadeSurfaceView extends GLSurfaceView {
                 return;
             }
             try {
+                if (multiplayer != null && multiplayer.isConnected()) {
+                    int[] incomingEdits = multiplayer.drainRemoteBlockEdits();
+                    if (incomingEdits.length > 0) NativeBridge.nativeApplyRemoteBlockEdits(incomingEdits);
+                    NativeBridge.nativeSetRemotePlayers(multiplayer.getRemotePlayerSnapshot());
+                } else if (multiplayer != null) {
+                    NativeBridge.nativeSetRemotePlayers(new float[0]);
+                    // Discard edits while the peer is disconnected, preventing an unbounded queue.
+                    NativeBridge.nativeConsumeBlockEdits();
+                }
                 NativeBridge.nativeRender();
+                if (multiplayer != null && multiplayer.isConnected()) {
+                    multiplayer.publishLocalState(NativeBridge.nativeGetPlayerState());
+                    int[] localEdits = NativeBridge.nativeConsumeBlockEdits();
+                    if (localEdits.length > 0) multiplayer.publishBlockEdits(localEdits);
+                }
                 if (soundEffects != null)
                     soundEffects.playEvents(NativeBridge.nativeConsumeSoundEvents());
             } catch (LinkageError | RuntimeException error) {

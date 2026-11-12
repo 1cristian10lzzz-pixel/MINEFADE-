@@ -479,12 +479,15 @@ bool VoxelWorld::BreakRay(const Vec3& origin,const Vec3& direction,float maxDist
     if(brokenType)*brokenType=block;
     return true;
 }
-bool VoxelWorld::PlaceRay(const Vec3& origin,const Vec3& direction,float maxDistance,BlockId block) {
+bool VoxelWorld::PlaceRay(const Vec3& origin,const Vec3& direction,float maxDistance,BlockId block,
+                          Vec3* placedBlock) {
     const BlockDefinition* definition=GetBlockDefinition(block);
     if(maxDistance<=0.0f||definition==nullptr||(definition->flags&BlockPlaceable)==0u)return false;
     const RayHit hit=TraceVoxelRay(*this,origin,direction,maxDistance);if(!hit.hit)return false;
     if(hit.previousY<0||hit.previousY>=kWorldHeight||IsSolid(hit.previousX,hit.previousY,hit.previousZ))return false;
-    return SetBlock(hit.previousX,hit.previousY,hit.previousZ,block);
+    if(!SetBlock(hit.previousX,hit.previousY,hit.previousZ,block))return false;
+    if(placedBlock!=nullptr)*placedBlock={static_cast<float>(hit.previousX),static_cast<float>(hit.previousY),static_cast<float>(hit.previousZ)};
+    return true;
 }
 
 void VoxelWorld::BuildMesh(std::vector<WorldVertex>& output,int centerWorldX,int centerWorldZ,int radiusInChunks,

@@ -72,3 +72,49 @@ extern "C" JNIEXPORT jint JNICALL
 Java_com_minefade_nativeengine_NativeBridge_nativeConsumeSoundEvents(JNIEnv*, jclass) {
     return static_cast<jint>(minefade::GetEngine().ConsumeSoundEvents());
 }
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_minefade_nativeengine_NativeBridge_nativeSetMultiplayerMode(JNIEnv*, jclass, jboolean enabled, jint slot) {
+    minefade::GetEngine().SetMultiplayerMode(enabled == JNI_TRUE, static_cast<int>(slot));
+}
+
+extern "C" JNIEXPORT jfloatArray JNICALL
+Java_com_minefade_nativeengine_NativeBridge_nativeGetPlayerState(JNIEnv* env, jclass) {
+    float state[4]{};
+    minefade::GetEngine().GetPlayerState(state);
+    jfloatArray result = env->NewFloatArray(4);
+    if (result != nullptr) env->SetFloatArrayRegion(result, 0, 4, state);
+    return result;
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_minefade_nativeengine_NativeBridge_nativeSetRemotePlayers(JNIEnv* env, jclass, jfloatArray values) {
+    if (values == nullptr) return;
+    const jsize length = env->GetArrayLength(values);
+    if (length < 4) return;
+    std::vector<jfloat> data(static_cast<std::size_t>(length));
+    env->GetFloatArrayRegion(values, 0, length, data.data());
+    if (env->ExceptionCheck()) { env->ExceptionClear(); return; }
+    minefade::GetEngine().SetRemotePlayers(data.data(), data.size());
+}
+
+extern "C" JNIEXPORT jintArray JNICALL
+Java_com_minefade_nativeengine_NativeBridge_nativeConsumeBlockEdits(JNIEnv* env, jclass) {
+    const std::vector<int> edits = minefade::GetEngine().ConsumeLocalBlockEdits();
+    if (edits.empty()) return env->NewIntArray(0);
+    jintArray result = env->NewIntArray(static_cast<jsize>(edits.size()));
+    if (result != nullptr) env->SetIntArrayRegion(result, 0, static_cast<jsize>(edits.size()),
+                                                   reinterpret_cast<const jint*>(edits.data()));
+    return result;
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_minefade_nativeengine_NativeBridge_nativeApplyRemoteBlockEdits(JNIEnv* env, jclass, jintArray values) {
+    if (values == nullptr) return;
+    const jsize length = env->GetArrayLength(values);
+    if (length < 4) return;
+    std::vector<jint> edits(static_cast<std::size_t>(length));
+    env->GetIntArrayRegion(values, 0, length, edits.data());
+    if (env->ExceptionCheck()) { env->ExceptionClear(); return; }
+    minefade::GetEngine().ApplyRemoteBlockEdits(reinterpret_cast<const int*>(edits.data()), edits.size());
+}

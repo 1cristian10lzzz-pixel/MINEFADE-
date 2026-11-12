@@ -51,7 +51,8 @@ public:
                            Vec3* targetBlock = nullptr, BlockId* targetType = nullptr) const;
     bool BreakRay(const Vec3& origin, const Vec3& direction, float maxDistance,
                   Vec3* brokenBlock = nullptr, BlockId* brokenType = nullptr);
-    bool PlaceRay(const Vec3& origin, const Vec3& direction, float maxDistance, BlockId block);
+    bool PlaceRay(const Vec3& origin, const Vec3& direction, float maxDistance, BlockId block,
+                  Vec3* placedBlock = nullptr);
 
     void BuildMesh(std::vector<WorldVertex>& output, int centerWorldX = 0,
                    int centerWorldZ = 0, int radiusInChunks = -1,
