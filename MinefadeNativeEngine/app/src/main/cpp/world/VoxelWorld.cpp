@@ -248,26 +248,52 @@ float VoxelWorld::Noise2D(float x,float z) const {
 }
 
 VoxelWorld::Biome VoxelWorld::GetBiome(int x,int z) const {
-    const float temperature=Noise2D(static_cast<float>(x)*0.009f+217.0f,static_cast<float>(z)*0.009f-71.0f);
-    const float humidity=Noise2D(static_cast<float>(x)*0.013f-493.0f,static_cast<float>(z)*0.013f+119.0f);
-    const float continental=Noise2D(static_cast<float>(x)*0.006f+901.0f,static_cast<float>(z)*0.006f+401.0f);
-    if(continental<-0.47f)return Biome::Ocean;
-    if(temperature>0.34f && humidity<-0.05f)return Biome::Desert;
-    if(temperature<-0.34f)return Biome::Snow;
-    if(humidity>0.22f)return Biome::Forest;
+    // Climate and continentalness fields are sampled at different scales so
+    // biome regions form broad, coherent areas rather than noisy checkerboards.
+    const float temperature = Noise2D(static_cast<float>(x) * 0.0035f + 217.0f,
+                                      static_cast<float>(z) * 0.0035f - 71.0f);
+    const float humidity = Noise2D(static_cast<float>(x) * 0.0055f - 493.0f,
+                                   static_cast<float>(z) * 0.0055f + 119.0f);
+    const float continental = Noise2D(static_cast<float>(x) * 0.0028f + 901.0f,
+                                      static_cast<float>(z) * 0.0028f + 401.0f);
+    const float mountainField = Noise2D(static_cast<float>(x) * 0.012f - 83.0f,
+                                        static_cast<float>(z) * 0.012f + 29.0f);
+
+    if (continental < -0.43f) return Biome::Ocean;
+    if (continental > 0.40f && mountainField > -0.10f) return Biome::Mountains;
+    if (temperature > 0.36f && humidity < -0.04f) return Biome::Desert;
+    if (temperature < -0.36f) return Biome::Snow;
+    if (humidity > 0.43f && continental < 0.22f) return Biome::Swamp;
+    if (temperature > 0.20f && humidity < 0.12f) return Biome::Savanna;
+    if (humidity > 0.08f) return Biome::Forest;
     return Biome::Plains;
 }
 
 int VoxelWorld::TerrainHeight(int x,int z) const {
-    const float broad=Noise2D(static_cast<float>(x)*0.022f,static_cast<float>(z)*0.022f);
-    const float detail=Noise2D(static_cast<float>(x)*0.075f+31.0f,static_cast<float>(z)*0.075f-17.0f);
-    const float ridged=1.0f-std::abs(Noise2D(static_cast<float>(x)*0.041f-83.0f,static_cast<float>(z)*0.041f+29.0f));
-    const Biome biome=GetBiome(x,z);
-    float h=39.0f+broad*13.0f+detail*4.0f+ridged*3.5f;
-    if(biome==Biome::Desert)h+=2.0f;
-    if(biome==Biome::Snow)h+=4.0f;
-    if(biome==Biome::Ocean)h=27.0f+broad*5.0f;
-    return std::clamp(static_cast<int>(std::lround(h)),8,kWorldHeight-8);
+    const float continental = Noise2D(static_cast<float>(x) * 0.0028f + 901.0f,
+                                       static_cast<float>(z) * 0.0028f + 401.0f);
+    const float erosion = Noise2D(static_cast<float>(x) * 0.009f + 31.0f,
+                                  static_cast<float>(z) * 0.009f - 17.0f);
+    const float peakNoise = Noise2D(static_cast<float>(x) * 0.021f - 83.0f,
+                                    static_cast<float>(z) * 0.021f + 29.0f);
+    const float detail = Noise2D(static_cast<float>(x) * 0.073f + 151.0f,
+                                 static_cast<float>(z) * 0.073f - 97.0f);
+    const float ridged = 1.0f - std::abs(peakNoise);
+    const Biome biome = GetBiome(x,z);
+
+    // A broad continental shelf controls coastlines; erosion shapes rolling
+    // terrain; ridged peaks create high mountain chains with finer surface detail.
+    const float continentalMask = std::clamp((continental + 0.18f) * 1.65f, 0.0f, 1.0f);
+    const float mountainMask = std::clamp((continental - 0.16f) * 2.15f, 0.0f, 1.0f);
+    float height = 43.0f + continental * 15.0f + erosion * 8.0f
+                 + continentalMask * 5.0f + mountainMask * (ridged * 30.0f - 5.0f)
+                 + detail * 2.4f;
+
+    if (biome == Biome::Desert || biome == Biome::Savanna) height += 1.5f;
+    if (biome == Biome::Snow) height += 3.0f;
+    if (biome == Biome::Swamp) height = 34.0f + erosion * 2.2f + detail * 1.0f;
+    if (biome == Biome::Ocean) height = 23.0f + continental * 5.0f + erosion * 2.0f;
+    return std::clamp(static_cast<int>(std::lround(height)), 5, kWorldHeight - 7);
 }
 
 VoxelWorld::Chunk VoxelWorld::MakeChunk(int chunkX,int chunkZ) const {
@@ -278,36 +304,41 @@ VoxelWorld::Chunk VoxelWorld::MakeChunk(int chunkX,int chunkZ) const {
         for(int y=0;y<=height;++y) {
             BlockId block=BlockId::Stone;
             if(y==height) {
-                if(biome==Biome::Desert || biome==Biome::Ocean)block=BlockId::Sand;
-                else if(biome==Biome::Snow)block=BlockId::Snow;
+                if(biome==Biome::Desert || biome==Biome::Ocean) block=BlockId::Sand;
+                else if(biome==Biome::Snow || (biome==Biome::Mountains && height>69)) block=BlockId::Snow;
                 else block=BlockId::Grass;
             } else if(y>=height-3) {
-                block=(biome==Biome::Desert)?BlockId::Sand:BlockId::Dirt;
+                block=(biome==Biome::Desert || biome==Biome::Savanna)?BlockId::Sand:BlockId::Dirt;
             } else {
-                const float caveA=Noise2D(static_cast<float>(wx)*0.115f+static_cast<float>(y)*0.037f,
-                                           static_cast<float>(wz)*0.115f-static_cast<float>(y)*0.031f);
-                const float caveB=Noise2D(static_cast<float>(wx)*0.061f-static_cast<float>(y)*0.021f+45.0f,
-                                           static_cast<float>(wz)*0.061f+static_cast<float>(y)*0.027f-12.0f);
-                if(y>5 && caveA>0.68f && caveB>0.12f) block=BlockId::Air;
+                // Two differently scaled cave fields make winding chambers and
+                // connecting passages. The vertical term opens larger caverns
+                // deeper underground while preserving a solid surface roof.
+                const float caveA=Noise2D(static_cast<float>(wx)*0.086f+static_cast<float>(y)*0.029f,
+                                           static_cast<float>(wz)*0.086f-static_cast<float>(y)*0.033f);
+                const float caveB=Noise2D(static_cast<float>(wx)*0.047f-static_cast<float>(y)*0.018f+45.0f,
+                                           static_cast<float>(wz)*0.047f+static_cast<float>(y)*0.023f-12.0f);
+                const float caveGate=0.63f + static_cast<float>(y) * 0.0007f;
+                if(y>6 && caveA>caveGate && caveB>0.08f) block=BlockId::Air;
                 else {
                     const float ore=Noise2D(static_cast<float>(wx)*0.29f+static_cast<float>(y)*0.13f,
                                             static_cast<float>(wz)*0.29f-static_cast<float>(y)*0.17f);
-                    if(y<22 && ore>0.91f)block=BlockId::DiamondOre;
-                    else if(y<28 && ore<-0.90f)block=BlockId::GoldOre;
-                    else if(y<37 && ore>0.82f)block=BlockId::IronOre;
-                    else if(y<48 && ore<-0.78f)block=BlockId::CoalOre;
-                    else if(y<32 && ore>0.76f && caveB<-0.4f)block=BlockId::RedstoneOre;
-                    else if(y<42 && ore<-0.83f && caveB>0.55f)block=BlockId::LapisOre;
+                    if(y<18 && ore>0.91f)block=BlockId::DiamondOre;
+                    else if(y<27 && ore<-0.90f)block=BlockId::GoldOre;
+                    else if(y<42 && ore>0.82f)block=BlockId::IronOre;
+                    else if(y<55 && ore<-0.78f)block=BlockId::CoalOre;
+                    else if(y<31 && ore>0.76f && caveB<-0.4f)block=BlockId::RedstoneOre;
+                    else if(y<39 && ore<-0.83f && caveB>0.55f)block=BlockId::LapisOre;
                 }
             }
             chunk.blocks[Index(x,y,z)]=block;
         }
-        if(height<kSeaLevel && biome==Biome::Ocean) {
+        // Oceans and low-lying wetlands fill to the common water table.
+        if(height<kSeaLevel && (biome==Biome::Ocean || biome==Biome::Swamp)) {
             for(int y=height+1;y<=kSeaLevel;++y)chunk.blocks[Index(x,y,z)]=BlockId::Water;
         }
         const std::uint32_t cellHash=Hash(seed_^static_cast<std::uint32_t>((wx/7)*0x45d9f3bu)^static_cast<std::uint32_t>((wz/7)*0x119de1f3u));
         const bool treeCell=(cellHash%9u)==0u && (x%7==3) && (z%7==3);
-        if(treeCell && (biome==Biome::Forest || biome==Biome::Plains) && height+6<kWorldHeight) {
+        if(treeCell && (biome==Biome::Forest || biome==Biome::Plains || biome==Biome::Swamp) && height+6<kWorldHeight) {
             for(int dy=1;dy<=4;++dy)chunk.blocks[Index(x,height+dy,z)]=BlockId::Log;
             for(int dy=3;dy<=6;++dy)for(int dz=-2;dz<=2;++dz)for(int dx=-2;dx<=2;++dx) {
                 if(std::abs(dx)+std::abs(dz)+(dy==6?1:0)>4)continue;
@@ -316,7 +347,7 @@ VoxelWorld::Chunk VoxelWorld::MakeChunk(int chunkX,int chunkZ) const {
                     chunk.blocks[Index(lx,height+dy,lz)]=BlockId::Leaves;
             }
         }
-        if(biome==Biome::Desert && height+4<kWorldHeight && (cellHash%47u)==0u) {
+        if((biome==Biome::Desert || biome==Biome::Savanna) && height+4<kWorldHeight && (cellHash%47u)==0u) {
             const int cactusHeight=2+static_cast<int>((cellHash>>8u)%3u);
             for(int dy=1;dy<=cactusHeight;++dy)chunk.blocks[Index(x,height+dy,z)]=BlockId::Cactus;
         }
