@@ -170,6 +170,17 @@ void Player::AppendMesh(std::vector<WorldVertex>& output) const {
     AppendPlayerBox(output, anchor, yaw, {0.0f, 1.63f, 0.015f}, {0.25f, 0.25f, 0.245f}, skin);
     AppendPlayerBox(output, anchor, yaw, {0.0f, 1.83f, -0.015f}, {0.255f, 0.075f, 0.255f}, hair);
     AppendPlayerBox(output, anchor, yaw, {0.0f, 1.63f, -0.225f}, {0.255f, 0.10f, 0.045f}, hair);
+
+    // Facial features, neck trim and a waist belt keep the avatar readable at
+    // third-person camera distance instead of presenting as a stack of plain cubes.
+    const std::array<float, 3> eye{{0.11f, 0.14f, 0.17f}};
+    const std::array<float, 3> belt{{0.11f, 0.16f, 0.21f}};
+    AppendPlayerBox(output, anchor, yaw, {-0.105f, 1.66f, 0.245f}, {0.035f, 0.045f, 0.018f}, eye);
+    AppendPlayerBox(output, anchor, yaw, { 0.105f, 1.66f, 0.245f}, {0.035f, 0.045f, 0.018f}, eye);
+    AppendPlayerBox(output, anchor, yaw, {0.0f, 1.57f, 0.252f}, {0.045f, 0.035f, 0.018f}, trim);
+    AppendPlayerBox(output, anchor, yaw, {0.0f, 0.77f, 0.0f}, {0.325f, 0.055f, 0.198f}, belt);
+    AppendPlayerBox(output, anchor, yaw, {-0.22f, 1.32f, 0.0f}, {0.13f, 0.08f, 0.205f}, trim);
+    AppendPlayerBox(output, anchor, yaw, { 0.22f, 1.32f, 0.0f}, {0.13f, 0.08f, 0.205f}, trim);
 }
 
 void Player::Update(const VoxelWorld& world, float deltaSeconds) {
