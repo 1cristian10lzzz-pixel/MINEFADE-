@@ -1,6 +1,6 @@
-# Minefade — catálogo de bloques 1.8
+# Minefade — catálogo base 1.8 + extensiones modernas
 
-**Entradas registradas: 284.** Cada ID tiene nombre en español, clase geométrica, propiedades físicas, resistencia, herramienta preferida, sonido de material, alias de textura y tres celdas propias de atlas (superior/lateral/inferior).
+**Entradas registradas: 306.** Se mantienen los 284 IDs originales y se añaden 22 definiciones minerales modernas al final del registro. Cada ID tiene nombre en español, clase geométrica, propiedades físicas, resistencia, herramienta preferida, sonido de material, alias de textura y tres celdas propias de atlas (superior/lateral/inferior).
 
 Las definiciones de nombres y alias proceden del `blocks.json` del APK aportado. Las texturas del atlas son pixel-art procedimental original generado por Minefade; no se redistribuyen los PNG de Minecraft.
 
@@ -290,3 +290,26 @@ Las definiciones de nombres y alias proceden del `blocks.json` del APK aportado.
 | 281 | Bambú | `bamboo` | Thin | 0.5 | None |
 | 282 | Brote de bambú | `bamboo_sapling` | CrossPlant | 0.0 | None |
 | 283 | Andamio | `scaffolding` | Scaffolding | 0.5 | None |
+
+| 284 | Mena de cobre | `copper_ore` | Cube | 3.0 | Pickaxe |
+| 285 | Pizarra profunda | `deepslate` | Cube | 3.0 | Pickaxe |
+| 286 | Mena de carbón de pizarra profunda | `deepslate_coal_ore` | Cube | 3.0 | Pickaxe |
+| 287 | Mena de hierro de pizarra profunda | `deepslate_iron_ore` | Cube | 3.0 | Pickaxe |
+| 288 | Mena de cobre de pizarra profunda | `deepslate_copper_ore` | Cube | 3.0 | Pickaxe |
+| 289 | Mena de oro de pizarra profunda | `deepslate_gold_ore` | Cube | 3.0 | Pickaxe |
+| 290 | Mena de redstone de pizarra profunda | `deepslate_redstone_ore` | Cube | 3.0 | Pickaxe |
+| 291 | Mena de esmeralda de pizarra profunda | `deepslate_emerald_ore` | Cube | 3.0 | Pickaxe |
+| 292 | Mena de lapislázuli de pizarra profunda | `deepslate_lapis_ore` | Cube | 3.0 | Pickaxe |
+| 293 | Mena de diamante de pizarra profunda | `deepslate_diamond_ore` | Cube | 3.0 | Pickaxe |
+| 294 | Restos ancestrales | `ancient_debris` | Cube | 50.0 | Pickaxe |
+| 295 | Bloque de netherita | `netherite_block` | Cube | 50.0 | Pickaxe |
+| 296 | Bloque de amatista | `amethyst_block` | Cube | 1.5 | Pickaxe |
+| 297 | Amatista en brote | `budding_amethyst` | Cube | -1.0 | None |
+| 298 | Calcita | `calcite` | Cube | 1.5 | Pickaxe |
+| 299 | Toba | `tuff` | Cube | 1.5 | Pickaxe |
+| 300 | Basalto | `basalt` | Cube | 1.5 | Pickaxe |
+| 301 | Bloque de hierro en bruto | `raw_iron_block` | Cube | 5.0 | Pickaxe |
+| 302 | Bloque de oro en bruto | `raw_gold_block` | Cube | 5.0 | Pickaxe |
+| 303 | Bloque de cobre en bruto | `raw_copper_block` | Cube | 5.0 | Pickaxe |
+| 304 | Bloque de cobre | `copper_block` | Cube | 5.0 | Pickaxe |
+| 305 | Cúmulo de amatista | `amethyst_cluster` | Thin | 1.5 | Pickaxe |
