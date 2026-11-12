@@ -45,6 +45,10 @@ jobs:
             "ndk;28.2.13676358" \
             "cmake;3.22.1"
 
+      - name: Regenerate block catalogue and high-quality mineral atlas
+        working-directory: MinefadeNativeEngine
+        run: python3 tools/generate_block_catalog.py
+
       - name: Run native regression tests
         working-directory: MinefadeNativeEngine
         shell: bash
