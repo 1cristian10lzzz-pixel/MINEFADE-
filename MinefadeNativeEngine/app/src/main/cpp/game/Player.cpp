@@ -463,6 +463,15 @@ void EntitySystem::AppendMesh(std::vector<WorldVertex>& output) const {
                        {0.10f, 0.24f, 0.11f}, hoof);
             AppendCube(output, {entity.position.x + 0.27f, entity.position.y + 0.22f + legA, entity.position.z + 0.36f},
                        {0.10f, 0.24f, 0.11f}, hoof);
+            const std::array<float, 3> eye{0.12f, 0.10f, 0.08f};
+            AppendCube(output, {entity.position.x - 0.13f, entity.position.y + 0.79f, entity.position.z + 0.855f},
+                       {0.035f, 0.045f, 0.028f}, eye);
+            AppendCube(output, {entity.position.x + 0.13f, entity.position.y + 0.79f, entity.position.z + 0.855f},
+                       {0.035f, 0.045f, 0.028f}, eye);
+            AppendCube(output, {entity.position.x, entity.position.y + 0.62f, entity.position.z + 0.87f},
+                       {0.12f, 0.08f, 0.045f}, face);
+            AppendCube(output, {entity.position.x, entity.position.y + 0.70f, entity.position.z - 0.71f},
+                       {0.055f, 0.07f, 0.15f}, wool);
         } else if (entity.kind == 1) {
             // Short-bodied bovine with contrasting patches and a larger head.
             const std::array<float, 3> hide{0.83f, 0.80f, 0.70f};
@@ -486,6 +495,18 @@ void EntitySystem::AppendMesh(std::vector<WorldVertex>& output) const {
                        {0.11f, 0.25f, 0.11f}, patch);
             AppendCube(output, {entity.position.x + 0.34f, entity.position.y + 0.22f + legA, entity.position.z + 0.42f},
                        {0.11f, 0.25f, 0.11f}, patch);
+            const std::array<float, 3> eye{0.10f, 0.08f, 0.07f};
+            const std::array<float, 3> horn{0.88f, 0.82f, 0.67f};
+            AppendCube(output, {entity.position.x - 0.17f, entity.position.y + 0.88f, entity.position.z + 0.94f},
+                       {0.04f, 0.05f, 0.028f}, eye);
+            AppendCube(output, {entity.position.x + 0.17f, entity.position.y + 0.88f, entity.position.z + 0.94f},
+                       {0.04f, 0.05f, 0.028f}, eye);
+            AppendCube(output, {entity.position.x - 0.22f, entity.position.y + 1.13f, entity.position.z + 0.68f},
+                       {0.065f, 0.15f, 0.065f}, horn);
+            AppendCube(output, {entity.position.x + 0.22f, entity.position.y + 1.13f, entity.position.z + 0.68f},
+                       {0.065f, 0.15f, 0.065f}, horn);
+            AppendCube(output, {entity.position.x, entity.position.y + 0.70f, entity.position.z - 0.73f},
+                       {0.045f, 0.06f, 0.20f}, hide);
         } else {
             // Small bird with compact body, head, beak and animated legs.
             const std::array<float, 3> feather{0.89f, 0.85f, 0.75f};
@@ -501,6 +522,18 @@ void EntitySystem::AppendMesh(std::vector<WorldVertex>& output) const {
                        {0.045f, 0.13f, 0.045f}, foot);
             AppendCube(output, {entity.position.x + 0.13f, entity.position.y + 0.12f + legB, entity.position.z},
                        {0.045f, 0.13f, 0.045f}, foot);
+            const std::array<float, 3> eye{0.12f, 0.09f, 0.05f};
+            const std::array<float, 3> wing{0.70f, 0.66f, 0.57f};
+            AppendCube(output, {entity.position.x - 0.12f, entity.position.y + 0.73f, entity.position.z + 0.52f},
+                       {0.035f, 0.04f, 0.025f}, eye);
+            AppendCube(output, {entity.position.x + 0.12f, entity.position.y + 0.73f, entity.position.z + 0.52f},
+                       {0.035f, 0.04f, 0.025f}, eye);
+            AppendCube(output, {entity.position.x - 0.27f, entity.position.y + 0.40f, entity.position.z - 0.03f},
+                       {0.13f, 0.11f, 0.31f}, wing);
+            AppendCube(output, {entity.position.x + 0.27f, entity.position.y + 0.40f, entity.position.z - 0.03f},
+                       {0.13f, 0.11f, 0.31f}, wing);
+            AppendCube(output, {entity.position.x, entity.position.y + 0.36f, entity.position.z - 0.47f},
+                       {0.12f, 0.09f, 0.24f}, feather);
         }
     }
 }
