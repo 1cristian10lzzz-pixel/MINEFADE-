@@ -6,6 +6,7 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdio>
+#include <filesystem>
 #include <string>
 #include <utility>
 
@@ -261,6 +262,20 @@ bool Engine::Initialise(float displayDensity, const std::uint8_t* atlasPixels,
                             static_cast<float>(spawnZ)};
     } else if (!storagePath_.empty()) {
         if (!world_.Load(storagePath_, player_.position, inventory_.counts)) {
+            // Keep a copy of a damaged/unsupported save before replacing it with
+            // a fresh playable world. This avoids silently destroying old progress.
+            std::error_code backupError;
+            const bool saveExists = std::filesystem::exists(storagePath_, backupError) && !backupError;
+            if (saveExists) {
+                const std::string backupPath = storagePath_ + ".recovery-backup";
+                std::filesystem::copy_file(storagePath_, backupPath,
+                    std::filesystem::copy_options::none, backupError);
+                if (!backupError) {
+                    ENGINE_LOGE("Unreadable world save preserved at %s", backupPath.c_str());
+                } else {
+                    ENGINE_LOGE("Could not preserve unreadable world save: %s", backupError.message().c_str());
+                }
+            }
             world_.GenerateAround(8, 8, 0);
             player_.position = {8.0f, static_cast<float>(world_.GetSurfaceHeight(8, 8)) + 1.05f, 8.0f};
         }
