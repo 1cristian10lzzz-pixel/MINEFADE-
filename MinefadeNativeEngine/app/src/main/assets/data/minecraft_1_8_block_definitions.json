@@ -422,7 +422,7 @@
   "obsidian": {
     "isotropic": true,
     "textures": "obsidian",
-    "brightness_gamma": 2.0,
+    "brightness_gamma": 2,
     "sound": "stone"
   },
   "torch": {
@@ -1707,5 +1707,93 @@
     "textures": "scaffolding",
     "isotropic": false,
     "sound": "scaffolding"
+  },
+  "copper_ore": {
+    "textures": "copper_ore",
+    "sound": "stone"
+  },
+  "deepslate": {
+    "textures": "deepslate",
+    "sound": "stone"
+  },
+  "deepslate_coal_ore": {
+    "textures": "deepslate_coal_ore",
+    "sound": "stone"
+  },
+  "deepslate_iron_ore": {
+    "textures": "deepslate_iron_ore",
+    "sound": "stone"
+  },
+  "deepslate_copper_ore": {
+    "textures": "deepslate_copper_ore",
+    "sound": "stone"
+  },
+  "deepslate_gold_ore": {
+    "textures": "deepslate_gold_ore",
+    "sound": "stone"
+  },
+  "deepslate_redstone_ore": {
+    "textures": "deepslate_redstone_ore",
+    "sound": "stone"
+  },
+  "deepslate_emerald_ore": {
+    "textures": "deepslate_emerald_ore",
+    "sound": "stone"
+  },
+  "deepslate_lapis_ore": {
+    "textures": "deepslate_lapis_ore",
+    "sound": "stone"
+  },
+  "deepslate_diamond_ore": {
+    "textures": "deepslate_diamond_ore",
+    "sound": "stone"
+  },
+  "ancient_debris": {
+    "textures": "ancient_debris",
+    "sound": "stone"
+  },
+  "netherite_block": {
+    "textures": "netherite_block",
+    "sound": "stone"
+  },
+  "amethyst_block": {
+    "textures": "amethyst_block",
+    "sound": "stone"
+  },
+  "budding_amethyst": {
+    "textures": "budding_amethyst",
+    "sound": "stone"
+  },
+  "calcite": {
+    "textures": "calcite",
+    "sound": "stone"
+  },
+  "tuff": {
+    "textures": "tuff",
+    "sound": "stone"
+  },
+  "basalt": {
+    "textures": "basalt",
+    "sound": "stone"
+  },
+  "raw_iron_block": {
+    "textures": "raw_iron_block",
+    "sound": "stone"
+  },
+  "raw_gold_block": {
+    "textures": "raw_gold_block",
+    "sound": "stone"
+  },
+  "raw_copper_block": {
+    "textures": "raw_copper_block",
+    "sound": "stone"
+  },
+  "copper_block": {
+    "textures": "copper_block",
+    "sound": "stone"
+  },
+  "amethyst_cluster": {
+    "textures": "amethyst_cluster",
+    "sound": "stone"
   }
 }
