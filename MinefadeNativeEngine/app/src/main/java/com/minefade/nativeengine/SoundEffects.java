@@ -9,6 +9,7 @@ import android.util.Log;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /** Low-latency local game audio with load-state tracking and live master volume. */
 public final class SoundEffects {
@@ -16,6 +17,7 @@ public final class SoundEffects {
     private final SoundPool pool;
     private final SharedPreferences preferences;
     private final Set<Integer> loadedSamples = Collections.synchronizedSet(new HashSet<>());
+    private final AtomicInteger variationSequence = new AtomicInteger();
     private final int blockBreak;
     private final int blockPlace;
     private final int uiClick;
@@ -71,7 +73,12 @@ public final class SoundEffects {
         if (released || sampleId == 0 || !loadedSamples.contains(sampleId)) return;
         final float volume = clamp(masterVolume * gain);
         if (volume <= 0.001f) return;
-        pool.play(sampleId, volume, volume, 1, 0, Math.max(0.5f, Math.min(2.0f, rate)));
+        // Tiny deterministic pitch/gain changes make repeated block and footstep
+        // samples feel less mechanical without introducing expensive audio work.
+        final int variation = Math.floorMod(variationSequence.getAndIncrement() * 37 + sampleId * 11, 9) - 4;
+        final float variedRate = Math.max(0.88f, Math.min(1.14f, rate + variation * 0.0125f));
+        final float variedVolume = clamp(volume * (0.97f + Math.floorMod(variation + 4, 5) * 0.015f));
+        pool.play(sampleId, variedVolume, variedVolume, 1, 0, variedRate);
     }
 
     /** Menu feedback works before the GL world is launched. */
@@ -87,6 +94,10 @@ public final class SoundEffects {
         if ((events & 8) != 0) play(itemPickup, 0.88f, 1.0f);
         if ((events & 16) != 0) play(jump, 0.74f, 1.0f);
         if ((events & 32) != 0) play(footstep, 0.32f, 1.0f);
+    }
+
+    public int loadedSampleCount() {
+        return loadedSamples.size();
     }
 
     public void release() {
