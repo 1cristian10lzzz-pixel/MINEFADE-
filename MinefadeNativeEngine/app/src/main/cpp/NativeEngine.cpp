@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 #include <cstdint>
+#include <exception>
 
 namespace {
 constexpr const char* kTag = "MinefadeNativeJNI";
@@ -17,14 +18,32 @@ Java_com_minefade_nativeengine_NativeBridge_nativeInit(JNIEnv* env, jclass, jflo
     if (atlas == nullptr || width <= 0 || height <= 0) return JNI_FALSE;
     const jsize length = env->GetArrayLength(atlas);
     if (length <= 0) return JNI_FALSE;
-    std::vector<std::uint8_t> pixels(static_cast<std::size_t>(length));
-    env->GetByteArrayRegion(atlas, 0, length, reinterpret_cast<jbyte*>(pixels.data()));
-    if (env->ExceptionCheck()) { env->ExceptionClear(); return JNI_FALSE; }
-    const bool result = minefade::GetEngine().Initialise(static_cast<float>(density), pixels.data(), pixels.size(),
-                                                          static_cast<int>(width), static_cast<int>(height));
-    __android_log_print(result ? ANDROID_LOG_INFO : ANDROID_LOG_ERROR, kTag,
-                        "Engine initialisation %s", result ? "succeeded" : "failed");
-    return result ? JNI_TRUE : JNI_FALSE;
+    auto& engine = minefade::GetEngine();
+    try {
+        std::vector<std::uint8_t> pixels(static_cast<std::size_t>(length));
+        env->GetByteArrayRegion(atlas, 0, length, reinterpret_cast<jbyte*>(pixels.data()));
+        if (env->ExceptionCheck()) {
+            env->ExceptionDescribe();
+            env->ExceptionClear();
+            engine.Shutdown();
+            return JNI_FALSE;
+        }
+        const bool result = engine.Initialise(static_cast<float>(density), pixels.data(), pixels.size(),
+                                               static_cast<int>(width), static_cast<int>(height));
+        __android_log_print(result ? ANDROID_LOG_INFO : ANDROID_LOG_ERROR, kTag,
+                            "Engine initialisation %s", result ? "succeeded" : "failed");
+        return result ? JNI_TRUE : JNI_FALSE;
+    } catch (const std::exception& error) {
+        __android_log_print(ANDROID_LOG_ERROR, kTag,
+                            "Engine initialisation threw: %s", error.what());
+    } catch (...) {
+        __android_log_print(ANDROID_LOG_ERROR, kTag,
+                            "Engine initialisation threw an unknown native exception");
+    }
+    // Never allow a C++ exception to cross the JNI boundary or leave a half-built
+    // GL world around for the Retry button to inherit.
+    engine.Shutdown();
+    return JNI_FALSE;
 }
 
 extern "C" JNIEXPORT void JNICALL
