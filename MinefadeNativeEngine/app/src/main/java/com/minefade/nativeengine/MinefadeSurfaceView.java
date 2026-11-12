@@ -25,13 +25,15 @@ public final class MinefadeSurfaceView extends GLSurfaceView {
     private final InitializationListener initializationListener;
 
     public MinefadeSurfaceView(Context context, SoundEffects soundEffects, float displayDensity,
+                               boolean multiplayerMode, int playerSlot, String storagePath,
                                LanMultiplayerService multiplayer, InitializationListener listener) {
         super(context);
         initializationListener = listener;
         setEGLContextClientVersion(3);
         setEGLConfigChooser(8, 8, 8, 8, 16, 0);
         setPreserveEGLContextOnPause(true);
-        setRenderer(new EngineRenderer(context, soundEffects, displayDensity, multiplayer));
+        setRenderer(new EngineRenderer(context, soundEffects, displayDensity,
+                multiplayerMode, playerSlot, storagePath, multiplayer));
         setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);
         setFocusable(true);
         setFocusableInTouchMode(true);
@@ -183,13 +185,20 @@ public final class MinefadeSurfaceView extends GLSurfaceView {
         private final SoundEffects soundEffects;
         private final float displayDensity;
         private final AssetManager assetManager;
+        private final boolean multiplayerMode;
+        private final int playerSlot;
+        private final String storagePath;
         private final LanMultiplayerService multiplayer;
 
         EngineRenderer(Context context, SoundEffects soundEffects, float displayDensity,
+                       boolean multiplayerMode, int playerSlot, String storagePath,
                        LanMultiplayerService multiplayer) {
             assetManager = context.getAssets();
             this.soundEffects = soundEffects;
             this.displayDensity = displayDensity;
+            this.multiplayerMode = multiplayerMode;
+            this.playerSlot = Math.max(0, Math.min(31, playerSlot));
+            this.storagePath = storagePath;
             this.multiplayer = multiplayer;
         }
 
@@ -201,6 +210,9 @@ public final class MinefadeSurfaceView extends GLSurfaceView {
             GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
             try {
                 byte[] atlas = readBlockAtlas(assetManager);
+                // Set mode and storage on the same GL thread as nativeInit/render.
+                NativeBridge.nativeSetMultiplayerMode(multiplayerMode, playerSlot);
+                NativeBridge.nativeSetStoragePath(storagePath);
                 nativeReady = NativeBridge.nativeInit(displayDensity, atlas, 576, 486);
                 if (nativeReady) {
                     Log.i(TAG, "Native renderer initialised successfully");
