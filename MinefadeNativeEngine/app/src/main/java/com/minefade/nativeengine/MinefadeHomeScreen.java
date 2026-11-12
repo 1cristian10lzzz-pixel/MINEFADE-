@@ -28,6 +28,7 @@ import android.widget.SeekBar;
 import android.widget.Switch;
 import android.widget.TextView;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -204,7 +205,7 @@ public final class MinefadeHomeScreen extends FrameLayout {
         subParams.topMargin = dp(2);
         brand.addView(sub, subParams);
         header.addView(brand, new LinearLayout.LayoutParams(0, -2, 1f));
-        TextView status = pill("NATIVE ENGINE  ·  PREVIEW", 0xff9bdd70);
+        TextView status = pill("MOTOR NATIVO  ·  OPENGL ES 3", 0xff9bdd70);
         header.addView(status, new LinearLayout.LayoutParams(-2, dp(28)));
         shell.addView(header, new LinearLayout.LayoutParams(-1, dp(38)));
 
@@ -268,7 +269,7 @@ public final class MinefadeHomeScreen extends FrameLayout {
         LinearLayout.LayoutParams taglineParams = new LinearLayout.LayoutParams(-1, -2);
         taglineParams.topMargin = dp(4);
         overlay.addView(tagline, taglineParams);
-        TextView footer = text("Mundos guardados · Generación procedural", 9, 0xffa5bac8, false);
+        TextView footer = text("Biomas · cuevas · montañas · mundo persistente", 9, 0xffa5bac8, false);
         LinearLayout.LayoutParams footParams = new LinearLayout.LayoutParams(-1, -2);
         footParams.topMargin = dp(9);
         overlay.addView(footer, footParams);
@@ -281,7 +282,9 @@ public final class MinefadeHomeScreen extends FrameLayout {
     }
 
     private void showWorlds() {
-        LinearLayout root = pageRoot("MUNDOS", "Partidas locales guardadas en este dispositivo.");
+        final boolean hasSavedWorld = new File(getContext().getFilesDir(),
+                "worlds/default.mfworld").isFile();
+        LinearLayout root = pageRoot("MUNDOS", "Crea tu mundo o vuelve a tu partida local.");
         LinearLayout card = column();
         card.setPadding(dp(17), dp(15), dp(17), dp(15));
         card.setBackground(shape(new int[]{0xff1b453a, 0xff122c35}, 18, 0x6676b88d));
@@ -297,15 +300,15 @@ public final class MinefadeHomeScreen extends FrameLayout {
         top.addView(icon, new LinearLayout.LayoutParams(dp(48), dp(48)));
         LinearLayout identity = column();
         identity.setPadding(dp(11), 0, 0, 0);
-        identity.addView(text("MUNDO PRINCIPAL", 15, white, true));
-        TextView subtitle = text("Partida local · modo individual", 9, 0xffb7d1c5, false);
+        identity.addView(text(hasSavedWorld ? "MUNDO PRINCIPAL" : "NUEVA AVENTURA", 15, white, true));
+        TextView subtitle = text(hasSavedWorld ? "Partida local · guardado encontrado" : "Partida local · mundo por generar", 9, 0xffb7d1c5, false);
         LinearLayout.LayoutParams sp = new LinearLayout.LayoutParams(-1, -2);
         sp.topMargin = dp(4);
         identity.addView(subtitle, sp);
         top.addView(identity, new LinearLayout.LayoutParams(0, -2, 1f));
-        top.addView(pill("AUTOGUARDADO", 0xffb9f27c), new LinearLayout.LayoutParams(-2, dp(25)));
+        top.addView(pill(hasSavedWorld ? "GUARDADO" : "NUEVO", 0xffb9f27c), new LinearLayout.LayoutParams(-2, dp(25)));
         card.addView(top);
-        TextView description = text("Continúa tu aventura. En la primera entrada se generará el mundo; después se cargará desde el guardado local.", 10, 0xffc0d3d9, false);
+        TextView description = text(hasSavedWorld ? "Tu mundo está guardado en este dispositivo. Entra para continuar exactamente donde lo dejaste." : "Todavía no hay ningún mundo guardado. Minefade generará el terreno y abrirá tu primera aventura al continuar.", 10, 0xffc0d3d9, false);
         description.setGravity(Gravity.TOP);
         LinearLayout.LayoutParams dp = new LinearLayout.LayoutParams(-1, -2);
         dp.topMargin = this.dp(15);
@@ -321,11 +324,11 @@ public final class MinefadeHomeScreen extends FrameLayout {
         card.addView(facts, fp);
         View spacer = new View(getContext());
         card.addView(spacer, new LinearLayout.LayoutParams(1, 0, 1f));
-        TextView enter = actionButton("ENTRAR AL MUNDO", () -> listener.onPlay());
+        TextView enter = actionButton(hasSavedWorld ? "CONTINUAR PARTIDA" : "CREAR MUNDO Y JUGAR", () -> listener.onPlay());
         LinearLayout.LayoutParams ep = new LinearLayout.LayoutParams(-1, this.dp(46));
         ep.topMargin = this.dp(12);
         card.addView(enter, ep);
-        TextView note = text("No desinstales la aplicación para conservar tus mundos locales.", 8, 0xff9eb9ad, false);
+        TextView note = text("El progreso se guarda automáticamente en el dispositivo.", 8, 0xff9eb9ad, false);
         note.setGravity(Gravity.CENTER);
         LinearLayout.LayoutParams np = new LinearLayout.LayoutParams(-1, this.dp(25));
         np.topMargin = this.dp(5);
