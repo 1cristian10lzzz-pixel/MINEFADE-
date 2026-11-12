@@ -197,7 +197,30 @@ bool Engine::UploadBlockAtlas(const std::uint8_t* pixels, std::size_t bytes, int
 
 bool Engine::Initialise(float displayDensity, const std::uint8_t* atlasPixels,
                         std::size_t atlasBytes, int atlasWidth, int atlasHeight) {
+    // Preserve the previous world first (Shutdown saves it when appropriate), then
+    // reset every gameplay subsystem before loading or creating the next session.
+    // Without this reset, a failed/missing save could silently reuse stale chunks,
+    // entities, drops, inventory and player state from the previous GL session.
     Shutdown();
+    world_ = VoxelWorld(0x4D464445u);
+    player_ = Player();
+    inventory_ = Inventory();
+    droppedItems_ = DroppedItemSystem();
+    entities_ = EntitySystem();
+    environment_ = EnvironmentSystem();
+    remotePlayers_.clear();
+    pendingBlockEdits_.clear();
+    touches_.clear();
+    inventoryVisible_ = false;
+    pauseVisible_ = false;
+    thirdPerson_ = false;
+    miningPointerId_ = -1;
+    miningElapsed_ = 0.0f;
+    miningRequired_ = 0.0f;
+    pickupToastText_.clear();
+    exitRequested_.store(false, std::memory_order_release);
+    soundEvents_.store(0u, std::memory_order_release);
+
     multiplayerMode_ = pendingMultiplayerMode_;
     multiplayerSlot_ = pendingMultiplayerSlot_;
     ENGINE_LOGI("Starting Minefade Native Engine C++20 / OpenGL ES 3");
@@ -276,7 +299,11 @@ bool Engine::Initialise(float displayDensity, const std::uint8_t* atlasPixels,
     thirdPerson_ = false;
     ui_.SetPerspectiveEnabled(false);
     RefreshInventoryUi();
-    ENGINE_LOGI("World ready: %zu chunks, %zu vertices", world_.ChunkCount(), worldMesh_.size());
+    ENGINE_LOGI("World ready: %zu chunks, %zu vertices, seed=%u",
+                world_.ChunkCount(), worldMesh_.size(), world_.Seed());
+    // Commit the first generated world immediately. This makes the first launch
+    // distinguishable from an empty menu and ensures the next launch can continue it.
+    SaveWorld();
     return true;
 }
 
