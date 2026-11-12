@@ -73,3 +73,17 @@ jobs:
           path: MinefadeNativeEngine/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 14
+
+      - name: Package complete source tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          git archive --format=zip --output=Minefade-0.6.0-source.zip HEAD
+
+      - name: Upload complete source
+        uses: actions/upload-artifact@v4
+        with:
+          name: Minefade-0.6.0-source
+          path: Minefade-0.6.0-source.zip
+          if-no-files-found: error
+          retention-days: 14
