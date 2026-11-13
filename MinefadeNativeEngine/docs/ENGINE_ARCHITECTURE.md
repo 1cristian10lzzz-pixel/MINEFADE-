@@ -66,17 +66,17 @@ La rama `minefade-source-review` añade una primera corrección verificable sobr
 - **HUD compacto:** se ocultan el rótulo superior y la instrucción permanente; se reducen los controles y espacios de la barra rápida, se quitan sus números, y la información del bloque objetivo y los objetos recogidos usa texto/progreso sin una caja opaca.
 - **Carga de chunks:** la generación del terreno permite hasta dos tareas de chunk simultáneas. La construcción de mallas, su carga a OpenGL ES y parte del trabajo de visibilidad todavía ocurren en el hilo de renderizado.
 
-La compilación de revisión se construye como variante de depuración con identificador de paquete separado `com.minefade.nativeengine.review`, para permitir una instalación de prueba paralela a otra instalación.
+La compilación de revisión se construye como variante de depuración con identificador de paquete separado `com.minefade.nativeengine.review6`, para permitir una instalación de prueba paralela a las revisiones anteriores.
 
 ## Funciones que siguen pendientes
 
-Esta revisión **no** es una reconstrucción completa de la versión clásica de Minefade. La base de repositorio disponible es el Native Engine 0.5.0 Alpha y todavía no contiene los menús clásicos, la personalización de avatar ni todos los sistemas anteriores. Siguen pendientes:
+Esta revisión **no** es una reconstrucción completa de la versión clásica de Minefade. La base disponible es el Native Engine y conserva sus límites de sistemas jugables. Los menús, ajustes modulares y editor de avatar están presentes en esta rama; lo siguiente sigue pendiente:
 
 - Modelo del jugador visible y animado en tercera persona; modelos de entidades con esqueleto, animaciones e IA completa.
 - Sistema de herramientas/armadura y bonificaciones de minería; daño, combate, hambre, consumo de alimentos y animación de mano.
 - Inventario de 7 columnas, recetas, cofres/tolvas funcionales y un sistema general de objetos no limitados a bloques.
-- Menús completos de inicio, ajustes, creación de mundos, logros, chat con emoji, muerte, configuración de controles y minimapa top-down.
-- Multijugador LAN/Internet, lluvia, agua dinámica, sombras reales y estructuras de mundo.
+- Logros con progresión completa, chat con emoji, pantalla de muerte y minimapa top-down.
+- Multijugador de Internet, lluvia, simulación completa de fluidos, shadow maps y estructuras de mundo.
 - Mallas por chunk con caché incremental, descarga de chunks lejanos, frustum/occlusion culling y LOD. El worker doble es solo un primer paso, no una solución completa de rendimiento.
 - Catálogo moderno completo de contenido: el registro actual conserva 284 bloques de una fuente Bedrock 1.8 y agrega 22 bloques minerales/modernos. Aún no incluye como sistemas jugables el equipo de cobre, cofres y golem de cobre, oxidación/encerado, geodas completas ni todas las incorporaciones posteriores de Minecraft.
 
@@ -84,7 +84,7 @@ Las pruebas automatizadas verifican los smoke tests del mundo, la recuperación 
 
 ## Opciones gráficas y avatar
 
-El menú de ajustes separa vídeo, audio, controles, interfaz y accesibilidad. Los perfiles de calidad, distancia de chunks, ondas de agua, sensibilidad e inversión vertical se entregan al motor por JNI antes de crear el mundo. La vista previa usa proyección de cajas 3D de voxel con giro táctil y selección de caras visibles. Las seis elecciones se pasan por JNI al jugador nativo y modifican sus materiales, cabello, ojos, ropa, armadura y accesorios. El modelo del juego sigue siendo una malla articulada por piezas con animación básica, no un rig esquelético/GLB completo; las apariencias remotas todavía no se replican por LAN.
+El menú de ajustes separa vídeo, audio, controles, interfaz y accesibilidad. Calidad, distancia de chunks, FOV, sombras de contacto, ondas de agua, sensibilidad e inversión vertical se entregan al motor por JNI antes de crear el mundo. La vista previa usa proyección de cajas 3D de voxel con giro táctil y selección de caras visibles. Las seis elecciones se pasan por JNI al jugador nativo y modifican sus materiales, cabello, ojos, ropa, armadura y accesorios. El modelo del juego sigue siendo una malla articulada por piezas con animación básica, no un rig esquelético/GLB completo; las apariencias remotas todavía no se replican por LAN.
 
 ## Rust y estrategia de migración
 
