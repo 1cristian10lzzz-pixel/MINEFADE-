@@ -1,0 +1,158 @@
+{
+  "stone": {
+    "textures": "stone",
+    "sound": "stone"
+  },
+  "dirt": {
+    "isotropic": true,
+    "textures": "dirt",
+    "sound": "gravel"
+  },
+  "cobblestone": {
+    "textures": "cobblestone",
+    "sound": "stone"
+  },
+  "bedrock": {
+    "textures": "bedrock",
+    "sound": "stone"
+  },
+  "sand": {
+    "isotropic": true,
+    "textures": "sand",
+    "brightness_gamma": 0.55,
+    "sound": "sand"
+  },
+  "gravel": {
+    "textures": "gravel",
+    "sound": "gravel"
+  },
+  "sandstone": {
+    "isotropic": {
+      "up": true,
+      "down": true
+    },
+    "textures": {
+      "up": "sandstone_top",
+      "down": "sandstone_bottom",
+      "side": "sandstone_side"
+    },
+    "brightness_gamma": 0.7,
+    "sound": "stone"
+  },
+  "mossy_cobblestone": {
+    "textures": "cobblestone_mossy",
+    "sound": "stone"
+  },
+  "obsidian": {
+    "isotropic": true,
+    "textures": "obsidian",
+    "brightness_gamma": 2,
+    "sound": "stone"
+  },
+  "snow_layer": {
+    "isotropic": true,
+    "textures": "snow",
+    "brightness_gamma": 0.45,
+    "sound": "snow"
+  },
+  "ice": {
+    "textures": "ice",
+    "sound": "glass"
+  },
+  "snow": {
+    "isotropic": true,
+    "textures": "snow",
+    "brightness_gamma": 0.45,
+    "sound": "snow"
+  },
+  "clay": {
+    "isotropic": true,
+    "textures": "clay",
+    "sound": "gravel"
+  },
+  "netherrack": {
+    "isotropic": true,
+    "textures": "netherrack",
+    "sound": "stone"
+  },
+  "magma": {
+    "isotropic": true,
+    "textures": "magma",
+    "sound": "stone"
+  },
+  "soul_sand": {
+    "textures": "soul_sand",
+    "sound": "sand"
+  },
+  "glowstone": {
+    "isotropic": true,
+    "textures": "glowstone",
+    "sound": "glass"
+  },
+  "stonebrick": {
+    "textures": "stonebrick",
+    "sound": "stone"
+  },
+  "end_stone": {
+    "textures": "end_stone",
+    "sound": "stone"
+  },
+  "cobblestone_wall": {
+    "textures": "cobblestone_wall"
+  },
+  "stained_hardened_clay": {
+    "isotropic": true,
+    "textures": "stained_clay",
+    "sound": "stone"
+  },
+  "hardened_clay": {
+    "isotropic": true,
+    "textures": "hardened_clay",
+    "sound": "stone"
+  },
+  "packed_ice": {
+    "textures": "ice_packed",
+    "sound": "glass"
+  },
+  "blue_ice": {
+    "textures": "blue_ice",
+    "sound": "glass"
+  },
+  "red_sandstone": {
+    "isotropic": {
+      "up": true,
+      "down": true
+    },
+    "textures": {
+      "up": "redsandstone_top",
+      "down": "redsandstone_bottom",
+      "side": "redsandstone_side"
+    },
+    "brightness_gamma": 0.7,
+    "sound": "stone"
+  },
+  "stonecutter": {
+    "textures": {
+      "up": "stonecutter_top",
+      "down": "stonecutter_bottom",
+      "north": "stonecutter_side",
+      "south": "stonecutter_side",
+      "west": "stonecutter_other_side",
+      "east": "stonecutter_other_side"
+    },
+    "sound": "stone"
+  },
+  "glowingobsidian": {
+    "textures": "glowing_obsidian",
+    "brightness_gamma": 0.8,
+    "sound": "stone"
+  },
+  "prismarine": {
+    "textures": "prismarine",
+    "sound": "stone"
+  },
+  "frosted_ice": {
+    "textures": "frosted_ice",
+    "sound": "glass"
+  }
+}
