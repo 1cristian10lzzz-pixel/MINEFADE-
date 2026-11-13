@@ -30,8 +30,10 @@ uniform float uDaylight;
 uniform float uTime;
 uniform float uQuality;
 uniform int uWaterWaves;
+uniform vec3 uCameraPosition;
 out mediump vec3 vColor;
 out mediump vec2 vTexCoord;
+out mediump float vFogDistance;
 void main() {
     vec3 position = aPosition;
     float fluidCode = aColor.r;
@@ -42,6 +44,7 @@ void main() {
         position.y += wave * (uQuality > 1.5 ? 0.018 : 0.009);
     }
     gl_Position = uMvp * vec4(position, 1.0);
+    vFogDistance = distance(position, uCameraPosition);
     float diffuse = max(dot(normalize(aNormal), normalize(-uLightDirection)), 0.0);
     float qualityFactor = clamp(uQuality * 0.5, 0.0, 1.0);
     float ambient = mix(0.17, 0.34, qualityFactor);
@@ -59,12 +62,18 @@ constexpr char kWorldFragmentShader[] = R"(
 precision mediump float;
 in mediump vec3 vColor;
 in mediump vec2 vTexCoord;
+in mediump float vFogDistance;
 uniform sampler2D uBlockAtlas;
 uniform int uUseAtlas;
+uniform vec3 uFogColor;
+uniform float uFogNear;
+uniform float uFogFar;
 out vec4 outColor;
 void main() {
     vec4 texel = (uUseAtlas == 1) ? texture(uBlockAtlas, vTexCoord) : vec4(1.0);
-    outColor = vec4(texel.rgb * vColor, texel.a);
+    vec3 litColor = texel.rgb * vColor;
+    float fog = smoothstep(uFogNear, uFogFar, vFogDistance);
+    outColor = vec4(mix(litColor, uFogColor, fog), texel.a);
 }
 )";
 
@@ -180,9 +189,14 @@ bool Engine::CreateWorldProgram() {
     timeLocation_ = glGetUniformLocation(worldProgram_, "uTime");
     qualityLocation_ = glGetUniformLocation(worldProgram_, "uQuality");
     waterWavesLocation_ = glGetUniformLocation(worldProgram_, "uWaterWaves");
+    cameraLocation_ = glGetUniformLocation(worldProgram_, "uCameraPosition");
+    fogColorLocation_ = glGetUniformLocation(worldProgram_, "uFogColor");
+    fogNearLocation_ = glGetUniformLocation(worldProgram_, "uFogNear");
+    fogFarLocation_ = glGetUniformLocation(worldProgram_, "uFogFar");
     if (mvpLocation_ < 0 || lightLocation_ < 0 || daylightLocation_ < 0 ||
         atlasLocation_ < 0 || useAtlasLocation_ < 0 || timeLocation_ < 0 ||
-        qualityLocation_ < 0 || waterWavesLocation_ < 0) return false;
+        qualityLocation_ < 0 || waterWavesLocation_ < 0 || cameraLocation_ < 0 ||
+        fogColorLocation_ < 0 || fogNearLocation_ < 0 || fogFarLocation_ < 0) return false;
     glUseProgram(worldProgram_);
     glUniform1i(atlasLocation_, 0);
     glUniform1i(useAtlasLocation_, 1);
@@ -376,6 +390,7 @@ void Engine::Shutdown() {
     worldProgram_ = blockAtlasTexture_ = 0;
     mvpLocation_ = lightLocation_ = daylightLocation_ = atlasLocation_ = useAtlasLocation_ = -1;
     timeLocation_ = qualityLocation_ = waterWavesLocation_ = -1;
+    cameraLocation_ = fogColorLocation_ = fogNearLocation_ = fogFarLocation_ = -1;
     worldVertexCount_ = transparentVertexCount_ = entityVertexCount_ = 0;
     ready_ = false;
     touches_.clear();
@@ -652,6 +667,12 @@ void Engine::Render() {
         glUniform1f(timeLocation_, static_cast<float>(ElapsedSeconds()));
         glUniform1f(qualityLocation_, static_cast<float>(graphicsQuality_));
         glUniform1i(waterWavesLocation_, waterWaves_ ? 1 : 0);
+        glUniform3f(cameraLocation_, eye.x, eye.y, eye.z);
+        glUniform3f(fogColorLocation_, sky[0], sky[1], sky[2]);
+        const float fogStart = 12.0f + static_cast<float>(renderDistanceChunks_) * 14.0f;
+        const float fogEnd = std::min(120.0f, fogStart + 34.0f + static_cast<float>(graphicsQuality_) * 10.0f);
+        glUniform1f(fogNearLocation_, fogStart);
+        glUniform1f(fogFarLocation_, fogEnd);
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, blockAtlasTexture_);
         glBindVertexArray(worldVao_);
