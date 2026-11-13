@@ -338,8 +338,10 @@ bool Engine::Initialise(float displayDensity, const std::uint8_t* atlasPixels,
     contactShadows_ = pendingContactShadows_;
     player_.SetContactShadows(contactShadows_);
     entities_.SetContactShadows(contactShadows_);
-    lookSensitivity_ = pendingLookSensitivity_;
+    lookSensitivityX_ = pendingLookSensitivityX_;
+    lookSensitivityY_ = pendingLookSensitivityY_;
     invertLookY_ = pendingInvertLookY_;
+    leftHandedControls_ = pendingLeftHandedControls_;
     ENGINE_LOGI("Starting Minefade Native Engine C++20 / OpenGL ES 3");
     const auto* glVersion = reinterpret_cast<const char*>(glGetString(GL_VERSION));
     const auto* glRenderer = reinterpret_cast<const char*>(glGetString(GL_RENDERER));
@@ -916,8 +918,8 @@ void Engine::Touch(int action, int pointerId, float x, float y) {
             }
             if (state.moved) {
                 const float verticalDirection = invertLookY_ ? -1.0f : 1.0f;
-                player_.Rotate(deltaX * lookSensitivity_,
-                               deltaY * lookSensitivity_ * verticalDirection);
+                player_.Rotate(deltaX * lookSensitivityX_,
+                               deltaY * lookSensitivityY_ * verticalDirection);
             }
         }
         state.lastX = x;
@@ -1204,16 +1206,16 @@ void Engine::SetGraphicsOptions(int quality,int renderDistanceChunks,bool waterW
     }
 }
 
-void Engine::SetInputOptions(float sensitivity, bool invertLookY) {
-    pendingLookSensitivity_ = std::clamp(sensitivity, 0.35f, 1.50f);
+void Engine::SetInputOptions(float sensitivityX, float sensitivityY, bool invertLookY, bool leftHanded) {
+    pendingLookSensitivityX_ = std::clamp(sensitivityX, 0.35f, 1.50f);
+    pendingLookSensitivityY_ = std::clamp(sensitivityY, 0.35f, 1.50f);
     pendingInvertLookY_ = invertLookY;
-    if (!ready_) {
-        lookSensitivity_ = pendingLookSensitivity_;
-        invertLookY_ = pendingInvertLookY_;
-    } else {
-        lookSensitivity_ = pendingLookSensitivity_;
-        invertLookY_ = pendingInvertLookY_;
-    }
+    pendingLeftHandedControls_ = leftHanded;
+    lookSensitivityX_ = pendingLookSensitivityX_;
+    lookSensitivityY_ = pendingLookSensitivityY_;
+    invertLookY_ = pendingInvertLookY_;
+    leftHandedControls_ = pendingLeftHandedControls_;
+    ui_.SetLeftHanded(leftHandedControls_);
 }
 
 void Engine::SetAvatarAppearance(const int* values,std::size_t count) {
