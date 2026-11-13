@@ -16,6 +16,7 @@ constexpr const char* kTag = "MinefadeNative";
 constexpr float kPi = 3.14159265358979323846f;
 #define ENGINE_LOGI(...) __android_log_print(ANDROID_LOG_INFO, kTag, __VA_ARGS__)
 #define ENGINE_LOGE(...) __android_log_print(ANDROID_LOG_ERROR, kTag, __VA_ARGS__)
+#define ENGINE_LOGW(...) __android_log_print(ANDROID_LOG_WARN, kTag, __VA_ARGS__)
 
 constexpr char kWorldVertexShader[] = R"(
 #version 300 es
