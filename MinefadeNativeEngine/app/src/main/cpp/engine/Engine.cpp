@@ -279,10 +279,28 @@ void main() {
 
 bool Engine::UploadBlockAtlas(const std::uint8_t* pixels, std::size_t bytes, int width, int height) {
     if (pixels == nullptr || width <= 0 || height <= 0) return false;
-    const std::size_t expected = static_cast<std::size_t>(width) * static_cast<std::size_t>(height) * 4u;
-    if (bytes != expected) return false;
+    GLint maximumTextureSize = 0;
+    glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maximumTextureSize);
+    if (maximumTextureSize <= 0 || width > maximumTextureSize || height > maximumTextureSize) {
+        ENGINE_LOGE("Atlas dimensions %dx%d exceed GL_MAX_TEXTURE_SIZE=%d",
+                    width, height, maximumTextureSize);
+        return false;
+    }
+    const std::size_t safeWidth = static_cast<std::size_t>(width);
+    const std::size_t safeHeight = static_cast<std::size_t>(height);
+    if (safeWidth > std::numeric_limits<std::size_t>::max() / safeHeight / 4u) {
+        ENGINE_LOGE("Atlas byte count would overflow size_t");
+        return false;
+    }
+    const std::size_t expected = safeWidth * safeHeight * 4u;
+    if (bytes != expected) {
+        ENGINE_LOGE("Atlas byte count mismatch: got %zu expected %zu", bytes, expected);
+        return false;
+    }
     glGenTextures(1, &blockAtlasTexture_);
     if (blockAtlasTexture_ == 0) return false;
+    GLint previousUnpackAlignment = 4;
+    glGetIntegerv(GL_UNPACK_ALIGNMENT, &previousUnpackAlignment);
     glBindTexture(GL_TEXTURE_2D, blockAtlasTexture_);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -290,13 +308,14 @@ bool Engine::UploadBlockAtlas(const std::uint8_t* pixels, std::size_t bytes, int
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+    glPixelStorei(GL_UNPACK_ALIGNMENT, previousUnpackAlignment);
     glBindTexture(GL_TEXTURE_2D, 0);
-    GLint error = GL_NO_ERROR;
-    error = glGetError();
+    const GLenum error = glGetError();
     if (error != GL_NO_ERROR) {
         glDeleteTextures(1, &blockAtlasTexture_);
         blockAtlasTexture_ = 0;
-        ENGINE_LOGE("Block atlas upload failed: GL error %d", error);
+        ENGINE_LOGE("Block atlas upload failed: GL error 0x%04X",
+                    static_cast<unsigned int>(error));
         return false;
     }
     return true;
