@@ -81,6 +81,10 @@ private:
     GLint timeLocation_{-1};
     GLint qualityLocation_{-1};
     GLint waterWavesLocation_{-1};
+    GLint cameraLocation_{-1};
+    GLint fogColorLocation_{-1};
+    GLint fogNearLocation_{-1};
+    GLint fogFarLocation_{-1};
     GLuint blockAtlasTexture_{0};
     GLuint entityVao_{0};
     GLuint entityVbo_{0};
