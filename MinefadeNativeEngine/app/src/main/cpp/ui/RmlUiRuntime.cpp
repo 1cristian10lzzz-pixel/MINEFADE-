@@ -163,7 +163,16 @@ bool RmlUiRuntime::Initialise(int width, int height, float displayDensity, Actio
         return false;
     }
     context_->SetDensityIndependentPixelRatio(displayDensity > 0.25f ? displayDensity : 1.0f);
-    document_ = context_->LoadDocumentFromMemory(kHudDocument, "minefade://hud.rml");
+    std::string hudMarkup = kHudDocument;
+    if (leftHanded_) {
+        const auto replaceStyle = [&hudMarkup](const std::string& from, const std::string& to) {
+            const std::size_t position = hudMarkup.find(from);
+            if (position != std::string::npos) hudMarkup.replace(position, from.size(), to);
+        };
+        replaceStyle("left: 17dp; bottom: 48dp;", "right: 17dp; left: auto; bottom: 48dp;");
+        replaceStyle("right: 21dp; bottom: 67dp;", "left: 21dp; right: auto; bottom: 67dp;");
+    }
+    document_ = context_->LoadDocumentFromMemory(hudMarkup, "minefade://hud.rml");
     if (document_ == nullptr) {
         __android_log_print(ANDROID_LOG_ERROR, kTag, "Could not load the Minefade HUD document");
         Rml::RemoveContext("minefade_hud");
