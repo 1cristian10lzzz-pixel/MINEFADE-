@@ -21,6 +21,7 @@ public final class NativeBridge {
     public static native void nativeSetMultiplayerMode(boolean enabled, int playerSlot);
     public static native void nativeSetGraphicsOptions(int quality, int renderDistanceChunks, boolean waterWaves);
     public static native void nativeSetInputOptions(float sensitivity, boolean invertLookY);
+    public static native void nativeSetAvatarAppearance(int[] choices);
     public static native float[] nativeGetPlayerState();
     public static native void nativeSetRemotePlayers(float[] values);
     public static native int[] nativeConsumeBlockEdits();
