@@ -84,7 +84,7 @@ Las pruebas automatizadas verifican los smoke tests del mundo, la recuperación 
 
 ## Opciones gráficas y avatar
 
-El menú de ajustes separa vídeo, audio, controles, interfaz y accesibilidad. Los perfiles de calidad, distancia de chunks, ondas de agua, sensibilidad e inversión vertical se entregan al motor por JNI antes de crear el mundo. La vista previa de avatar actual es una proyección 2.5D con geometría de voxel dibujada por Canvas y giro táctil; no debe confundirse con el futuro modelo GLB/esquelético compartido con el personaje jugable.
+El menú de ajustes separa vídeo, audio, controles, interfaz y accesibilidad. Los perfiles de calidad, distancia de chunks, ondas de agua, sensibilidad e inversión vertical se entregan al motor por JNI antes de crear el mundo. La vista previa usa proyección de cajas 3D de voxel con giro táctil y selección de caras visibles. Las seis elecciones se pasan por JNI al jugador nativo y modifican sus materiales, cabello, ojos, ropa, armadura y accesorios. El modelo del juego sigue siendo una malla articulada por piezas con animación básica, no un rig esquelético/GLB completo; las apariencias remotas todavía no se replican por LAN.
 
 ## Rust y estrategia de migración
 
