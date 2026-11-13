@@ -37,9 +37,11 @@ Java_com_minefade_nativeengine_NativeBridge_nativeInit(JNIEnv* env, jclass, jflo
                             "Engine initialisation %s", result ? "succeeded" : "failed");
         return result ? JNI_TRUE : JNI_FALSE;
     } catch (const std::exception& error) {
-        __android_log_print(ANDROID_LOG_ERROR, kTag,
-                            "Engine initialisation threw: %s", error.what());
+        const std::string detail = std::string("Excepción C++ durante el arranque: ") + error.what();
+        engine.SetLastInitError(detail);
+        __android_log_print(ANDROID_LOG_ERROR, kTag, "Engine initialisation threw: %s", error.what());
     } catch (...) {
+        engine.SetLastInitError("Excepción C++ desconocida durante el arranque del motor.");
         __android_log_print(ANDROID_LOG_ERROR, kTag,
                             "Engine initialisation threw an unknown native exception");
     }
@@ -47,6 +49,12 @@ Java_com_minefade_nativeengine_NativeBridge_nativeInit(JNIEnv* env, jclass, jflo
     // GL world around for the Retry button to inherit.
     engine.Shutdown();
     return JNI_FALSE;
+}
+
+extern "C" JNIEXPORT jstring JNICALL
+Java_com_minefade_nativeengine_NativeBridge_nativeGetLastInitError(JNIEnv* env, jclass) {
+    const std::string message = minefade::GetEngine().LastInitError();
+    return env->NewStringUTF(message.c_str());
 }
 
 extern "C" JNIEXPORT void JNICALL
