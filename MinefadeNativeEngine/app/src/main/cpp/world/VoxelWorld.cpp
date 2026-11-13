@@ -97,7 +97,15 @@ void AppendBox(std::vector<WorldVertex>& out, float x0, float y0, float z0,
             const Vec3& p=kFaces[static_cast<std::size_t>(face)][i];
             points[i]={x0+(x1-x0)*p.x,y0+(y1-y0)*p.y,z0+(z1-z0)*p.z};
         }
-        AddFace(out,points,FaceShade(face),TileForFace(def,face));
+        std::array<float, 3> shade = FaceShade(face);
+        if ((def.flags & BlockFluid) != 0u) {
+            // The renderer recognises these material tags and animates only the
+            // exposed top vertices, while retaining separate water/lava palettes.
+            const bool lava = std::string_view(def.key).find("lava") != std::string_view::npos;
+            shade = lava ? std::array<float,3>{-2.0f, 0.0f, 0.0f}
+                         : std::array<float,3>{-1.0f, 0.0f, 0.0f};
+        }
+        AddFace(out,points,shade,TileForFace(def,face));
     }
 }
 
