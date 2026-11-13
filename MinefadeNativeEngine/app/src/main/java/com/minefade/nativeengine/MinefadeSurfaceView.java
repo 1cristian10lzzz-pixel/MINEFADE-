@@ -228,6 +228,15 @@ public final class MinefadeSurfaceView extends GLSurfaceView {
                 float hudScale = preferences.getInt("hud_scale", 100) / 100.0f;
                 NativeBridge.nativeSetGraphicsOptions(quality, renderDistance, waterWaves);
                 NativeBridge.nativeSetInputOptions(sensitivity, invertLookY);
+                int[] avatarChoices = {
+                        preferences.getInt("avatar_piel", 0),
+                        preferences.getInt("avatar_cabello", 0),
+                        preferences.getInt("avatar_ojos", 0),
+                        preferences.getInt("avatar_ropa", 0),
+                        preferences.getInt("avatar_armadura", 0),
+                        preferences.getInt("avatar_accesorios", 0)
+                };
+                NativeBridge.nativeSetAvatarAppearance(avatarChoices);
                 nativeReady = NativeBridge.nativeInit(displayDensity * hudScale, atlas, ATLAS_WIDTH, ATLAS_HEIGHT);
                 if (nativeReady) {
                     Log.i(TAG, "Native renderer initialised successfully");
