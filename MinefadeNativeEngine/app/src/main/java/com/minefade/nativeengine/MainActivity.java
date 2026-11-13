@@ -248,18 +248,6 @@ public final class MainActivity extends Activity {
         detailParams.topMargin = dp(7);
         card.addView(detailView, detailParams);
 
-        TextView copyDiagnostics = statusButton("COPIAR DIAGNÓSTICO", false);
-        LinearLayout.LayoutParams copyParams = new LinearLayout.LayoutParams(-1, dp(34));
-        copyParams.topMargin = dp(7);
-        card.addView(copyDiagnostics, copyParams);
-        copyDiagnostics.setOnClickListener(v -> {
-            ClipboardManager clipboard = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
-            if (clipboard != null) {
-                clipboard.setPrimaryClip(ClipData.newPlainText("Minefade - diagnóstico de arranque", detail));
-                Toast.makeText(this, "Diagnóstico copiado", Toast.LENGTH_SHORT).show();
-            }
-        });
-
         FrameLayout.LayoutParams cardParams = new FrameLayout.LayoutParams(
                 Math.min(getResources().getDisplayMetrics().widthPixels - dp(40), dp(420)),
                 -2, Gravity.CENTER);
@@ -301,6 +289,18 @@ public final class MainActivity extends Activity {
         LinearLayout.LayoutParams mp = new LinearLayout.LayoutParams(-1, -2);
         mp.topMargin = dp(8);
         card.addView(message, mp);
+
+        TextView copyDiagnostics = statusButton("COPIAR DIAGNÓSTICO", false);
+        LinearLayout.LayoutParams copyParams = new LinearLayout.LayoutParams(-1, dp(34));
+        copyParams.topMargin = dp(9);
+        card.addView(copyDiagnostics, copyParams);
+        copyDiagnostics.setOnClickListener(v -> {
+            ClipboardManager clipboard = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
+            if (clipboard != null) {
+                clipboard.setPrimaryClip(ClipData.newPlainText("Minefade - diagnóstico de arranque", detail));
+                Toast.makeText(this, "Diagnóstico copiado", Toast.LENGTH_SHORT).show();
+            }
+        });
 
         LinearLayout actions = new LinearLayout(this);
         actions.setGravity(Gravity.CENTER);
