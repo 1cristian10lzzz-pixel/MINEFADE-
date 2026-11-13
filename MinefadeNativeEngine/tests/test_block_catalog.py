@@ -6,10 +6,23 @@ import pathlib
 import struct
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
-source = json.loads((ROOT / "app/src/main/assets/data/minecraft_1_8_block_definitions.json").read_text(encoding="utf-8"))
+manifest_path = ROOT / "app/src/main/assets/data/block_modules/manifest.json"
+if manifest_path.is_file():
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    source_keys = manifest["order"]
+    module_names = manifest["modules"]
+    merged_keys = []
+    for module_name in module_names:
+        module = json.loads((manifest_path.parent / module_name).read_text(encoding="utf-8"))
+        merged_keys.extend(module.keys())
+    assert len(merged_keys) == len(set(merged_keys)) == len(source_keys)
+    assert set(merged_keys) == set(source_keys)
+else:
+    source = json.loads((ROOT / "app/src/main/assets/data/minecraft_1_8_block_definitions.json").read_text(encoding="utf-8"))
+    source_keys = [key for key in source if key != "format_version"]
+
 catalog = json.loads((ROOT / "app/src/main/assets/data/minefade_block_catalog.json").read_text(encoding="utf-8"))
 blocks = catalog["blocks"]
-source_keys = [key for key in source if key != "format_version"]
 block_count = len(source_keys)
 assert len(blocks) == block_count == catalog["count"]
 assert block_count >= 306
