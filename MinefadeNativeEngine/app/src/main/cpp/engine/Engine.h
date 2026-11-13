@@ -19,6 +19,8 @@ namespace minefade {
 class Engine {
 public:
     bool Initialise(float displayDensity, const std::uint8_t* atlasPixels, std::size_t atlasBytes, int atlasWidth, int atlasHeight);
+    std::string LastInitError() const;
+    void SetLastInitError(std::string message);
     void Shutdown();
     void Resize(int width, int height);
     void Render();
@@ -155,6 +157,8 @@ private:
     float fps_{0.0f};
     std::atomic_bool exitRequested_{false};
     std::atomic<std::uint32_t> soundEvents_{0};
+    // Kept after GL cleanup so Java can show the exact native startup failure.
+    std::string lastInitError_;
 };
 
 Engine& GetEngine();
