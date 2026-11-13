@@ -37,7 +37,11 @@ button:active { background: #47789b; }
 .panel p { font-size: 12dp; color: #c8d3db; margin: 3dp 0dp 12dp 0dp; }
 .panel .actions { flex-wrap: wrap; }
 #quickbar { position: absolute; bottom: 12dp; left: 50%; margin-left: -143dp; display: flex; flex-direction: row; gap: 3dp; }
-.slot { width: 29dp; min-width: 29dp; height: 32dp; text-align: center; padding: 3dp 2dp; background: #172b3a66; border: 1dp #d8e6ee66; border-radius: 7dp; color: #ffffff; font-size: 10dp; }
+.slot { position: relative; width: 29dp; min-width: 29dp; height: 32dp; text-align: center; padding: 2dp; display: flex; align-items: center; justify-content: center; background: #172b3a66; border: 1dp #d8e6ee66; border-radius: 7dp; color: #ffffff; font-size: 8dp; }
+.slot img { width: 21dp; height: 21dp; display: block; margin: auto; }
+.slot .slot-count { position: absolute; right: 1dp; bottom: 0dp; color: #ffffff; font-size: 7dp; text-shadow: 0dp 1dp 2dp #000000; }
+.inventory-row { display: flex; align-items: center; gap: 7dp; color: #e0e8ed; font-size: 12dp; padding: 5dp 2dp; border-bottom: 1dp #43576a; }
+.inventory-icon { width: 19dp; height: 19dp; }
 #inventory, #pause, #perspective { width: 34dp; height: 34dp; padding: 0dp; text-align: center; background: #172b3a55; border: 1dp #d8e6ee55; border-radius: 9dp; }
 #movement-pad { position: absolute; left: 17dp; bottom: 48dp; width: 92dp; height: 92dp; border-radius: 50%; border: 1dp #ffffff44; background: transparent; pointer-events: none; }
 #movement-pad-inner { position: absolute; left: 25dp; top: 25dp; width: 42dp; height: 42dp; border-radius: 50%; border: 1dp #d9e9a488; background: #6c9c8c33; }
@@ -119,6 +123,9 @@ bool RmlUiRuntime::Initialise(int width, int height, float displayDensity, Actio
         __android_log_print(ANDROID_LOG_ERROR, kTag, "Could not initialise the OpenGL ES RmlUi renderer");
         return false;
     }
+    if(!blockAtlasPixels_.empty())
+        renderer_.SetBlockAtlas(blockAtlasPixels_.data(),blockAtlasPixels_.size(),
+                                blockAtlasWidth_,blockAtlasHeight_);
 
     Rml::SetSystemInterface(&system_);
     Rml::SetRenderInterface(&renderer_);
@@ -211,6 +218,21 @@ void RmlUiRuntime::Shutdown() {
     renderer_.Shutdown();
 }
 
+void RmlUiRuntime::SetBlockAtlas(const std::uint8_t* pixels,std::size_t bytes,
+                                     int width,int height) {
+    if(pixels==nullptr||width<=0||height<=0) {
+        blockAtlasPixels_.clear();
+        blockAtlasWidth_=blockAtlasHeight_=0;
+        return;
+    }
+    const std::size_t expected=static_cast<std::size_t>(width)*
+        static_cast<std::size_t>(height)*4u;
+    if(bytes<expected)return;
+    blockAtlasPixels_.assign(pixels,pixels+expected);
+    blockAtlasWidth_=width;
+    blockAtlasHeight_=height;
+}
+
 void RmlUiRuntime::Resize(int width, int height) {
     width_ = width > 0 ? width : 1;
     height_ = height > 0 ? height : 1;
@@ -280,13 +302,13 @@ void RmlUiRuntime::SetPerspectiveEnabled(bool enabled) {
     }
 }
 
-void RmlUiRuntime::SetQuickbarSlot(int slot, const std::string& label, bool selected) {
-    if (document_ == nullptr || slot < 0 || slot >= 9) return;
-    const std::string id = "slot-" + std::to_string(slot);
-    if (Rml::Element* element = document_->GetElementById(id)) {
+void RmlUiRuntime::SetQuickbarSlot(int slot,const std::string& label,bool selected) {
+    if(document_==nullptr||slot<0||slot>=9)return;
+    const std::string id="slot-"+std::to_string(slot);
+    if(Rml::Element* element=document_->GetElementById(id)) {
         element->SetInnerRML(label);
-        element->SetProperty("border", selected ? "2dp #d9e9a4" : "1dp #ffffff33");
-        element->SetProperty("background-color", selected ? "#d9e9a422" : "#10192322");
+        element->SetProperty("border",selected?"2dp #d9e9a4":"1dp #ffffff33");
+        element->SetProperty("background-color",selected?"#d9e9a422":"#10192322");
     }
 }
 
