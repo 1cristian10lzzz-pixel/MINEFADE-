@@ -298,8 +298,8 @@ public final class MinefadeHomeScreen extends FrameLayout {
         top.addView(icon, new LinearLayout.LayoutParams(dp(48), dp(48)));
         LinearLayout identity = column();
         identity.setPadding(dp(11), 0, 0, 0);
-        identity.addView(text(hasSavedWorld ? "MUNDO PRINCIPAL" : "NUEVA AVENTURA", 15, white, true));
-        TextView subtitle = text(hasSavedWorld ? "Partida local · guardado encontrado" : "Partida local · mundo por generar", 9, 0xffb7d1c5, false);
+        identity.addView(text(hasSavedWorld ? "TU PARTIDA" : "NUEVA AVENTURA", 15, white, true));
+        TextView subtitle = text(hasSavedWorld ? "Guardado disponible" : "Un nuevo mundo te espera", 9, 0xffb7d1c5, false);
         LinearLayout.LayoutParams sp = new LinearLayout.LayoutParams(-1, -2);
         sp.topMargin = dp(4);
         identity.addView(subtitle, sp);
@@ -311,15 +311,6 @@ public final class MinefadeHomeScreen extends FrameLayout {
         LinearLayout.LayoutParams dp = new LinearLayout.LayoutParams(-1, -2);
         dp.topMargin = this.dp(15);
         card.addView(description, dp);
-        LinearLayout facts = row();
-        facts.setPadding(this.dp(10), this.dp(9), this.dp(10), this.dp(9));
-        facts.setBackground(shape(new int[]{0x332a5a4b, 0x22152d36}, 11, 0x334b8d73));
-        facts.addView(text("ALMACENAMIENTO LOCAL", 8, 0xffd1e6d8, true),
-                new LinearLayout.LayoutParams(0, this.dp(23), 1f));
-        facts.addView(text("SIN CUENTA", 8, 0xffa9c4b6, true));
-        LinearLayout.LayoutParams fp = new LinearLayout.LayoutParams(-1, -2);
-        fp.topMargin = this.dp(12);
-        card.addView(facts, fp);
         View spacer = new View(getContext());
         card.addView(spacer, new LinearLayout.LayoutParams(1, 0, 1f));
         TextView enter = actionButton(hasSavedWorld ? "CONTINUAR PARTIDA" : "CREAR MUNDO Y JUGAR", () -> listener.onPlay());
@@ -1110,9 +1101,28 @@ public final class MinefadeHomeScreen extends FrameLayout {
                     null, Shader.TileMode.CLAMP));
             canvas.drawRect(0, 0, w, h, paint);
             paint.setShader(null);
-            paint.setColor(0x1c8bd5ef);
-            for (int x = 0; x < w; x += 38) canvas.drawLine(x, 0, x, h, paint);
-            for (int y = 0; y < h; y += 38) canvas.drawLine(0, y, w, y, paint);
+            // A layered atmospheric backdrop replaces the old visible square grid.
+            // Broad arcs, diagonal light strokes and sparse particles provide depth
+            // without competing with cards, text or the voxel cover illustration.
+            paint.setColor(0x164c9cba);
+            paint.setStyle(Paint.Style.STROKE);
+            paint.setStrokeWidth(Math.max(1f, dp(1)));
+            canvas.drawCircle(w * 0.82f, h * 0.25f, Math.max(w, h) * 0.22f, paint);
+            canvas.drawCircle(w * 0.82f, h * 0.25f, Math.max(w, h) * 0.34f, paint);
+            canvas.drawCircle(w * 0.82f, h * 0.25f, Math.max(w, h) * 0.46f, paint);
+            canvas.drawArc(new RectF(-w * 0.42f, h * 0.52f, w * 0.55f, h * 1.45f),
+                    205, 115, false, paint);
+            paint.setColor(0x124c9cba);
+            canvas.drawLine(w * 0.05f, h * 0.86f, w * 0.42f, h * 0.49f, paint);
+            canvas.drawLine(w * 0.16f, h, w * 0.62f, h * 0.54f, paint);
+            paint.setStyle(Paint.Style.FILL);
+            paint.setColor(0x337ed6bd);
+            for (int i = 0; i < 24; i++) {
+                float px = (i * 79 % 997) / 997f * w;
+                float py = (i * 137 % 991) / 991f * h;
+                float radius = dp(i % 5 == 0 ? 2.0f : 0.8f);
+                canvas.drawCircle(px, py, radius, paint);
+            }
             paint.setShader(new RadialGradient(w * 0.76f, h * 0.22f,
                     Math.max(w, h) * 0.65f,
                     new int[]{0x3342bb8a, 0x00152c3d},
