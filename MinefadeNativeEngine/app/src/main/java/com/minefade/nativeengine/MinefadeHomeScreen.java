@@ -597,6 +597,14 @@ public final class MinefadeHomeScreen extends FrameLayout {
                         "invert_look_y", false));
                 content.addView(settingSwitch("Controles para mano izquierda", "Mueve el joystick al lado derecho y refleja el botón de salto.",
                         "left_handed_controls", false));
+                content.addView(menuButton("↺", "RESTABLECER CONTROLES", "Recupera la configuración predeterminada.",
+                        new int[]{0xff3a4b5d, 0xff263648}, 0xffa9c6d8, 38, () -> {
+                            preferences.edit().putInt("touch_sensitivity", 100)
+                                    .putInt("touch_sensitivity_x", 100).putInt("touch_sensitivity_y", 100)
+                                    .putBoolean("invert_look_y", false).putBoolean("left_handed_controls", false)
+                                    .putBoolean("menu_haptics", true).apply();
+                            showSettingsPage();
+                        }, 4));
                 content.addView(settingSwitch("Animación de respuesta táctil", "Pequeña vibración al pulsar controles.",
                         "menu_haptics", true));
                 break;
@@ -604,6 +612,8 @@ public final class MinefadeHomeScreen extends FrameLayout {
                 settingsHeading(content, "INTERFAZ Y HUD", "Preferencias visuales de los menús y la pantalla de juego.");
                 content.addView(settingSwitch("Animaciones de interfaz", "Transiciones suaves entre pantallas.",
                         "menu_animations", true));
+                content.addView(settingSwitch("Mostrar información superior", "Oculta FPS, chunks y datos del HUD durante la partida.",
+                        "show_hud_stats", true));
                 content.addView(settingSwitch("Vibración de interfaz", "Respuesta táctil en botones del menú.",
                         "menu_haptics", true));
                 content.addView(settingSlider("Escala del HUD", "Tamaño preferido de los elementos de pantalla.",
