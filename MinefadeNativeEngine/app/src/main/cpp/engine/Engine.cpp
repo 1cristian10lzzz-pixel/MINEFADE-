@@ -1007,24 +1007,32 @@ void Engine::UpdateMining(float deltaSeconds) {
 
 void Engine::RefreshInventoryUi() {
     std::string markup;
-    markup.reserve(1800);
-    for (std::size_t i = 0; i < inventory_.counts.size(); ++i) {
-        const std::uint32_t encoded = inventory_.counts[i];
-        const std::uint16_t itemId = static_cast<std::uint16_t>(encoded / 1000u);
-        const std::uint32_t quantity = encoded % 1000u;
-        const BlockDefinition* definition = GetBlockDefinition(static_cast<BlockId>(itemId));
-        const char* name = definition != nullptr ? definition->nameEs : "Vacío";
-        markup += R"(<div class="inventory-row">)";
-        markup += std::to_string(i + 1u) + ". " + name;
-        if (quantity > 0u) markup += " × " + std::to_string(quantity);
-        markup += "</div>";
-        std::string label = "·";
-        if (quantity > 0u) {
-            std::string shortName = name;
-            if (shortName.size() > 3u) shortName.resize(3u);
-            label = shortName;
+    markup.reserve(2400);
+    for(std::size_t i=0;i<inventory_.counts.size();++i) {
+        const std::uint32_t encoded=inventory_.counts[i];
+        const std::uint16_t itemId=static_cast<std::uint16_t>(encoded/1000u);
+        const std::uint32_t quantity=encoded%1000u;
+        const BlockDefinition* definition=GetBlockDefinition(static_cast<BlockId>(itemId));
+        const char* name=definition!=nullptr?definition->nameEs:"Vacío";
+        std::string icon;
+        if(quantity>0u&&itemId>0u) {
+            icon="<img class='inventory-icon' src='minefade://block/"+
+                std::to_string(itemId)+"'/>";
+        } else {
+            icon="<span class='inventory-icon empty-icon'>—</span>";
         }
-        ui_.SetQuickbarSlot(static_cast<int>(i), label, i == inventory_.selectedSlot);
+        markup+="<div class='inventory-row'>"+icon+"<span>";
+        markup+=std::to_string(i+1u)+". "+name;
+        if(quantity>0u)markup+=" × "+std::to_string(quantity);
+        markup+="</span></div>";
+
+        std::string slotMarkup="·";
+        if(quantity>0u&&itemId>0u) {
+            slotMarkup="<img src='minefade://block/"+std::to_string(itemId)+"'/>";
+            if(quantity>1u)slotMarkup+="<span class='slot-count'>"+
+                std::to_string(quantity)+"</span>";
+        }
+        ui_.SetQuickbarSlot(static_cast<int>(i),slotMarkup,i==inventory_.selectedSlot);
     }
     ui_.SetInventoryContents(markup);
 }
