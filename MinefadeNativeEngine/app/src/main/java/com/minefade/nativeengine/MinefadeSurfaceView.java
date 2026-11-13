@@ -1,6 +1,7 @@
 package com.minefade.nativeengine;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.res.AssetManager;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
@@ -26,12 +27,14 @@ public final class MinefadeSurfaceView extends GLSurfaceView {
     private static final int ATLAS_TILE_COUNT = 918;
     private volatile boolean nativeReady;
     private final InitializationListener initializationListener;
+    private final SharedPreferences preferences;
 
     public MinefadeSurfaceView(Context context, SoundEffects soundEffects, float displayDensity,
                                boolean multiplayerMode, int playerSlot, String storagePath,
                                LanMultiplayerService multiplayer, InitializationListener listener) {
         super(context);
         initializationListener = listener;
+        preferences = context.getSharedPreferences("minefade_ui", Context.MODE_PRIVATE);
         setEGLContextClientVersion(3);
         setEGLConfigChooser(8, 8, 8, 8, 16, 0);
         setPreserveEGLContextOnPause(true);
@@ -216,6 +219,14 @@ public final class MinefadeSurfaceView extends GLSurfaceView {
                 // Set mode and storage on the same GL thread as nativeInit/render.
                 NativeBridge.nativeSetMultiplayerMode(multiplayerMode, playerSlot);
                 NativeBridge.nativeSetStoragePath(storagePath);
+                int quality = Math.max(0, Math.min(2, preferences.getInt("graphics_quality", 1)));
+                int renderDistance = Math.max(1, Math.min(3,
+                        preferences.getInt("render_distance", 1) + 1));
+                boolean waterWaves = preferences.getBoolean("water_waves", true);
+                float sensitivity = preferences.getInt("touch_sensitivity", 100) / 100.0f;
+                boolean invertLookY = preferences.getBoolean("invert_look_y", false);
+                NativeBridge.nativeSetGraphicsOptions(quality, renderDistance, waterWaves);
+                NativeBridge.nativeSetInputOptions(sensitivity, invertLookY);
                 nativeReady = NativeBridge.nativeInit(displayDensity, atlas, ATLAS_WIDTH, ATLAS_HEIGHT);
                 if (nativeReady) {
                     Log.i(TAG, "Native renderer initialised successfully");
