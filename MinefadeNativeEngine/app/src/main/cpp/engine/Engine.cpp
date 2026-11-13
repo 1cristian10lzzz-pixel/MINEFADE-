@@ -159,52 +159,120 @@ GLuint Engine::CompileShader(GLenum type, const char* source) {
 }
 
 bool Engine::CreateWorldProgram() {
-    const GLuint vertex = CompileShader(GL_VERTEX_SHADER, kWorldVertexShader);
-    const GLuint fragment = CompileShader(GL_FRAGMENT_SHADER, kWorldFragmentShader);
-    if (vertex == 0 || fragment == 0) {
-        if (vertex != 0) glDeleteShader(vertex);
-        if (fragment != 0) glDeleteShader(fragment);
-        return false;
-    }
-    worldProgram_ = glCreateProgram();
-    glAttachShader(worldProgram_, vertex);
-    glAttachShader(worldProgram_, fragment);
-    glLinkProgram(worldProgram_);
-    glDeleteShader(vertex);
-    glDeleteShader(fragment);
-
-    GLint linked = GL_FALSE;
-    glGetProgramiv(worldProgram_, GL_LINK_STATUS, &linked);
-    if (linked != GL_TRUE) {
-        GLint length = 0;
-        glGetProgramiv(worldProgram_, GL_INFO_LOG_LENGTH, &length);
-        std::string log(static_cast<std::size_t>(std::max(length, 1)), '\0');
-        glGetProgramInfoLog(worldProgram_, length, nullptr, log.data());
-        ENGINE_LOGE("World program failed: %s", log.c_str());
-        glDeleteProgram(worldProgram_);
+    const auto destroyCurrentProgram = [this]() {
+        if (worldProgram_ != 0) glDeleteProgram(worldProgram_);
         worldProgram_ = 0;
+    };
+    const auto buildProgram = [this](const char* vertexSource, const char* fragmentSource) {
+        const GLuint vertex = CompileShader(GL_VERTEX_SHADER, vertexSource);
+        const GLuint fragment = CompileShader(GL_FRAGMENT_SHADER, fragmentSource);
+        if (vertex == 0 || fragment == 0) {
+            if (vertex != 0) glDeleteShader(vertex);
+            if (fragment != 0) glDeleteShader(fragment);
+            return false;
+        }
+        worldProgram_ = glCreateProgram();
+        if (worldProgram_ == 0) {
+            glDeleteShader(vertex);
+            glDeleteShader(fragment);
+            return false;
+        }
+        glAttachShader(worldProgram_, vertex);
+        glAttachShader(worldProgram_, fragment);
+        glLinkProgram(worldProgram_);
+        glDeleteShader(vertex);
+        glDeleteShader(fragment);
+        GLint linked = GL_FALSE;
+        glGetProgramiv(worldProgram_, GL_LINK_STATUS, &linked);
+        if (linked != GL_TRUE) {
+            GLint length = 0;
+            glGetProgramiv(worldProgram_, GL_INFO_LOG_LENGTH, &length);
+            std::string log(static_cast<std::size_t>(std::max(length, 1)), '\0');
+            glGetProgramInfoLog(worldProgram_, length, nullptr, log.data());
+            ENGINE_LOGE("World program link failed: %s", log.c_str());
+            destroyCurrentProgram();
+            return false;
+        }
+        return true;
+    };
+    const auto fetchLocations = [this]() {
+        mvpLocation_ = glGetUniformLocation(worldProgram_, "uMvp");
+        lightLocation_ = glGetUniformLocation(worldProgram_, "uLightDirection");
+        daylightLocation_ = glGetUniformLocation(worldProgram_, "uDaylight");
+        atlasLocation_ = glGetUniformLocation(worldProgram_, "uBlockAtlas");
+        useAtlasLocation_ = glGetUniformLocation(worldProgram_, "uUseAtlas");
+        timeLocation_ = glGetUniformLocation(worldProgram_, "uTime");
+        qualityLocation_ = glGetUniformLocation(worldProgram_, "uQuality");
+        waterWavesLocation_ = glGetUniformLocation(worldProgram_, "uWaterWaves");
+        cameraLocation_ = glGetUniformLocation(worldProgram_, "uCameraPosition");
+        fogColorLocation_ = glGetUniformLocation(worldProgram_, "uFogColor");
+        fogNearLocation_ = glGetUniformLocation(worldProgram_, "uFogNear");
+        fogFarLocation_ = glGetUniformLocation(worldProgram_, "uFogFar");
+    };
+
+    if (buildProgram(kWorldVertexShader, kWorldFragmentShader)) {
+        fetchLocations();
+        if (mvpLocation_ >= 0 && lightLocation_ >= 0 && daylightLocation_ >= 0 &&
+            atlasLocation_ >= 0 && useAtlasLocation_ >= 0 && timeLocation_ >= 0 &&
+            qualityLocation_ >= 0 && waterWavesLocation_ >= 0 && cameraLocation_ >= 0 &&
+            fogColorLocation_ >= 0 && fogNearLocation_ >= 0 && fogFarLocation_ >= 0) {
+            glUseProgram(worldProgram_);
+            glUniform1i(atlasLocation_, 0);
+            glUniform1i(useAtlasLocation_, 1);
+            glUseProgram(0);
+            ENGINE_LOGI("Full world shader compiled and linked");
+            return true;
+        }
+        ENGINE_LOGE("Full world shader linked but one or more required uniforms were optimised out");
+        destroyCurrentProgram();
+    }
+
+    // Some mobile driver versions are fragile with larger shader variants. Keep a
+    // deliberately small ES 3.0 path so the world remains playable without fog,
+    // animated water or per-fragment lighting if the full program is rejected.
+    constexpr char fallbackVertex[] = R"(
+#version 300 es
+precision highp float;
+layout(location=0) in vec3 aPosition;
+layout(location=2) in vec3 aColor;
+layout(location=3) in vec2 aTexCoord;
+uniform mat4 uMvp;
+out mediump vec3 vColor;
+out mediump vec2 vTexCoord;
+void main() {
+    gl_Position = uMvp * vec4(aPosition, 1.0);
+    vColor = aColor;
+    vTexCoord = aTexCoord;
+}
+)";
+    constexpr char fallbackFragment[] = R"(
+#version 300 es
+precision mediump float;
+in mediump vec3 vColor;
+in mediump vec2 vTexCoord;
+uniform sampler2D uBlockAtlas;
+uniform int uUseAtlas;
+out vec4 outColor;
+void main() {
+    vec4 texel = (uUseAtlas == 1) ? texture(uBlockAtlas, vTexCoord) : vec4(1.0);
+    outColor = vec4(texel.rgb * vColor, texel.a);
+}
+)";
+    if (!buildProgram(fallbackVertex, fallbackFragment)) {
+        destroyCurrentProgram();
         return false;
     }
-    mvpLocation_ = glGetUniformLocation(worldProgram_, "uMvp");
-    lightLocation_ = glGetUniformLocation(worldProgram_, "uLightDirection");
-    daylightLocation_ = glGetUniformLocation(worldProgram_, "uDaylight");
-    atlasLocation_ = glGetUniformLocation(worldProgram_, "uBlockAtlas");
-    useAtlasLocation_ = glGetUniformLocation(worldProgram_, "uUseAtlas");
-    timeLocation_ = glGetUniformLocation(worldProgram_, "uTime");
-    qualityLocation_ = glGetUniformLocation(worldProgram_, "uQuality");
-    waterWavesLocation_ = glGetUniformLocation(worldProgram_, "uWaterWaves");
-    cameraLocation_ = glGetUniformLocation(worldProgram_, "uCameraPosition");
-    fogColorLocation_ = glGetUniformLocation(worldProgram_, "uFogColor");
-    fogNearLocation_ = glGetUniformLocation(worldProgram_, "uFogNear");
-    fogFarLocation_ = glGetUniformLocation(worldProgram_, "uFogFar");
-    if (mvpLocation_ < 0 || lightLocation_ < 0 || daylightLocation_ < 0 ||
-        atlasLocation_ < 0 || useAtlasLocation_ < 0 || timeLocation_ < 0 ||
-        qualityLocation_ < 0 || waterWavesLocation_ < 0 || cameraLocation_ < 0 ||
-        fogColorLocation_ < 0 || fogNearLocation_ < 0 || fogFarLocation_ < 0) return false;
+    fetchLocations();
+    if (mvpLocation_ < 0 || atlasLocation_ < 0 || useAtlasLocation_ < 0) {
+        ENGINE_LOGE("Fallback world shader is missing a required uniform");
+        destroyCurrentProgram();
+        return false;
+    }
     glUseProgram(worldProgram_);
     glUniform1i(atlasLocation_, 0);
     glUniform1i(useAtlasLocation_, 1);
     glUseProgram(0);
+    ENGINE_LOGW("Using conservative ES 3.0 fallback world shader");
     return true;
 }
 
