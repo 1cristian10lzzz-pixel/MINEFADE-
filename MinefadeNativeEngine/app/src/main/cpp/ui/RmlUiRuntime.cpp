@@ -164,6 +164,12 @@ bool RmlUiRuntime::Initialise(int width, int height, float displayDensity, Actio
     }
     context_->SetDensityIndependentPixelRatio(displayDensity > 0.25f ? displayDensity : 1.0f);
     std::string hudMarkup = kHudDocument;
+    if (!showStats_) {
+        const std::string statsRule = "#stats { color:";
+        const std::size_t statsPosition = hudMarkup.find(statsRule);
+        if (statsPosition != std::string::npos)
+            hudMarkup.replace(statsPosition, statsRule.size(), "#stats { display: none; color:");
+    }
     if (leftHanded_) {
         const auto replaceStyle = [&hudMarkup](const std::string& from, const std::string& to) {
             const std::size_t position = hudMarkup.find(from);
