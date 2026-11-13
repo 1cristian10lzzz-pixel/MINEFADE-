@@ -238,6 +238,7 @@ bool Engine::Initialise(float displayDensity, const std::uint8_t* atlasPixels,
     Shutdown();
     world_ = VoxelWorld(0x4D464445u);
     player_ = Player();
+    player_.SetAppearance(avatarAppearance_);
     inventory_ = Inventory();
     droppedItems_ = DroppedItemSystem();
     entities_ = EntitySystem();
@@ -1094,6 +1095,17 @@ void Engine::SetInputOptions(float sensitivity, bool invertLookY) {
     } else {
         lookSensitivity_ = pendingLookSensitivity_;
         invertLookY_ = pendingInvertLookY_;
+    }
+}
+
+void Engine::SetAvatarAppearance(const int* values,std::size_t count) {
+    if(values==nullptr||count<avatarAppearance_.size())return;
+    for(std::size_t i=0;i<avatarAppearance_.size();++i)
+        avatarAppearance_[i]=std::clamp(values[i],0,5);
+    player_.SetAppearance(avatarAppearance_);
+    if(ready_) {
+        RebuildEntityMesh();
+        UploadEntityMesh();
     }
 }
 
