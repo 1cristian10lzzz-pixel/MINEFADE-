@@ -183,6 +183,32 @@ public final class MinefadeSurfaceView extends GLSurfaceView {
         return atlas;
     }
 
+    private String readNativeInitError() {
+        try {
+            final String value = NativeBridge.nativeGetLastInitError();
+            return value == null || value.trim().isEmpty()
+                    ? "El motor devolvió false sin proporcionar una causa adicional." : value;
+        } catch (LinkageError | RuntimeException error) {
+            return "No se pudo leer el diagnóstico JNI: " + error.getClass().getSimpleName();
+        }
+    }
+
+    private String buildStartupDiagnostic(String nativeFailure) {
+        final String version = GLES20.glGetString(GLES20.GL_VERSION);
+        final String renderer = GLES20.glGetString(GLES20.GL_RENDERER);
+        final String vendor = GLES20.glGetString(GLES20.GL_VENDOR);
+        final String glsl = GLES20.glGetString(GLES20.GL_SHADING_LANGUAGE_VERSION);
+        final int[] maxTexture = new int[1];
+        GLES20.glGetIntegerv(GLES20.GL_MAX_TEXTURE_SIZE, maxTexture, 0);
+        return "Causa detectada: " + nativeFailure
+                + "\nOpenGL ES: " + (version != null ? version : "no disponible")
+                + "\nGLSL: " + (glsl != null ? glsl : "no disponible")
+                + "\nGPU: " + (renderer != null ? renderer : "no identificada")
+                + "\nFabricante: " + (vendor != null ? vendor : "no disponible")
+                + "\nTextura máxima: " + maxTexture[0] + " px"
+                + "\nNo se ha borrado el archivo del mundo.";
+    }
+
     private static int clamp(int value) {
         return Math.max(0, Math.min(255, value));
     }
@@ -241,18 +267,35 @@ public final class MinefadeSurfaceView extends GLSurfaceView {
                 };
                 NativeBridge.nativeSetAvatarAppearance(avatarChoices);
                 nativeReady = NativeBridge.nativeInit(displayDensity * hudScale, atlas, ATLAS_WIDTH, ATLAS_HEIGHT);
+                if (!nativeReady) {
+                    final String firstFailure = readNativeInitError();
+                    // Retry once with a smaller workload only for resource-allocation failures.
+                    final boolean retryable = firstFailure.contains("memoria")
+                            || firstFailure.contains("buffer")
+                            || firstFailure.contains("malla")
+                            || firstFailure.contains("OUT_OF_MEMORY")
+                            || firstFailure.contains("0x0505");
+                    if (retryable) {
+                        Log.w(TAG, "Retrying with conservative graphics settings: " + firstFailure);
+                        NativeBridge.nativeSetGraphicsOptions(0, 1, false, fieldOfView, false);
+                        nativeReady = NativeBridge.nativeInit(displayDensity * hudScale, atlas, ATLAS_WIDTH, ATLAS_HEIGHT);
+                        if (nativeReady) {
+                            preferences.edit().putInt("graphics_quality", 0)
+                                    .putInt("render_distance", 0)
+                                    .putBoolean("water_waves", false)
+                                    .putBoolean("contact_shadows", false).apply();
+                            Log.w(TAG, "World startup recovered with conservative graphics settings");
+                        } else {
+                            final String secondFailure = readNativeInitError();
+                            notifyError(buildStartupDiagnostic(firstFailure + "\nSegundo intento: " + secondFailure));
+                        }
+                    } else {
+                        notifyError(buildStartupDiagnostic(firstFailure));
+                    }
+                }
                 if (nativeReady) {
                     Log.i(TAG, "Native renderer initialised successfully");
                     notifyReady();
-                } else {
-                    final String glVersion = GLES20.glGetString(GLES20.GL_VERSION);
-                    final String glRenderer = GLES20.glGetString(GLES20.GL_RENDERER);
-                    Log.e(TAG, "Native engine initialisation returned false; GL_VERSION="
-                            + glVersion + "; GL_RENDERER=" + glRenderer);
-                    notifyError("El motor gráfico no pudo iniciarse.\nOpenGL ES: "
-                            + (glVersion != null ? glVersion : "no disponible")
-                            + "\nGPU: " + (glRenderer != null ? glRenderer : "no identificada")
-                            + "\nComprueba la compatibilidad con OpenGL ES 3.0 y vuelve a intentarlo.");
                 }
             } catch (LinkageError | RuntimeException error) {
                 nativeReady = false;
