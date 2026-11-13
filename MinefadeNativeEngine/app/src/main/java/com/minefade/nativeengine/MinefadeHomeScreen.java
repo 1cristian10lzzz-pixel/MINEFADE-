@@ -619,8 +619,12 @@ public final class MinefadeHomeScreen extends FrameLayout {
                         "graphics_quality", new String[]{"Ahorro", "Equilibrado", "Alta"}, 1));
                 content.addView(settingChoice("Distancia de visión", "Más chunks visibles requieren más memoria y GPU.",
                         "render_distance", new String[]{"Cercana · 3×3", "Normal · 5×5", "Amplia · 7×7"}, 1));
+                content.addView(settingSlider("Campo de visión", "Ángulo de cámara en primera y tercera persona.",
+                        "field_of_view", 60, 100, 68, "°"));
                 content.addView(settingSwitch("Ondulación del agua", "Animación suave de la superficie del agua.",
                         "water_waves", true));
+                content.addView(settingSwitch("Sombras de contacto", "Oscurecimiento suave bajo el jugador y las criaturas.",
+                        "contact_shadows", true));
                 TextView note = text("Los cambios gráficos se cargan la próxima vez que entres a un mundo.", 8, muted, false);
                 note.setGravity(Gravity.TOP);
                 LinearLayout.LayoutParams np = new LinearLayout.LayoutParams(-1, -2);
