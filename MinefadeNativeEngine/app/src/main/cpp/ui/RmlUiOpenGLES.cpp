@@ -257,7 +257,7 @@ Rml::TextureHandle RmlUiOpenGLES::LoadTexture(Rml::Vector2i& textureDimensions,c
     try {
         std::size_t parsed=0;
         blockId=std::stoi(uri.substr(std::strlen(prefix)),&parsed);
-        if(parsed!=uri.size()-std::strlen(prefix)||blockId<0)return 0;
+        if(parsed!=uri.size()-std::strlen(prefix)||blockId<0||blockId>=306)return 0;
     } catch(...) { return 0; }
     constexpr int columns=32,cell=18,tileSize=16;
     const int tile=blockId*3+1; // side-facing thumbnail for the block.
