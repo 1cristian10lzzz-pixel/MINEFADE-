@@ -14,6 +14,9 @@ Android Activity / SurfaceView (Java)
            │    ├─ hasta dos tareas asíncronas de generación de chunks
            │    ├─ raycast DDA y reglas de drops/colocación
            │    ├─ malla opaca + malla transparente ordenada
+           │    ├─ pase separado de objetos texturizados (bloque en mano y drops)
+           │    ├─ niebla atmosférica ligada al cielo + ondulación del agua
+           │    └─ geometría de sombras de contacto ligeras
            │    └─ guardado MFVOX002 / lectura MFVOX001
            ├─ OpenGL ES 3.0
            │    ├─ shader 3D, luz direccional y depth buffer
@@ -44,11 +47,12 @@ El catálogo cubre nombres, alias, material/sound, forma aproximada, flags, luz,
 ## Límites actuales
 
 - El backend RmlUi no decodifica imágenes externas y no implementa todos los features avanzados de layers, filters, clip masks y shaders.
+- Las sombras actuales son geometría de contacto simple; todavía no hay shadow maps ni sombras dinámicas proyectadas sobre bloques.
 - El render de transparencias ordena triángulos por distancia, una aproximación móvil; el agua ya ondula con shader, pero todavía no simula caudal, niveles ni refracción compleja.
 - La geometría de las formas parciales y su colisión todavía no representa todos los estados, conexiones y rotaciones.
 - La generación usa hasta dos workers y no descarga chunks visitados de RAM.
 - Las entidades son modelos temporales de cubos y no tienen animación esquelética o IA de producción.
-- La lluvia, la simulación completa de fluidos, las sombras de mapa/profundidad y el multijugador de Internet siguen pendientes.
+- La lluvia, la simulación completa de fluidos, los shadow maps, las sombras dinámicas proyectadas y el multijugador de Internet siguen pendientes.
 - La compilación/instalación del APK necesita Android SDK/NDK/Gradle y una prueba real en un dispositivo; no se marca como validada antes de eso.
 
 
