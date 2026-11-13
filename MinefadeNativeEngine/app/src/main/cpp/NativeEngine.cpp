@@ -7,6 +7,7 @@
 #include <vector>
 #include <cstdint>
 #include <exception>
+#include <new>
 #include <atomic>
 
 namespace {
@@ -43,6 +44,9 @@ Java_com_minefade_nativeengine_NativeBridge_nativeInit(JNIEnv* env, jclass, jflo
         __android_log_print(result ? ANDROID_LOG_INFO : ANDROID_LOG_ERROR, kTag,
                             "Engine initialisation %s", result ? "succeeded" : "failed");
         return result ? JNI_TRUE : JNI_FALSE;
+    } catch (const std::bad_alloc&) {
+        engine.SetLastInitError("Memoria de CPU insuficiente para preparar el mundo. Se puede reintentar con carga gráfica reducida.");
+        __android_log_print(ANDROID_LOG_ERROR, kTag, "Engine initialisation failed: CPU memory exhausted");
     } catch (const std::exception& error) {
         const std::string detail = std::string("Excepción C++ durante el arranque: ") + error.what();
         engine.SetLastInitError(detail);
