@@ -1,8 +1,8 @@
-# Minefade Native Engine — revisión integral de sistemas (0.5.0)
+# Minefade Native Engine — revisión integral de sistemas (0.6.0)
 
 Reconstrucción nativa independiente de Minefade para Android: **C++20**, **OpenGL ES 3.0**, **RmlUi 6.3** y FreeType 2.13.3. El proyecto contiene únicamente el motor y recursos propios de esta rama Native Engine; no modifica el motor binario de Alpha 10.
 
-> **Estado de entrega:** el código fuente y los recursos están preparados y las pruebas nativas del mundo y del catálogo pasan en este entorno. **No se ha generado un APK instalable aquí.** No hay Android SDK, NDK, `gradle`, `sdkmanager` ni `adb` disponibles en el entorno de trabajo y la descarga de Gradle no está accesible. Por eso no adjunto un APK inventado ni afirmo que se haya instalado o probado en un teléfono.
+> **Estado de entrega:** la rama de revisión tiene un workflow de GitHub Actions que ejecuta pruebas nativas, regenera el catálogo/atlas y compila el APK Android de revisión. El workflow confirma la compilación; eso no sustituye una prueba visual, táctil y de instalación en un teléfono físico.
 
 ## Qué se mejoró en esta revisión
 
@@ -22,6 +22,20 @@ El atlas RGBA de 576×522 se genera con pixel-art procedimental original de Mine
 
 **Alcance exacto:** el catálogo conserva las 284 entradas originales 1.8-ish y añade 22 bloques modernos, pero todavía no es una recreación completa de todas las versiones actuales de Minecraft ni de cada estado, orientación o variante de colocación. La resistencia y herramienta preferida son aproximaciones de Minefade cuando `blocks.json` no contiene comportamiento de juego suficiente. Las mallas de escalera, valla, puerta, losa, panel y otros bloques especiales son geometrías base; aún no implementan todos sus estados/orientaciones ni colisión de precisión por forma.
 
+### Catálogo modular de bloques
+
+Las definiciones de contenido ya no se editan como una única lista monolítica. Se organizan en `assets/data/block_modules/`:
+
+- `01_terrain.json`: terreno, roca, suelos y materiales naturales.
+- `02_minerals.json`: menas, minerales profundos, cobre, amatista y materiales de minería.
+- `03_wood_building.json`: madera, construcción, puertas, vallas, escaleras y almacenamiento.
+- `04_vegetation.json`: plantas, hojas, cultivos, flores, corales y vegetación.
+- `05_mechanics_redstone.json`: redstone, mecanismos, raíles y componentes.
+- `06_decoration_misc.json`: decoración y bloques restantes.
+- `manifest.json`: orden estable de IDs y lista de módulos.
+
+El generador combina los módulos siguiendo el manifiesto y valida duplicados/omisiones. El registro C++ se sigue generando como una tabla contigua compacta para conservar búsqueda por ID rápida y buena localidad de caché; separar los archivos editables no obliga a fragmentar la tabla en tiempo de ejecución.
+
 ### Arranque y creación del mundo
 
 - La primera zona de aparición se genera y valida antes de habilitar el control del jugador.
@@ -32,11 +46,11 @@ El atlas RGBA de 576×522 se genera con pixel-art procedimental original de Mine
 ### Mundo y chunks
 
 - Mundo voxel de 16×16 por chunk y 96 bloques de altura.
-- Terreno determinista con ruido de varias escalas, cinco biomas base, océanos, árboles, cactus, cuevas y vetas de carbón, hierro, oro, diamante, lapislázuli y redstone.
+- Terreno determinista con ruido Perlin/fractal de varias escalas, océanos, ríos, pantanos, desiertos, sabanas, bosques, llanuras, nieve y montañas; cuevas amplias, vetas minerales, árboles variables, flores, cactus y formaciones rocosas.
 - Raycast 3D DDA para romper y colocar bloques.
 - Malla con descarte de caras internas de bloques opacos.
-- Pasadas separadas para terreno opaco y superficies transparentes/fluido; los triángulos transparentes se ordenan de lejos a cerca antes de dibujar.
-- Generación de chunks en un worker asíncrono, una tarea a la vez, priorizada por distancia al jugador.
+- Pasadas separadas para terreno opaco y superficies transparentes/fluido; los triángulos transparentes se ordenan de lejos a cerca. El agua incorpora ondulación animada por shader en la superficie superior; todavía no es una simulación completa de niveles/caudal.
+- Generación de chunks con hasta dos workers asíncronos y cola de prioridad por distancia al jugador; la distancia de visión se configura en tres niveles.
 - Guardado binario `MFVOX002`, escritura temporal y renombrado; lectura compatible con el formato de prototipo `MFVOX001`.
 
 La generación asíncrona actual no es un sistema masivo de workers: mantiene un worker para la siguiente tarea y el render vuelve a construir/subir la malla visible cuando se completan chunks. Los chunks visitados siguen residentes en RAM y el guardado tiene un límite de 4096 chunks.
@@ -48,7 +62,7 @@ La generación asíncrona actual no es un sistema masivo de workers: mantiene un
 - Barra rápida de nueve espacios; inventario con inserción atómica y límite de pila por definición.
 - Si el inventario está lleno, romper un bloque que genera objeto restaura el bloque para no perderlo silenciosamente.
 - Tres entidades ambientales de prueba con movimiento y animación básica de extremidades en malla dinámica separada.
-- Ciclo día/noche, cielo variable y luz direccional por cara.
+- Ciclo día/noche, cielo variable, luz direccional, perfiles de calidad y materiales de agua diferenciados; aún no hay sombras dinámicas por mapa de profundidad.
 - Efectos locales de romper, colocar y pulsar botones.
 - Pausa, guardado y reanudación se ejecutan desde el hilo GL mediante eventos de `GLSurfaceView`, evitando carreras con el hilo que actualiza el mundo.
 
@@ -133,3 +147,14 @@ app/src/main/assets/audio/                   Efectos de sonido
  docs/                                         Arquitectura, lista de bloques y preview
  .github/workflows/                            Workflow de compilación Android
 ```
+
+### Revisión de interfaz y avatar
+
+- La portada elimina el eslogan de gran tamaño y las etiquetas de versión/estado del motor; las acciones principales quedan más cerca del encabezado.
+- El fondo de pantallas deja la cuadrícula rígida y usa capas de luz, arcos y partículas tenues.
+- Ajustes se divide en Vídeo, Audio, Controles, Interfaz y Accesibilidad.
+- Calidad gráfica, distancia de chunks, ondulación del agua, sensibilidad, inversión vertical, escala del HUD y preferencias de audio se guardan y se aplican al iniciar una partida.
+- El editor de avatar usa módulos de piel, cabello, ojos, ropa, armadura y accesorios. Los selectores son miniaturas geométricas sombreadas y la vista previa del personaje se puede girar arrastrando.
+- Los objetos caídos y el objeto seleccionado en primera persona usan las celdas de textura del bloque correspondiente en vez de una caja genérica.
+
+La vista previa de avatar actual es una proyección 2.5D dibujada por Canvas con geometría de voxel, no un modelo esquelético GLB ni el mismo mesh de animación del motor. La personalización todavía no cubre mallas 3D completas, materiales por pieza, tintes avanzados o persistencia conectada al jugador del mundo.
