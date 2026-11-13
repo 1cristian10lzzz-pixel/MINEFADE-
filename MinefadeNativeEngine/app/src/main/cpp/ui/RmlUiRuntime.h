@@ -4,6 +4,8 @@
 
 #include <RmlUi/Core.h>
 #include <functional>
+#include <cstdint>
+#include <cstddef>
 #include <memory>
 #include <string>
 #include <utility>
@@ -18,6 +20,7 @@ public:
     bool Initialise(int width, int height, float displayDensity, ActionCallback callback);
     void Shutdown();
     void Resize(int width, int height);
+    void SetBlockAtlas(const std::uint8_t* pixels, std::size_t bytes, int width, int height);
     bool Touch(int action, float x, float y);
     void UpdateAndRender();
     void SetStatus(const std::string& status);
@@ -55,6 +58,9 @@ private:
     ActionCallback callback_;
     std::vector<std::unique_ptr<ActionListener>> listeners_;
     std::vector<Rml::byte> fontData_;
+    std::vector<std::uint8_t> blockAtlasPixels_;
+    int blockAtlasWidth_{0};
+    int blockAtlasHeight_{0};
     int width_{1};
     int height_{1};
     bool ready_{false};
