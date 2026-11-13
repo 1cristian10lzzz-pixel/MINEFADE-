@@ -143,6 +143,11 @@ Java_com_minefade_nativeengine_NativeBridge_nativeSetInputOptions(
 }
 
 extern "C" JNIEXPORT void JNICALL
+Java_com_minefade_nativeengine_NativeBridge_nativeSetHudOptions(JNIEnv*, jclass, jboolean showStats) {
+    minefade::GetEngine().SetHudOptions(showStats == JNI_TRUE);
+}
+
+extern "C" JNIEXPORT void JNICALL
 Java_com_minefade_nativeengine_NativeBridge_nativeSetAvatarAppearance(
         JNIEnv* env, jclass, jintArray choices) {
     if (choices == nullptr || env->GetArrayLength(choices) < 6) return;
