@@ -11,6 +11,7 @@ Esta auditoría diferencia lo que ya existía en Review6, lo nuevo de Review7 y 
 - **#73 — Sensibilidad independiente:** ahora hay ajustes horizontales y verticales separados, conservando el ajuste anterior como valor heredado.
 - **#74 — Invertir eje vertical:** se conserva y sigue conectado al giro de cámara nativo.
 - **#81 — Mano izquierda:** el área real de movimiento se desplaza a la derecha y el botón de salto se refleja a la izquierda; el HUD se reconstruye con esa distribución.
+- **#86 — Zona muerta de joystick:** selector persistente del 5–30%; el motor ignora desviaciones pequeñas alrededor del centro y normaliza progresivamente el resto del recorrido.
 - **#56 (parcial) — Visibilidad del HUD:** se puede ocultar la información superior (FPS/chunks/día) sin ocultar la barra rápida ni los controles.
 - **#100 (parcial) — Preferencias de controles persistentes:** los controles se guardan automáticamente y se añadió restauración de sus valores predeterminados. Todavía no hay perfiles exportables/importables.
 
@@ -23,7 +24,7 @@ Esta auditoría diferencia lo que ya existía en Review6, lo nuevo de Review7 y 
 
 ## Pendientes del bloque 1–100
 
-No se consideran terminados todavía: #4, #5, #10, #11, #12, #15, #21, #22, #24, #26 (falta acceso a ajustes desde pausa), #28 (la carga existe, pero falta progreso real medido), #30, #31–#37 (gestión completa de varios mundos, búsqueda, orden, miniaturas, metadatos y acciones), #39, #41, #43–#46, #48, #51–#52 (editor de posición del HUD y distribución independiente por orientación), #56 (ocultar todos los indicadores, no solo la información superior), #57, #61, #65, #67–#72 (cruceta seleccionable, reubicar salto, agacharse, correr e interacción contextual), #75–#77, #79, #82–#90 (captura sin controles, HUD mínimo/ampliado, lado de mano completo para inventario, dead zone física y mando/remapeo), #93, #95–#96, #98–#99 y la parte de perfiles de #100.
+No se consideran terminados todavía: #4, #5, #10, #11, #12, #15, #21, #22, #24, #26 (falta acceso a ajustes desde pausa), #28 (la carga existe, pero falta progreso real medido), #30, #31–#37 (gestión completa de varios mundos, búsqueda, orden, miniaturas, metadatos y acciones), #39, #41, #43–#46, #48, #51–#52 (editor de posición del HUD y distribución independiente por orientación), #56 (ocultar todos los indicadores, no solo la información superior), #57, #61, #65, #67–#72 (cruceta seleccionable, reubicar salto, agacharse, correr e interacción contextual), #75–#77, #79, #82–#85, #87–#90 (captura sin controles, HUD mínimo/ampliado, lado de mano completo para inventario y mando/remapeo), #93, #95–#96, #98–#99 y la parte de perfiles de #100.
 
 ## Pruebas y límites conocidos
 
