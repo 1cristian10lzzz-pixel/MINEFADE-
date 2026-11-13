@@ -10,7 +10,7 @@ Android Activity / SurfaceView (Java)
            ├─ EntitySystem: 3 entidades ambientales provisionales + objetos caídos
            ├─ EnvironmentSystem: ciclo día/noche, cielo y dirección solar
            ├─ VoxelWorld
-           │    ├─ chunks 16×16×96, biomas y cuevas
+           │    ├─ chunks 16×16×96, biomas, ríos y cuevas
            │    ├─ hasta dos tareas asíncronas de generación de chunks
            │    ├─ raycast DDA y reglas de drops/colocación
            │    ├─ malla opaca + malla transparente ordenada
@@ -28,7 +28,7 @@ Android Activity / SurfaceView (Java)
 
 ## Catálogo de bloques
 
-La fuente de referencia incluye 284 entradas base del APK de Minecraft aportado y 22 extensiones modernas añadidas por Minefade. El registro conserva el orden de los primeros 284 IDs y alcanza 306 bloques con tres tiles por bloque (superior/lateral/inferior). Los píxeles son originales y se generan de forma reproducible mediante `tools/generate_block_catalog.py`; la herramienta no copia PNG del juego de referencia.
+La fuente se divide en seis módulos JSON más un manifiesto de orden estable. La fuente original conserva 284 entradas base y las extensiones modernas añaden 22 bloques: 306 bloques en total con tres tiles por bloque. El generador combina los módulos en una tabla C++ contigua (lookup eficiente y localidad de caché) y un atlas de 918 tiles. Los píxeles son originales y se generan de forma reproducible mediante `tools/generate_block_catalog.py`.
 
 El catálogo cubre nombres, alias, material/sound, forma aproximada, flags, luz, dureza, herramienta, drop y límite de pila. No es paridad con cada estado y orientación de Minecraft: los metadatos no presentes en la fuente son aproximados y varias geometrías todavía usan formas simplificadas.
 
@@ -44,11 +44,11 @@ El catálogo cubre nombres, alias, material/sound, forma aproximada, flags, luz,
 ## Límites actuales
 
 - El backend RmlUi no decodifica imágenes externas y no implementa todos los features avanzados de layers, filters, clip masks y shaders.
-- El render de transparencias ordena triángulos por distancia, una aproximación móvil; no resuelve refracción ni intersecciones complejas.
+- El render de transparencias ordena triángulos por distancia, una aproximación móvil; el agua ya ondula con shader, pero todavía no simula caudal, niveles ni refracción compleja.
 - La geometría de las formas parciales y su colisión todavía no representa todos los estados, conexiones y rotaciones.
-- La generación usa un único worker y no descarga chunks visitados de RAM.
+- La generación usa hasta dos workers y no descarga chunks visitados de RAM.
 - Las entidades son modelos temporales de cubos y no tienen animación esquelética o IA de producción.
-- El multijugador LAN/Internet, la lluvia, el agua dinámica y las sombras de mapa siguen pendientes.
+- La lluvia, la simulación completa de fluidos, las sombras de mapa/profundidad y el multijugador de Internet siguen pendientes.
 - La compilación/instalación del APK necesita Android SDK/NDK/Gradle y una prueba real en un dispositivo; no se marca como validada antes de eso.
 
 
@@ -77,3 +77,11 @@ Esta revisión **no** es una reconstrucción completa de la versión clásica de
 - Catálogo moderno completo de contenido: el registro actual conserva 284 bloques de una fuente Bedrock 1.8 y agrega 22 bloques minerales/modernos. Aún no incluye como sistemas jugables el equipo de cobre, cofres y golem de cobre, oxidación/encerado, geodas completas ni todas las incorporaciones posteriores de Minecraft.
 
 Las pruebas automatizadas verifican los smoke tests del mundo, la recuperación de spawn, la física básica de drops y el catálogo. La compilación CI verifica que se genera el APK Android. Ninguna de esas comprobaciones sustituye una prueba visual y táctil en un dispositivo físico.
+
+## Opciones gráficas y avatar
+
+El menú de ajustes separa vídeo, audio, controles, interfaz y accesibilidad. Los perfiles de calidad, distancia de chunks, ondas de agua, sensibilidad e inversión vertical se entregan al motor por JNI antes de crear el mundo. La vista previa de avatar actual es una proyección 2.5D con geometría de voxel dibujada por Canvas y giro táctil; no debe confundirse con el futuro modelo GLB/esquelético compartido con el personaje jugable.
+
+## Rust y estrategia de migración
+
+El motor Android actual usa C++20 porque OpenGL ES, JNI, RmlUi y el sistema de chunks ya comparten ese ABI. No se ha declarado un motor Rust completo ni se mezcla Rust sin un puente y pruebas Android verificadas. La migración razonable es aislar primero un módulo Rust puro para generación/ruido o estructuras de datos, probarlo en host y Android, y sustituir después una frontera C++ concreta; mantener C++ para el render hasta validar la interoperabilidad evita reemplazos masivos que rompan guardados o arranque.
