@@ -523,10 +523,11 @@ void EntitySystem::AppendMesh(std::vector<WorldVertex>& output) const {
             AppendCube(output, {entity.position.x, entity.position.y + 0.70f, entity.position.z - 0.73f},
                        {0.045f, 0.06f, 0.20f}, hide);
         } else {
-            // Small bird with compact body, head, beak and animated legs.
+            // Small bird with independent wing flap, compact body, head and beak.
             const std::array<float, 3> feather{0.89f, 0.85f, 0.75f};
             const std::array<float, 3> beak{0.91f, 0.60f, 0.18f};
             const std::array<float, 3> foot{0.80f, 0.49f, 0.15f};
+            const float flap=std::sin(entity.phase*13.0f)*0.16f;
             AppendCube(output, {entity.position.x, entity.position.y + 0.39f, entity.position.z},
                        {0.34f, 0.30f, 0.42f}, feather);
             AppendCube(output, {entity.position.x, entity.position.y + 0.69f, entity.position.z + 0.36f},
@@ -543,9 +544,9 @@ void EntitySystem::AppendMesh(std::vector<WorldVertex>& output) const {
                        {0.035f, 0.04f, 0.025f}, eye);
             AppendCube(output, {entity.position.x + 0.12f, entity.position.y + 0.73f, entity.position.z + 0.52f},
                        {0.035f, 0.04f, 0.025f}, eye);
-            AppendCube(output, {entity.position.x - 0.27f, entity.position.y + 0.40f, entity.position.z - 0.03f},
+            AppendCube(output, {entity.position.x - 0.27f, entity.position.y + 0.40f + flap, entity.position.z - 0.03f},
                        {0.13f, 0.11f, 0.31f}, wing);
-            AppendCube(output, {entity.position.x + 0.27f, entity.position.y + 0.40f, entity.position.z - 0.03f},
+            AppendCube(output, {entity.position.x + 0.27f, entity.position.y + 0.40f - flap, entity.position.z - 0.03f},
                        {0.13f, 0.11f, 0.31f}, wing);
             AppendCube(output, {entity.position.x, entity.position.y + 0.36f, entity.position.z - 0.47f},
                        {0.12f, 0.09f, 0.24f}, feather);
