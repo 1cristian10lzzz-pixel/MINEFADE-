@@ -61,6 +61,7 @@ private:
     void UploadTransparentWorldMesh();
     void RebuildEntityMesh();
     void UploadEntityMesh();
+    void UploadItemMesh();
     void HandleUiAction(const std::string& action);
     void SaveWorld();
     void RefreshInventoryUi();
@@ -90,9 +91,12 @@ private:
     GLuint entityVbo_{0};
     GLuint transparentVao_{0};
     GLuint transparentVbo_{0};
+    GLuint itemVao_{0};
+    GLuint itemVbo_{0};
     GLsizei worldVertexCount_{0};
     GLsizei transparentVertexCount_{0};
     GLsizei entityVertexCount_{0};
+    GLsizei itemVertexCount_{0};
     int lastChunkX_{999999};
     int lastChunkZ_{999999};
     int width_{1};
@@ -127,6 +131,7 @@ private:
     std::vector<WorldVertex> worldMesh_;
     std::vector<WorldVertex> transparentWorldMesh_;
     std::vector<WorldVertex> entityMesh_;
+    std::vector<WorldVertex> itemMesh_;
     std::vector<float> remotePlayers_;
     std::vector<int> pendingBlockEdits_;
     std::unordered_map<int, TouchState> touches_;
