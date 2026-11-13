@@ -1,0 +1,365 @@
+{
+  "planks": {
+    "textures": "planks",
+    "sound": "wood"
+  },
+  "log": {
+    "textures": {
+      "up": "log_top",
+      "down": "log_top",
+      "side": "log_side"
+    },
+    "sound": "wood"
+  },
+  "stripped_oak_log": {
+    "textures": {
+      "up": "stripped_oak_log_top",
+      "down": "stripped_oak_log_top",
+      "side": "stripped_oak_log_side"
+    },
+    "sound": "wood"
+  },
+  "stripped_birch_log": {
+    "textures": {
+      "up": "stripped_birch_log_top",
+      "down": "stripped_birch_log_top",
+      "side": "stripped_birch_log_side"
+    },
+    "sound": "wood"
+  },
+  "stripped_dark_oak_log": {
+    "textures": {
+      "up": "stripped_dark_oak_log_top",
+      "down": "stripped_dark_oak_log_top",
+      "side": "stripped_dark_oak_log_side"
+    },
+    "sound": "wood"
+  },
+  "stripped_acacia_log": {
+    "textures": {
+      "up": "stripped_acacia_log_top",
+      "down": "stripped_acacia_log_top",
+      "side": "stripped_acacia_log_side"
+    },
+    "sound": "wood"
+  },
+  "stripped_jungle_log": {
+    "textures": {
+      "up": "stripped_jungle_log_top",
+      "down": "stripped_jungle_log_top",
+      "side": "stripped_jungle_log_side"
+    },
+    "sound": "wood"
+  },
+  "stripped_spruce_log": {
+    "textures": {
+      "up": "stripped_spruce_log_top",
+      "down": "stripped_spruce_log_top",
+      "side": "stripped_spruce_log_side"
+    },
+    "sound": "wood"
+  },
+  "double_stone_slab": {
+    "textures": {
+      "up": "stone_slab_top",
+      "down": "stone_slab_bottom",
+      "side": "stone_slab_side"
+    },
+    "sound": "stone"
+  },
+  "stone_slab": {
+    "textures": {
+      "up": "stone_slab_top",
+      "down": "stone_slab_bottom",
+      "side": "stone_slab_side"
+    },
+    "sound": "stone"
+  },
+  "oak_stairs": {
+    "textures": "wood_oak",
+    "sound": "wood"
+  },
+  "chest": {
+    "textures": {
+      "up": "chest_inventory_top",
+      "down": "chest_inventory_top",
+      "north": "chest_inventory_side",
+      "south": "chest_inventory_front",
+      "west": "chest_inventory_side",
+      "east": "chest_inventory_side"
+    },
+    "sound": "wood"
+  },
+  "crafting_table": {
+    "textures": {
+      "up": "crafting_table_top",
+      "down": "crafting_table_bottom",
+      "north": "crafting_table_front",
+      "south": "crafting_table_front",
+      "west": "crafting_table_side",
+      "east": "crafting_table_side"
+    },
+    "sound": "wood"
+  },
+  "standing_sign": {
+    "textures": "sign",
+    "sound": "wood"
+  },
+  "wooden_door": {
+    "textures": {
+      "up": "door_lower",
+      "down": "door_lower",
+      "side": "door_upper"
+    },
+    "sound": "wood"
+  },
+  "ladder": {
+    "textures": "ladder",
+    "sound": "ladder"
+  },
+  "stone_stairs": {
+    "textures": "cobblestone"
+  },
+  "wall_sign": {
+    "textures": "sign",
+    "sound": "wood"
+  },
+  "iron_door": {
+    "textures": {
+      "up": "door_lower",
+      "down": "door_lower",
+      "side": "door_upper"
+    },
+    "sound": "metal"
+  },
+  "fence": {
+    "textures": "planks",
+    "sound": "wood"
+  },
+  "nether_brick_fence": {
+    "textures": "nether_brick",
+    "sound": "stone"
+  },
+  "trapdoor": {
+    "textures": "trapdoor",
+    "sound": "wood"
+  },
+  "acacia_trapdoor": {
+    "textures": "acacia_trapdoor",
+    "sound": "wood"
+  },
+  "birch_trapdoor": {
+    "textures": "birch_trapdoor",
+    "sound": "wood"
+  },
+  "dark_oak_trapdoor": {
+    "textures": "dark_oak_trapdoor",
+    "sound": "wood"
+  },
+  "jungle_trapdoor": {
+    "textures": "jungle_trapdoor",
+    "sound": "wood"
+  },
+  "spruce_trapdoor": {
+    "textures": "spruce_trapdoor",
+    "sound": "wood"
+  },
+  "fence_gate": {
+    "textures": "wood_oak",
+    "sound": "wood"
+  },
+  "brick_stairs": {
+    "textures": "brick"
+  },
+  "end_gateway": {
+    "textures": "end_gateway"
+  },
+  "spruce_stairs": {
+    "textures": "wood_spruce",
+    "sound": "wood"
+  },
+  "birch_stairs": {
+    "textures": "wood_birch",
+    "sound": "wood"
+  },
+  "jungle_stairs": {
+    "textures": "wood_jungle",
+    "sound": "wood"
+  },
+  "stone_brick_stairs": {
+    "textures": "stonebrick"
+  },
+  "nether_brick_stairs": {
+    "textures": "nether_brick"
+  },
+  "sandstone_stairs": {
+    "isotropic": {
+      "up": true,
+      "down": true
+    },
+    "textures": {
+      "up": "sandstone_top",
+      "down": "sandstone_bottom",
+      "side": "sandstone_side"
+    }
+  },
+  "trapped_chest": {
+    "textures": {
+      "up": "chest_inventory_top",
+      "down": "chest_inventory_top",
+      "north": "chest_inventory_side",
+      "south": "trapped_chest_inventory_front",
+      "west": "chest_inventory_side",
+      "east": "chest_inventory_side"
+    },
+    "sound": "wood"
+  },
+  "quartz_stairs": {
+    "textures": {
+      "up": "stair_quartz_block_top",
+      "down": "stair_quartz_block_bottom",
+      "side": "stair_quartz_block_side"
+    }
+  },
+  "purpur_stairs": {
+    "textures": "stair_purpur_block"
+  },
+  "double_wooden_slab": {
+    "textures": "planks",
+    "sound": "wood"
+  },
+  "wooden_slab": {
+    "textures": "planks",
+    "sound": "wood"
+  },
+  "log2": {
+    "textures": {
+      "up": "log_top2",
+      "down": "log_top2",
+      "side": "log_side2"
+    },
+    "sound": "wood"
+  },
+  "acacia_stairs": {
+    "textures": "wood_acacia",
+    "sound": "wood"
+  },
+  "dark_oak_stairs": {
+    "textures": "wood_big_oak",
+    "sound": "wood"
+  },
+  "iron_trapdoor": {
+    "textures": "iron_trapdoor",
+    "sound": "metal"
+  },
+  "red_sandstone_stairs": {
+    "isotropic": {
+      "up": true,
+      "down": true
+    },
+    "textures": "redsandstone_side"
+  },
+  "double_stone_slab2": {
+    "textures": {
+      "up": "stone_slab_top_2",
+      "down": "stone_slab_bottom_2",
+      "side": "stone_slab_side_2"
+    },
+    "sound": "stone"
+  },
+  "stone_slab2": {
+    "textures": {
+      "up": "stone_slab_top_2",
+      "down": "stone_slab_bottom_2",
+      "side": "stone_slab_side_2"
+    },
+    "sound": "stone"
+  },
+  "spruce_fence_gate": {
+    "textures": "wood_spruce",
+    "sound": "wood"
+  },
+  "birch_fence_gate": {
+    "textures": "wood_birch",
+    "sound": "wood"
+  },
+  "jungle_fence_gate": {
+    "textures": "wood_jungle",
+    "sound": "wood"
+  },
+  "dark_oak_fence_gate": {
+    "textures": "wood_big_oak",
+    "sound": "wood"
+  },
+  "acacia_fence_gate": {
+    "textures": "wood_acacia",
+    "sound": "wood"
+  },
+  "spruce_door": {
+    "textures": {
+      "up": "door_lower",
+      "down": "door_lower",
+      "side": "door_upper"
+    },
+    "sound": "wood"
+  },
+  "birch_door": {
+    "textures": {
+      "up": "door_lower",
+      "down": "door_lower",
+      "side": "door_upper"
+    },
+    "sound": "wood"
+  },
+  "jungle_door": {
+    "textures": {
+      "up": "door_lower",
+      "down": "door_lower",
+      "side": "door_upper"
+    },
+    "sound": "wood"
+  },
+  "acacia_door": {
+    "textures": {
+      "up": "door_lower",
+      "down": "door_lower",
+      "side": "door_upper"
+    },
+    "sound": "wood"
+  },
+  "dark_oak_door": {
+    "textures": {
+      "up": "door_lower",
+      "down": "door_lower",
+      "side": "door_upper"
+    },
+    "sound": "wood"
+  },
+  "ender_chest": {
+    "textures": {
+      "up": "ender_chest_inventory_top",
+      "down": "ender_chest_inventory_top",
+      "north": "ender_chest_inventory_side",
+      "south": "ender_chest_inventory_front",
+      "west": "ender_chest_inventory_side",
+      "east": "ender_chest_inventory_side"
+    }
+  },
+  "prismarine_stairs": {
+    "textures": "prismarine",
+    "sound": "stone"
+  },
+  "dark_prismarine_stairs": {
+    "textures": "dark_prismarine",
+    "sound": "stone"
+  },
+  "prismarine_bricks_stairs": {
+    "textures": "prismarine_bricks",
+    "sound": "stone"
+  },
+  "scaffolding": {
+    "textures": "scaffolding",
+    "isotropic": false,
+    "sound": "scaffolding"
+  }
+}
