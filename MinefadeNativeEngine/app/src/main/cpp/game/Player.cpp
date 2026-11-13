@@ -421,7 +421,6 @@ std::size_t DroppedItemSystem::Update(const VoxelWorld& world, const Player& pla
 
 void DroppedItemSystem::AppendMesh(std::vector<WorldVertex>& output) const {
     for (const DroppedItem& item : drops_) {
-        AppendContactShadow(output,item.position,0.18f,0.18f,0.48f);
         const BlockId block=static_cast<BlockId>(item.itemId);
         AppendTexturedBlockCube(output,block,item.position,{0.13f,0.13f,0.13f});
     }
