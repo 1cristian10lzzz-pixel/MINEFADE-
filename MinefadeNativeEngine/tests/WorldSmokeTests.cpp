@@ -5,6 +5,7 @@
 #include <cassert>
 #include <cmath>
 #include <filesystem>
+#include <fstream>
 #include <iostream>
 
 using namespace minefade;
@@ -82,6 +83,24 @@ int main() {
     assert(std::abs(loadedPlayer.x - savedPlayer.x) < 0.001f);
     assert(loadedInventory == inventory);
     std::filesystem::remove(path);
+
+    // A truncated/invalid world must fail atomically: it must not partially
+    // overwrite the currently loaded world, player position or inventory.
+    const std::string damagedPath = path + ".damaged";
+    {
+        std::ofstream damaged(damagedPath, std::ios::binary | std::ios::trunc);
+        damaged.write("MF", 2);
+    }
+    const Vec3 beforeFailedLoad = loadedPlayer;
+    const auto inventoryBeforeFailedLoad = loadedInventory;
+    const auto chunksBeforeFailedLoad = loaded.ChunkCount();
+    assert(!loaded.Load(damagedPath, loadedPlayer, loadedInventory));
+    assert(loaded.ChunkCount() == chunksBeforeFailedLoad);
+    assert(std::abs(loadedPlayer.x - beforeFailedLoad.x) < 0.001f);
+    assert(std::abs(loadedPlayer.y - beforeFailedLoad.y) < 0.001f);
+    assert(std::abs(loadedPlayer.z - beforeFailedLoad.z) < 0.001f);
+    assert(loadedInventory == inventoryBeforeFailedLoad);
+    std::filesystem::remove(damagedPath);
 
     Inventory slots;
     assert(slots.SelectedItemId() == static_cast<std::uint16_t>(BlockId::Grass));
