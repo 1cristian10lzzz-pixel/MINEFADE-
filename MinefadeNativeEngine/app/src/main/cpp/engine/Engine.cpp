@@ -86,6 +86,10 @@ Engine& GetEngine() {
     return engine;
 }
 
+std::string Engine::LastInitError() const { return lastInitError_; }
+
+void Engine::SetLastInitError(std::string message) { lastInitError_ = std::move(message); }
+
 std::uint32_t Engine::ConsumeSoundEvents() {
     return soundEvents_.exchange(0u, std::memory_order_acq_rel);
 }
@@ -235,6 +239,7 @@ bool Engine::Initialise(float displayDensity, const std::uint8_t* atlasPixels,
     // reset every gameplay subsystem before loading or creating the next session.
     // Without this reset, a failed/missing save could silently reuse stale chunks,
     // entities, drops, inventory and player state from the previous GL session.
+    lastInitError_.clear();
     Shutdown();
     world_ = VoxelWorld(0x4D464445u);
     player_ = Player();
@@ -270,19 +275,36 @@ bool Engine::Initialise(float displayDensity, const std::uint8_t* atlasPixels,
     ENGINE_LOGI("Starting Minefade Native Engine C++20 / OpenGL ES 3");
     const auto* glVersion = reinterpret_cast<const char*>(glGetString(GL_VERSION));
     const auto* glRenderer = reinterpret_cast<const char*>(glGetString(GL_RENDERER));
-    ENGINE_LOGI("OpenGL version=%s renderer=%s", glVersion != nullptr ? glVersion : "unknown",
-                glRenderer != nullptr ? glRenderer : "unknown");
+    const auto* glVendor = reinterpret_cast<const char*>(glGetString(GL_VENDOR));
+    const auto* glslVersion = reinterpret_cast<const char*>(glGetString(GL_SHADING_LANGUAGE_VERSION));
+    GLint maxTextureSize = 0;
+    glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTextureSize);
+    ENGINE_LOGI("OpenGL version=%s GLSL=%s vendor=%s renderer=%s maxTexture=%d",
+                glVersion != nullptr ? glVersion : "unknown",
+                glslVersion != nullptr ? glslVersion : "unknown",
+                glVendor != nullptr ? glVendor : "unknown",
+                glRenderer != nullptr ? glRenderer : "unknown", maxTextureSize);
 
-    const auto failInitialisation = [this]() {
-        ENGINE_LOGE("World initialisation failed; releasing partial GL and UI state");
+    const auto failInitialisation = [this](const std::string& reason) {
+        GLenum glError = glGetError();
+        lastInitError_ = reason;
+        if (glError != GL_NO_ERROR) {
+            char code[24]{};
+            std::snprintf(code, sizeof(code), "0x%04X", static_cast<unsigned int>(glError));
+            lastInitError_ += std::string(" | OpenGL error ") + code;
+        }
+        ENGINE_LOGE("World initialisation failed: %s; releasing partial GL and UI state",
+                    lastInitError_.c_str());
         Shutdown();
         return false;
     };
 
-    if (!CreateWorldProgram()) return failInitialisation();
+    // Clear any stale driver error before attributing a failure to a startup stage.
+    while (glGetError() != GL_NO_ERROR) { }
+    if (!CreateWorldProgram())
+        return failInitialisation("No se pudo compilar o enlazar el shader principal del mundo. Revisa el registro GLSL del controlador.");
     if (!UploadBlockAtlas(atlasPixels, atlasBytes, atlasWidth, atlasHeight)) {
-        ENGINE_LOGE("Minefade block atlas is missing or invalid");
-        return failInitialisation();
+        return failInitialisation("No se pudo cargar la textura atlas de bloques. Comprueba sus dimensiones, memoria gráfica y GL_MAX_TEXTURE_SIZE.");
     }
     glGenVertexArrays(1, &worldVao_);
     glGenBuffers(1, &worldVbo_);
@@ -294,7 +316,12 @@ bool Engine::Initialise(float displayDensity, const std::uint8_t* atlasPixels,
     glGenBuffers(1, &itemVbo_);
     if (worldVao_ == 0 || worldVbo_ == 0 || entityVao_ == 0 || entityVbo_ == 0 ||
         transparentVao_ == 0 || transparentVbo_ == 0 || itemVao_ == 0 || itemVbo_ == 0)
-        return failInitialisation();
+        return failInitialisation("El controlador no pudo reservar los VAO/VBO del mundo, entidades, transparencia u objetos. Posible falta de memoria gráfica.");
+    if (const GLenum error = glGetError(); error != GL_NO_ERROR) {
+        char code[24]{};
+        std::snprintf(code, sizeof(code), "0x%04X", static_cast<unsigned int>(error));
+        return failInitialisation(std::string("Error al reservar buffers OpenGL: ") + code);
+    }
 
     if (multiplayerMode_) {
         // All LAN peers start from the same deterministic seed. The host's block
@@ -335,7 +362,7 @@ bool Engine::Initialise(float displayDensity, const std::uint8_t* atlasPixels,
         player_.position = {8.0f, static_cast<float>(world_.GetSurfaceHeight(8, 8)) + 1.001f, 8.0f};
         if (!player_.ResolveSafeSpawn(world_)) {
             ENGINE_LOGE("Fresh spawn recovery failed; generated terrain has no safe player location");
-            return failInitialisation();
+            return failInitialisation("No se pudo encontrar una posición segura para aparecer incluso después de regenerar el terreno inicial.");
         }
     }
     if (!multiplayerMode_) {
@@ -356,6 +383,11 @@ bool Engine::Initialise(float displayDensity, const std::uint8_t* atlasPixels,
     RebuildEntityMesh();
     UploadEntityMesh();
     UploadItemMesh();
+    if (const GLenum error = glGetError(); error != GL_NO_ERROR) {
+        char code[24]{};
+        std::snprintf(code, sizeof(code), "0x%04X", static_cast<unsigned int>(error));
+        return failInitialisation(std::string("Falló la construcción o transferencia de las mallas del mundo: ") + code);
+    }
 
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LEQUAL);
