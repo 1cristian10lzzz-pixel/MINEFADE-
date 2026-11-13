@@ -209,9 +209,14 @@ int main() {
         const float nz = abx * ady - aby * adx;
         assert(nx * a.nx + ny * a.ny + nz * a.nz > 0.0f);
     }
-    float minX = playerMesh.front().x, maxX = playerMesh.front().x;
-    float minZ = playerMesh.front().z, maxZ = playerMesh.front().z;
-    for (const WorldVertex& vertex : playerMesh) {
+    // The first 18 triangles are the intentionally broad contact shadow;
+    // measure the articulated character body separately from its ground projection.
+    constexpr std::size_t shadowVertexCount = 18u * 3u;
+    assert(playerMesh.size() > shadowVertexCount);
+    float minX = playerMesh[shadowVertexCount].x, maxX = playerMesh[shadowVertexCount].x;
+    float minZ = playerMesh[shadowVertexCount].z, maxZ = playerMesh[shadowVertexCount].z;
+    for (std::size_t i = shadowVertexCount; i < playerMesh.size(); ++i) {
+        const WorldVertex& vertex = playerMesh[i];
         minX = std::min(minX, vertex.x);
         maxX = std::max(maxX, vertex.x);
         minZ = std::min(minZ, vertex.z);
@@ -221,9 +226,10 @@ int main() {
     renderedPlayer.yaw = 1.5707963f;
     playerMesh.clear();
     renderedPlayer.AppendMesh(playerMesh);
-    minX = maxX = playerMesh.front().x;
-    minZ = maxZ = playerMesh.front().z;
-    for (const WorldVertex& vertex : playerMesh) {
+    minX = maxX = playerMesh[shadowVertexCount].x;
+    minZ = maxZ = playerMesh[shadowVertexCount].z;
+    for (std::size_t i = shadowVertexCount; i < playerMesh.size(); ++i) {
+        const WorldVertex& vertex = playerMesh[i];
         minX = std::min(minX, vertex.x);
         maxX = std::max(maxX, vertex.x);
         minZ = std::min(minZ, vertex.z);
