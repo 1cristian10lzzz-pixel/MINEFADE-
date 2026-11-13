@@ -17,10 +17,16 @@ std::atomic_bool gEngineFailure{false};
 extern "C" JNIEXPORT jboolean JNICALL
 Java_com_minefade_nativeengine_NativeBridge_nativeInit(JNIEnv* env, jclass, jfloat density,
                                                            jbyteArray atlas, jint width, jint height) {
-    if (atlas == nullptr || width <= 0 || height <= 0) return JNI_FALSE;
-    const jsize length = env->GetArrayLength(atlas);
-    if (length <= 0) return JNI_FALSE;
     auto& engine = minefade::GetEngine();
+    if (atlas == nullptr || width <= 0 || height <= 0) {
+        engine.SetLastInitError("El atlas de bloques llegó vacío o con dimensiones no válidas desde Android.");
+        return JNI_FALSE;
+    }
+    const jsize length = env->GetArrayLength(atlas);
+    if (length <= 0) {
+        engine.SetLastInitError("Android entregó un atlas de bloques de cero bytes.");
+        return JNI_FALSE;
+    }
     gEngineFailure.store(false, std::memory_order_release);
     try {
         std::vector<std::uint8_t> pixels(static_cast<std::size_t>(length));
@@ -28,6 +34,7 @@ Java_com_minefade_nativeengine_NativeBridge_nativeInit(JNIEnv* env, jclass, jflo
         if (env->ExceptionCheck()) {
             env->ExceptionDescribe();
             env->ExceptionClear();
+            engine.SetLastInitError("JNI no pudo copiar los píxeles del atlas desde la memoria Java.");
             engine.Shutdown();
             return JNI_FALSE;
         }
