@@ -587,11 +587,16 @@ public final class MinefadeHomeScreen extends FrameLayout {
                         "ui_sounds_enabled", true));
                 break;
             case "controls":
-                settingsHeading(content, "CONTROLES TÁCTILES", "Sensibilidad y orientación de la cámara.");
-                content.addView(settingSlider("Sensibilidad de cámara", "Velocidad de giro al deslizar.",
-                        "touch_sensitivity", 35, 150, 100, "%"));
+                settingsHeading(content, "CONTROLES TÁCTILES", "Ajusta cada eje y el lado de movimiento.");
+                int legacyTouch = preferences.getInt("touch_sensitivity", 100);
+                content.addView(settingSlider("Sensibilidad horizontal", "Velocidad de giro de izquierda a derecha.",
+                        "touch_sensitivity_x", 35, 150, legacyTouch, "%"));
+                content.addView(settingSlider("Sensibilidad vertical", "Velocidad de giro de arriba abajo.",
+                        "touch_sensitivity_y", 35, 150, legacyTouch, "%"));
                 content.addView(settingSwitch("Invertir eje vertical", "Invierte el movimiento arriba y abajo.",
                         "invert_look_y", false));
+                content.addView(settingSwitch("Controles para mano izquierda", "Mueve el joystick al lado derecho y refleja el botón de salto.",
+                        "left_handed_controls", false));
                 content.addView(settingSwitch("Animación de respuesta táctil", "Pequeña vibración al pulsar controles.",
                         "menu_haptics", true));
                 break;
