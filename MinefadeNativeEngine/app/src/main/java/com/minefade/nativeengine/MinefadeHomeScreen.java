@@ -282,7 +282,7 @@ public final class MinefadeHomeScreen extends FrameLayout {
     private void showWorlds() {
         final boolean hasSavedWorld = new File(getContext().getFilesDir(),
                 "worlds/default.mfworld").isFile();
-        LinearLayout root = pageRoot("MUNDOS", "Crea tu mundo o vuelve a tu partida local.");
+        LinearLayout root = pageRoot("JUGAR", "Continúa tu aventura o empieza una nueva.");
         LinearLayout card = column();
         card.setPadding(dp(17), dp(15), dp(17), dp(15));
         card.setBackground(shape(new int[]{0xff1b453a, 0xff122c35}, 18, 0x6676b88d));
@@ -292,21 +292,23 @@ public final class MinefadeHomeScreen extends FrameLayout {
         LinearLayout top = row();
         FrameLayout icon = new FrameLayout(getContext());
         icon.setBackground(shape(new int[]{0xff315d48, 0xff1b473c}, 13, 0x557acb91));
-        TextView glyph = text("▦", 25, 0xffb9f27c, true);
-        glyph.setGravity(Gravity.CENTER);
-        icon.addView(glyph, new FrameLayout.LayoutParams(-1, -1));
+        icon.addView(new WorldMarkView(getContext()),
+                new FrameLayout.LayoutParams(-1, -1));
         top.addView(icon, new LinearLayout.LayoutParams(dp(48), dp(48)));
         LinearLayout identity = column();
         identity.setPadding(dp(11), 0, 0, 0);
         identity.addView(text(hasSavedWorld ? "TU PARTIDA" : "NUEVA AVENTURA", 15, white, true));
-        TextView subtitle = text(hasSavedWorld ? "Guardado disponible" : "Un nuevo mundo te espera", 9, 0xffb7d1c5, false);
+        TextView subtitle = text(hasSavedWorld ? "Retoma tu exploración" : "Una aventura nueva te espera",
+                9, 0xffb7d1c5, false);
         LinearLayout.LayoutParams sp = new LinearLayout.LayoutParams(-1, -2);
         sp.topMargin = dp(4);
         identity.addView(subtitle, sp);
         top.addView(identity, new LinearLayout.LayoutParams(0, -2, 1f));
-        top.addView(pill(hasSavedWorld ? "GUARDADO" : "NUEVO", 0xffb9f27c), new LinearLayout.LayoutParams(-2, dp(25)));
         card.addView(top);
-        TextView description = text(hasSavedWorld ? "Tu mundo está guardado en este dispositivo. Entra para continuar exactamente donde lo dejaste." : "Todavía no hay ningún mundo guardado. Minefade generará el terreno y abrirá tu primera aventura al continuar.", 10, 0xffc0d3d9, false);
+        TextView description = text(hasSavedWorld
+                ? "Vuelve a tus construcciones, descubre nuevos lugares y sigue explorando."
+                : "Recorre nuevos biomas, encuentra cuevas y construye tu propio mundo.",
+                10, 0xffc0d3d9, false);
         description.setGravity(Gravity.TOP);
         LinearLayout.LayoutParams dp = new LinearLayout.LayoutParams(-1, -2);
         dp.topMargin = this.dp(15);
@@ -317,11 +319,6 @@ public final class MinefadeHomeScreen extends FrameLayout {
         LinearLayout.LayoutParams ep = new LinearLayout.LayoutParams(-1, this.dp(46));
         ep.topMargin = this.dp(12);
         card.addView(enter, ep);
-        TextView note = text("El progreso se guarda automáticamente en el dispositivo.", 8, 0xff9eb9ad, false);
-        note.setGravity(Gravity.CENTER);
-        LinearLayout.LayoutParams np = new LinearLayout.LayoutParams(-1, this.dp(25));
-        np.topMargin = this.dp(5);
-        card.addView(note, np);
         animateIn(card, 0);
     }
 
@@ -990,6 +987,37 @@ public final class MinefadeHomeScreen extends FrameLayout {
     }
 
     /** Small illustrated appearance pictograms, arranged four across without text labels. */
+    /** Small original voxel-island emblem replacing a generic square glyph. */
+    private final class WorldMarkView extends View {
+        private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        private final Path path = new Path();
+        WorldMarkView(Context context) { super(context); }
+        private void face(Canvas canvas, int color, float... points) {
+            path.reset();
+            path.moveTo(points[0], points[1]);
+            for(int i=2;i<points.length;i+=2)path.lineTo(points[i],points[i+1]);
+            path.close();
+            paint.setColor(color);
+            canvas.drawPath(path,paint);
+        }
+        private void cube(Canvas canvas,float x,float y,float s,int top,int left,int right) {
+            float d=s*0.43f;
+            face(canvas,left,x-s*0.5f,y,x,y+d,x,y+s*0.74f,x-s*0.5f,y+s*0.38f);
+            face(canvas,right,x,y+d,x+s*0.5f,y,x+s*0.5f,y+s*0.38f,x,y+s*0.74f);
+            face(canvas,top,x-s*0.5f,y,x,y-d,x+s*0.5f,y,x,y+d);
+        }
+        @Override protected void onDraw(Canvas canvas) {
+            super.onDraw(canvas);
+            float cx=getWidth()*0.5f,cy=getHeight()*0.52f;
+            float s=Math.min(getWidth(),getHeight())*0.31f;
+            paint.setColor(0x5569d7ac);
+            canvas.drawOval(cx-s*1.4f,cy+s*0.56f,cx+s*1.4f,cy+s*0.95f,paint);
+            cube(canvas,cx-s*0.48f,cy+s*0.05f,s,0xffa8ed6a,0xff26844b,0xff3aa65d);
+            cube(canvas,cx+s*0.48f,cy+s*0.05f,s,0xff83d95a,0xff2d8f4e,0xff47b967);
+            cube(canvas,cx,cy-s*0.45f,s*0.78f,0xffc0f47d,0xff328c4d,0xff55bd65);
+        }
+    }
+
     private static final class Backdrop extends View {
         private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
         Backdrop(Context context) { super(context); }
