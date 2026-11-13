@@ -19,6 +19,7 @@ public:
     bool grounded{false};
     float walkPhase{0.0f};
     std::array<int, 6> appearance{{0,0,0,0,0,0}};
+    bool contactShadows{true};
 
     Vec3 Forward() const;
     Vec3 CameraPosition() const;
@@ -26,6 +27,7 @@ public:
     void Rotate(float deltaX, float deltaY);
     void Jump();
     void SetAppearance(const std::array<int, 6>& appearance);
+    void SetContactShadows(bool enabled) { contactShadows = enabled; }
     // Keeps saved player positions out of solid blocks and finds nearby open ground.
     bool ResolveSafeSpawn(const VoxelWorld& world);
     void Update(const VoxelWorld& world, float deltaSeconds);
@@ -78,10 +80,12 @@ public:
     void SpawnInitial(const VoxelWorld& world);
     void Update(const VoxelWorld& world, float deltaSeconds);
     void AppendMesh(std::vector<WorldVertex>& output) const;
+    void SetContactShadows(bool enabled) { contactShadows_ = enabled; }
     std::size_t Count() const { return entities_.size(); }
 private:
     std::array<Entity, 3> entities_{};
     bool initialized_{false};
+    bool contactShadows_{true};
 };
 
 class EnvironmentSystem {
