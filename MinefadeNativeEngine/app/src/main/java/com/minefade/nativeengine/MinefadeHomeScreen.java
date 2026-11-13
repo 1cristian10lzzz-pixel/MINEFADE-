@@ -1104,9 +1104,10 @@ public final class MinefadeHomeScreen extends FrameLayout {
             // A layered atmospheric backdrop replaces the old visible square grid.
             // Broad arcs, diagonal light strokes and sparse particles provide depth
             // without competing with cards, text or the voxel cover illustration.
+            float density = getResources().getDisplayMetrics().density;
             paint.setColor(0x164c9cba);
             paint.setStyle(Paint.Style.STROKE);
-            paint.setStrokeWidth(Math.max(1f, dp(1)));
+            paint.setStrokeWidth(Math.max(1f, density));
             canvas.drawCircle(w * 0.82f, h * 0.25f, Math.max(w, h) * 0.22f, paint);
             canvas.drawCircle(w * 0.82f, h * 0.25f, Math.max(w, h) * 0.34f, paint);
             canvas.drawCircle(w * 0.82f, h * 0.25f, Math.max(w, h) * 0.46f, paint);
@@ -1120,7 +1121,7 @@ public final class MinefadeHomeScreen extends FrameLayout {
             for (int i = 0; i < 24; i++) {
                 float px = (i * 79 % 997) / 997f * w;
                 float py = (i * 137 % 991) / 991f * h;
-                float radius = dp(i % 5 == 0 ? 2.0f : 0.8f);
+                float radius = density * (i % 5 == 0 ? 2.0f : 0.8f);
                 canvas.drawCircle(px, py, radius, paint);
             }
             paint.setShader(new RadialGradient(w * 0.76f, h * 0.22f,
