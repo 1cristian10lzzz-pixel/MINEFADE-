@@ -7,6 +7,7 @@
 #include <cstddef>
 #include <cstdio>
 #include <filesystem>
+#include <limits>
 #include <string>
 #include <utility>
 
