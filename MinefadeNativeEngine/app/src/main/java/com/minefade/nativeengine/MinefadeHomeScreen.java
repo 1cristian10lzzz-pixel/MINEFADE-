@@ -26,6 +26,8 @@ import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.SeekBar;
 import android.widget.Switch;
+import android.widget.Spinner;
+import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
 import java.io.File;
@@ -52,8 +54,10 @@ public final class MinefadeHomeScreen extends FrameLayout {
     private final int white = Color.rgb(241, 247, 250);
     private final int muted = Color.rgb(157, 177, 190);
     private final int panel = Color.rgb(17, 31, 45);
-    private int avatarTone = 0;
-    private int avatarOutfit = 0;
+    private final int[] avatarStyles = new int[6];
+    private final String[] avatarModules = {"piel", "cabello", "ojos", "ropa", "armadura", "accesorios"};
+    private int avatarModuleIndex = 1;
+    private String settingsModule = "video";
     private AvatarPreview avatarPreview;
     private TextView multiplayerStatus;
     private LinearLayout multiplayerGames;
@@ -63,8 +67,9 @@ public final class MinefadeHomeScreen extends FrameLayout {
         this.listener = listener;
         this.clickSound = clickSound;
         preferences = context.getSharedPreferences("minefade_ui", Context.MODE_PRIVATE);
-        avatarTone = preferences.getInt("avatar_tone", 0);
-        avatarOutfit = preferences.getInt("avatar_outfit", 0);
+        for (int i = 0; i < avatarModules.length; i++)
+            avatarStyles[i] = preferences.getInt("avatar_" + avatarModules[i], 0);
+        settingsModule = preferences.getString("settings_module", "video");
         setClipChildren(false);
         setClipToPadding(false);
         addView(new Backdrop(context), new LayoutParams(-1, -1));
@@ -205,8 +210,6 @@ public final class MinefadeHomeScreen extends FrameLayout {
         subParams.topMargin = dp(2);
         brand.addView(sub, subParams);
         header.addView(brand, new LinearLayout.LayoutParams(0, -2, 1f));
-        TextView status = pill("MOTOR NATIVO  ·  OPENGL ES 3", 0xff9bdd70);
-        header.addView(status, new LinearLayout.LayoutParams(-2, dp(28)));
         shell.addView(header, new LinearLayout.LayoutParams(-1, dp(38)));
 
         LinearLayout body = row();
@@ -218,14 +221,8 @@ public final class MinefadeHomeScreen extends FrameLayout {
         left.setPadding(dp(2), dp(2), dp(10), dp(1));
         body.addView(left, new LinearLayout.LayoutParams(0, -1, 0.94f));
 
-        TextView headline = text("Tu mundo. Tus reglas.", 21, white, true);
-        left.addView(headline);
-        TextView description = text("Explora, construye y descubre.", 10, muted, false);
-        LinearLayout.LayoutParams descriptionParams = new LinearLayout.LayoutParams(-1, -2);
-        descriptionParams.topMargin = dp(4);
-        descriptionParams.bottomMargin = dp(8);
-        left.addView(description, descriptionParams);
-
+        // The home actions start directly below the brand: removing the oversized
+        // slogan frees space for the actual game navigation on short screens.
         List<View> buttons = new ArrayList<>();
         buttons.add(menuButton("▶", "JUGAR", "Continuar tu aventura",
                 new int[]{0xff275d3b, 0xff183e35}, 0xffa9ee70, 48,
@@ -274,11 +271,8 @@ public final class MinefadeHomeScreen extends FrameLayout {
         footParams.topMargin = dp(9);
         overlay.addView(footer, footParams);
 
-        TextView bottom = text("MINEFADE 1.0  ·  DESARROLLO POR FASES", 8, 0xff78909f, true);
-        bottom.setGravity(Gravity.CENTER);
-        LinearLayout.LayoutParams bottomParams = new LinearLayout.LayoutParams(-1, dp(16));
-        bottomParams.topMargin = dp(3);
-        shell.addView(bottom, bottomParams);
+        // No engine/version/debug banner on the start screen; build metadata stays
+        // in the APK and release notes rather than consuming game-menu space.
     }
 
     private void showWorlds() {
