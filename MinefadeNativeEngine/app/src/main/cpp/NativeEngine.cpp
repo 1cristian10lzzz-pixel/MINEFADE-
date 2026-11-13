@@ -119,9 +119,11 @@ Java_com_minefade_nativeengine_NativeBridge_nativeSetMultiplayerMode(JNIEnv*, jc
 
 extern "C" JNIEXPORT void JNICALL
 Java_com_minefade_nativeengine_NativeBridge_nativeSetGraphicsOptions(
-        JNIEnv*, jclass, jint quality, jint renderDistanceChunks, jboolean waterWaves) {
+        JNIEnv*, jclass, jint quality, jint renderDistanceChunks, jboolean waterWaves,
+        jfloat fieldOfView, jboolean contactShadows) {
     minefade::GetEngine().SetGraphicsOptions(static_cast<int>(quality),
-        static_cast<int>(renderDistanceChunks), waterWaves == JNI_TRUE);
+        static_cast<int>(renderDistanceChunks), waterWaves == JNI_TRUE,
+        static_cast<float>(fieldOfView), contactShadows == JNI_TRUE);
 }
 
 extern "C" JNIEXPORT void JNICALL
