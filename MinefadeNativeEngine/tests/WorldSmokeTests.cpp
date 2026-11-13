@@ -194,6 +194,8 @@ int main() {
     Player renderedPlayer;
     renderedPlayer.position = {4.0f, 10.0f, 7.0f};
     renderedPlayer.yaw = 0.0f;
+    const std::array<int,6> avatarChoices{{5,4,1,3,4,2}};
+    renderedPlayer.SetAppearance(avatarChoices);
     std::vector<WorldVertex> playerMesh;
     renderedPlayer.AppendMesh(playerMesh);
     assert(playerMesh.size() >= 400u);
