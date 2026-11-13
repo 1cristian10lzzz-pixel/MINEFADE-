@@ -153,17 +153,17 @@ app/src/main/assets/audio/                   Efectos de sonido
 - La portada elimina el eslogan de gran tamaño y las etiquetas de versión/estado del motor; las acciones principales quedan más cerca del encabezado.
 - El fondo de pantallas deja la cuadrícula rígida y usa capas de luz, arcos y partículas tenues.
 - Ajustes se divide en Vídeo, Audio, Controles, Interfaz y Accesibilidad.
-- Calidad gráfica, distancia de chunks, ondulación del agua, sensibilidad, inversión vertical, escala del HUD y preferencias de audio se guardan y se aplican al iniciar una partida.
-- El editor de avatar usa módulos de piel, cabello, ojos, ropa, armadura y accesorios. Los selectores son miniaturas geométricas sombreadas y la vista previa del personaje se puede girar arrastrando.
+- Calidad gráfica, distancia de chunks, campo de visión, sombras de contacto, ondulación del agua, sensibilidad, inversión vertical, escala del HUD y preferencias de audio se guardan y se aplican al iniciar una partida.
+- El editor de avatar usa módulos de piel, cabello, ojos, ropa, armadura y accesorios. Los selectores son miniaturas geométricas sombreadas y la vista previa de voxel proyectado desde cajas 3D se puede girar arrastrando. Las seis elecciones se envían al jugador nativo mediante JNI.
 - Los objetos caídos y el objeto seleccionado en primera persona usan las celdas de textura del bloque correspondiente en vez de una caja genérica.
 
-La vista previa de avatar actual es una proyección 2.5D dibujada por Canvas con geometría de voxel, no un modelo esquelético GLB ni el mismo mesh de animación del motor. La personalización todavía no cubre mallas 3D completas, materiales por pieza, tintes avanzados o persistencia conectada al jugador del mundo.
+El editor usa una proyección 3D de piezas voxel dibujadas por Canvas; el jugador en el mundo también recibe las opciones y cambia sus materiales y capas de cabello/armadura/accesorios. El personaje nativo sigue siendo una malla articulada por piezas con animaciones básicas, no un rig esquelético/GLB completo; las apariencias de jugadores remotos aún no se sincronizan por LAN.
 
 ### Pase de objetos y acabado del render
 
 - La entidad de mano y los objetos caídos se agrupan en un buffer/pase separado que muestrea el atlas real; los modelos de personajes y criaturas mantienen su propio pase de color por vértice.
 - El shader mezcla niebla de distancia con el color variable del cielo para suavizar el horizonte según la distancia de visión.
-- Se añadieron sombras de contacto geométricas sencillas bajo jugador, criaturas y objetos del mundo; son una aproximación de oclusión local, no sombras dinámicas proyectadas en paredes/terreno.
+- Se añadieron sombras de contacto geométricas sencillas bajo jugador y criaturas; son una aproximación de oclusión local, no sombras dinámicas proyectadas en paredes/terreno.
 - El ave ambiental mueve las alas de forma independiente; oveja, vaca y jugador conservan animaciones de marcha básicas.
 
 **Pendiente visual:** las sombras de contacto no sustituyen un shadow map; el agua tiene ondas de superficie, pero aún no existe propagación de flujo, alturas por bloque ni refracción física; el ítem en mano es un mesh de bloque compacto con una manga sencilla, no una animación completa de brazo/herramienta.
