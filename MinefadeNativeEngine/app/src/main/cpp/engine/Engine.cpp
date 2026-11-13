@@ -342,6 +342,7 @@ bool Engine::Initialise(float displayDensity, const std::uint8_t* atlasPixels,
     lookSensitivityY_ = pendingLookSensitivityY_;
     invertLookY_ = pendingInvertLookY_;
     leftHandedControls_ = pendingLeftHandedControls_;
+    showHudStats_ = pendingShowHudStats_;
     ENGINE_LOGI("Starting Minefade Native Engine C++20 / OpenGL ES 3");
     const auto* glVersion = reinterpret_cast<const char*>(glGetString(GL_VERSION));
     const auto* glRenderer = reinterpret_cast<const char*>(glGetString(GL_RENDERER));
@@ -470,6 +471,7 @@ bool Engine::Initialise(float displayDensity, const std::uint8_t* atlasPixels,
     // Keep the generated atlas available to RmlUi so quickbar/inventory icons
     // are cropped from the exact same block textures used by the 3D renderer.
     ui_.SetBlockAtlas(atlasPixels,atlasBytes,atlasWidth,atlasHeight);
+    ui_.SetStatusVisible(showHudStats_);
     if (!ui_.Initialise(width_, height_, displayDensity,
                         [this](const std::string& action) { HandleUiAction(action); })) {
         ENGINE_LOGE("RmlUi failed to initialise; game rendering remains available without the HUD");
@@ -1216,6 +1218,12 @@ void Engine::SetInputOptions(float sensitivityX, float sensitivityY, bool invert
     invertLookY_ = pendingInvertLookY_;
     leftHandedControls_ = pendingLeftHandedControls_;
     ui_.SetLeftHanded(leftHandedControls_);
+}
+
+void Engine::SetHudOptions(bool showStats) {
+    pendingShowHudStats_ = showStats;
+    showHudStats_ = showStats;
+    ui_.SetStatusVisible(showHudStats_);
 }
 
 void Engine::SetAvatarAppearance(const int* values,std::size_t count) {
