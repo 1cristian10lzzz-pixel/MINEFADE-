@@ -467,7 +467,29 @@ void Engine::UploadTransparentWorldMesh() {
 void Engine::RebuildEntityMesh() {
     entityMesh_.clear();
     entities_.AppendMesh(entityMesh_);
-    if (thirdPerson_) player_.AppendMesh(entityMesh_);
+    if (thirdPerson_) {
+        player_.AppendMesh(entityMesh_);
+    } else {
+        // First-person held item: render the selected block with its own atlas
+        // texture and place it in the lower-right camera space, not as a generic cube.
+        const std::uint16_t selected=inventory_.SelectedItemId();
+        const BlockDefinition* definition=GetBlockDefinition(static_cast<BlockId>(selected));
+        if(definition!=nullptr&&definition->shape!=BlockShape::None&&selected!=static_cast<std::uint16_t>(BlockId::Air)) {
+            const Vec3 eye=player_.CameraPosition();
+            const Vec3 forward=player_.Forward();
+            const Vec3 right{-forward.z,0.0f,forward.x};
+            const Vec3 held{
+                eye.x+forward.x*0.66f+right.x*0.30f,
+                eye.y+forward.y*0.66f-0.28f,
+                eye.z+forward.z*0.66f+right.z*0.30f
+            };
+            AppendTexturedBlockCube(entityMesh_,static_cast<BlockId>(selected),
+                                    held,{0.105f,0.105f,0.105f});
+            const std::array<float,3> sleeve{0.28f,0.43f,0.38f};
+            AppendCube(entityMesh_,{held.x-right.x*0.19f,held.y-0.12f,held.z-right.z*0.19f},
+                       {0.085f,0.16f,0.085f},sleeve);
+        }
+    }
     // Remote players use the same articulated voxel model as the local avatar.
     for (std::size_t i = 0; i + 3u < remotePlayers_.size(); i += 4u) {
         Player remote;
