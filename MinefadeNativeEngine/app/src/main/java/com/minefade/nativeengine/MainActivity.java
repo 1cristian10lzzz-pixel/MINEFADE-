@@ -1,6 +1,8 @@
 package com.minefade.nativeengine;
 
 import android.app.Activity;
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -14,6 +16,7 @@ import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 /**
  * Activity lifecycle and native engine host.
@@ -245,6 +248,18 @@ public final class MainActivity extends Activity {
         detailParams.topMargin = dp(7);
         card.addView(detailView, detailParams);
 
+        TextView copyDiagnostics = statusButton("COPIAR DIAGNÓSTICO", false);
+        LinearLayout.LayoutParams copyParams = new LinearLayout.LayoutParams(-1, dp(34));
+        copyParams.topMargin = dp(7);
+        card.addView(copyDiagnostics, copyParams);
+        copyDiagnostics.setOnClickListener(v -> {
+            ClipboardManager clipboard = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
+            if (clipboard != null) {
+                clipboard.setPrimaryClip(ClipData.newPlainText("Minefade - diagnóstico de arranque", detail));
+                Toast.makeText(this, "Diagnóstico copiado", Toast.LENGTH_SHORT).show();
+            }
+        });
+
         FrameLayout.LayoutParams cardParams = new FrameLayout.LayoutParams(
                 Math.min(getResources().getDisplayMetrics().widthPixels - dp(40), dp(420)),
                 -2, Gravity.CENTER);
@@ -282,6 +297,7 @@ public final class MainActivity extends Activity {
         card.addView(heading, hp);
         TextView message = statusText(detail, 10, 0xffc4d1d9, false);
         message.setGravity(Gravity.CENTER);
+        message.setTextIsSelectable(true);
         LinearLayout.LayoutParams mp = new LinearLayout.LayoutParams(-1, -2);
         mp.topMargin = dp(8);
         card.addView(message, mp);
