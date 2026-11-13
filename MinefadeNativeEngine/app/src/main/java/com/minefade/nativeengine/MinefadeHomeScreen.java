@@ -1225,45 +1225,307 @@ public final class MinefadeHomeScreen extends FrameLayout {
         }
     }
 
-    private final class AvatarPreview extends View {
+    /** A small perspective voxel-item thumbnail, drawn as geometry rather than emoji. */
+    private final class AvatarOptionView extends View {
         private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
         private final Path path = new Path();
-        private final int[] skins = {0xffd5a37c, 0xff9a6549, 0xfff0c6a1, 0xffb97b57};
-        private final int[] outfits = {0xff3c9d79, 0xff4b75c8, 0xffa85a8a, 0xffb27b36, 0xff596779};
-        AvatarPreview(Context context) { super(context); }
-        private void box(Canvas c, float x, float y, float w, float h, int color) {
+        private final int module;
+        private final int choice;
+        AvatarOptionView(Context context, int module, int choice) {
+            super(context);
+            this.module = module;
+            this.choice = choice;
+        }
+        private void polygon(Canvas canvas, int color, float... points) {
+            path.reset();
+            path.moveTo(points[0], points[1]);
+            for (int i = 2; i < points.length; i += 2) path.lineTo(points[i], points[i + 1]);
+            path.close();
             paint.setColor(color);
-            c.drawRoundRect(new RectF(x, y, x + w, y + h), dp(5), dp(5), paint);
-            paint.setColor(0x27ffffff);
-            c.drawLine(x + dp(3), y + dp(2), x + w - dp(3), y + dp(2), paint);
+            paint.setStyle(Paint.Style.FILL);
+            canvas.drawPath(path, paint);
+        }
+        private void cube(Canvas canvas, float x, float y, float w, float h, float depth,
+                          int front, int side, int top) {
+            float left = x - w * 0.5f, right = x + w * 0.5f;
+            float upper = y - h * 0.5f, lower = y + h * 0.5f;
+            float dx = depth * 0.55f, dy = depth * 0.38f;
+            polygon(canvas, side, right, upper, right + dx, upper - dy,
+                    right + dx, lower - dy, right, lower);
+            polygon(canvas, top, left, upper, left + dx, upper - dy,
+                    right + dx, upper - dy, right, upper);
+            polygon(canvas, front, left, upper, right, upper, right, lower, left, lower);
+            paint.setColor(0x44ffffff);
+            paint.setStyle(Paint.Style.STROKE);
+            paint.setStrokeWidth(Math.max(1f, dp(0.6f)));
+            canvas.drawLine(left + dp(2), upper + dp(2), right - dp(2), upper + dp(2), paint);
+            paint.setStyle(Paint.Style.FILL);
         }
         @Override protected void onDraw(Canvas canvas) {
             super.onDraw(canvas);
-            float cx = getWidth() * 0.5f, ground = getHeight() * 0.83f;
-            paint.setShader(new RadialGradient(cx, getHeight() * 0.4f, getHeight() * 0.7f,
-                    new int[]{0x3357d4b3, 0x00132639}, null, Shader.TileMode.CLAMP));
-            canvas.drawRect(0, 0, getWidth(), getHeight(), paint);
-            paint.setShader(null);
-            paint.setColor(0x557f9bad);
-            canvas.drawOval(cx - dp(65), ground - dp(4), cx + dp(65), ground + dp(10), paint);
-            int skin = skins[avatarTone % skins.length];
-            int outfit = outfits[avatarOutfit % outfits.length];
-            float unit = Math.min(getWidth(), getHeight()) / 8.2f;
-            float x = cx - unit * 0.48f;
-            box(canvas, x - unit * 0.40f, ground - unit * 2.25f, unit * 0.80f, unit * 0.83f, skin);
-            box(canvas, x - unit * 0.45f, ground - unit * 1.40f, unit * 0.90f, unit * 1.0f, outfit);
-            box(canvas, x - unit * 0.39f, ground - unit * 0.42f, unit * 0.34f, unit * 0.42f, 0xff34496e);
-            box(canvas, x + unit * 0.05f, ground - unit * 0.42f, unit * 0.34f, unit * 0.42f, 0xff34496e);
-            box(canvas, x - unit * 0.67f, ground - unit * 1.37f, unit * 0.30f, unit * 0.90f, outfit);
-            box(canvas, x + unit * 0.38f, ground - unit * 1.37f, unit * 0.30f, unit * 0.90f, outfit);
-            box(canvas, x - unit * 0.33f, ground - unit * 3.05f, unit * 0.66f, unit * 0.75f, skin);
-            box(canvas, x - unit * 0.36f, ground - unit * 3.10f, unit * 0.72f, unit * 0.22f, 0xff53362a);
-            paint.setColor(white);
-            canvas.drawCircle(x - unit * 0.14f, ground - unit * 2.73f, unit * 0.055f, paint);
-            canvas.drawCircle(x + unit * 0.14f, ground - unit * 2.73f, unit * 0.055f, paint);
-            paint.setColor(0xff25303b);
-            canvas.drawCircle(x - unit * 0.14f, ground - unit * 2.73f, unit * 0.025f, paint);
-            canvas.drawCircle(x + unit * 0.14f, ground - unit * 2.73f, unit * 0.025f, paint);
+            float cx = getWidth() * 0.5f, cy = getHeight() * 0.53f;
+            float unit = Math.min(getWidth(), getHeight()) * 0.34f;
+            int skin = new int[]{0xffe8c09c, 0xffc58d69, 0xff9b654c,
+                    0xfff0c9a8, 0xffad7659, 0xff76513f}[choice % 6];
+            int[] palette = {0xff8a5739, 0xff44313b, 0xffc49a57,
+                    0xff4b7890, 0xff6e9f79, 0xffd0d2d0};
+            int accent = palette[choice % palette.length];
+            switch (module) {
+                case 0: // skin material swatch
+                    paint.setColor(skin);
+                    canvas.drawCircle(cx - unit * 0.08f, cy, unit * 0.74f, paint);
+                    paint.setColor(0x55ffffff);
+                    canvas.drawArc(new RectF(cx - unit * 0.82f, cy - unit * 0.75f,
+                            cx + unit * 0.68f, cy + unit * 0.75f), 205, 125, false, paint);
+                    break;
+                case 1: // hair silhouettes as shaded voxel locks
+                    cube(canvas, cx, cy + unit * 0.20f, unit * 1.05f, unit * 1.0f,
+                            unit * 0.35f, 0xffb87e5d, 0xff80533d, 0xffd6a17a);
+                    if (choice == 3 || choice == 4) {
+                        cube(canvas, cx, cy - unit * 0.33f, unit * 1.0f, unit * 0.48f,
+                                unit * 0.34f, accent, 0xff49382f, 0xffd19d67);
+                        cube(canvas, cx + unit * 0.38f, cy + unit * 0.32f,
+                                unit * 0.30f, unit * 1.05f, unit * 0.23f, accent, 0xff34272a, 0xffc28b59);
+                    } else {
+                        cube(canvas, cx, cy - unit * 0.37f, unit * 1.14f,
+                                choice == 5 ? unit * 0.82f : unit * 0.50f,
+                                unit * 0.42f, accent, 0xff302a34, 0xffd5a66c);
+                    }
+                    break;
+                case 2: // eye pair with pupil and highlight
+                    for (int side = -1; side <= 1; side += 2) {
+                        float x = cx + side * unit * 0.40f;
+                        paint.setColor(0xffe9e5dc);
+                        canvas.drawOval(new RectF(x - unit * 0.27f, cy - unit * 0.28f,
+                                x + unit * 0.27f, cy + unit * 0.28f), paint);
+                        paint.setColor(accent);
+                        canvas.drawCircle(x, cy, unit * 0.18f, paint);
+                        paint.setColor(0xff17212b);
+                        canvas.drawCircle(x, cy, unit * 0.09f, paint);
+                        paint.setColor(0xffffffff);
+                        canvas.drawCircle(x - unit * 0.045f, cy - unit * 0.07f, unit * 0.045f, paint);
+                    }
+                    break;
+                case 3: // clothing torso
+                case 4: // armour chest plate
+                    cube(canvas, cx, cy, unit * 1.18f, unit * 1.34f, unit * 0.42f,
+                            module == 3 ? accent : 0xff718c9d,
+                            module == 3 ? 0xff334a63 : 0xff34495a,
+                            module == 3 ? 0xffd4b078 : 0xffc9dce4);
+                    if (module == 4) {
+                        cube(canvas, cx, cy - unit * 0.05f, unit * 0.24f, unit * 0.92f,
+                                unit * 0.13f, 0xffd9e5e8, 0xff718b9b, 0xfff0f6f5);
+                        for (int side = -1; side <= 1; side += 2)
+                            cube(canvas, cx + side * unit * 0.55f, cy - unit * 0.34f,
+                                    unit * 0.34f, unit * 0.65f, unit * 0.22f,
+                                    0xff91aab8, 0xff40596a, 0xffe6eff1);
+                    }
+                    break;
+                default: // accessory: amulet, cape clasp, crown or pack
+                    if (choice == 2) {
+                        cube(canvas, cx, cy + unit * 0.25f, unit * 0.72f, unit * 1.2f,
+                                unit * 0.22f, accent, 0xff374c70, 0xffd4a56e);
+                    } else if (choice == 4) {
+                        cube(canvas, cx, cy - unit * 0.12f, unit * 1.15f, unit * 0.35f,
+                                unit * 0.35f, 0xffd4a84c, 0xff83572c, 0xffffdf7b);
+                        cube(canvas, cx, cy - unit * 0.42f, unit * 0.26f, unit * 0.58f,
+                                unit * 0.22f, 0xffe9c36e, 0xff83572c, 0xffffe7a1);
+                    } else {
+                        cube(canvas, cx, cy, unit * 0.88f, unit * 0.92f,
+                                unit * 0.48f, accent, 0xff344c60, 0xffd3b46c);
+                        paint.setColor(0xffffe2a0);
+                        canvas.drawCircle(cx, cy + unit * 0.12f, unit * 0.16f, paint);
+                    }
+                    break;
+            }
         }
     }
+
+    /** Perspective character preview; drag horizontally to rotate the voxel model. */
+    private final class AvatarPreview extends View {
+        private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        private final Path path = new Path();
+        private float rotation = -17.0f;
+        private float previousX;
+        private final int[] skins = {0xffe8c09c, 0xffc58d69, 0xff9b654c,
+                0xfff0c9a8, 0xffad7659, 0xff76513f};
+        private final int[] hairColors = {0xff795039, 0xff3a3037, 0xffb8894c,
+                0xff415d75, 0xff765b4b, 0xffd4c6a2};
+        private final int[] clothes = {0xff3c9d79, 0xff4b75c8, 0xffa85a8a,
+                0xffb27b36, 0xff596779, 0xff4b6d52};
+        AvatarPreview(Context context) {
+            super(context);
+            setLayerType(View.LAYER_TYPE_SOFTWARE, null);
+            setClickable(true);
+        }
+        private void polygon(Canvas canvas, int color, float... points) {
+            path.reset();
+            path.moveTo(points[0], points[1]);
+            for (int i = 2; i < points.length; i += 2) path.lineTo(points[i], points[i + 1]);
+            path.close();
+            paint.setColor(color);
+            paint.setStyle(Paint.Style.FILL);
+            canvas.drawPath(path, paint);
+        }
+        private void cube(Canvas canvas, float x, float y, float w, float h, float depth,
+                          int front, int side, int top) {
+            float left = x - w * 0.5f, right = x + w * 0.5f;
+            float upper = y - h * 0.5f, lower = y + h * 0.5f;
+            float dx = depth * 0.52f, dy = depth * 0.34f;
+            polygon(canvas, side, right, upper, right + dx, upper - dy,
+                    right + dx, lower - dy, right, lower);
+            polygon(canvas, top, left, upper, left + dx, upper - dy,
+                    right + dx, upper - dy, right, upper);
+            polygon(canvas, front, left, upper, right, upper, right, lower, left, lower);
+            paint.setColor(0x36ffffff);
+            paint.setStyle(Paint.Style.STROKE);
+            paint.setStrokeWidth(Math.max(1f, dp(0.7f)));
+            canvas.drawLine(left + dp(2), upper + dp(2), right - dp(2), upper + dp(2), paint);
+            paint.setStyle(Paint.Style.FILL);
+        }
+        @Override public boolean onTouchEvent(android.view.MotionEvent event) {
+            switch (event.getActionMasked()) {
+                case android.view.MotionEvent.ACTION_DOWN:
+                    previousX = event.getX();
+                    return true;
+                case android.view.MotionEvent.ACTION_MOVE:
+                    float dx = event.getX() - previousX;
+                    previousX = event.getX();
+                    rotation += dx * 0.72f;
+                    if (rotation > 360f) rotation -= 360f;
+                    if (rotation < -360f) rotation += 360f;
+                    invalidate();
+                    return true;
+                case android.view.MotionEvent.ACTION_UP:
+                case android.view.MotionEvent.ACTION_CANCEL:
+                    performClick();
+                    return true;
+                default:
+                    return true;
+            }
+        }
+        @Override public boolean performClick() {
+            super.performClick();
+            return true;
+        }
+        @Override protected void onDraw(Canvas canvas) {
+            super.onDraw(canvas);
+            float w = getWidth(), h = getHeight();
+            float cx = w * 0.50f, ground = h * 0.88f;
+            float unit = Math.min(w * 0.27f, h * 0.135f);
+            if (unit < dp(8)) return;
+            paint.setShader(new RadialGradient(cx, h * 0.38f, Math.max(w, h) * 0.75f,
+                    new int[]{0x444c9b88, 0x00132639}, null, Shader.TileMode.CLAMP));
+            canvas.drawRect(0, 0, w, h, paint);
+            paint.setShader(null);
+            paint.setColor(0x557f9bad);
+            canvas.drawOval(cx - unit * 1.55f, ground - dp(4),
+                    cx + unit * 1.55f, ground + dp(11), paint);
+
+            float facing = (float) Math.cos(Math.toRadians(rotation));
+            float widthScale = 0.58f + Math.abs(facing) * 0.42f;
+            int skin = skins[avatarStyles[0] % skins.length];
+            int hair = hairColors[avatarStyles[1] % hairColors.length];
+            int outfit = clothes[avatarStyles[3] % clothes.length];
+            int eye = new int[]{0xff8b6843, 0xff63a8d4, 0xff65a978,
+                    0xff8796a4, 0xff292c3a, 0xffd4a54c}[avatarStyles[2] % 6];
+            int armour = new int[]{0x00000000, 0xff805e49, 0xff89969c,
+                    0xff4e7f9b, 0xff9b78c7, 0xffd2dfe3}[avatarStyles[4] % 6];
+            int accessory = avatarStyles[5] % 6;
+
+            canvas.save();
+            canvas.translate(cx, 0);
+            canvas.scale(widthScale, 1f, 0f, 0f);
+            float x = 0f;
+            // Legs and boots.
+            cube(canvas, x - unit * 0.25f, ground - unit * 0.54f, unit * 0.34f,
+                    unit * 0.91f, unit * 0.22f, 0xff344b65, 0xff203044, 0xff75899b);
+            cube(canvas, x + unit * 0.25f, ground - unit * 0.54f, unit * 0.34f,
+                    unit * 0.91f, unit * 0.22f, 0xff405b78, 0xff203044, 0xff8294a6);
+            cube(canvas, x - unit * 0.25f, ground - unit * 0.12f, unit * 0.39f,
+                    unit * 0.25f, unit * 0.24f, 0xff27384a, 0xff172538, 0xff63798b);
+            cube(canvas, x + unit * 0.25f, ground - unit * 0.12f, unit * 0.39f,
+                    unit * 0.25f, unit * 0.24f, 0xff27384a, 0xff172538, 0xff63798b);
+
+            // Torso, shoulders and articulated arms.
+            cube(canvas, x, ground - unit * 1.60f, unit * 0.92f, unit * 1.23f,
+                    unit * 0.34f, outfit, 0xff263b54, 0xff9bc39a);
+            cube(canvas, x - unit * 0.59f, ground - unit * 1.56f,
+                    unit * 0.29f, unit * 0.98f, unit * 0.22f,
+                    outfit, 0xff263b54, 0xffa7c5a0);
+            cube(canvas, x + unit * 0.59f, ground - unit * 1.56f,
+                    unit * 0.29f, unit * 0.98f, unit * 0.22f,
+                    outfit, 0xff263b54, 0xffa7c5a0);
+            cube(canvas, x, ground - unit * 2.19f, unit * 0.48f, unit * 0.22f,
+                    unit * 0.30f, 0xffd0b07a, 0xff71583e, 0xfff0d4a1);
+
+            // Neck and head.
+            cube(canvas, x, ground - unit * 2.36f, unit * 0.30f, unit * 0.30f,
+                    unit * 0.24f, skin, 0xff93694e, 0xfff5d4b0);
+            cube(canvas, x, ground - unit * 2.86f, unit * 0.74f, unit * 0.86f,
+                    unit * 0.30f, skin, 0xff95694e, 0xfff6d5b3);
+            // Hair cap and module-specific silhouette.
+            cube(canvas, x, ground - unit * 3.24f, unit * 0.82f,
+                    avatarStyles[1] == 5 ? unit * 0.40f : unit * 0.25f,
+                    unit * 0.36f, hair, 0xff3c302b, 0xffd0a16a);
+            if (avatarStyles[1] == 1 || avatarStyles[1] == 2 || avatarStyles[1] == 4) {
+                cube(canvas, x - unit * 0.35f, ground - unit * 2.91f,
+                        unit * 0.22f, unit * 0.75f, unit * 0.24f,
+                        hair, 0xff3c302b, 0xffc18c59);
+            }
+            if (avatarStyles[1] == 3) {
+                cube(canvas, x + unit * 0.43f, ground - unit * 2.66f,
+                        unit * 0.20f, unit * 0.85f, unit * 0.20f,
+                        hair, 0xff3c302b, 0xffc18c59);
+            }
+
+            // Facial details on the visible front plane.
+            paint.setColor(eye);
+            canvas.drawOval(new RectF(x - unit * 0.22f, ground - unit * 2.93f,
+                    x - unit * 0.09f, ground - unit * 2.77f), paint);
+            canvas.drawOval(new RectF(x + unit * 0.09f, ground - unit * 2.93f,
+                    x + unit * 0.22f, ground - unit * 2.77f), paint);
+            paint.setColor(0xff18232d);
+            canvas.drawCircle(x - unit * 0.155f, ground - unit * 2.85f, unit * 0.045f, paint);
+            canvas.drawCircle(x + unit * 0.155f, ground - unit * 2.85f, unit * 0.045f, paint);
+            paint.setColor(0xff9d6558);
+            paint.setStyle(Paint.Style.STROKE);
+            paint.setStrokeWidth(Math.max(1f, unit * 0.025f));
+            canvas.drawArc(new RectF(x - unit * 0.13f, ground - unit * 2.70f,
+                    x + unit * 0.13f, ground - unit * 2.53f), 15, 150, false, paint);
+            paint.setStyle(Paint.Style.FILL);
+
+            // Armour overlays the clothes instead of replacing the base outfit.
+            if (avatarStyles[4] > 0) {
+                cube(canvas, x, ground - unit * 1.67f, unit * 0.98f, unit * 0.83f,
+                        unit * 0.36f, armour, 0xff34495b, 0xffe5eef1);
+                cube(canvas, x - unit * 0.60f, ground - unit * 1.88f,
+                        unit * 0.38f, unit * 0.44f, unit * 0.25f,
+                        armour, 0xff34495b, 0xffe5eef1);
+                cube(canvas, x + unit * 0.60f, ground - unit * 1.88f,
+                        unit * 0.38f, unit * 0.44f, unit * 0.25f,
+                        armour, 0xff34495b, 0xffe5eef1);
+            }
+            // Accessories are separate geometry layers.
+            if (accessory == 1) {
+                cube(canvas, x, ground - unit * 2.18f, unit * 0.98f, unit * 0.18f,
+                        unit * 0.28f, 0xffc69a55, 0xff79522f, 0xffffdb8c);
+            } else if (accessory == 2) {
+                cube(canvas, x + unit * 0.02f, ground - unit * 1.52f,
+                        unit * 1.13f, unit * 1.43f, unit * 0.08f,
+                        0xff6b527f, 0xff3b2d59, 0xffb9a5d9);
+            } else if (accessory == 3) {
+                paint.setColor(0xffffd17b);
+                canvas.drawCircle(x, ground - unit * 2.15f, unit * 0.11f, paint);
+            } else if (accessory == 4) {
+                cube(canvas, x, ground - unit * 3.34f, unit * 0.90f, unit * 0.15f,
+                        unit * 0.35f, 0xffd9b45d, 0xff79552f, 0xffffe6a0);
+            } else if (accessory == 5) {
+                cube(canvas, x, ground - unit * 1.56f, unit * 0.44f, unit * 0.89f,
+                        unit * 0.34f, 0xff536e7a, 0xff283f51, 0xff9bbac3);
+            }
+            canvas.restore();
+        }
+    }
+
 }
