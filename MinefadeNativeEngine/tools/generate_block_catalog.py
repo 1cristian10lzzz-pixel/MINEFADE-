@@ -10,6 +10,8 @@ import hashlib, json, math, pathlib, random, re, struct, zlib
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 INPUT = ROOT / 'app/src/main/assets/data/minecraft_1_8_block_definitions.json'
+MODULES_DIR = ROOT / 'app/src/main/assets/data/block_modules'
+MODULE_MANIFEST = MODULES_DIR / 'manifest.json'
 OUT_H = ROOT / 'app/src/main/cpp/blocks/BlockRegistry.h'
 OUT_CPP = ROOT / 'app/src/main/cpp/blocks/BlockRegistry.cpp'
 OUT_RGBA = ROOT / 'app/src/main/assets/textures/block_atlas.rgba'
@@ -525,9 +527,33 @@ def save_png(path: pathlib.Path, rgba: bytes):
     data=b'\x89PNG\r\n\x1a\n'+png_chunk(b'IHDR',struct.pack('>IIBBBBB',WIDTH,HEIGHT,8,6,0,0,0))+png_chunk(b'IDAT',zlib.compress(raw,9))+png_chunk(b'IEND',b'')
     path.parent.mkdir(parents=True,exist_ok=True); path.write_bytes(data)
 
+def load_block_sources() -> dict:
+    """Load ordered, independently editable block modules, with legacy fallback.
+
+    The manifest is the source of stable IDs. Module file order never changes an
+    existing ID; a new block must be appended to the manifest's explicit order.
+    """
+    if not MODULE_MANIFEST.is_file():
+        return json.loads(INPUT.read_text(encoding='utf-8'))
+    manifest = json.loads(MODULE_MANIFEST.read_text(encoding='utf-8'))
+    merged = {}
+    for filename in manifest.get('modules', []):
+        module_path = MODULES_DIR / filename
+        module = json.loads(module_path.read_text(encoding='utf-8'))
+        duplicate_keys = set(merged).intersection(module)
+        if duplicate_keys:
+            raise SystemExit(f'Duplicate block definitions across modules: {sorted(duplicate_keys)}')
+        merged.update(module)
+    order = manifest.get('order', [])
+    if len(order) != len(set(order)) or set(order) != set(merged):
+        raise SystemExit('Block module manifest order does not match module definitions')
+    ordered = {key: merged[key] for key in order}
+    return {'format_version': manifest.get('format_version'), **ordered}
+
+
 def main():
     global ROWS, HEIGHT
-    raw=json.loads(INPUT.read_text(encoding='utf-8'))
+    raw=load_block_sources()
     entries=[(k,v) for k,v in raw.items() if k!='format_version']
     if not entries or entries[0][0]!='air': raise SystemExit('Expected air to be block ID 0')
     ROWS=(len(entries)*3 + COLS - 1)//COLS
