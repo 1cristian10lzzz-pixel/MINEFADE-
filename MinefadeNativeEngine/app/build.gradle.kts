@@ -11,7 +11,7 @@ android {
         applicationId = "com.minefade.nativeengine"
         minSdk = 24
         targetSdk = 36
-        versionCode = 9
+        versionCode = 10
         versionName = "0.6.0-lan-alpha"
 
         ndk {
@@ -45,8 +45,8 @@ android {
         debug {
             // A distinct package avoids signature conflicts with older review APKs.
             // Existing installations and their private world data remain untouched.
-            applicationIdSuffix = ".review5"
-            versionNameSuffix = "-review5"
+            applicationIdSuffix = ".review6"
+            versionNameSuffix = "-review6"
             isMinifyEnabled = false
             isDebuggable = true
         }
