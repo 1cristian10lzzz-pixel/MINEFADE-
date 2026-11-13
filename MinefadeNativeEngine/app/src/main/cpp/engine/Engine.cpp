@@ -1160,10 +1160,19 @@ void Engine::SaveWorld() {
         ENGINE_LOGE("Cannot save: Android private storage path has not been supplied");
         return;
     }
-    if (!world_.Save(storagePath_, player_.position, inventory_.counts))
-        ENGINE_LOGE("Failed to save world to %s", storagePath_.c_str());
-    else
-        ENGINE_LOGI("World saved to private app storage");
+    // Persistence errors must never be reported as a graphics/world startup failure.
+    // A user should still be able to enter and play while the storage problem is visible
+    // in Logcat; the original world file remains untouched if the atomic save fails.
+    try {
+        if (!world_.Save(storagePath_, player_.position, inventory_.counts))
+            ENGINE_LOGE("Failed to save world to %s", storagePath_.c_str());
+        else
+            ENGINE_LOGI("World saved to private app storage");
+    } catch (const std::exception& error) {
+        ENGINE_LOGE("World save raised an exception: %s", error.what());
+    } catch (...) {
+        ENGINE_LOGE("World save raised an unknown exception");
+    }
 }
 
 void Engine::Pause() {
