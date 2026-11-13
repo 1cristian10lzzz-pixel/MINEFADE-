@@ -84,14 +84,17 @@ public final class MinefadeHomeScreen extends FrameLayout {
         GradientDrawable drawable = new GradientDrawable(
                 GradientDrawable.Orientation.TL_BR, colors);
         drawable.setCornerRadius(dp(radius));
-        drawable.setStroke(dp(1), strokeColor);
+        boolean contrast = preferences.getBoolean("high_contrast", false);
+        drawable.setStroke(dp(contrast ? 2 : 1),
+                contrast ? 0xffa9c9d8 : strokeColor);
         return drawable;
     }
 
     private TextView text(String value, int size, int color, boolean bold) {
         TextView view = new TextView(getContext());
         view.setText(value);
-        view.setTextSize(size);
+        float textScale = preferences.getInt("menu_text_scale", 100) / 100.0f;
+        view.setTextSize(size * Math.max(0.85f, Math.min(1.25f, textScale)));
         view.setTextColor(color);
         view.setGravity(Gravity.CENTER_VERTICAL);
         view.setTypeface(Typeface.create(bold ? "sans-serif" : "sans-serif-medium",
@@ -118,7 +121,8 @@ public final class MinefadeHomeScreen extends FrameLayout {
     }
 
     private void animateIn(View view, int index) {
-        if (!preferences.getBoolean("menu_animations", true)) {
+        if (!preferences.getBoolean("menu_animations", true)
+                || preferences.getBoolean("reduce_motion", false)) {
             view.setAlpha(1f);
             return;
         }
