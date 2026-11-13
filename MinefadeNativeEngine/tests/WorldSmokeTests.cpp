@@ -49,6 +49,8 @@ int main() {
                            {0.0f, -1.0f, 0.0f}, 5.0f));
     assert(world.GetBlock(8, height + 5, 8) == BlockId::Portal);
     assert(world.SetBlock(8, height + 5, 8, BlockId::Air));
+    // Biome decoration and rivers may legitimately occupy this cell in the new terrain.
+    assert(world.SetBlock(8, height + 1, 8, BlockId::Air));
     assert(world.PlaceRay({8.5f, static_cast<float>(height) + 7.5f, 8.5f},
                           {0.0f, -1.0f, 0.0f}, 30.0f, BlockId::Dirt));
     assert(world.GetBlock(8, height + 1, 8) == BlockId::Dirt);
