@@ -223,10 +223,13 @@ public final class MinefadeSurfaceView extends GLSurfaceView {
                 int renderDistance = Math.max(1, Math.min(3,
                         preferences.getInt("render_distance", 1) + 1));
                 boolean waterWaves = preferences.getBoolean("water_waves", true);
+                float fieldOfView = preferences.getInt("field_of_view", 68);
+                boolean contactShadows = preferences.getBoolean("contact_shadows", true);
                 float sensitivity = preferences.getInt("touch_sensitivity", 100) / 100.0f;
                 boolean invertLookY = preferences.getBoolean("invert_look_y", false);
                 float hudScale = preferences.getInt("hud_scale", 100) / 100.0f;
-                NativeBridge.nativeSetGraphicsOptions(quality, renderDistance, waterWaves);
+                NativeBridge.nativeSetGraphicsOptions(quality, renderDistance, waterWaves,
+                        fieldOfView, contactShadows);
                 NativeBridge.nativeSetInputOptions(sensitivity, invertLookY);
                 int[] avatarChoices = {
                         preferences.getInt("avatar_piel", 0),
