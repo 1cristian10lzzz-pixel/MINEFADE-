@@ -31,6 +31,7 @@ public:
     void SetMultiplayerMode(bool enabled, int playerSlot);
     void SetGraphicsOptions(int quality, int renderDistanceChunks, bool waterWaves);
     void SetInputOptions(float sensitivity, bool invertLookY);
+    void SetAvatarAppearance(const int* values, std::size_t count);
     void GetPlayerState(float output[4]) const;
     void SetRemotePlayers(const float* values, std::size_t floatCount);
     void ApplyRemoteBlockEdits(const int* values, std::size_t valueCount);
@@ -117,6 +118,7 @@ private:
     float pendingLookSensitivity_{1.0f};
     bool invertLookY_{false};
     bool pendingInvertLookY_{false};
+    std::array<int, 6> avatarAppearance_{{0,0,0,0,0,0}};
     bool inventoryVisible_{false};
     bool pauseVisible_{false};
     bool thirdPerson_{false};
