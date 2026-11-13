@@ -163,7 +163,7 @@ bool Engine::CreateWorldProgram() {
         if (worldProgram_ != 0) glDeleteProgram(worldProgram_);
         worldProgram_ = 0;
     };
-    const auto buildProgram = [this](const char* vertexSource, const char* fragmentSource) {
+    const auto buildProgram = [this, &destroyCurrentProgram](const char* vertexSource, const char* fragmentSource) {
         const GLuint vertex = CompileShader(GL_VERTEX_SHADER, vertexSource);
         const GLuint fragment = CompileShader(GL_FRAGMENT_SHADER, fragmentSource);
         if (vertex == 0 || fragment == 0) {
