@@ -30,7 +30,6 @@ std::uint32_t Hash(std::uint32_t x) {
     x ^= x >> 16u; x *= 0x7feb352du; x ^= x >> 15u; x *= 0x846ca68bu; x ^= x >> 16u;
     return x;
 }
-float Smooth(float t) { return t * t * (3.0f - 2.0f * t); }
 float Lerp(float a, float b, float t) { return a + (b - a) * t; }
 
 bool IsValidBlock(BlockId block) {
