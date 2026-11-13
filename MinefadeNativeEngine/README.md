@@ -158,3 +158,12 @@ app/src/main/assets/audio/                   Efectos de sonido
 - Los objetos caídos y el objeto seleccionado en primera persona usan las celdas de textura del bloque correspondiente en vez de una caja genérica.
 
 La vista previa de avatar actual es una proyección 2.5D dibujada por Canvas con geometría de voxel, no un modelo esquelético GLB ni el mismo mesh de animación del motor. La personalización todavía no cubre mallas 3D completas, materiales por pieza, tintes avanzados o persistencia conectada al jugador del mundo.
+
+### Pase de objetos y acabado del render
+
+- La entidad de mano y los objetos caídos se agrupan en un buffer/pase separado que muestrea el atlas real; los modelos de personajes y criaturas mantienen su propio pase de color por vértice.
+- El shader mezcla niebla de distancia con el color variable del cielo para suavizar el horizonte según la distancia de visión.
+- Se añadieron sombras de contacto geométricas sencillas bajo jugador, criaturas y objetos del mundo; son una aproximación de oclusión local, no sombras dinámicas proyectadas en paredes/terreno.
+- El ave ambiental mueve las alas de forma independiente; oveja, vaca y jugador conservan animaciones de marcha básicas.
+
+**Pendiente visual:** las sombras de contacto no sustituyen un shadow map; el agua tiene ondas de superficie, pero aún no existe propagación de flujo, alturas por bloque ni refracción física; el ítem en mano es un mesh de bloque compacto con una manga sencilla, no una animación completa de brazo/herramienta.
