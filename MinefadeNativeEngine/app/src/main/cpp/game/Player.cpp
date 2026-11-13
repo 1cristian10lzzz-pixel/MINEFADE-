@@ -402,13 +402,8 @@ std::size_t DroppedItemSystem::Update(const VoxelWorld& world, const Player& pla
 
 void DroppedItemSystem::AppendMesh(std::vector<WorldVertex>& output) const {
     for (const DroppedItem& item : drops_) {
-        const std::uint32_t hash = static_cast<std::uint32_t>(item.itemId) * 2654435761u;
-        const std::array<float, 3> tint{
-            0.42f + static_cast<float>((hash >>  0u) & 0x3fu) / 180.0f,
-            0.42f + static_cast<float>((hash >>  8u) & 0x3fu) / 180.0f,
-            0.42f + static_cast<float>((hash >> 16u) & 0x3fu) / 180.0f
-        };
-        AppendCube(output, item.position, {0.12f, 0.12f, 0.12f}, tint);
+        const BlockId block=static_cast<BlockId>(item.itemId);
+        AppendTexturedBlockCube(output,block,item.position,{0.13f,0.13f,0.13f});
     }
 }
 
