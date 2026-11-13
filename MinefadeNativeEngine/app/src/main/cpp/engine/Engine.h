@@ -32,7 +32,7 @@ public:
     std::uint32_t ConsumeSoundEvents();
     void SetMultiplayerMode(bool enabled, int playerSlot);
     void SetGraphicsOptions(int quality, int renderDistanceChunks, bool waterWaves, float fieldOfView, bool contactShadows);
-    void SetInputOptions(float sensitivity, bool invertLookY);
+    void SetInputOptions(float sensitivityX, float sensitivityY, bool invertLookY, bool leftHanded);
     void SetAvatarAppearance(const int* values, std::size_t count);
     void GetPlayerState(float output[4]) const;
     void SetRemotePlayers(const float* values, std::size_t floatCount);
@@ -120,10 +120,14 @@ private:
     float pendingFieldOfView_{68.0f};
     bool contactShadows_{true};
     bool pendingContactShadows_{true};
-    float lookSensitivity_{1.0f};
-    float pendingLookSensitivity_{1.0f};
+    float lookSensitivityX_{1.0f};
+    float pendingLookSensitivityX_{1.0f};
+    float lookSensitivityY_{1.0f};
+    float pendingLookSensitivityY_{1.0f};
     bool invertLookY_{false};
     bool pendingInvertLookY_{false};
+    bool leftHandedControls_{false};
+    bool pendingLeftHandedControls_{false};
     std::array<int, 6> avatarAppearance_{{0,0,0,0,0,0}};
     bool inventoryVisible_{false};
     bool pauseVisible_{false};
