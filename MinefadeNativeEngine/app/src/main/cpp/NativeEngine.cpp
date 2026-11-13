@@ -131,6 +131,18 @@ Java_com_minefade_nativeengine_NativeBridge_nativeSetInputOptions(
         invertLookY == JNI_TRUE);
 }
 
+extern "C" JNIEXPORT void JNICALL
+Java_com_minefade_nativeengine_NativeBridge_nativeSetAvatarAppearance(
+        JNIEnv* env, jclass, jintArray choices) {
+    if (choices == nullptr || env->GetArrayLength(choices) < 6) return;
+    jint values[6]{};
+    env->GetIntArrayRegion(choices,0,6,values);
+    if(env->ExceptionCheck()) { env->ExceptionClear(); return; }
+    int nativeValues[6]{};
+    for(int i=0;i<6;++i) nativeValues[i]=static_cast<int>(values[i]);
+    minefade::GetEngine().SetAvatarAppearance(nativeValues,6u);
+}
+
 extern "C" JNIEXPORT jfloatArray JNICALL
 Java_com_minefade_nativeengine_NativeBridge_nativeGetPlayerState(JNIEnv* env, jclass) {
     float state[4]{};
