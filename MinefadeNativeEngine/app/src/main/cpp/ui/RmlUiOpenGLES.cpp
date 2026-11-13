@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <string>
+#include <cstring>
 
 namespace minefade {
 namespace {
@@ -126,6 +127,8 @@ void RmlUiOpenGLES::Shutdown() {
         if (texture != 0) glDeleteTextures(1, &texture);
     }
     textures_.clear();
+    blockAtlasPixels_.clear();
+    blockAtlasWidth_=blockAtlasHeight_=0;
     if (program_ != 0) glDeleteProgram(program_);
     program_ = 0;
     viewportLocation_ = translationLocation_ = texturedLocation_ = samplerLocation_ = -1;
@@ -134,6 +137,26 @@ void RmlUiOpenGLES::Shutdown() {
 void RmlUiOpenGLES::SetViewport(int width, int height) {
     width_ = std::max(width, 1);
     height_ = std::max(height, 1);
+}
+
+void RmlUiOpenGLES::SetBlockAtlas(const std::uint8_t* pixels,std::size_t bytes,
+                                  int width,int height) {
+    if(pixels==nullptr||width<=0||height<=0) {
+        blockAtlasPixels_.clear();
+        blockAtlasWidth_=blockAtlasHeight_=0;
+        return;
+    }
+    const std::size_t expected=static_cast<std::size_t>(width)*
+        static_cast<std::size_t>(height)*4u;
+    if(bytes<expected) {
+        UI_LOGE("RmlUi block atlas is truncated: %zu < %zu",bytes,expected);
+        blockAtlasPixels_.clear();
+        blockAtlasWidth_=blockAtlasHeight_=0;
+        return;
+    }
+    blockAtlasPixels_.assign(pixels,pixels+expected);
+    blockAtlasWidth_=width;
+    blockAtlasHeight_=height;
 }
 
 Rml::CompiledGeometryHandle RmlUiOpenGLES::CompileGeometry(
@@ -220,12 +243,37 @@ void RmlUiOpenGLES::ReleaseGeometry(Rml::CompiledGeometryHandle handle) {
     geometries_.erase(found);
 }
 
-Rml::TextureHandle RmlUiOpenGLES::LoadTexture(Rml::Vector2i& textureDimensions, const Rml::String& source) {
-    // The initial native HUD uses vector geometry and generated font atlases. External bitmap assets
-    // are intentionally not accepted until a decoder is included in the resource pipeline.
-    (void)textureDimensions;
-    UI_LOGE("External RmlUi texture is not supported yet: %s", source.c_str());
-    return 0;
+Rml::TextureHandle RmlUiOpenGLES::LoadTexture(Rml::Vector2i& textureDimensions,const Rml::String& source) {
+    // Block thumbnails are cropped from Minefade's runtime atlas; other external
+    // bitmap paths remain intentionally unsupported until an asset decoder is added.
+    constexpr const char* prefix="minefade://block/";
+    const std::string uri=source;
+    if(uri.rfind(prefix,0)!=0) {
+        UI_LOGE("External RmlUi texture is not supported: %s",source.c_str());
+        return 0;
+    }
+    if(blockAtlasPixels_.empty()||blockAtlasWidth_<576||blockAtlasHeight_<18)return 0;
+    int blockId=-1;
+    try {
+        std::size_t parsed=0;
+        blockId=std::stoi(uri.substr(std::strlen(prefix)),&parsed);
+        if(parsed!=uri.size()-std::strlen(prefix)||blockId<0)return 0;
+    } catch(...) { return 0; }
+    constexpr int columns=32,cell=18,tileSize=16;
+    const int tile=blockId*3+1; // side-facing thumbnail for the block.
+    const int column=tile%columns,row=tile/columns;
+    const int x0=column*cell+1,y0=row*cell+1;
+    if(x0+tileSize>blockAtlasWidth_||y0+tileSize>blockAtlasHeight_)return 0;
+    std::vector<Rml::byte> pixels(static_cast<std::size_t>(tileSize*tileSize*4));
+    for(int y=0;y<tileSize;++y) {
+        const std::size_t sourceOffset=(static_cast<std::size_t>(y0+y)*
+            static_cast<std::size_t>(blockAtlasWidth_)+static_cast<std::size_t>(x0))*4u;
+        const std::size_t destinationOffset=static_cast<std::size_t>(y*tileSize*4);
+        std::memcpy(pixels.data()+destinationOffset,
+                    blockAtlasPixels_.data()+sourceOffset,static_cast<std::size_t>(tileSize*4));
+    }
+    textureDimensions={tileSize,tileSize};
+    return GenerateTexture(Rml::Span<const Rml::byte>(pixels.data(),pixels.size()),textureDimensions);
 }
 
 Rml::TextureHandle RmlUiOpenGLES::GenerateTexture(Rml::Span<const Rml::byte> source,
