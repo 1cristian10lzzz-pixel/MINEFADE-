@@ -24,6 +24,7 @@ public:
     bool Touch(int action, float x, float y);
     void UpdateAndRender();
     void SetStatus(const std::string& status);
+    void SetLeftHanded(bool enabled) { leftHanded_ = enabled; }
     void SetTargetBlock(const std::string& name, float progress);
     void SetPickupToast(const std::string& text);
     void SetPerspectiveEnabled(bool enabled);
@@ -66,6 +67,7 @@ private:
     bool ready_{false};
     bool rmlInitialised_{false};
     bool mouseCaptured_{false};
+    bool leftHanded_{false};
 };
 
 } // namespace minefade
