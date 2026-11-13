@@ -723,36 +723,6 @@ public final class MinefadeHomeScreen extends FrameLayout {
         return card;
     }
 
-    private void showSettingsPage() {
-        LinearLayout root = pageRoot("AJUSTES", "Preferencias visuales y comodidad de uso.");
-        ScrollView scroll = new ScrollView(getContext());
-        scroll.setFillViewport(true);
-        LinearLayout settings = column();
-        settings.setPadding(0, dp(10), 0, dp(8));
-        scroll.addView(settings);
-        root.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1f));
-
-        settings.addView(settingSwitch("Animaciones de interfaz", "Transiciones suaves en los menús.",
-                "menu_animations", true));
-        settings.addView(settingSwitch("Respuesta táctil", "Vibración ligera al pulsar botones.",
-                "menu_haptics", true));
-        settings.addView(soundVolumeControl());
-
-        LinearLayout info = column();
-        info.setPadding(dp(13), dp(11), dp(13), dp(11));
-        info.setBackground(shape(new int[]{0x332e4b60, 0x22162435}, 13, 0x334f7087));
-        TextView title = text("PERFILES GRÁFICOS", 10, 0xffb7d4e3, true);
-        info.addView(title);
-        TextView body = text("El volumen se aplica al instante. Los perfiles de calidad, distancia de renderizado y sombras se habilitarán cuando estén conectados al renderizador.", 9, muted, false);
-        body.setGravity(Gravity.TOP);
-        LinearLayout.LayoutParams bodyParams = new LinearLayout.LayoutParams(-1, -2);
-        bodyParams.topMargin = dp(6);
-        info.addView(body, bodyParams);
-        LinearLayout.LayoutParams infoParams = new LinearLayout.LayoutParams(-1, -2);
-        infoParams.topMargin = dp(4);
-        settings.addView(info, infoParams);
-    }
-
     private View soundVolumeControl() {
         LinearLayout card = column();
         card.setPadding(dp(12), dp(9), dp(12), dp(8));
