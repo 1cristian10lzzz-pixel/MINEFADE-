@@ -97,6 +97,7 @@ private:
     };
     static constexpr std::size_t kChunkWorkerCount = 2;
     std::vector<ChunkJob> pendingChunkJobs_;
+    bool asyncGenerationDisabled_{false};
 };
 
 void AppendCube(std::vector<WorldVertex>& output, const Vec3& center, const Vec3& half,
