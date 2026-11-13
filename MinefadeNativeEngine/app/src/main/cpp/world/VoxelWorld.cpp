@@ -713,4 +713,20 @@ void AppendCube(std::vector<WorldVertex>& output,const Vec3& center,const Vec3& 
     }
 }
 
+void AppendTexturedBlockCube(std::vector<WorldVertex>& output,BlockId block,
+                             const Vec3& center,const Vec3& half) {
+    const BlockDefinition* definition=GetBlockDefinition(block);
+    if(definition==nullptr||definition->shape==BlockShape::None)return;
+    const float x0=center.x-half.x,x1=center.x+half.x;
+    const float y0=center.y-half.y,y1=center.y+half.y;
+    const float z0=center.z-half.z,z1=center.z+half.z;
+    if(definition->shape==BlockShape::CrossPlant) {
+        AppendCrossPlant(output,x0,y0,z0,*definition);
+        return;
+    }
+    // Item meshes use the exact top/side/bottom atlas cells of their block.
+    // A compact cube keeps the held/dropped representation inexpensive.
+    AppendBox(output,x0,y0,z0,x1,y1,z1,*definition);
+}
+
 } // namespace minefade
