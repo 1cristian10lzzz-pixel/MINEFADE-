@@ -365,6 +365,9 @@ bool Engine::Initialise(float displayDensity, const std::uint8_t* atlasPixels,
     glDisable(GL_BLEND);
     glViewport(0, 0, width_, height_);
 
+    // Keep the generated atlas available to RmlUi so quickbar/inventory icons
+    // are cropped from the exact same block textures used by the 3D renderer.
+    ui_.SetBlockAtlas(atlasPixels,atlasBytes,atlasWidth,atlasHeight);
     if (!ui_.Initialise(width_, height_, displayDensity,
                         [this](const std::string& action) { HandleUiAction(action); })) {
         ENGINE_LOGE("RmlUi failed to initialise; game rendering remains available without the HUD");
