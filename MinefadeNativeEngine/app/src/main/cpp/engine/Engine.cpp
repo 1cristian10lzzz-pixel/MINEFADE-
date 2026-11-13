@@ -488,6 +488,7 @@ void Engine::UploadTransparentWorldMesh() {
 
 void Engine::RebuildEntityMesh() {
     entityMesh_.clear();
+    itemMesh_.clear();
     entities_.AppendMesh(entityMesh_);
     if (thirdPerson_) {
         player_.AppendMesh(entityMesh_);
@@ -523,7 +524,6 @@ void Engine::RebuildEntityMesh() {
     }
     // Block items use their own atlas-backed draw pass; entity models remain
     // vertex-coloured and therefore do not sample an arbitrary texture pixel.
-    itemMesh_.clear();
     droppedItems_.AppendMesh(itemMesh_);
 }
 
