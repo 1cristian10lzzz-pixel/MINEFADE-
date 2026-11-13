@@ -9,6 +9,7 @@
 #include <fstream>
 #include <limits>
 #include <set>
+#include <system_error>
 #include <utility>
 
 namespace minefade {
@@ -429,7 +430,10 @@ VoxelWorld::Chunk* VoxelWorld::FindChunk(int chunkX,int chunkZ) {
     const auto it=chunks_.find({chunkX,chunkZ});return it==chunks_.end()?nullptr:&it->second;
 }
 void VoxelWorld::StartNextChunkJob() {
-    // Keep two chunk builds in flight, leaving CPU capacity for rendering and input.
+    // Thread creation is optional: on devices that temporarily cannot allocate
+    // another worker, keep the world playable and let PumpChunkGeneration build
+    // one missing chunk synchronously per frame instead.
+    if (asyncGenerationDisabled_) return;
     while (pendingChunkJobs_.size() < kChunkWorkerCount && !generationQueue_.empty()) {
         const auto key = generationQueue_.front();
         generationQueue_.pop_front();
@@ -437,10 +441,16 @@ void VoxelWorld::StartNextChunkJob() {
         const int chunkZ = key.second;
         ChunkJob job;
         job.key = key;
-        job.future = std::async(std::launch::async, [this, chunkX, chunkZ]() {
-            return MakeChunk(chunkX, chunkZ);
-        });
-        pendingChunkJobs_.push_back(std::move(job));
+        try {
+            job.future = std::async(std::launch::async, [this, chunkX, chunkZ]() {
+                return MakeChunk(chunkX, chunkZ);
+            });
+            pendingChunkJobs_.push_back(std::move(job));
+        } catch (const std::system_error&) {
+            asyncGenerationDisabled_ = true;
+            generationQueue_.push_front(key);
+            break;
+        }
     }
 }
 
@@ -481,12 +491,24 @@ bool VoxelWorld::PumpChunkGeneration() {
         ChunkJob& job = pendingChunkJobs_[i];
         if (job.future.valid() &&
             job.future.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
-            Chunk chunk = job.future.get();
-            queuedChunks_.erase(job.key);
-            const auto key = std::make_pair(chunk.x, chunk.z);
-            if (chunks_.find(key) == chunks_.end()) {
-                chunks_.emplace(key, std::move(chunk));
-                addedChunk = true;
+            const auto key = job.key;
+            try {
+                Chunk chunk = job.future.get();
+                queuedChunks_.erase(key);
+                const auto completedKey = std::make_pair(chunk.x, chunk.z);
+                if (chunks_.find(completedKey) == chunks_.end()) {
+                    chunks_.emplace(completedKey, std::move(chunk));
+                    addedChunk = true;
+                }
+            } catch (...) {
+                // A worker failure should not permanently stop terrain streaming.
+                asyncGenerationDisabled_ = true;
+                queuedChunks_.erase(key);
+                if (chunks_.find(key) == chunks_.end()) {
+                    Chunk chunk = MakeChunk(key.first, key.second);
+                    chunks_.emplace(key, std::move(chunk));
+                    addedChunk = true;
+                }
             }
             pendingChunkJobs_.erase(pendingChunkJobs_.begin() + static_cast<std::ptrdiff_t>(i));
         } else {
@@ -494,20 +516,49 @@ bool VoxelWorld::PumpChunkGeneration() {
         }
     }
     StartNextChunkJob();
+    if (asyncGenerationDisabled_ && !generationQueue_.empty()) {
+        const auto key = generationQueue_.front();
+        generationQueue_.pop_front();
+        queuedChunks_.erase(key);
+        if (chunks_.find(key) == chunks_.end()) {
+            Chunk chunk = MakeChunk(key.first, key.second);
+            chunks_.emplace(key, std::move(chunk));
+            addedChunk = true;
+        }
+    }
     return addedChunk;
 }
 
 void VoxelWorld::WaitForChunkGeneration() {
     while (!pendingChunkJobs_.empty() || !generationQueue_.empty()) {
         StartNextChunkJob();
+        if (asyncGenerationDisabled_ && !generationQueue_.empty()) {
+            const auto key = generationQueue_.front();
+            generationQueue_.pop_front();
+            queuedChunks_.erase(key);
+            if (chunks_.find(key) == chunks_.end()) {
+                Chunk chunk = MakeChunk(key.first, key.second);
+                chunks_.emplace(key, std::move(chunk));
+            }
+            continue;
+        }
         if (pendingChunkJobs_.empty()) continue;
         ChunkJob job = std::move(pendingChunkJobs_.front());
         pendingChunkJobs_.erase(pendingChunkJobs_.begin());
         if (job.future.valid()) {
-            Chunk chunk = job.future.get();
-            queuedChunks_.erase(job.key);
-            const auto key = std::make_pair(chunk.x, chunk.z);
-            if (chunks_.find(key) == chunks_.end()) chunks_.emplace(key, std::move(chunk));
+            try {
+                Chunk chunk = job.future.get();
+                queuedChunks_.erase(job.key);
+                const auto key = std::make_pair(chunk.x, chunk.z);
+                if (chunks_.find(key) == chunks_.end()) chunks_.emplace(key, std::move(chunk));
+            } catch (...) {
+                asyncGenerationDisabled_ = true;
+                queuedChunks_.erase(job.key);
+                if (chunks_.find(job.key) == chunks_.end()) {
+                    Chunk chunk = MakeChunk(job.key.first, job.key.second);
+                    chunks_.emplace(job.key, std::move(chunk));
+                }
+            }
         }
     }
 }
