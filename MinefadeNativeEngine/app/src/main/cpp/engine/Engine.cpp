@@ -343,6 +343,7 @@ bool Engine::Initialise(float displayDensity, const std::uint8_t* atlasPixels,
     lookSensitivityY_ = pendingLookSensitivityY_;
     invertLookY_ = pendingInvertLookY_;
     leftHandedControls_ = pendingLeftHandedControls_;
+    joystickDeadzone_ = pendingJoystickDeadzone_;
     showHudStats_ = pendingShowHudStats_;
     ENGINE_LOGI("Starting Minefade Native Engine C++20 / OpenGL ES 3");
     const auto* glVersion = reinterpret_cast<const char*>(glGetString(GL_VERSION));
@@ -911,8 +912,18 @@ void Engine::Touch(int action, int pointerId, float x, float y) {
         if (state.joystick) {
             const float dx = (x - state.startX) / 48.0f;
             const float dy = (state.startY - y) / 48.0f;
+            const float magnitude = std::sqrt(dx * dx + dy * dy);
             state.moved = true;
-            player_.SetMovement(dx, dy);
+            if (magnitude <= joystickDeadzone_) {
+                player_.SetMovement(0.0f, 0.0f);
+            } else {
+                // Remap the range outside the dead zone to [0, 1] so small
+                // accidental finger drift does not move the player.
+                const float intensity = std::clamp(
+                    (magnitude - joystickDeadzone_) / (1.0f - joystickDeadzone_), 0.0f, 1.0f);
+                const float factor = intensity / std::max(magnitude, 0.0001f);
+                player_.SetMovement(dx * factor, dy * factor);
+            }
         } else {
             const float deltaX = x - state.lastX;
             const float deltaY = y - state.lastY;
@@ -1210,9 +1221,10 @@ void Engine::SetGraphicsOptions(int quality,int renderDistanceChunks,bool waterW
     }
 }
 
-void Engine::SetInputOptions(float sensitivityX, float sensitivityY, bool invertLookY, bool leftHanded) {
+void Engine::SetInputOptions(float sensitivityX, float sensitivityY, float joystickDeadzone, bool invertLookY, bool leftHanded) {
     pendingLookSensitivityX_ = std::clamp(sensitivityX, 0.35f, 1.50f);
     pendingLookSensitivityY_ = std::clamp(sensitivityY, 0.35f, 1.50f);
+    pendingJoystickDeadzone_ = std::clamp(joystickDeadzone, 0.05f, 0.30f);
     pendingInvertLookY_ = invertLookY;
     pendingLeftHandedControls_ = leftHanded;
     lookSensitivityX_ = pendingLookSensitivityX_;

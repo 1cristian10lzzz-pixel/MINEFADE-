@@ -32,7 +32,7 @@ public:
     std::uint32_t ConsumeSoundEvents();
     void SetMultiplayerMode(bool enabled, int playerSlot);
     void SetGraphicsOptions(int quality, int renderDistanceChunks, bool waterWaves, float fieldOfView, bool contactShadows);
-    void SetInputOptions(float sensitivityX, float sensitivityY, bool invertLookY, bool leftHanded);
+    void SetInputOptions(float sensitivityX, float sensitivityY, float joystickDeadzone, bool invertLookY, bool leftHanded);
     void SetHudOptions(bool showStats);
     void SetAvatarAppearance(const int* values, std::size_t count);
     void GetPlayerState(float output[4]) const;
@@ -129,6 +129,8 @@ private:
     bool pendingInvertLookY_{false};
     bool leftHandedControls_{false};
     bool pendingLeftHandedControls_{false};
+    float joystickDeadzone_{0.12f};
+    float pendingJoystickDeadzone_{0.12f};
     bool showHudStats_{true};
     bool pendingShowHudStats_{true};
     std::array<int, 6> avatarAppearance_{{0,0,0,0,0,0}};

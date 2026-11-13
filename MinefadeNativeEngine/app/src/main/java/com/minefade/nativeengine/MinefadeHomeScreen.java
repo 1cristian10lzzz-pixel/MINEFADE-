@@ -593,6 +593,8 @@ public final class MinefadeHomeScreen extends FrameLayout {
                         "touch_sensitivity_x", 35, 150, legacyTouch, "%"));
                 content.addView(settingSlider("Sensibilidad vertical", "Velocidad de giro de arriba abajo.",
                         "touch_sensitivity_y", 35, 150, legacyTouch, "%"));
+                content.addView(settingSlider("Zona muerta del joystick", "Filtra movimientos accidentales cerca del centro.",
+                        "joystick_deadzone", 5, 30, 12, "%"));
                 content.addView(settingSwitch("Invertir eje vertical", "Invierte el movimiento arriba y abajo.",
                         "invert_look_y", false));
                 content.addView(settingSwitch("Controles para mano izquierda", "Mueve el joystick al lado derecho y refleja el botón de salto.",
@@ -601,6 +603,7 @@ public final class MinefadeHomeScreen extends FrameLayout {
                         new int[]{0xff3a4b5d, 0xff263648}, 0xffa9c6d8, 38, () -> {
                             preferences.edit().putInt("touch_sensitivity", 100)
                                     .putInt("touch_sensitivity_x", 100).putInt("touch_sensitivity_y", 100)
+                                    .putInt("joystick_deadzone", 12)
                                     .putBoolean("invert_look_y", false).putBoolean("left_handed_controls", false)
                                     .putBoolean("menu_haptics", true).apply();
                             showSettingsPage();

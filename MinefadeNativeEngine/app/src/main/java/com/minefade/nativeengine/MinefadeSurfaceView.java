@@ -254,13 +254,14 @@ public final class MinefadeSurfaceView extends GLSurfaceView {
                 int legacySensitivity = preferences.getInt("touch_sensitivity", 100);
                 float sensitivityX = preferences.getInt("touch_sensitivity_x", legacySensitivity) / 100.0f;
                 float sensitivityY = preferences.getInt("touch_sensitivity_y", legacySensitivity) / 100.0f;
+                float joystickDeadzone = preferences.getInt("joystick_deadzone", 12) / 100.0f;
                 boolean invertLookY = preferences.getBoolean("invert_look_y", false);
                 boolean leftHanded = preferences.getBoolean("left_handed_controls", false);
                 boolean showHudStats = preferences.getBoolean("show_hud_stats", true);
                 float hudScale = preferences.getInt("hud_scale", 100) / 100.0f;
                 NativeBridge.nativeSetGraphicsOptions(quality, renderDistance, waterWaves,
                         fieldOfView, contactShadows);
-                NativeBridge.nativeSetInputOptions(sensitivityX, sensitivityY, invertLookY, leftHanded);
+                NativeBridge.nativeSetInputOptions(sensitivityX, sensitivityY, joystickDeadzone, invertLookY, leftHanded);
                 NativeBridge.nativeSetHudOptions(showHudStats);
                 int[] avatarChoices = {
                         preferences.getInt("avatar_piel", 0),
