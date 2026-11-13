@@ -33,6 +33,7 @@ public:
     void SetMultiplayerMode(bool enabled, int playerSlot);
     void SetGraphicsOptions(int quality, int renderDistanceChunks, bool waterWaves, float fieldOfView, bool contactShadows);
     void SetInputOptions(float sensitivityX, float sensitivityY, bool invertLookY, bool leftHanded);
+    void SetHudOptions(bool showStats);
     void SetAvatarAppearance(const int* values, std::size_t count);
     void GetPlayerState(float output[4]) const;
     void SetRemotePlayers(const float* values, std::size_t floatCount);
@@ -128,6 +129,8 @@ private:
     bool pendingInvertLookY_{false};
     bool leftHandedControls_{false};
     bool pendingLeftHandedControls_{false};
+    bool showHudStats_{true};
+    bool pendingShowHudStats_{true};
     std::array<int, 6> avatarAppearance_{{0,0,0,0,0,0}};
     bool inventoryVisible_{false};
     bool pauseVisible_{false};
