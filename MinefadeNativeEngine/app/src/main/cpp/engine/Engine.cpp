@@ -261,6 +261,10 @@ bool Engine::Initialise(float displayDensity, const std::uint8_t* atlasPixels,
     graphicsQuality_ = pendingGraphicsQuality_;
     renderDistanceChunks_ = pendingRenderDistanceChunks_;
     waterWaves_ = pendingWaterWaves_;
+    fieldOfView_ = pendingFieldOfView_;
+    contactShadows_ = pendingContactShadows_;
+    player_.SetContactShadows(contactShadows_);
+    entities_.SetContactShadows(contactShadows_);
     lookSensitivity_ = pendingLookSensitivity_;
     invertLookY_ = pendingInvertLookY_;
     ENGINE_LOGI("Starting Minefade Native Engine C++20 / OpenGL ES 3");
@@ -686,7 +690,7 @@ void Engine::Render() {
     if (worldProgram_ != 0 && worldVertexCount_ > 0) {
         const Vec3 eye = ViewPosition();
         const Vec3 target = ViewTarget();
-        const Mat4 projection = Perspective(68.0f * (kPi / 180.0f),
+        const Mat4 projection = Perspective(fieldOfView_ * (kPi / 180.0f),
                                             static_cast<float>(width_) / static_cast<float>(height_),
                                             0.08f, 120.0f);
         const Mat4 view = LookAt(eye, target, {0.0f, 1.0f, 0.0f});
@@ -1063,26 +1067,29 @@ void Engine::SetMultiplayerMode(bool enabled, int playerSlot) {
     pendingBlockEdits_.clear();
 }
 
-void Engine::SetGraphicsOptions(int quality, int renderDistanceChunks, bool waterWaves) {
-    pendingGraphicsQuality_ = std::clamp(quality, 0, 2);
-    pendingRenderDistanceChunks_ = std::clamp(renderDistanceChunks, 1, 3);
-    pendingWaterWaves_ = waterWaves;
-    if (!ready_) {
-        graphicsQuality_ = pendingGraphicsQuality_;
-        renderDistanceChunks_ = pendingRenderDistanceChunks_;
-        waterWaves_ = pendingWaterWaves_;
-    } else {
-        graphicsQuality_ = pendingGraphicsQuality_;
-        if (renderDistanceChunks_ != pendingRenderDistanceChunks_) {
-            renderDistanceChunks_ = pendingRenderDistanceChunks_;
-            world_.RequestGenerateAround(static_cast<int>(std::floor(player_.position.x)),
-                                         static_cast<int>(std::floor(player_.position.z)),
-                                         renderDistanceChunks_);
-            RebuildWorldMesh();
-            UploadWorldMesh();
-            UploadTransparentWorldMesh();
-        }
-        waterWaves_ = pendingWaterWaves_;
+void Engine::SetGraphicsOptions(int quality,int renderDistanceChunks,bool waterWaves,
+                                 float fieldOfView,bool contactShadows) {
+    pendingGraphicsQuality_=std::clamp(quality,0,2);
+    pendingRenderDistanceChunks_=std::clamp(renderDistanceChunks,1,3);
+    pendingWaterWaves_=waterWaves;
+    pendingFieldOfView_=std::clamp(fieldOfView,60.0f,100.0f);
+    pendingContactShadows_=contactShadows;
+    graphicsQuality_=pendingGraphicsQuality_;
+    renderDistanceChunks_=pendingRenderDistanceChunks_;
+    waterWaves_=pendingWaterWaves_;
+    fieldOfView_=pendingFieldOfView_;
+    contactShadows_=pendingContactShadows_;
+    if(ready_) {
+        player_.SetContactShadows(contactShadows_);
+        entities_.SetContactShadows(contactShadows_);
+        world_.RequestGenerateAround(static_cast<int>(std::floor(player_.position.x)),
+                                     static_cast<int>(std::floor(player_.position.z)),
+                                     renderDistanceChunks_);
+        RebuildWorldMesh();
+        UploadWorldMesh();
+        UploadTransparentWorldMesh();
+        RebuildEntityMesh();
+        UploadEntityMesh();
     }
 }
 
