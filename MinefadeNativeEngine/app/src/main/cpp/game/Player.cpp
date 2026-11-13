@@ -164,7 +164,8 @@ bool Player::ResolveSafeSpawn(const VoxelWorld& world) {
 
 void Player::AppendMesh(std::vector<WorldVertex>& output) const {
     const Vec3 anchor = position;
-    AppendContactShadow(output,{anchor.x,anchor.y-0.98f,anchor.z},0.48f,0.34f,1.0f);
+    if(contactShadows)
+        AppendContactShadow(output,{anchor.x,anchor.y-0.98f,anchor.z},0.48f,0.34f,1.0f);
     const float stride = (std::abs(movementX) + std::abs(movementY) > 0.05f)
         ? std::sin(walkPhase) * 0.16f : 0.0f;
 
@@ -509,7 +510,8 @@ void EntitySystem::Update(const VoxelWorld& world, float deltaSeconds) {
 
 void EntitySystem::AppendMesh(std::vector<WorldVertex>& output) const {
     for (const Entity& entity : entities_) {
-        AppendContactShadow(output,{entity.position.x,entity.position.y-0.98f,entity.position.z},0.55f,0.42f,0.78f);
+        if(contactShadows_)
+            AppendContactShadow(output,{entity.position.x,entity.position.y-0.98f,entity.position.z},0.55f,0.42f,0.78f);
         const float gait = std::sin(entity.phase * 8.0f) * 0.12f;
         const float legA = gait;
         const float legB = -gait;
