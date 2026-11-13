@@ -285,8 +285,11 @@ bool Engine::Initialise(float displayDensity, const std::uint8_t* atlasPixels,
     glGenBuffers(1, &entityVbo_);
     glGenVertexArrays(1, &transparentVao_);
     glGenBuffers(1, &transparentVbo_);
+    glGenVertexArrays(1, &itemVao_);
+    glGenBuffers(1, &itemVbo_);
     if (worldVao_ == 0 || worldVbo_ == 0 || entityVao_ == 0 || entityVbo_ == 0 ||
-        transparentVao_ == 0 || transparentVbo_ == 0) return failInitialisation();
+        transparentVao_ == 0 || transparentVbo_ == 0 || itemVao_ == 0 || itemVbo_ == 0)
+        return failInitialisation();
 
     if (multiplayerMode_) {
         // All LAN peers start from the same deterministic seed. The host's block
@@ -347,6 +350,7 @@ bool Engine::Initialise(float displayDensity, const std::uint8_t* atlasPixels,
     UploadTransparentWorldMesh();
     RebuildEntityMesh();
     UploadEntityMesh();
+    UploadItemMesh();
 
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LEQUAL);
@@ -384,14 +388,17 @@ void Engine::Shutdown() {
     if (entityVao_ != 0) glDeleteVertexArrays(1, &entityVao_);
     if (transparentVbo_ != 0) glDeleteBuffers(1, &transparentVbo_);
     if (transparentVao_ != 0) glDeleteVertexArrays(1, &transparentVao_);
+    if (itemVbo_ != 0) glDeleteBuffers(1, &itemVbo_);
+    if (itemVao_ != 0) glDeleteVertexArrays(1, &itemVao_);
     if (worldProgram_ != 0) glDeleteProgram(worldProgram_);
     if (blockAtlasTexture_ != 0) glDeleteTextures(1, &blockAtlasTexture_);
     worldVbo_ = worldVao_ = entityVbo_ = entityVao_ = transparentVbo_ = transparentVao_ = 0;
+    itemVbo_ = itemVao_ = 0;
     worldProgram_ = blockAtlasTexture_ = 0;
     mvpLocation_ = lightLocation_ = daylightLocation_ = atlasLocation_ = useAtlasLocation_ = -1;
     timeLocation_ = qualityLocation_ = waterWavesLocation_ = -1;
     cameraLocation_ = fogColorLocation_ = fogNearLocation_ = fogFarLocation_ = -1;
-    worldVertexCount_ = transparentVertexCount_ = entityVertexCount_ = 0;
+    worldVertexCount_ = transparentVertexCount_ = entityVertexCount_ = itemVertexCount_ = 0;
     ready_ = false;
     touches_.clear();
 }
@@ -498,7 +505,7 @@ void Engine::RebuildEntityMesh() {
                 eye.y+forward.y*0.66f-0.28f,
                 eye.z+forward.z*0.66f+right.z*0.30f
             };
-            AppendTexturedBlockCube(entityMesh_,static_cast<BlockId>(selected),
+            AppendTexturedBlockCube(itemMesh_,static_cast<BlockId>(selected),
                                     held,{0.105f,0.105f,0.105f});
             const std::array<float,3> sleeve{0.28f,0.43f,0.38f};
             AppendCube(entityMesh_,{held.x-right.x*0.19f,held.y-0.12f,held.z-right.z*0.19f},
@@ -514,7 +521,34 @@ void Engine::RebuildEntityMesh() {
         remote.walkPhase = static_cast<float>(ElapsedSeconds() * 5.0);
         remote.AppendMesh(entityMesh_);
     }
-    droppedItems_.AppendMesh(entityMesh_);
+    // Block items use their own atlas-backed draw pass; entity models remain
+    // vertex-coloured and therefore do not sample an arbitrary texture pixel.
+    itemMesh_.clear();
+    droppedItems_.AppendMesh(itemMesh_);
+}
+
+void Engine::UploadItemMesh() {
+    if(itemVao_==0||itemVbo_==0)return;
+    glBindVertexArray(itemVao_);
+    glBindBuffer(GL_ARRAY_BUFFER,itemVbo_);
+    glBufferData(GL_ARRAY_BUFFER,
+        static_cast<GLsizeiptr>(itemMesh_.size()*sizeof(WorldVertex)),
+        itemMesh_.empty()?nullptr:itemMesh_.data(),GL_DYNAMIC_DRAW);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,sizeof(WorldVertex),
+                          reinterpret_cast<const void*>(offsetof(WorldVertex,x)));
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1,3,GL_FLOAT,GL_FALSE,sizeof(WorldVertex),
+                          reinterpret_cast<const void*>(offsetof(WorldVertex,nx)));
+    glEnableVertexAttribArray(2);
+    glVertexAttribPointer(2,3,GL_FLOAT,GL_FALSE,sizeof(WorldVertex),
+                          reinterpret_cast<const void*>(offsetof(WorldVertex,r)));
+    glEnableVertexAttribArray(3);
+    glVertexAttribPointer(3,2,GL_FLOAT,GL_FALSE,sizeof(WorldVertex),
+                          reinterpret_cast<const void*>(offsetof(WorldVertex,u)));
+    glBindVertexArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER,0);
+    itemVertexCount_=static_cast<GLsizei>(itemMesh_.size());
 }
 
 void Engine::UploadEntityMesh() {
@@ -630,6 +664,7 @@ void Engine::Render() {
         }
         RebuildEntityMesh();
         UploadEntityMesh();
+        UploadItemMesh();
         const int playerChunkX = static_cast<int>(std::floor(player_.position.x / 16.0f));
         const int playerChunkZ = static_cast<int>(std::floor(player_.position.z / 16.0f));
         if (playerChunkX != lastChunkX_ || playerChunkZ != lastChunkZ_) {
@@ -685,8 +720,20 @@ void Engine::Render() {
             glBindVertexArray(entityVao_);
             glDrawArrays(GL_TRIANGLES, 0, entityVertexCount_);
             glBindVertexArray(0);
-            glUniform1i(useAtlasLocation_, 1);
         }
+        if(itemVertexCount_>0) {
+            glUniform1i(useAtlasLocation_,1);
+            glBindTexture(GL_TEXTURE_2D,blockAtlasTexture_);
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+            glDepthMask(GL_FALSE);
+            glBindVertexArray(itemVao_);
+            glDrawArrays(GL_TRIANGLES,0,itemVertexCount_);
+            glBindVertexArray(0);
+            glDepthMask(GL_TRUE);
+            glDisable(GL_BLEND);
+        }
+        glUniform1i(useAtlasLocation_,1);
         if (transparentVertexCount_ > 0) {
             glEnable(GL_BLEND);
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
