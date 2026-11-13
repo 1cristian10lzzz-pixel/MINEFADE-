@@ -106,6 +106,11 @@ void Player::Jump() {
     grounded = false;
 }
 
+void Player::SetAppearance(const std::array<int, 6>& values) {
+    for (std::size_t i = 0; i < appearance.size(); ++i)
+        appearance[i] = std::clamp(values[i], 0, 5);
+}
+
 bool Player::ResolveSafeSpawn(const VoxelWorld& world) {
     constexpr float bodyRadius = 0.29f;
     constexpr float bodyHeight = 1.80f;
@@ -165,9 +170,28 @@ void Player::AppendMesh(std::vector<WorldVertex>& output) const {
 
     // Original Minefade adventurer silhouette: boots, trousers, tunic, arms, hands,
     // face and hair. Every part is transformed by the player's yaw, not world axes.
-    const std::array<float, 3> skin{{0.78f, 0.57f, 0.42f}};
-    const std::array<float, 3> hair{{0.25f, 0.18f, 0.14f}};
-    const std::array<float, 3> tunic{{0.18f, 0.43f, 0.62f}};
+    static constexpr std::array<std::array<float,3>,6> skinPalette{{
+        {{0.91f,0.75f,0.61f}},{{0.75f,0.51f,0.37f}},{{0.58f,0.36f,0.25f}},
+        {{0.95f,0.80f,0.68f}},{{0.68f,0.43f,0.31f}},{{0.43f,0.28f,0.21f}}
+    }};
+    static constexpr std::array<std::array<float,3>,6> hairPalette{{
+        {{0.48f,0.29f,0.17f}},{{0.19f,0.16f,0.18f}},{{0.72f,0.50f,0.24f}},
+        {{0.25f,0.39f,0.50f}},{{0.42f,0.30f,0.23f}},{{0.78f,0.70f,0.55f}}
+    }};
+    static constexpr std::array<std::array<float,3>,6> outfitPalette{{
+        {{0.18f,0.55f,0.39f}},{{0.25f,0.41f,0.76f}},{{0.66f,0.35f,0.54f}},
+        {{0.70f,0.47f,0.19f}},{{0.34f,0.42f,0.50f}},{{0.27f,0.48f,0.36f}}
+    }};
+    static constexpr std::array<std::array<float,3>,6> armourPalette{{
+        {{0.0f,0.0f,0.0f}},{{0.48f,0.34f,0.24f}},{{0.61f,0.69f,0.74f}},
+        {{0.26f,0.52f,0.66f}},{{0.61f,0.46f,0.78f}},{{0.82f,0.88f,0.91f}}
+    }};
+    const auto& skin=skinPalette[static_cast<std::size_t>(appearance[0])];
+    const auto& hair=hairPalette[static_cast<std::size_t>(appearance[1])];
+    const auto& tunic=outfitPalette[static_cast<std::size_t>(appearance[3])];
+    const auto& armour=armourPalette[static_cast<std::size_t>(appearance[4])];
+    const int hairstyle=appearance[1];
+    const int accessory=appearance[5];
     const std::array<float, 3> trim{{0.88f, 0.66f, 0.28f}};
     const std::array<float, 3> trousers{{0.19f, 0.25f, 0.43f}};
     const std::array<float, 3> boots{{0.25f, 0.16f, 0.11f}};
@@ -189,17 +213,45 @@ void Player::AppendMesh(std::vector<WorldVertex>& output) const {
     AppendPlayerBox(output, anchor, yaw, {0.0f, 1.63f, 0.015f}, {0.25f, 0.25f, 0.245f}, skin);
     AppendPlayerBox(output, anchor, yaw, {0.0f, 1.83f, -0.015f}, {0.255f, 0.075f, 0.255f}, hair);
     AppendPlayerBox(output, anchor, yaw, {0.0f, 1.63f, -0.225f}, {0.255f, 0.10f, 0.045f}, hair);
+    // Hairstyle slots alter the actual native silhouette, not just the menu swatch.
+    if(hairstyle==1||hairstyle==2) {
+        AppendPlayerBox(output,anchor,yaw,{-0.19f,1.72f,0.19f},{0.10f,0.18f,0.12f},hair);
+    } else if(hairstyle==3||hairstyle==4) {
+        AppendPlayerBox(output,anchor,yaw,{0.23f,1.43f,-0.02f},{0.085f,0.34f,0.10f},hair);
+    } else if(hairstyle==5) {
+        AppendPlayerBox(output,anchor,yaw,{0.0f,1.99f,-0.015f},{0.11f,0.16f,0.12f},hair);
+    }
 
-    // Facial features, neck trim and a waist belt keep the avatar readable at
-    // third-person camera distance instead of presenting as a stack of plain cubes.
-    const std::array<float, 3> eye{{0.11f, 0.14f, 0.17f}};
-    const std::array<float, 3> belt{{0.11f, 0.16f, 0.21f}};
-    AppendPlayerBox(output, anchor, yaw, {-0.105f, 1.66f, 0.245f}, {0.035f, 0.045f, 0.018f}, eye);
-    AppendPlayerBox(output, anchor, yaw, { 0.105f, 1.66f, 0.245f}, {0.035f, 0.045f, 0.018f}, eye);
-    AppendPlayerBox(output, anchor, yaw, {0.0f, 1.57f, 0.252f}, {0.045f, 0.035f, 0.018f}, trim);
-    AppendPlayerBox(output, anchor, yaw, {0.0f, 0.77f, 0.0f}, {0.325f, 0.055f, 0.198f}, belt);
-    AppendPlayerBox(output, anchor, yaw, {-0.22f, 1.32f, 0.0f}, {0.13f, 0.08f, 0.205f}, trim);
-    AppendPlayerBox(output, anchor, yaw, { 0.22f, 1.32f, 0.0f}, {0.13f, 0.08f, 0.205f}, trim);
+    // Skin/eye palettes, armour overlays and accessories are applied on the in-world avatar.
+    static constexpr std::array<std::array<float,3>,6> eyePalette{{
+        {{0.48f,0.34f,0.20f}},{{0.30f,0.62f,0.82f}},{{0.29f,0.67f,0.43f}},
+        {{0.52f,0.60f,0.68f}},{{0.13f,0.15f,0.22f}},{{0.82f,0.62f,0.25f}}
+    }};
+    const auto& eye=eyePalette[static_cast<std::size_t>(appearance[2])];
+    const std::array<float,3> belt{{0.11f,0.16f,0.21f}};
+    AppendPlayerBox(output, anchor, yaw, {-0.105f,1.66f,0.245f},{0.035f,0.045f,0.018f},eye);
+    AppendPlayerBox(output, anchor, yaw, {0.105f,1.66f,0.245f},{0.035f,0.045f,0.018f},eye);
+    AppendPlayerBox(output, anchor, yaw, {0.0f,1.57f,0.252f},{0.045f,0.035f,0.018f},trim);
+    AppendPlayerBox(output, anchor, yaw, {0.0f,0.77f,0.0f},{0.325f,0.055f,0.198f},belt);
+    AppendPlayerBox(output, anchor, yaw, {-0.22f,1.32f,0.0f},{0.13f,0.08f,0.205f},trim);
+    AppendPlayerBox(output, anchor, yaw, {0.22f,1.32f,0.0f},{0.13f,0.08f,0.205f},trim);
+
+    if(appearance[4]>0) {
+        AppendPlayerBox(output,anchor,yaw,{0.0f,1.08f,0.205f},{0.30f,0.25f,0.045f},armour);
+        AppendPlayerBox(output,anchor,yaw,{-0.43f,1.34f,0.0f},{0.17f,0.12f,0.18f},armour);
+        AppendPlayerBox(output,anchor,yaw,{0.43f,1.34f,0.0f},{0.17f,0.12f,0.18f},armour);
+    }
+    if(accessory==1) {
+        AppendPlayerBox(output,anchor,yaw,{-0.34f,1.42f,0.0f},{0.20f,0.12f,0.22f},trim);
+    } else if(accessory==2) {
+        AppendPlayerBox(output,anchor,yaw,{0.0f,1.00f,-0.235f},{0.30f,0.62f,0.035f},hair);
+    } else if(accessory==3) {
+        AppendPlayerBox(output,anchor,yaw,{0.0f,1.26f,0.25f},{0.075f,0.085f,0.025f},trim);
+    } else if(accessory==4) {
+        AppendPlayerBox(output,anchor,yaw,{0.0f,2.03f,-0.015f},{0.27f,0.035f,0.26f},trim);
+    } else if(accessory==5) {
+        AppendPlayerBox(output,anchor,yaw,{0.0f,1.08f,-0.245f},{0.22f,0.30f,0.09f},armour);
+    }
 }
 
 void Player::Update(const VoxelWorld& world, float deltaSeconds) {
