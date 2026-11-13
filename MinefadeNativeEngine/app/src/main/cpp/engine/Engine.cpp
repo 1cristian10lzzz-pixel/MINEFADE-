@@ -27,14 +27,29 @@ layout(location=3) in vec2 aTexCoord;
 uniform mat4 uMvp;
 uniform vec3 uLightDirection;
 uniform float uDaylight;
+uniform float uTime;
+uniform float uQuality;
+uniform int uWaterWaves;
 out mediump vec3 vColor;
 out mediump vec2 vTexCoord;
 void main() {
-    gl_Position = uMvp * vec4(aPosition, 1.0);
+    vec3 position = aPosition;
+    float fluidCode = aColor.r;
+    bool waterSurface = fluidCode < -0.5 && fluidCode > -1.5 && aNormal.y > 0.8;
+    if (waterSurface && uWaterWaves == 1) {
+        float wave = sin(position.x * 0.72 + uTime * 1.25)
+                   * cos(position.z * 0.61 - uTime * 0.92);
+        position.y += wave * (uQuality > 1.5 ? 0.018 : 0.009);
+    }
+    gl_Position = uMvp * vec4(position, 1.0);
     float diffuse = max(dot(normalize(aNormal), normalize(-uLightDirection)), 0.0);
-    float ambient = mix(0.22, 0.38, uDaylight);
-    float illumination = ambient + diffuse * (0.42 + 0.58 * uDaylight);
-    vColor = aColor * illumination;
+    float qualityFactor = clamp(uQuality * 0.5, 0.0, 1.0);
+    float ambient = mix(0.17, 0.34, qualityFactor);
+    float illumination = ambient + diffuse * (0.40 + 0.60 * uDaylight);
+    vec3 material = aColor;
+    if (fluidCode < -1.5) material = vec3(1.0, 0.43, 0.16);
+    else if (fluidCode < -0.5) material = vec3(0.36, 0.72, 0.91);
+    vColor = material * illumination;
     vTexCoord = aTexCoord;
 }
 )";
@@ -162,8 +177,12 @@ bool Engine::CreateWorldProgram() {
     daylightLocation_ = glGetUniformLocation(worldProgram_, "uDaylight");
     atlasLocation_ = glGetUniformLocation(worldProgram_, "uBlockAtlas");
     useAtlasLocation_ = glGetUniformLocation(worldProgram_, "uUseAtlas");
+    timeLocation_ = glGetUniformLocation(worldProgram_, "uTime");
+    qualityLocation_ = glGetUniformLocation(worldProgram_, "uQuality");
+    waterWavesLocation_ = glGetUniformLocation(worldProgram_, "uWaterWaves");
     if (mvpLocation_ < 0 || lightLocation_ < 0 || daylightLocation_ < 0 ||
-        atlasLocation_ < 0 || useAtlasLocation_ < 0) return false;
+        atlasLocation_ < 0 || useAtlasLocation_ < 0 || timeLocation_ < 0 ||
+        qualityLocation_ < 0 || waterWavesLocation_ < 0) return false;
     glUseProgram(worldProgram_);
     glUniform1i(atlasLocation_, 0);
     glUniform1i(useAtlasLocation_, 1);
@@ -224,6 +243,11 @@ bool Engine::Initialise(float displayDensity, const std::uint8_t* atlasPixels,
 
     multiplayerMode_ = pendingMultiplayerMode_;
     multiplayerSlot_ = pendingMultiplayerSlot_;
+    graphicsQuality_ = pendingGraphicsQuality_;
+    renderDistanceChunks_ = pendingRenderDistanceChunks_;
+    waterWaves_ = pendingWaterWaves_;
+    lookSensitivity_ = pendingLookSensitivity_;
+    invertLookY_ = pendingInvertLookY_;
     ENGINE_LOGI("Starting Minefade Native Engine C++20 / OpenGL ES 3");
     const auto* glVersion = reinterpret_cast<const char*>(glGetString(GL_VERSION));
     const auto* glRenderer = reinterpret_cast<const char*>(glGetString(GL_RENDERER));
@@ -297,7 +321,8 @@ bool Engine::Initialise(float displayDensity, const std::uint8_t* atlasPixels,
         // nine 16x16x96 chunks and building their meshes here can stall EGL startup
         // on lower-end Android GPUs and trigger the world's loading timeout.
         world_.RequestGenerateAround(static_cast<int>(std::floor(player_.position.x)),
-                                     static_cast<int>(std::floor(player_.position.z)), 1);
+                                     static_cast<int>(std::floor(player_.position.z)),
+                                     renderDistanceChunks_);
     }
     footstepElapsed_ = 0.0f;
     lastChunkX_ = static_cast<int>(std::floor(player_.position.x / 16.0f));
@@ -350,6 +375,7 @@ void Engine::Shutdown() {
     worldVbo_ = worldVao_ = entityVbo_ = entityVao_ = transparentVbo_ = transparentVao_ = 0;
     worldProgram_ = blockAtlasTexture_ = 0;
     mvpLocation_ = lightLocation_ = daylightLocation_ = atlasLocation_ = useAtlasLocation_ = -1;
+    timeLocation_ = qualityLocation_ = waterWavesLocation_ = -1;
     worldVertexCount_ = transparentVertexCount_ = entityVertexCount_ = 0;
     ready_ = false;
     touches_.clear();
@@ -364,7 +390,8 @@ void Engine::Resize(int width, int height) {
 
 void Engine::RebuildWorldMesh() {
     world_.BuildMesh(worldMesh_, static_cast<int>(std::floor(player_.position.x)),
-                     static_cast<int>(std::floor(player_.position.z)), 1, &transparentWorldMesh_);
+                     static_cast<int>(std::floor(player_.position.z)),
+                     renderDistanceChunks_, &transparentWorldMesh_);
 
     // Alpha blending is order-dependent. Sort transparent triangles from far to near
     // so overlapping water/glass surfaces blend more consistently on mobile GPUs.
@@ -570,7 +597,8 @@ void Engine::Render() {
         const int playerChunkZ = static_cast<int>(std::floor(player_.position.z / 16.0f));
         if (playerChunkX != lastChunkX_ || playerChunkZ != lastChunkZ_) {
             world_.RequestGenerateAround(static_cast<int>(std::floor(player_.position.x)),
-                                         static_cast<int>(std::floor(player_.position.z)), 1);
+                                         static_cast<int>(std::floor(player_.position.z)),
+                                         renderDistanceChunks_);
             lastChunkX_ = playerChunkX;
             lastChunkZ_ = playerChunkZ;
             RebuildWorldMesh();
@@ -599,6 +627,9 @@ void Engine::Render() {
         glUniformMatrix4fv(mvpLocation_, 1, GL_FALSE, mvp.v.data());
         glUniform3f(lightLocation_, sun[0], sun[1], sun[2]);
         glUniform1f(daylightLocation_, environment_.Daylight());
+        glUniform1f(timeLocation_, static_cast<float>(ElapsedSeconds()));
+        glUniform1f(qualityLocation_, static_cast<float>(graphicsQuality_));
+        glUniform1i(waterWavesLocation_, waterWaves_ ? 1 : 0);
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, blockAtlasTexture_);
         glBindVertexArray(worldVao_);
@@ -685,7 +716,11 @@ void Engine::Touch(int action, int pointerId, float x, float y) {
                 state.moved = true;
                 state.mining = false;
             }
-            if (state.moved) player_.Rotate(deltaX, deltaY);
+            if (state.moved) {
+                const float verticalDirection = invertLookY_ ? -1.0f : 1.0f;
+                player_.Rotate(deltaX * lookSensitivity_,
+                               deltaY * lookSensitivity_ * verticalDirection);
+            }
         }
         state.lastX = x;
         state.lastY = y;
@@ -935,6 +970,41 @@ void Engine::SetMultiplayerMode(bool enabled, int playerSlot) {
     }
     remotePlayers_.clear();
     pendingBlockEdits_.clear();
+}
+
+void Engine::SetGraphicsOptions(int quality, int renderDistanceChunks, bool waterWaves) {
+    pendingGraphicsQuality_ = std::clamp(quality, 0, 2);
+    pendingRenderDistanceChunks_ = std::clamp(renderDistanceChunks, 1, 3);
+    pendingWaterWaves_ = waterWaves;
+    if (!ready_) {
+        graphicsQuality_ = pendingGraphicsQuality_;
+        renderDistanceChunks_ = pendingRenderDistanceChunks_;
+        waterWaves_ = pendingWaterWaves_;
+    } else {
+        graphicsQuality_ = pendingGraphicsQuality_;
+        if (renderDistanceChunks_ != pendingRenderDistanceChunks_) {
+            renderDistanceChunks_ = pendingRenderDistanceChunks_;
+            world_.RequestGenerateAround(static_cast<int>(std::floor(player_.position.x)),
+                                         static_cast<int>(std::floor(player_.position.z)),
+                                         renderDistanceChunks_);
+            RebuildWorldMesh();
+            UploadWorldMesh();
+            UploadTransparentWorldMesh();
+        }
+        waterWaves_ = pendingWaterWaves_;
+    }
+}
+
+void Engine::SetInputOptions(float sensitivity, bool invertLookY) {
+    pendingLookSensitivity_ = std::clamp(sensitivity, 0.35f, 1.50f);
+    pendingInvertLookY_ = invertLookY;
+    if (!ready_) {
+        lookSensitivity_ = pendingLookSensitivity_;
+        invertLookY_ = pendingInvertLookY_;
+    } else {
+        lookSensitivity_ = pendingLookSensitivity_;
+        invertLookY_ = pendingInvertLookY_;
+    }
 }
 
 void Engine::GetPlayerState(float output[4]) const {
