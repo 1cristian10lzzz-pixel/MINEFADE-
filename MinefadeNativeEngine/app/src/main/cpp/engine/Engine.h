@@ -29,7 +29,7 @@ public:
     bool ConsumeExitRequest();
     std::uint32_t ConsumeSoundEvents();
     void SetMultiplayerMode(bool enabled, int playerSlot);
-    void SetGraphicsOptions(int quality, int renderDistanceChunks, bool waterWaves);
+    void SetGraphicsOptions(int quality, int renderDistanceChunks, bool waterWaves, float fieldOfView, bool contactShadows);
     void SetInputOptions(float sensitivity, bool invertLookY);
     void SetAvatarAppearance(const int* values, std::size_t count);
     void GetPlayerState(float output[4]) const;
@@ -114,6 +114,10 @@ private:
     int pendingRenderDistanceChunks_{2};
     bool waterWaves_{true};
     bool pendingWaterWaves_{true};
+    float fieldOfView_{68.0f};
+    float pendingFieldOfView_{68.0f};
+    bool contactShadows_{true};
+    bool pendingContactShadows_{true};
     float lookSensitivity_{1.0f};
     float pendingLookSensitivity_{1.0f};
     bool invertLookY_{false};
