@@ -12,6 +12,23 @@ using namespace minefade;
 
 int main() {
     VoxelWorld world(123456u);
+    // Exercise the exact default game seed and the same one-chunk spawn path
+    // used by Engine::Initialise, not only arbitrary test seeds.
+    VoxelWorld firstLaunchWorld(0x4D464445u);
+    firstLaunchWorld.GenerateAround(8, 8, 0);
+    Player firstLaunchPlayer;
+    firstLaunchPlayer.position = {8.0f,
+        static_cast<float>(firstLaunchWorld.GetSurfaceHeight(8, 8)) + 1.05f, 8.0f};
+    assert(firstLaunchPlayer.ResolveSafeSpawn(firstLaunchWorld));
+    assert(std::isfinite(firstLaunchPlayer.position.x));
+    assert(std::isfinite(firstLaunchPlayer.position.y));
+    assert(std::isfinite(firstLaunchPlayer.position.z));
+    assert(firstLaunchPlayer.position.y > 0.0f);
+    assert(!firstLaunchWorld.IsSolid(
+        static_cast<int>(std::floor(firstLaunchPlayer.position.x)),
+        static_cast<int>(std::floor(firstLaunchPlayer.position.y + 0.75f)),
+        static_cast<int>(std::floor(firstLaunchPlayer.position.z))));
+
     VoxelWorld deterministic(123456u);
     world.GenerateAround(8, 8, 1);
     deterministic.GenerateAround(8, 8, 1);
