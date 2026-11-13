@@ -83,11 +83,13 @@ public final class SoundEffects {
 
     /** Menu feedback works before the GL world is launched. */
     public void playMenuClick() {
+        if (!preferences.getBoolean("ui_sounds_enabled", true)) return;
         play(uiClick, 0.52f, 1.0f);
     }
 
     /** Native sound-event bits: break=1, place=2, UI=4, pickup=8, jump=16, footstep=32. */
     public void playEvents(int events) {
+        if (!preferences.getBoolean("sound_effects_enabled", true)) return;
         if ((events & 1) != 0) play(blockBreak, 0.82f, 1.0f);
         if ((events & 2) != 0) play(blockPlace, 0.72f, 1.0f);
         if ((events & 4) != 0) play(uiClick, 0.48f, 1.0f);
