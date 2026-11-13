@@ -117,6 +117,20 @@ Java_com_minefade_nativeengine_NativeBridge_nativeSetMultiplayerMode(JNIEnv*, jc
     minefade::GetEngine().SetMultiplayerMode(enabled == JNI_TRUE, static_cast<int>(slot));
 }
 
+extern "C" JNIEXPORT void JNICALL
+Java_com_minefade_nativeengine_NativeBridge_nativeSetGraphicsOptions(
+        JNIEnv*, jclass, jint quality, jint renderDistanceChunks, jboolean waterWaves) {
+    minefade::GetEngine().SetGraphicsOptions(static_cast<int>(quality),
+        static_cast<int>(renderDistanceChunks), waterWaves == JNI_TRUE);
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_minefade_nativeengine_NativeBridge_nativeSetInputOptions(
+        JNIEnv*, jclass, jfloat sensitivity, jboolean invertLookY) {
+    minefade::GetEngine().SetInputOptions(static_cast<float>(sensitivity),
+        invertLookY == JNI_TRUE);
+}
+
 extern "C" JNIEXPORT jfloatArray JNICALL
 Java_com_minefade_nativeengine_NativeBridge_nativeGetPlayerState(JNIEnv* env, jclass) {
     float state[4]{};
