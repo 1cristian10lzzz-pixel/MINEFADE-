@@ -73,12 +73,13 @@ private:
         std::array<BlockId, kChunkVolume> blocks{};
     };
 
-    enum class Biome : std::uint8_t { Plains, Forest, Desert, Snow, Ocean, Mountains, Swamp, Savanna };
+    enum class Biome : std::uint8_t { Plains, Forest, Desert, Snow, Ocean, Mountains, Swamp, Savanna, River };
 
     static int FloorDiv(int value, int divisor);
     static int PositiveMod(int value, int divisor);
     static std::size_t Index(int x, int y, int z);
     float Noise2D(float x, float z) const;
+    float FractalNoise2D(float x, float z, int octaves, float persistence, float lacunarity) const;
     Biome GetBiome(int x, int z) const;
     int TerrainHeight(int x, int z) const;
     Chunk MakeChunk(int chunkX, int chunkZ) const;
