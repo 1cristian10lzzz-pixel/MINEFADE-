@@ -162,6 +162,7 @@ El editor usa una proyección 3D de piezas voxel dibujadas por Canvas; el jugado
 ### Pase de objetos y acabado del render
 
 - La entidad de mano y los objetos caídos se agrupan en un buffer/pase separado que muestrea el atlas real; los modelos de personajes y criaturas mantienen su propio pase de color por vértice.
+- RmlUi carga miniaturas de los bloques desde el mismo atlas mediante rutas internas `minefade://block/ID`; la barra rápida y el inventario muestran iconos con cantidades en vez de abreviaturas de tres letras.
 - El shader mezcla niebla de distancia con el color variable del cielo para suavizar el horizonte según la distancia de visión.
 - Se añadieron sombras de contacto geométricas sencillas bajo jugador y criaturas; son una aproximación de oclusión local, no sombras dinámicas proyectadas en paredes/terreno.
 - El ave ambiental mueve las alas de forma independiente; oveja, vaca y jugador conservan animaciones de marcha básicas.
