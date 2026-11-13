@@ -24,6 +24,24 @@ Vec3 PlayerLocalPoint(const Vec3& anchor, float yaw, float x, float y, float z) 
     };
 }
 
+void AppendContactShadow(std::vector<WorldVertex>& output,const Vec3& position,
+                          float radiusX,float radiusZ,float opacity) {
+    constexpr int segments=18;
+    const float y=position.y+0.018f;
+    const std::array<float,3> inner{0.10f*opacity,0.12f*opacity,0.15f*opacity};
+    const std::array<float,3> outer{0.19f*opacity,0.22f*opacity,0.25f*opacity};
+    for(int segment=0;segment<segments;++segment) {
+        const float a0=2.0f*kPi*static_cast<float>(segment)/static_cast<float>(segments);
+        const float a1=2.0f*kPi*static_cast<float>(segment+1)/static_cast<float>(segments);
+        const Vec3 center{position.x,y,position.z};
+        const Vec3 p0{position.x+std::cos(a0)*radiusX,y,position.z+std::sin(a0)*radiusZ};
+        const Vec3 p1{position.x+std::cos(a1)*radiusX,y,position.z+std::sin(a1)*radiusZ};
+        output.push_back({center.x,center.y,center.z,0,1,0,inner[0],inner[1],inner[2],0.5f,0.5f});
+        output.push_back({p1.x,p1.y,p1.z,0,1,0,outer[0],outer[1],outer[2],0.5f,0.5f});
+        output.push_back({p0.x,p0.y,p0.z,0,1,0,outer[0],outer[1],outer[2],0.5f,0.5f});
+    }
+}
+
 void AppendPlayerBox(std::vector<WorldVertex>& output, const Vec3& anchor, float yaw,
                      const Vec3& localCenter, const Vec3& half,
                      const std::array<float, 3>& color) {
@@ -141,6 +159,7 @@ bool Player::ResolveSafeSpawn(const VoxelWorld& world) {
 
 void Player::AppendMesh(std::vector<WorldVertex>& output) const {
     const Vec3 anchor = position;
+    AppendContactShadow(output,anchor,0.48f,0.34f,1.0f);
     const float stride = (std::abs(movementX) + std::abs(movementY) > 0.05f)
         ? std::sin(walkPhase) * 0.16f : 0.0f;
 
@@ -402,6 +421,7 @@ std::size_t DroppedItemSystem::Update(const VoxelWorld& world, const Player& pla
 
 void DroppedItemSystem::AppendMesh(std::vector<WorldVertex>& output) const {
     for (const DroppedItem& item : drops_) {
+        AppendContactShadow(output,item.position,0.18f,0.18f,0.48f);
         const BlockId block=static_cast<BlockId>(item.itemId);
         AppendTexturedBlockCube(output,block,item.position,{0.13f,0.13f,0.13f});
     }
@@ -438,6 +458,7 @@ void EntitySystem::Update(const VoxelWorld& world, float deltaSeconds) {
 
 void EntitySystem::AppendMesh(std::vector<WorldVertex>& output) const {
     for (const Entity& entity : entities_) {
+        AppendContactShadow(output,entity.position,0.55f,0.42f,0.78f);
         const float gait = std::sin(entity.phase * 8.0f) * 0.12f;
         const float legA = gait;
         const float legB = -gait;
