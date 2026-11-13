@@ -29,6 +29,8 @@ public:
     bool ConsumeExitRequest();
     std::uint32_t ConsumeSoundEvents();
     void SetMultiplayerMode(bool enabled, int playerSlot);
+    void SetGraphicsOptions(int quality, int renderDistanceChunks, bool waterWaves);
+    void SetInputOptions(float sensitivity, bool invertLookY);
     void GetPlayerState(float output[4]) const;
     void SetRemotePlayers(const float* values, std::size_t floatCount);
     void ApplyRemoteBlockEdits(const int* values, std::size_t valueCount);
@@ -76,6 +78,9 @@ private:
     GLint daylightLocation_{-1};
     GLint atlasLocation_{-1};
     GLint useAtlasLocation_{-1};
+    GLint timeLocation_{-1};
+    GLint qualityLocation_{-1};
+    GLint waterWavesLocation_{-1};
     GLuint blockAtlasTexture_{0};
     GLuint entityVao_{0};
     GLuint entityVbo_{0};
@@ -94,6 +99,16 @@ private:
     int multiplayerSlot_{0};
     bool pendingMultiplayerMode_{false};
     int pendingMultiplayerSlot_{0};
+    int graphicsQuality_{1};
+    int pendingGraphicsQuality_{1};
+    int renderDistanceChunks_{2};
+    int pendingRenderDistanceChunks_{2};
+    bool waterWaves_{true};
+    bool pendingWaterWaves_{true};
+    float lookSensitivity_{1.0f};
+    float pendingLookSensitivity_{1.0f};
+    bool invertLookY_{false};
+    bool pendingInvertLookY_{false};
     bool inventoryVisible_{false};
     bool pauseVisible_{false};
     bool thirdPerson_{false};
