@@ -666,10 +666,6 @@ public final class MinefadeHomeScreen extends FrameLayout {
                 settingsHeading(content, "ACCESIBILIDAD", "Adapta movimiento, contraste y lectura.");
                 content.addView(settingSwitch("Reducir movimiento", "Desactiva movimiento decorativo y transiciones.",
                         "reduce_motion", false));
-                content.addView(settingSwitch("Contraste reforzado", "Aumenta la separación de paneles y controles.",
-                        "high_contrast", false));
-                content.addView(settingSlider("Tamaño del texto", "Escala preferida para los menús.",
-                        "menu_text_scale", 85, 125, 100, "%"));
                 content.addView(settingSwitch("Animaciones de avatar", "Permite movimiento de reposo en el editor.",
                         "avatar_idle_animation", true));
                 break;
