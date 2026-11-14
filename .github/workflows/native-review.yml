@@ -54,6 +54,10 @@ jobs:
         working-directory: MinefadeNativeEngine
         run: python3 tools/generate_block_catalog.py
 
+      - name: Generate original PCM game audio
+        working-directory: MinefadeNativeEngine
+        run: python3 tools/generate_audio.py
+
       - name: Run native regression tests
         working-directory: MinefadeNativeEngine
         shell: bash
@@ -61,6 +65,7 @@ jobs:
           set -euo pipefail
           bash tests/run-world-tests.sh
           python3 tests/test_block_catalog.py
+          python3 tests/test_audio_assets.py
 
       - name: Build Android debug APK
         working-directory: MinefadeNativeEngine
