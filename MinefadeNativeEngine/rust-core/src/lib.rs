@@ -712,7 +712,7 @@ mod tests {
         let mut restricted = [0u32; 9];
         assert_eq!(unsafe { minefade_inventory_add(restricted.as_mut_ptr(), 9, 69, 25, 16) }, 1);
         assert_eq!(restricted[0], 69016);
-        assert_eq!(restricted[1], 6909);
+        assert_eq!(restricted[1], 69009);
         assert_eq!(unsafe { minefade_inventory_consume_selected(restricted.as_mut_ptr(), 9, 0, 17) }, 0);
         assert_eq!(restricted[0], 69016);
     }
