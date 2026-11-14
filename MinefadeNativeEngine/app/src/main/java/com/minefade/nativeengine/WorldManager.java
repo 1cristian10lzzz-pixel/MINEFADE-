@@ -60,6 +60,23 @@ public final class WorldManager {
     public WorldManager(Context context) {
         worldsDirectory = new File(context.getFilesDir(), "worlds");
         if (!worldsDirectory.exists()) worldsDirectory.mkdirs();
+        migrateLegacyDefaultWorld();
+    }
+
+    private void migrateLegacyDefaultWorld() {
+        File legacyFile = new File(worldsDirectory, "default.mfworld");
+        if (!legacyFile.isFile()) return;
+        File folder = new File(worldsDirectory, "legacy");
+        if (!folder.exists() && !folder.mkdirs()) return;
+        File destination = new File(folder, "world.mfworld");
+        try {
+            if (!destination.exists()) java.nio.file.Files.copy(legacyFile.toPath(), destination.toPath());
+            long stamp = legacyFile.lastModified();
+            if (!write(new WorldInfo("legacy", "Mundo anterior", 0x4D464445L,
+                    SURVIVAL, false, false, stamp, stamp, folder))) return;
+            // Keep the original until the metadata and destination both exist.
+            if (destination.isFile()) legacyFile.delete();
+        } catch (Exception ignored) { }
     }
 
     public synchronized List<WorldInfo> listWorlds() {
