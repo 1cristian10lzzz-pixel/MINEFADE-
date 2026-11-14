@@ -1455,27 +1455,48 @@ public final class MinefadeHomeScreen extends FrameLayout {
                                     0xff91aab8, 0xff40596a, 0xffe6eff1);
                     }
                     break;
-                default: // accessory: amulet, cape clasp, crown or pack
-                    if (choice == 2) {
-                        cube(canvas, cx, cy + unit * 0.25f, unit * 0.72f, unit * 1.2f,
-                                unit * 0.22f, accent, 0xff374c70, 0xffd4a56e);
+                default: // individual accessory silhouettes
+                    if (choice == 0) {
+                        paint.setColor(0x77d4e4ef);
+                        paint.setStyle(Paint.Style.STROKE);
+                        paint.setStrokeWidth(Math.max(1f,dp(1.8f)));
+                        canvas.drawCircle(cx,cy,unit*0.72f,paint);
+                        canvas.drawLine(cx-unit*0.48f,cy+unit*0.48f,
+                                cx+unit*0.48f,cy-unit*0.48f,paint);
+                    } else if (choice == 1) {
+                        cube(canvas,cx-unit*0.46f,cy,unit*0.75f,unit*0.70f,
+                                unit*0.25f,0xffc49a57,0xff78532f,0xffffe7a1);
+                        cube(canvas,cx+unit*0.34f,cy+unit*0.12f,unit*0.70f,unit*0.45f,
+                                unit*0.22f,0xff879dac,0xff40596a,0xffdce8ed);
+                    } else if (choice == 2) {
+                        polygon(canvas,0xff6b527f,cx-unit*0.55f,cy-unit*0.65f,
+                                cx+unit*0.55f,cy-unit*0.65f,cx+unit*0.75f,cy+unit*0.85f,
+                                cx,cy+unit*0.52f,cx-unit*0.75f,cy+unit*0.85f);
+                    } else if (choice == 3) {
+                        paint.setColor(0xffffe0a0);
+                        paint.setStyle(Paint.Style.STROKE);
+                        paint.setStrokeWidth(Math.max(1f,dp(2f)));
+                        canvas.drawArc(new RectF(cx-unit*0.56f,cy-unit*0.85f,
+                                cx+unit*0.56f,cy+unit*0.50f),200,140,false,paint);
+                        polygon(canvas,0xff62b9c4,cx,cy-unit*0.10f,cx+unit*0.30f,cy+unit*0.26f,
+                                cx,cy+unit*0.72f,cx-unit*0.30f,cy+unit*0.26f);
                     } else if (choice == 4) {
-                        cube(canvas, cx, cy - unit * 0.12f, unit * 1.15f, unit * 0.35f,
-                                unit * 0.35f, 0xffd4a84c, 0xff83572c, 0xffffdf7b);
-                        cube(canvas, cx, cy - unit * 0.42f, unit * 0.26f, unit * 0.58f,
-                                unit * 0.22f, 0xffe9c36e, 0xff83572c, 0xffffe7a1);
+                        polygon(canvas,0xffffdf83,cx-unit*0.86f,cy+unit*0.38f,
+                                cx-unit*0.65f,cy-unit*0.62f,cx-unit*0.18f,cy-unit*0.12f,
+                                cx,cy-unit*0.80f,cx+unit*0.18f,cy-unit*0.12f,
+                                cx+unit*0.65f,cy-unit*0.62f,cx+unit*0.86f,cy+unit*0.38f);
                     } else {
-                        cube(canvas, cx, cy, unit * 0.88f, unit * 0.92f,
-                                unit * 0.48f, accent, 0xff344c60, 0xffd3b46c);
+                        cube(canvas,cx,cy+unit*0.12f,unit*0.72f,unit*1.18f,
+                                unit*0.45f,0xff536e7a,0xff283f51,0xff9bbac3);
                         paint.setColor(0xffffe2a0);
-                        canvas.drawCircle(cx, cy + unit * 0.12f, unit * 0.16f, paint);
+                        canvas.drawCircle(cx,cy+unit*0.12f,unit*0.15f,paint);
                     }
                     break;
             }
         }
     }
 
-    /** Rotatable, shaded voxel preview built from 3D box parts and perspective projection. */
+    /** Rotatable, shaded voxel previeww built from 3D box parts and perspective projection. */
     private final class AvatarPreview extends View {
         private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
         private final Path path = new Path();
@@ -1703,12 +1724,19 @@ public final class MinefadeHomeScreen extends FrameLayout {
                     0xff27384a,0xff172538,0xff63798b,-0.22f,0.40f,0.015f,legSway*0.8f,0,0);
             cubeAnimated(canvas,0.22f,0.20f-legSway,0.015f,0.17f,0.19f,0.25f,
                     0xff27384a,0xff172538,0xff63798b,0.22f,0.40f,0.015f,-legSway*0.8f,0,0);
+            // Reinforced boots and articulated toe caps add readable silhouette detail.
+            cubeAnimated(canvas,-0.22f,0.12f+legSway,0.19f,0.16f,0.10f,0.13f,
+                    0xff1a2b3c,0xff101e2e,0xff8197a7,-0.22f,0.25f,0.05f,legSway*0.6f,0,0);
+            cubeAnimated(canvas,0.22f,0.12f-legSway,0.19f,0.16f,0.10f,0.13f,
+                    0xff1a2b3c,0xff101e2e,0xff8197a7,0.22f,0.25f,0.05f,-legSway*0.6f,0,0);
             cubeAnimated(canvas,-0.22f,0.77f+legSway,0.0f,0.145f,0.42f,0.16f,
                     0xff344b65,0xff203044,0xff75899b,-0.22f,1.18f,0.0f,legSway,0,0);
             cubeAnimated(canvas,0.22f,0.77f-legSway,0.0f,0.145f,0.42f,0.16f,
                     0xff405b78,0xff203044,0xff8294a6,0.22f,1.18f,0.0f,-legSway,0,0);
             cube(canvas,0.0f,1.33f,0.0f,0.37f,0.17f,0.22f,
                     0xffaa7d46,0xff5e452e,0xffe2c27d);
+            cube(canvas,0.0f,1.34f,0.225f,0.095f,0.085f,0.035f,
+                    0xffe4c77f,0xff805c35,0xffffe8a7);
 
             // Cape layer stays behind the torso and rotates with the character.
             if (accessory == 2) {
@@ -1723,11 +1751,21 @@ public final class MinefadeHomeScreen extends FrameLayout {
                     outfit,0xff263b54,0xffa7c5a0,-0.58f,2.38f,0.0f,armSway,0,0);
             cubeAnimated(canvas,0.58f,1.96f,0.0f,0.15f,0.47f,0.18f,
                     outfit,0xff263b54,0xffa7c5a0,0.58f,2.38f,0.0f,-armSway,0,0);
+            // Hands remain separate from the sleeves and follow the gentle arm swing.
+            cubeAnimated(canvas,-0.58f,1.42f,0.015f,0.12f,0.13f,0.13f,
+                    skin,0xff91684f,0xffefc9a7,-0.58f,1.58f,0.0f,armSway*0.35f,0,0);
+            cubeAnimated(canvas,0.58f,1.42f,0.015f,0.12f,0.13f,0.13f,
+                    skin,0xff91684f,0xffefc9a7,0.58f,1.58f,0.0f,-armSway*0.35f,0,0);
             cubeAnimated(canvas,0.0f,2.60f+breath,0.0f,0.17f,0.16f,0.16f,
                     skin,0xff93694e,0xfff5d4b0,0.0f,2.60f,0.0f,0,headSway,0);
 
             // Head, face, hair cap and selectable hairstyle silhouettes.
             cubeAnimated(canvas,0.0f,3.10f+breath*0.2f,0.0f,0.37f,0.42f,0.31f,
+                    skin,0xff95694e,0xfff6d5b3,0.0f,3.10f,0.0f,0,headSway,0);
+            // Ears, nose and brows make facial expression readable at the smaller preview scale.
+            cubeAnimated(canvas,-0.385f,3.10f+breath*0.2f,0.015f,0.075f,0.14f,0.11f,
+                    skin,0xff95694e,0xfff6d5b3,0.0f,3.10f,0.0f,0,headSway,0);
+            cubeAnimated(canvas,0.385f,3.10f+breath*0.2f,0.015f,0.075f,0.14f,0.11f,
                     skin,0xff95694e,0xfff6d5b3,0.0f,3.10f,0.0f,0,headSway,0);
             cubeAnimated(canvas,0.0f,3.48f+breath*0.2f,-0.015f,0.40f,
                     avatarStyles[1]==5?0.22f:0.13f,0.35f,
@@ -1744,6 +1782,12 @@ public final class MinefadeHomeScreen extends FrameLayout {
                     eye,0xff18232d,0xffe7f1f4,0.0f,3.10f,0.0f,0,headSway,0);
             cubeAnimated(canvas,0.15f,3.12f,0.319f,0.055f,0.065f*eyeOpen,0.025f,
                     eye,0xff18232d,0xffe7f1f4,0.0f,3.10f,0.0f,0,headSway,0);
+            cubeAnimated(canvas,-0.15f,3.30f,0.321f,0.075f,0.025f,0.026f,
+                    hair,0xff3c302b,0xffd0a16a,0.0f,3.10f,0.0f,0,headSway,0);
+            cubeAnimated(canvas,0.15f,3.30f,0.321f,0.075f,0.025f,0.026f,
+                    hair,0xff3c302b,0xffd0a16a,0.0f,3.10f,0.0f,0,headSway,0);
+            cubeAnimated(canvas,0.0f,3.02f,0.338f,0.065f,0.075f,0.065f,
+                    skin,0xff95694e,0xfff6d5b3,0.0f,3.10f,0.0f,0,headSway,0);
             cube(canvas,0.0f,2.96f,0.326f,0.075f,0.025f,0.015f,
                     0xff9d6558,0xff744c43,0xffc88b79);
 
@@ -1772,6 +1816,8 @@ public final class MinefadeHomeScreen extends FrameLayout {
             } else if (accessory == 5) {
                 cube(canvas,0.0f,1.95f,-0.34f,0.25f,0.48f,0.18f,
                         0xff536e7a,0xff283f51,0xff9bbac3);
+                cube(canvas,0.0f,1.72f,-0.355f,0.16f,0.07f,0.045f,
+                        0xffd0a96b,0xff78532f,0xffffe0a0);
             }
         }
     }
