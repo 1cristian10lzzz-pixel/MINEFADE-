@@ -66,53 +66,60 @@ La generación asíncrona actual no es un sistema masivo de workers: mantiene un
 
 ### Jugador, inventario, entidades y entorno
 
-- Movimiento táctil, giro de cámara, gravedad, subpasos para reducir el atravesamiento de paredes y salto.
-- Movimiento y gravedad reducidos al entrar en agua/lava.
+- El núcleo Rust gestiona movimiento normalizado, giro, salto, gravedad, movimiento en fluidos y colisiones contra el mundo C++ mediante callbacks.
+- La prueba de contacto bajo los pies mantiene el estado de suelo estable y evita el pequeño rebote que producía la gravedad en cada frame; al caminar fuera de un borde, el jugador cae normalmente.
+- Las poses del jugador se calculan en Rust: brazos/piernas, respiración, torso, cabeza, ojos/parpadeo y transición de salto. C++ aplica la pose a los pivotes de las piezas de la malla.
+- La simulación Rust calcula marcha, balanceo de cabeza, cola, patas, alas y parpadeo de las criaturas ambientales; las mallas de entidad son geométricas voxel articuladas, no rigs externos.
+- Los jugadores remotos reciben una pose de reposo animada; el protocolo LAN actual aún transmite posición/yaw, no el estado completo de movimiento/animación.
 - Barra rápida de nueve espacios; inventario con inserción atómica y límite de pila por definición.
 - Si el inventario está lleno, romper un bloque que genera objeto restaura el bloque para no perderlo silenciosamente.
-- Tres entidades ambientales de prueba con movimiento y animación básica de extremidades en malla dinámica separada.
-- Ciclo día/noche, cielo variable, luz direccional, perfiles de calidad y materiales de agua diferenciados; aún no hay sombras dinámicas por mapa de profundidad.
-- Efectos locales de romper, colocar y pulsar botones.
-- Pausa, guardado y reanudación se ejecutan desde el hilo GL mediante eventos de `GLSurfaceView`, evitando carreras con el hilo que actualiza el mundo.
-
-Las entidades son modelos provisionales de cajas, no modelos esqueléticos completos. No hay todavía IA compleja, combate, reproducción, domesticación ni persistencia de entidades.
+- El ciclo día/noche, daylight, dirección solar y color del cielo son actualizados por Rust; el render C++ consume esos valores.
+- Tres entidades ambientales de prueba tienen movimiento y pose; todavía no se han convertido en fauna con IA de producción, daño, domesticación y persistencia.
+- Las mallas animadas de criaturas se reconstruyen/suben como máximo a 30 Hz; los buffers de ítems se suben a 20 Hz para aliviar el hilo GLES sin detener la simulación.
+- Efectos locales de romper, colocar, salto, pasos, recogida y UI.
+- Pausa, guardado y reanudación se ejecutan desde el hilo GL mediante eventos de `GLSurfaceView`.
 
 ### Interfaz y renderizador
 
+- Avatar: previsualización grande, giro manual/automático, respiración, parpadeo, balanceo de miembros y transición respetuosa con Reducir movimiento. Las seis categorías se muestran en pestañas horizontales y las opciones tienen celdas mayores.
+- Ajustes: categorías de ancho completo (vídeo, audio, controles, HUD, animación y accesibilidad), contenido desplazable, desplegables compactos emergentes y sin controles que no tengan efecto conectado.
+- Fondo de menús con desplazamiento ambiental y partículas de bajo coste; se detiene cuando se activa Reducir movimiento.
 - Renderizador del mundo con shaders GLSL ES 3.00, perspectiva, normales, profundidad y descarte de caras posteriores.
-- VAO/VBO separados para mundo, transparencia y entidades.
+- VAO/VBO separados para mundo, transparencia y entidades/ítems.
 - Textura atlas por material con canal alfa para superficies transparentes.
 - RmlUi 6.3 inicializado mediante interfaces propias de sistema y renderizado OpenGL ES.
 - HUD táctil, barra rápida, inventario, pausa, salto, guardado y guardado/salida.
 
-Limitaciones de RmlUi: la interfaz actual carga su HUD desde memoria y usa una fuente de sistema Android. El backend admite geometría, texturas generadas desde memoria y scissor; todavía no admite archivos de imagen externos ni todas las funciones avanzadas de filtros, capas, máscaras y shaders de RmlUi.
+Limitaciones de RmlUi: el HUD actual carga desde memoria y usa fuente de sistema Android. El backend admite geometría, texturas generadas desde memoria y scissor; todavía no decodifica archivos de imagen externos ni implementa todos los filtros, capas, máscaras y shaders avanzados de RmlUi. La vista de avatar usa proyección 3D por cubos, no un visor GLTF de rigs completos.
 
 ## Sistemas que todavía no están completos
 
-- Compilación, firma, instalación y prueba real del APK Android.
-- Sombras dinámicas shadow-map, luz indirecta y shaders avanzados.
-- Flujo físico del agua, olas, reflejos, lluvia y clima completo.
-- Generación extensa de estructuras, dimensiones Nether/End y más biomas.
-- Modelos articulados, animaciones esqueléticas, IA, combate y drops físicos de entidades.
-- Inventario ampliado con arrastrar/soltar, crafting, armaduras y durabilidad de herramientas.
-- Multijugador LAN/Internet y descubrimiento automático NSD.
-- Colisión exacta con todos los volúmenes parciales y orientación de escaleras, puertas, vallas, etc.
-- Clasificación de transparencia por objeto/cara y tratamiento de materiales refractivos.
-- Streaming y descarga de chunks a disco, caché de mallas por chunk y perfilado en GPU/teléfonos reales.
+- Rig esquelético general GLB/GLTF, animaciones de combate/herramientas/minería, primera persona de mano animada y sincronización del estado de animación remoto.
+- IA de producción, pathfinding, combate, daño, hambre, domesticación, reproducción y persistencia completa de criaturas.
+- Inventario ampliado, recetas/crafting completo, cofres funcionales, durabilidad de armaduras y progresión.
+- Multijugador Internet. LAN/NSD/TCP ya está implementado como prototipo, pero necesita pruebas físicas con dos dispositivos y no replica todavía las poses/velocidades completas.
+- Lluvia y clima, caudal/niveles de fluidos, refracción y reflejos.
+- Shadow maps, iluminación indirecta, culling/occlusion, LOD y caché/descarga de chunks lejanos.
+- Geometrías y colisiones exactas para todos los estados, conexiones y orientaciones de escaleras, puertas, vallas, etc.
+- Perfilado de GPU/FPS/temperatura y validación visual/táctil en teléfonos Mali y otros controladores.
 
-## Verificaciones ejecutadas
+## Verificaciones y construcción
 
-- `tests/run-world-tests.sh`: pruebas C++ nativas de mundo, chunks, raycast, guardado/carga, inventario, colisión básica, entidades, entorno y generación asíncrona.
-- `tests/test_block_catalog.py`: 306 entradas, IDs consecutivos, nombres no vacíos, 918 tiles únicos, tamaños RGBA/PNG, texturas minerales por cara, drops especiales y bloques protegidos.
-- Compilación Java 17 con stubs de API Android para comprobar sintaxis/firmas (no sustituye a AGP/D8).
-- Compilación de las pruebas C++ de escritorio con warnings habilitados y ejecución con AddressSanitizer/UBSan.
-- Las pruebas nativas no equivalen a enlazar con Android NDK/RmlUi ni a ejecutar el juego en un teléfono.
+El workflow `.github/workflows/native-review.yml` en la rama `minefade-deep-renewal` ejecuta:
+- `cargo test` y build release de `rust-core`.
+- Smoke tests C++ del mundo, chunks, raycast, guardado/carga, inventario, jugador y entidades enlazados contra la biblioteca estática Rust.
+- `tests/test_block_catalog.py` y regeneración de módulos/atlas.
+- Compilación Android con Gradle, CMake y NDK, con ABI `arm64-v8a` y `armeabi-v7a`.
+- Verificación y publicación del APK debug Review9 como artefacto.
 
-## Construcción Android (cuando SDK/NDK estén disponibles)
+Una ejecución verde confirma tests y compilación de CI; no confirma por sí misma que el juego ya se haya probado en un teléfono físico. La instalación Review9 usa el paquete `com.minefade.nativeengine.review9` y guarda partidas por separado, sin importar automáticamente mundos de versiones anteriores.
+
+## Construcción Android
 
 Requisitos fijados:
 
 - JDK 17.
+- Rust stable + Cargo, con targets `aarch64-linux-android` y `armv7-linux-androideabi`.
 - Android SDK Platform 36 y Build Tools 36.0.0.
 - Android NDK `28.2.13676358`.
 - CMake `3.22.1`.
