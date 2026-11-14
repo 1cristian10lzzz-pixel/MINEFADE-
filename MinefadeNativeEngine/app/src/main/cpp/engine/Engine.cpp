@@ -1342,23 +1342,30 @@ std::string Engine::ExecuteCommand(const std::string& rawCommand) {
 
     if (verb == "ayuda" || verb == "help") {
         return "/oveja [cantidad] · /vaca [cantidad] · /pollo [cantidad] · /cerdo [cantidad] · "
+               "/zombi [cantidad] · /esqueleto [cantidad] · /conejo [cantidad] · "
                "/modo supervivencia|creativo|aventura · /tiempo dia|noche · "
                "/dar <id> [cantidad] · /tp <x> <y> <z> · /semilla";
     }
     if (!allowCheats_) return "Los trucos están desactivados en este mundo. Actívalos en sus opciones.";
 
-    if (verb == "oveja" || verb == "vaca" || verb == "pollo" || verb == "cerdo") {
+    if (verb == "oveja" || verb == "vaca" || verb == "pollo" || verb == "cerdo" ||
+        verb == "zombi" || verb == "esqueleto" || verb == "conejo") {
         int count = 1;
         if (!(input >> count)) count = 1;
         count = std::clamp(count, 1, 16);
-        const int kind = verb == "oveja" ? 0 : (verb == "vaca" ? 1 : (verb == "pollo" ? 2 : 3));
+        const int kind = verb == "oveja" ? 0 : (verb == "vaca" ? 1 :
+            (verb == "pollo" ? 2 : (verb == "cerdo" ? 3 :
+            (verb == "zombi" ? 4 : (verb == "esqueleto" ? 5 : 6)))));
         int created = 0;
         for (int i = 0; i < count; ++i)
             if (entities_.SpawnEntity(player_.position, kind, world_)) ++created;
         RebuildEntityMesh();
         UploadEntityMesh();
-        return created == 1 ? "Ha aparecido una " + verb + "."
-            : "Han aparecido " + std::to_string(created) + " entidades: " + verb + ".";
+        if (created == 1) {
+            const std::string article = (verb == "oveja" || verb == "vaca") ? "una " : "un ";
+            return "Ha aparecido " + article + verb + ".";
+        }
+        return "Han aparecido " + std::to_string(created) + " entidades: " + verb + ".";
     }
     if (verb == "modo") {
         std::string mode;
