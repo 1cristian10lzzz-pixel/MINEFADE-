@@ -267,10 +267,19 @@ def palette(key: str, face: int) -> tuple[int,int,int]:
     for color, rgb in COLOR_NAMES.items():
         if color in k and any(x in k for x in ['wool','stained','glazed','carpet','banner','concrete','shulker']):
             return rgb
-    if 'deepslate' in k: return (65,69,77)
-    if 'amethyst' in k: return (91,64,119)
-    if 'basalt' in k or 'tuff' in k: return (87,91,88)
-    if 'calcite' in k: return (209,204,194)
+    if 'deepslate' in k: return (65,69,77) if face != FACE_TOP else (76,79,88)
+    if 'amethyst' in k: return (91,64,119) if face != FACE_BOTTOM else (63,45,89)
+    if 'oxidized' in k and 'copper' in k: return (69,139,126)
+    if 'weathered' in k and 'copper' in k: return (91,151,117)
+    if 'exposed' in k and 'copper' in k: return (161,117,78)
+    if 'copper' in k: return (190,105,58)
+    if 'tuff' in k: return (105,112,102)
+    if 'basalt' in k: return (71,76,82)
+    if 'calcite' in k: return (219,216,205)
+    if 'prismarine' in k: return (73,143,138)
+    if 'terracotta' in k: return (157,93,69)
+    if 'end_stone' in k: return (201,193,128)
+    if 'honey' in k or 'hive' in k: return (205,147,46)
     if 'grass' in k or 'leaves' in k or 'sapling' in k or 'bamboo' in k or 'seagrass' in k or 'wheat' in k or 'beetroot' in k:
         return (91,151,61) if face != 2 else (111,169,68)
     if 'dirt' in k or 'podzol' in k or 'farmland' in k or 'mud' in k or 'soul_sand' in k: return (127,88,54)
@@ -429,6 +438,7 @@ def make_tile(key: str, face: int, block_idx: int) -> bytes:
     rng = random.Random(seed)
     k = key.lower()
     pixels = []
+    face_shade = (1.07, 1.0, 0.78)[face]
     for y in range(TILE):
         for x in range(TILE):
             n = rng.randint(-12, 12)
@@ -460,6 +470,47 @@ def make_tile(key: str, face: int, block_idx: int) -> bytes:
                 mortar = (y % 4 == 0) or ((x + (4 if row % 2 else 0)) % 8 == 0)
                 if mortar: n -= 29
                 elif (x * 5 + y * 3 + block_idx) % 17 == 0: n += 11
+            elif 'amethyst' in k:
+                # Distinct crystal facets and a dark geode-like matrix.
+                facet = (x * 3 + y * 5 + block_idx) % 8
+                if facet in (0, 1): n += 42
+                elif facet in (2, 3): n += 14
+                elif facet == 6: n -= 34
+                if (x + 2 * y + block_idx) % 9 == 0: n += 30
+            elif 'deepslate' in k:
+                # Fine horizontal strata, broken seams and darker corners.
+                if y % 4 in (0, 1): n -= 18
+                if (x * 7 + y * 3 + block_idx) % 19 < 2: n += 19
+                if x in (0, 15): n -= 5
+            elif 'copper' in k:
+                # Metallic bands with patches of patina on aged copper blocks.
+                band = math.sin((x * 0.72 + y * 0.24) + block_idx * 0.17)
+                n += int(band * 15)
+                if (x * 11 + y * 5 + block_idx) % 23 < 3: n += 22
+                if 'oxidized' in k and (x * 5 + y * 7) % 11 < 4: n -= 12
+            elif 'prismarine' in k or 'coral' in k:
+                facet = (x // 3 + (y // 3) * 2 + block_idx) % 7
+                n += 21 if facet in (0, 1) else (-12 if facet == 5 else 0)
+                if (x * 3 + y * 13 + block_idx) % 17 == 0: n += 18
+            elif 'terracotta' in k or 'glazed' in k:
+                stripe = math.sin((x + y * 0.28 + block_idx) * 0.55)
+                n += int(stripe * 17)
+                if x in (0, 15) or y in (0, 15): n -= 7
+                if 'glazed' in k and (x + y + block_idx) % 7 == 0: n += 26
+            elif 'end_stone' in k or 'endstone' in k:
+                pores = (x * 13 + y * 7 + block_idx * 3) % 29
+                if pores < 4: n -= 17
+                elif pores > 24: n += 10
+                if y % 6 == 0: n -= 4
+            elif 'honey' in k or 'hive' in k:
+                cell = (x // 4 + y // 4 + block_idx) % 3
+                n += 24 if cell == 0 else (-10 if cell == 2 else 0)
+                if x % 4 == 0 or y % 4 == 0: n -= 13
+            elif 'metal' in k or 'iron' in k or 'gold' in k or 'anvil' in k:
+                brushed = math.sin((x * 1.9 + block_idx) * 0.35)
+                n += int(brushed * 8)
+                if y in (1, 2, 13, 14): n += 13
+                if x in (0, 15): n -= 9
             elif 'stone' in k or 'cobble' in k or 'rock' in k or 'andesite' in k or 'granite' in k or 'diorite' in k:
                 cell_x, cell_y = x // 4, y // 4
                 facet = (cell_x * 7 + cell_y * 11 + block_idx) % 9
@@ -515,7 +566,11 @@ def make_tile(key: str, face: int, block_idx: int) -> bytes:
                 a = 198
             elif 'portal' in k or 'end_gateway' in k:
                 a = 190
-            pixels.append((max(0, min(255, r + n)), max(0, min(255, g + n)), max(0, min(255, b + n)), a))
+            # Distinct top/side/bottom lighting makes each tile read as a voxel face.
+            pixels.append((
+                max(0, min(255, int((r + n) * face_shade))),
+                max(0, min(255, int((g + n) * face_shade))),
+                max(0, min(255, int((b + n) * face_shade))), a))
     return b''.join(bytes(px) for px in pixels)
 
 def png_chunk(tag: bytes, data: bytes) -> bytes:
