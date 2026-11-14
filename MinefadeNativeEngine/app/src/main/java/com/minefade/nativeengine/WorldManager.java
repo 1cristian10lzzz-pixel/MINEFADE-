@@ -70,7 +70,16 @@ public final class WorldManager {
         if (!folder.exists() && !folder.mkdirs()) return;
         File destination = new File(folder, "world.mfworld");
         try {
-            if (!destination.exists()) java.nio.file.Files.copy(legacyFile.toPath(), destination.toPath());
+            if (!destination.exists()) {
+                try (FileInputStream input = new FileInputStream(legacyFile);
+                     FileOutputStream output = new FileOutputStream(destination, false)) {
+                    byte[] buffer = new byte[16 * 1024];
+                    int read;
+                    while ((read = input.read(buffer)) != -1) output.write(buffer, 0, read);
+                    output.flush();
+                    output.getFD().sync();
+                }
+            }
             long stamp = legacyFile.lastModified();
             if (!write(new WorldInfo("legacy", "Mundo anterior", 0x4D464445L,
                     SURVIVAL, false, false, stamp, stamp, folder))) return;
