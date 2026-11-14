@@ -59,6 +59,12 @@ typedef struct MfEnvironmentState {
     float daylight;
 } MfEnvironmentState;
 
+typedef struct MfDroppedItemState {
+    float x, y, z;
+    float velocity_x, velocity_y, velocity_z;
+    float age;
+} MfDroppedItemState;
+
 typedef uint8_t (*MfIsSolidCallback)(int32_t x, int32_t y, int32_t z, void* user_data);
 typedef int32_t (*MfSurfaceHeightCallback)(int32_t x, int32_t z, void* user_data);
 
@@ -72,6 +78,12 @@ uint8_t minefade_inventory_can_add(
 uint8_t minefade_inventory_add(
     uint32_t* counts, uint32_t slot_count,
     uint16_t item_id, uint16_t amount, uint16_t stack_limit);
+void minefade_dropped_item_update(
+    MfDroppedItemState* state,
+    float delta_seconds,
+    MfIsSolidCallback is_solid,
+    void* user_data);
+
 uint16_t minefade_inventory_selected_item_id(
     const uint32_t* counts, uint32_t slot_count, uint32_t selected_slot);
 uint8_t minefade_inventory_consume_selected(
