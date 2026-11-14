@@ -90,7 +90,7 @@ jobs:
                "*/build/*" "*/.gradle/*" "*/.cxx/*" \
                "*/.externalNativeBuild/*" "*/intermediates/*" \
                "*/outputs/*" "*/tmp/*" "*/target/*" "*/rust-target/*" \
-               "Minefade-0.7.1-source.zip"
+               "Minefade-0.8.0-source.zip"
           test -s Minefade-0.8.0-source.zip
 
       - name: Upload complete source
