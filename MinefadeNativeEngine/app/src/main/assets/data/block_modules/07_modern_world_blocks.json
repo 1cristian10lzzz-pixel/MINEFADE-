@@ -1,0 +1,146 @@
+{
+  "cherry_log": {
+    "textures": "cherry_log",
+    "sound": "wood"
+  },
+  "stripped_cherry_log": {
+    "textures": "stripped_cherry_log",
+    "sound": "wood"
+  },
+  "cherry_planks": {
+    "textures": "cherry_planks",
+    "sound": "wood"
+  },
+  "cherry_leaves": {
+    "textures": "cherry_leaves",
+    "sound": "stone"
+  },
+  "cherry_sapling": {
+    "textures": "cherry_sapling",
+    "sound": "grass"
+  },
+  "cherry_stairs": {
+    "textures": "cherry_stairs",
+    "sound": "wood"
+  },
+  "cherry_slab": {
+    "textures": "cherry_slab",
+    "sound": "stone"
+  },
+  "pink_petals": {
+    "textures": "pink_petals",
+    "sound": "grass"
+  },
+  "mangrove_log": {
+    "textures": "mangrove_log",
+    "sound": "wood"
+  },
+  "stripped_mangrove_log": {
+    "textures": "stripped_mangrove_log",
+    "sound": "wood"
+  },
+  "mangrove_planks": {
+    "textures": "mangrove_planks",
+    "sound": "wood"
+  },
+  "mangrove_leaves": {
+    "textures": "mangrove_leaves",
+    "sound": "stone"
+  },
+  "mangrove_propagule": {
+    "textures": "mangrove_propagule",
+    "sound": "grass"
+  },
+  "mangrove_roots": {
+    "textures": "mangrove_roots",
+    "sound": "wood"
+  },
+  "muddy_mangrove_roots": {
+    "textures": "muddy_mangrove_roots",
+    "sound": "wood"
+  },
+  "mud": {
+    "textures": "mud",
+    "sound": "gravel"
+  },
+  "packed_mud": {
+    "textures": "packed_mud",
+    "sound": "gravel"
+  },
+  "mud_bricks": {
+    "textures": "mud_bricks",
+    "sound": "stone"
+  },
+  "mud_brick_stairs": {
+    "textures": "mud_brick_stairs",
+    "sound": "stone"
+  },
+  "mud_brick_slab": {
+    "textures": "mud_brick_slab",
+    "sound": "stone"
+  },
+  "sculk": {
+    "textures": "sculk",
+    "sound": "stone"
+  },
+  "sculk_catalyst": {
+    "textures": "sculk_catalyst",
+    "sound": "stone"
+  },
+  "sculk_sensor": {
+    "textures": "sculk_sensor",
+    "sound": "stone"
+  },
+  "sculk_shrieker": {
+    "textures": "sculk_shrieker",
+    "sound": "stone"
+  },
+  "reinforced_deepslate": {
+    "textures": "reinforced_deepslate",
+    "sound": "stone"
+  },
+  "blackstone": {
+    "textures": "blackstone",
+    "sound": "stone"
+  },
+  "polished_blackstone": {
+    "textures": "polished_blackstone",
+    "sound": "stone"
+  },
+  "gilded_blackstone": {
+    "textures": "gilded_blackstone",
+    "sound": "stone"
+  },
+  "crying_obsidian": {
+    "textures": "crying_obsidian",
+    "sound": "stone"
+  },
+  "crimson_planks": {
+    "textures": "crimson_planks",
+    "sound": "wood"
+  },
+  "warped_planks": {
+    "textures": "warped_planks",
+    "sound": "wood"
+  },
+  "crimson_stairs": {
+    "textures": "crimson_stairs",
+    "sound": "wood"
+  },
+  "warped_stairs": {
+    "textures": "warped_stairs",
+    "sound": "wood"
+  },
+  "ochre_froglight": {
+    "textures": "ochre_froglight",
+    "sound": "glass"
+  },
+  "verdant_froglight": {
+    "textures": "verdant_froglight",
+    "sound": "glass"
+  },
+  "pearlescent_froglight": {
+    "textures": "pearlescent_froglight",
+    "sound": "glass"
+  }
+}
