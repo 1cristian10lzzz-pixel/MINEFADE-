@@ -445,8 +445,11 @@ std::size_t DroppedItemSystem::Update(const VoxelWorld& world, const Player& pla
     return pickedUp;
 }
 
-void DroppedItemSystem::AppendMesh(std::vector<WorldVertex>& output) const {
+void DroppedItemSystem::AppendMesh(std::vector<WorldVertex>& output, const CameraFrustum* frustum) const {
     for (const DroppedItem& item : drops_) {
+        if (frustum != nullptr && !frustum->IntersectsAabb(
+                item.position.x-0.20f,item.position.y-0.20f,item.position.z-0.20f,
+                item.position.x+0.20f,item.position.y+0.20f,item.position.z+0.20f)) continue;
         const BlockId block=static_cast<BlockId>(item.itemId);
         const float spin=item.age*1.45f;
         const float bob=std::sin(item.age*3.4f)*0.055f;
