@@ -971,40 +971,175 @@ public final class MinefadeHomeScreen extends FrameLayout {
     }
 
     private void showAchievementsPage() {
-        LinearLayout root = pageRoot("LOGROS", "Retos y recompensas de tu aventura.");
+        LinearLayout root = pageRoot("LOGROS", "Progreso real de tu partida. Se guarda automáticamente.");
+        int mined = preferences.getInt("achievement_blocks_mined", 0);
+        int placed = preferences.getInt("achievement_blocks_placed", 0);
+        int collected = preferences.getInt("achievement_items_collected", 0);
+        int jumps = preferences.getInt("achievement_jumps", 0);
+        boolean entered = preferences.getBoolean("achievement_world_entered", false);
+
+        String[] titles = {"Primera aventura", "Primer minero", "Minero experto", "Constructor",
+                "Arquitecto", "Recolector", "Primer salto", "Explorador del cielo"};
+        String[] details = {"Entra en tu primer mundo.", "Rompe tu primer bloque.",
+                "Rompe 100 bloques.", "Coloca tu primer bloque.", "Coloca 100 bloques.",
+                "Recoge un objeto del suelo.", "Salta por primera vez.", "Realiza 25 saltos."};
+        String[] icons = {"◈", "⚒", "◆", "▦", "⌂", "◇", "↑", "✦"};
+        int[] progress = {entered ? 1 : 0, mined, mined, placed, placed, collected, jumps, jumps};
+        int[] targets = {1, 1, 100, 1, 100, 1, 1, 25};
+
+        ScrollView scroll = new ScrollView(getContext());
+        scroll.setFillViewport(true);
+        scroll.setClipChildren(true);
+        scroll.setClipToPadding(true);
+        scroll.setVerticalScrollBarEnabled(false);
+        LinearLayout.LayoutParams scrollParams = new LinearLayout.LayoutParams(-1, 0, 1f);
+        scrollParams.topMargin = dp(10);
+        root.addView(scroll, scrollParams);
+
         LinearLayout grid = column();
-        LinearLayout.LayoutParams gridParams = new LinearLayout.LayoutParams(-1, 0, 1f);
-        gridParams.topMargin = dp(12);
-        root.addView(grid, gridParams);
-        String[] icons = {"✦", "◆", "⚒", "⌂", "◇", "☼", "◈", "✧"};
-        String[] names = {"Primer paso", "Constructor", "Minero", "Explorador",
-                "Artesano", "Aventura", "Coleccionista", "Superviviente"};
-        for (int row = 0; row < 2; row++) {
+        grid.setPadding(0, 0, 0, dp(4));
+        grid.setClipChildren(true);
+        grid.setClipToPadding(true);
+        scroll.addView(grid, new ScrollView.LayoutParams(-1, -2));
+        for (int rowIndex = 0; rowIndex < 2; rowIndex++) {
             LinearLayout line = row();
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, 0, 1f);
-            lp.bottomMargin = dp(7);
-            grid.addView(line, lp);
+            LinearLayout.LayoutParams lineParams = new LinearLayout.LayoutParams(-1, dp(112));
+            if (rowIndex > 0) lineParams.topMargin = dp(7);
+            grid.addView(line, lineParams);
             for (int col = 0; col < 4; col++) {
-                final int index = row * 4 + col;
+                final int index = rowIndex * 4 + col;
+                final int current = Math.max(0, progress[index]);
+                final int target = Math.max(1, targets[index]);
+                final boolean unlocked = current >= target;
                 LinearLayout tile = column();
-                tile.setGravity(Gravity.CENTER);
-                tile.setPadding(dp(5), dp(5), dp(5), dp(5));
-                tile.setBackground(shape(new int[]{0xff203449, 0xff142438}, 12, 0x444b6b80));
-                tile.addView(text(icons[index], 20, 0xffa9ee70, true));
-                TextView label = text(names[index], 8, white, true);
-                label.setGravity(Gravity.CENTER);
-                LinearLayout.LayoutParams tlp = new LinearLayout.LayoutParams(-1, -2);
-                tlp.topMargin = dp(4);
-                tile.addView(label, tlp);
-                TextView locked = text("POR LOGRAR", 7, muted, true);
-                locked.setGravity(Gravity.CENTER);
-                LinearLayout.LayoutParams klp = new LinearLayout.LayoutParams(-1, -2);
-                klp.topMargin = dp(3);
-                tile.addView(locked, klp);
+                tile.setGravity(Gravity.CENTER_VERTICAL);
+                tile.setPadding(dp(8), dp(6), dp(8), dp(6));
+                tile.setBackground(shape(unlocked
+                        ? new int[]{0xff274d3e, 0xff17382f}
+                        : new int[]{0xff203449, 0xff142438},
+                        12, unlocked ? 0xff8fd17b : 0x554b6b80));
+
+                LinearLayout top = row();
+                top.setGravity(Gravity.CENTER_VERTICAL);
+                top.addView(new AchievementGlyph(getContext(), index, unlocked ? 0xffb9f27c : 0xff8caabd),
+                        new LinearLayout.LayoutParams(dp(28), dp(28)));
+                LinearLayout labels = column();
+                labels.setPadding(dp(6), 0, 0, 0);
+                TextView title = text(titles[index], 9, white, true);
+                title.setMaxLines(1);
+                labels.addView(title);
+                TextView description = text(details[index], 7, muted, false);
+                description.setMaxLines(2);
+                LinearLayout.LayoutParams detailParams = new LinearLayout.LayoutParams(-1, -2);
+                detailParams.topMargin = dp(2);
+                labels.addView(description, detailParams);
+                top.addView(labels, new LinearLayout.LayoutParams(0, -2, 1f));
+                tile.addView(top);
+
+                LinearLayout footer = row();
+                footer.setGravity(Gravity.CENTER_VERTICAL);
+                TextView status = text(unlocked ? "COMPLETADO" : current + " / " + target,
+                        7, unlocked ? 0xffb9f27c : 0xffc2d2dc, true);
+                footer.addView(status, new LinearLayout.LayoutParams(0, dp(16), 1f));
+                if (unlocked) footer.addView(text("✓", 12, 0xffb9f27c, true));
+                LinearLayout.LayoutParams footerParams = new LinearLayout.LayoutParams(-1, dp(16));
+                footerParams.topMargin = dp(5);
+                tile.addView(footer, footerParams);
+                tile.addView(new AchievementProgressView(getContext(),
+                        Math.min(1.0f, current / (float) target), unlocked),
+                        new LinearLayout.LayoutParams(-1, dp(5)));
+
                 LinearLayout.LayoutParams cell = new LinearLayout.LayoutParams(0, -1, 1f);
                 if (col > 0) cell.leftMargin = dp(6);
                 line.addView(tile, cell);
             }
+        }
+    }
+
+
+    private static final class AchievementGlyph extends View {
+        private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        private final Path path = new Path();
+        private final int kind;
+        private final int tint;
+        AchievementGlyph(Context context, int kind, int tint) {
+            super(context);
+            this.kind = kind;
+            this.tint = tint;
+        }
+        private void polygon(Canvas canvas, float... points) {
+            path.reset();
+            path.moveTo(points[0], points[1]);
+            for (int i = 2; i < points.length; i += 2) path.lineTo(points[i], points[i + 1]);
+            path.close();
+            canvas.drawPath(path, paint);
+        }
+        private void line(Canvas canvas, float x1, float y1, float x2, float y2, float width) {
+            paint.setStyle(Paint.Style.STROKE);
+            paint.setStrokeWidth(width);
+            paint.setStrokeCap(Paint.Cap.ROUND);
+            canvas.drawLine(x1, y1, x2, y2, paint);
+            paint.setStyle(Paint.Style.FILL);
+        }
+        @Override protected void onDraw(Canvas canvas) {
+            super.onDraw(canvas);
+            float cx = getWidth()*0.5f, cy = getHeight()*0.5f;
+            float u = Math.min(getWidth(),getHeight())*0.36f;
+            paint.setColor(tint);
+            paint.setStyle(Paint.Style.FILL);
+            switch (kind) {
+                case 0:
+                    polygon(canvas,cx,cy-u,cx+u*0.82f,cy,cx,cy+u,cx-u*0.82f,cy);
+                    break;
+                case 1:
+                    line(canvas,cx-u*0.65f,cy+u*0.62f,cx+u*0.62f,cy-u*0.60f,u*0.16f);
+                    line(canvas,cx-u*0.58f,cy-u*0.50f,cx+u*0.58f,cy+u*0.50f,u*0.16f);
+                    canvas.drawCircle(cx-u*0.62f,cy-u*0.58f,u*0.18f,paint);
+                    break;
+                case 2:
+                    polygon(canvas,cx-u,cy-u*0.55f,cx,cy-u,cx+u,cy-u*0.55f,
+                            cx+u*0.75f,cy+u*0.78f,cx-u*0.75f,cy+u*0.78f);
+                    break;
+                case 3: case 4:
+                    polygon(canvas,cx-u,cy-u*0.2f,cx-u*0.45f,cy-u,cx+u*0.45f,cy-u,
+                            cx+u,cy-u*0.2f,cx+u*0.65f,cy+u,cx-u*0.65f,cy+u);
+                    if (kind == 4) {
+                        paint.setColor(0xffffe3a0);
+                        canvas.drawRect(cx-u*0.13f,cy-u*0.55f,cx+u*0.13f,cy+u*0.85f,paint);
+                    }
+                    break;
+                case 5:
+                    canvas.drawCircle(cx,cy,u*0.78f,paint);
+                    paint.setColor(0xff193246);
+                    canvas.drawCircle(cx,cy,u*0.40f,paint);
+                    break;
+                case 6: case 7:
+                    line(canvas,cx,cy+u,cx,cy-u,u*0.17f);
+                    polygon(canvas,cx,cy-u*1.08f,cx-u*0.58f,cy-u*0.30f,
+                            cx+u*0.58f,cy-u*0.30f);
+                    break;
+                default:
+                    canvas.drawCircle(cx,cy,u*0.7f,paint);
+            }
+        }
+    }
+
+    private static final class AchievementProgressView extends View {
+        private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        private final float progress;
+        private final boolean unlocked;
+        AchievementProgressView(Context context, float progress, boolean unlocked) {
+            super(context);
+            this.progress = Math.max(0f,Math.min(1f,progress));
+            this.unlocked = unlocked;
+        }
+        @Override protected void onDraw(Canvas canvas) {
+            super.onDraw(canvas);
+            float radius = getHeight()*0.5f;
+            paint.setColor(0x553a5569);
+            canvas.drawRoundRect(new RectF(0,0,getWidth(),getHeight()),radius,radius,paint);
+            paint.setColor(unlocked ? 0xffa9ee70 : 0xff72b4ce);
+            canvas.drawRoundRect(new RectF(0,0,getWidth()*progress,getHeight()),radius,radius,paint);
         }
     }
 
