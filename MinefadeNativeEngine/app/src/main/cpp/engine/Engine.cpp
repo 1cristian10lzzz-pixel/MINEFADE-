@@ -1303,6 +1303,21 @@ void Engine::HandleUiAction(const std::string& action) {
         ui_.SetPanelVisible("starter-chest-panel", false);
     } else if (action == "starter-chest-take") {
         TakeStarterChestContents();
+    } else if (action.rfind("creative-select-", 0) == 0) {
+        if (gameMode_ != 1) return;
+        try {
+            const int itemId = std::stoi(action.substr(16));
+            if (itemId > 0 && itemId < static_cast<int>(GetBlockDefinitionCount()) &&
+                HasBlockFlag(static_cast<BlockId>(itemId), BlockPlaceable)) {
+                inventory_.counts[inventory_.selectedSlot] =
+                    static_cast<std::uint32_t>(itemId) * 1000u + 64u;
+                RefreshInventoryUi();
+                ui_.SetChatMessage(std::string("Seleccionado: ") +
+                    GetBlockDefinition(static_cast<BlockId>(itemId))->nameEs);
+            }
+        } catch (...) {
+            ui_.SetChatMessage("No se pudo seleccionar ese bloque.");
+        }
     } else if (action.rfind("slot-", 0) == 0 && action.size() == 6) {
         const char digit = action[5];
         if (digit >= '0' && digit <= '8') {
@@ -1568,7 +1583,7 @@ void Engine::UpdateMining(float deltaSeconds) {
 
 void Engine::RefreshInventoryUi() {
     std::string markup;
-    markup.reserve(2400);
+    markup.reserve(gameMode_ == 1 ? 42000u : 2400u);
     for(std::size_t i=0;i<inventory_.counts.size();++i) {
         const std::uint32_t encoded=inventory_.counts[i];
         const std::uint16_t itemId=static_cast<std::uint16_t>(encoded/1000u);
@@ -1594,6 +1609,19 @@ void Engine::RefreshInventoryUi() {
                 std::to_string(quantity)+"</span>";
         }
         ui_.SetQuickbarSlot(static_cast<int>(i),slotMarkup,i==inventory_.selectedSlot);
+    }
+    if (gameMode_ == 1) {
+        markup.clear();
+        markup += "<div class='creative-heading'>CATÁLOGO CREATIVO · SELECCIONA UN BLOQUE</div>";
+        for (std::size_t id = 1; id < GetBlockDefinitionCount(); ++id) {
+            const auto blockId = static_cast<BlockId>(id);
+            const BlockDefinition* definition = GetBlockDefinition(blockId);
+            if (definition == nullptr || !HasBlockFlag(blockId, BlockPlaceable)) continue;
+            markup += "<div class='inventory-row creative-row'><img class='inventory-icon' src='minefade://block/"
+                + std::to_string(id) + "'/><span class='creative-name'>" + definition->nameEs
+                + "</span><button id='creative-select-" + std::to_string(id)
+                + "' class='creative-add'>USAR</button></div>";
+        }
     }
     ui_.SetInventoryContents(markup);
 }
