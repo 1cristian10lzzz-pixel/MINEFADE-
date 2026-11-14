@@ -56,7 +56,7 @@ button:active { background: #47789b; }
 #move-right { right: 3dp; top: 42dp; }
 #jump { position: absolute; z-index: 7; right: 22dp; bottom: 60dp; width: 56dp; height: 56dp; padding: 2dp; text-align: center; border-radius: 18dp; background: #2f6479f2; border: 2dp #d9e9a4ee; color: #ffffff; font-size: 20dp; }
 #crouch { position: absolute; z-index: 7; right: 82dp; bottom: 65dp; width: 44dp; height: 44dp; padding: 1dp; text-align: center; border-radius: 14dp; background: #20394ce8; border: 1dp #c3d8e888; color: #f5fbff; font-size: 17dp; }
-#inventory-panel { left: auto; right: 10dp; top: 52dp; width: 205dp; margin: 0dp; }
+#inventory-panel { left: auto; right: 10dp; top: 52dp; bottom: 54dp; width: 220dp; margin: 0dp; overflow-y: auto; }
 .inventory-row { color: #e0e8ed; font-size: 12dp; padding: 5dp 2dp; border-bottom: 1dp #43576a; }
 #pause-panel { z-index: 10; width: 270dp; margin-left: -135dp; }
 #pause-panel .actions { justify-content: center; gap: 8dp; }
@@ -257,6 +257,7 @@ void RmlUiRuntime::Shutdown() {
         context_ = nullptr;
     }
     listeners_.clear();
+    inventoryListeners_.clear();
     // RmlUi requires its contexts to be destroyed before Shutdown and the render interface to outlive it.
     if (rmlInitialised_) Rml::Shutdown();
     rmlInitialised_ = false;
@@ -404,7 +405,19 @@ void RmlUiRuntime::SetQuickbarSlot(int slot,const std::string& label,bool select
 
 void RmlUiRuntime::SetInventoryContents(const std::string& markup) {
     if (document_ == nullptr) return;
-    if (Rml::Element* element = document_->GetElementById("inventory-items")) element->SetInnerRML(markup);
+    Rml::Element* container = document_->GetElementById("inventory-items");
+    if (container == nullptr) return;
+    container->SetInnerRML(markup);
+    inventoryListeners_.clear();
+    // Creative mode creates one native select action for each placeable block.
+    for (int id = 1; id < 512; ++id) {
+        const std::string elementId = "creative-select-" + std::to_string(id);
+        Rml::Element* element = document_->GetElementById(elementId);
+        if (element == nullptr) continue;
+        const std::string action = elementId;
+        inventoryListeners_.push_back(std::make_unique<ActionListener>(callback_, action));
+        element->AddEventListener("click", inventoryListeners_.back().get());
+    }
 }
 
 void RmlUiRuntime::SetPanelVisible(const char* elementId, bool visible) {
