@@ -155,7 +155,7 @@ Vec3 Player::Forward() const {
     return {std::cos(yaw) * cp, std::sin(pitch), std::sin(yaw) * cp};
 }
 
-Vec3 Player::CameraPosition() const { return {position.x, position.y + 1.58f, position.z}; }
+Vec3 Player::CameraPosition() const { return {position.x, position.y + (crouching ? 1.32f : 1.58f), position.z}; }
 
 void Player::SetMovement(float x, float y) {
     MfPlayerState state = ToRustPlayerState(*this);
@@ -352,9 +352,19 @@ void Player::Update(const VoxelWorld& world, float deltaSeconds) {
                                                FloorToInt(position.z));
     const std::uint8_t inFluid = HasBlockFlag(bodyBlock, BlockFluid) ? 1u : 0u;
     MfPlayerState state = ToRustPlayerState(*this);
+    const float inputX = state.movement_x;
+    const float inputY = state.movement_y;
+    if (crouching) {
+        state.movement_x *= 0.46f;
+        state.movement_y *= 0.46f;
+    }
     minefade_player_update(&state, deltaSeconds, inFluid, WorldSolidForRust,
                            const_cast<VoxelWorld*>(&world));
     ApplyRustPlayerState(*this, state);
+    // Preserve the raw joystick intent; the speed multiplier is applied each
+    // simulation step so toggling crouch on/off never leaves stale movement.
+    movementX = inputX;
+    movementY = inputY;
 }
 
 bool Inventory::CanAdd(std::uint16_t itemId, std::uint16_t amount) const {
