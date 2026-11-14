@@ -20,33 +20,33 @@ constexpr char kHudDocument[] = R"RML(
 <title>Minefade HUD</title>
 <style>
 body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; font-family: Roboto; color: #f3f6f8; }
-#topbar { position: absolute; top: 7dp; left: 7dp; right: 7dp; height: 36dp; display: flex; align-items: center; justify-content: flex-end; pointer-events: none; }
+#topbar { position: absolute; top: 8dp; left: 8dp; right: 8dp; height: 40dp; display: flex; align-items: center; justify-content: flex-end; pointer-events: none; }
 #topbar button { pointer-events: auto; }
 #brand { display: none; }
-#stats { color: #edf2f5; font-size: 10dp; background: transparent; padding: 4dp 7dp; border: none; border-radius: 7dp; text-shadow: none; }
-.actions { display: flex; flex-direction: row; gap: 4dp; }
-button { color: #ffffff; background: #1b2a3733; border: 1dp #b9c9d855; border-radius: 5dp; padding: 5dp 7dp; font-size: 12dp; }
+#stats { color: #edf5f8; font-size: 9dp; background: #101c2b88; padding: 7dp 10dp; border: 1dp #d7e8ef33; border-radius: 10dp; text-shadow: none; }
+.actions { display: flex; flex-direction: row; align-items: center; gap: 6dp; }
+button { color: #f7fbff; background: #142638bb; border: 1dp #d7e8ef66; border-radius: 9dp; padding: 6dp 9dp; font-size: 11dp; }
 button:hover { background: #365a77; }
 button:active { background: #47789b; }
 #crosshair { position: absolute; left: 50%; top: 50%; width: 12dp; height: 12dp; margin-left: -6dp; margin-top: -6dp; pointer-events: none; }
 #crosshair-v { position: absolute; left: 5dp; top: 0dp; width: 2dp; height: 12dp; background: #ffffffcc; }
 #crosshair-h { position: absolute; left: 0dp; top: 5dp; width: 12dp; height: 2dp; background: #ffffffcc; }
 #hint { display: none; }
-.panel { position: absolute; left: 50%; top: 50%; width: 310dp; margin-left: -155dp; margin-top: -112dp; padding: 18dp; background: #111d2af2; border: 1dp #607b91; border-radius: 12dp; display: none; }
+.panel { position: absolute; left: 50%; top: 50%; width: 310dp; margin-left: -155dp; margin-top: -112dp; padding: 16dp; background: #101d2bf5; border: 1dp #8ca9bd99; border-radius: 16dp; display: none; }
 .panel h1 { font-size: 20dp; margin: 0dp 0dp 10dp 0dp; color: #ffffff; }
 .panel p { font-size: 12dp; color: #c8d3db; margin: 3dp 0dp 12dp 0dp; }
 .panel .actions { flex-wrap: wrap; }
-#quickbar { position: absolute; bottom: 12dp; left: 50%; margin-left: -143dp; display: flex; flex-direction: row; gap: 3dp; }
-.slot { position: relative; width: 29dp; min-width: 29dp; height: 32dp; text-align: center; padding: 2dp; display: flex; align-items: center; justify-content: center; background: #172b3a66; border: 1dp #d8e6ee66; border-radius: 7dp; color: #ffffff; font-size: 8dp; }
+#quickbar { position: absolute; bottom: 12dp; left: 50%; margin-left: -149dp; display: flex; flex-direction: row; gap: 4dp; padding: 5dp; background: #0b1724a8; border: 1dp #dcebf044; border-radius: 12dp; }
+.slot { position: relative; width: 29dp; min-width: 29dp; height: 34dp; text-align: center; padding: 2dp; display: flex; align-items: center; justify-content: center; background: #172b3acc; border: 1dp #d8e6ee55; border-radius: 8dp; color: #ffffff; font-size: 8dp; }
 .slot img { width: 21dp; height: 21dp; display: block; margin: auto; }
 .slot .slot-count { position: absolute; right: 1dp; bottom: 0dp; color: #ffffff; font-size: 7dp; text-shadow: 0dp 1dp 2dp #000000; }
 .inventory-row { display: flex; align-items: center; gap: 7dp; color: #e0e8ed; font-size: 12dp; padding: 5dp 2dp; border-bottom: 1dp #43576a; }
 .inventory-icon { width: 19dp; height: 19dp; }
-#inventory, #pause, #perspective { width: 34dp; height: 34dp; padding: 0dp; text-align: center; background: #172b3a55; border: 1dp #d8e6ee55; border-radius: 9dp; }
-#movement-pad { position: absolute; left: 17dp; bottom: 48dp; width: 92dp; height: 92dp; border-radius: 50%; border: 1dp #ffffff44; background: transparent; pointer-events: none; }
-#movement-pad-inner { position: absolute; left: 25dp; top: 25dp; width: 42dp; height: 42dp; border-radius: 50%; border: 1dp #d9e9a488; background: #6c9c8c33; }
+#inventory, #pause, #perspective { width: 38dp; min-width: 38dp; height: 38dp; padding: 0dp; text-align: center; background: #142638cc; border: 1dp #d8e6ee77; border-radius: 11dp; }
+#movement-pad { position: absolute; left: 17dp; bottom: 48dp; width: 96dp; height: 96dp; border-radius: 50%; border: 1dp #ffffff55; background: #0d1b2933; pointer-events: none; }
+#movement-pad-inner { position: absolute; left: 26dp; top: 26dp; width: 42dp; height: 42dp; border-radius: 50%; border: 1dp #d9e9a4bb; background: #6c9c8c55; }
 #movement-pad-cross { position: absolute; left: 45dp; top: 12dp; width: 2dp; height: 68dp; background: #ffffff22; }
-#jump { position: absolute; right: 21dp; bottom: 67dp; width: 45dp; height: 45dp; padding: 2dp; text-align: center; border-radius: 50%; background: #31566dcc; border: 1dp #d9e9a4bb; }
+#jump { position: absolute; right: 21dp; bottom: 67dp; width: 50dp; height: 50dp; padding: 2dp; text-align: center; border-radius: 16dp; background: #244f65ee; border: 1dp #d9e9a4dd; font-size: 16dp; }
 #inventory-panel { left: auto; right: 10dp; top: 52dp; width: 205dp; margin: 0dp; }
 .inventory-row { color: #e0e8ed; font-size: 12dp; padding: 5dp 2dp; border-bottom: 1dp #43576a; }
 #pause-panel { z-index: 10; width: 270dp; margin-left: -135dp; }
@@ -54,9 +54,9 @@ button:active { background: #47789b; }
 #pause-panel button { min-width: 104dp; }
 .panel h1, .panel p { display: none; }
 #target { position: absolute; left: 50%; top: 57%; margin-left: -75dp; min-width: 150dp; text-align: center; color: #ffffff; font-size: 11dp; text-shadow: 0dp 1dp 3dp #000000; display: none; pointer-events: none; }
-#target-progress { width: 84dp; height: 3dp; margin: 4dp auto 0dp auto; background: #ffffff22; }
-#target-progress-fill { height: 3dp; width: 0%; background: #ffffff; }
-#pickup { position: absolute; right: 12dp; bottom: 54dp; color: #ffffff; font-size: 12dp; text-shadow: 0dp 1dp 3dp #000000; background: transparent; padding: 0dp; pointer-events: none; }
+#target-progress { width: 100dp; height: 4dp; margin: 5dp auto 0dp auto; background: #ffffff33; border-radius: 4dp; overflow: hidden; }
+#target-progress-fill { height: 4dp; width: 0%; background: #b9f27c; border-radius: 4dp; }
+#pickup { position: absolute; right: 12dp; bottom: 54dp; color: #ffffff; font-size: 11dp; text-shadow: 0dp 1dp 3dp #000000; background: #102131bb; border: 1dp #d9e9a455; border-radius: 9dp; padding: 6dp 9dp; pointer-events: none; }
 
 #inventory-panel { z-index: 9; }
 </style>
