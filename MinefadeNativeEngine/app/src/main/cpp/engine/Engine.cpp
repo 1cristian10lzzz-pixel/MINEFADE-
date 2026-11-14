@@ -388,6 +388,8 @@ bool Engine::Initialise(float displayDensity, const std::uint8_t* atlasPixels,
     miningElapsed_ = 0.0f;
     miningRequired_ = 0.0f;
     pickupToastText_.clear();
+    entityMeshAccumulator_ = 0.0f;
+    itemMeshAccumulator_ = 0.0f;
     exitRequested_.store(false, std::memory_order_release);
     soundEvents_.store(0u, std::memory_order_release);
 
@@ -846,9 +848,20 @@ void Engine::Render() {
             UploadWorldMesh();
             UploadTransparentWorldMesh();
         }
-        RebuildEntityMesh();
-        UploadEntityMesh();
-        UploadItemMesh();
+        // Simulation remains frame-stepped, while animated vertex buffers are
+        // uploaded at bounded rates to avoid rebuilding all creature/item geometry
+        // on every 60–120 Hz screen refresh.
+        entityMeshAccumulator_ += safeDelta;
+        if (entityMeshAccumulator_ >= (1.0f / 30.0f)) {
+            entityMeshAccumulator_ = std::fmod(entityMeshAccumulator_, 1.0f / 30.0f);
+            RebuildEntityMesh();
+            UploadEntityMesh();
+        }
+        itemMeshAccumulator_ += safeDelta;
+        if (itemMeshAccumulator_ >= 0.05f) {
+            itemMeshAccumulator_ = std::fmod(itemMeshAccumulator_, 0.05f);
+            UploadItemMesh();
+        }
         const int playerChunkX = static_cast<int>(std::floor(player_.position.x / 16.0f));
         const int playerChunkZ = static_cast<int>(std::floor(player_.position.z / 16.0f));
         if (playerChunkX != lastChunkX_ || playerChunkZ != lastChunkZ_) {
