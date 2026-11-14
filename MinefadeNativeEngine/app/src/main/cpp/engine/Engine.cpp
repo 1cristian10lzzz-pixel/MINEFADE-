@@ -1218,6 +1218,8 @@ void Engine::Touch(int action, int pointerId, float x, float y) {
                 if (gameMode_ != 1) inventory_.ConsumeSelected();
                 RefreshInventoryUi();
                 soundEvents_.fetch_or(2u, std::memory_order_release);
+                if (HasBlockFlag(static_cast<BlockId>(selected), BlockFluid))
+                    soundEvents_.fetch_or(524288u, std::memory_order_release);
                 if (const BlockDefinition* placedDefinition =
                         GetBlockDefinition(static_cast<BlockId>(selected))) {
                     if (placedDefinition->preferredTool == BlockTool::Axe)
@@ -1359,6 +1361,14 @@ std::string Engine::ExecuteCommand(const std::string& rawCommand) {
         int created = 0;
         for (int i = 0; i < count; ++i)
             if (entities_.SpawnEntity(player_.position, kind, world_)) ++created;
+        if (created > 0) {
+            static constexpr std::array<std::uint32_t,7> creatureSounds{{
+                1024u, 2048u, 4096u, 8192u, 16384u, 32768u, 65536u
+            }};
+            soundEvents_.fetch_or(creatureSounds[static_cast<std::size_t>(kind)],
+                                  std::memory_order_release);
+            soundEvents_.fetch_or(262144u, std::memory_order_release);
+        }
         RebuildEntityMesh();
         UploadEntityMesh();
         if (created == 1) {
@@ -1377,6 +1387,7 @@ std::string Engine::ExecuteCommand(const std::string& rawCommand) {
         else if (mode == "supervivencia" || mode == "survival") gameMode_ = 0;
         else return "Uso: /modo supervivencia, /modo creativo o /modo aventura.";
         RefreshInventoryUi();
+        soundEvents_.fetch_or(262144u, std::memory_order_release);
         return "Modo de juego: " + mode + ". Se guardará con el mundo.";
     }
     if (verb == "tiempo" || verb == "time") {
@@ -1387,6 +1398,7 @@ std::string Engine::ExecuteCommand(const std::string& rawCommand) {
         if (value == "dia" || value == "día" || value == "day") environment_.SetTimeOfDay(0.25f);
         else if (value == "noche" || value == "night") environment_.SetTimeOfDay(0.75f);
         else return "Uso: /tiempo dia o /tiempo noche.";
+        soundEvents_.fetch_or(262144u, std::memory_order_release);
         return "El tiempo del mundo ha cambiado.";
     }
     if (verb == "dar" || verb == "give") {
@@ -1445,6 +1457,7 @@ void Engine::OpenStarterChest() {
     ui_.SetChestContents(markup.empty() ? "<div class='inventory-row'>El cofre está vacío.</div>" : markup);
     starterChestOpen_ = true;
     ui_.SetPanelVisible("starter-chest-panel", true);
+    soundEvents_.fetch_or(131072u, std::memory_order_release);
 }
 
 void Engine::TakeStarterChestContents() {
@@ -1566,6 +1579,8 @@ void Engine::UpdateMining(float deltaSeconds) {
                                 brokenDefinition->dropId, 1u);
         }
         soundEvents_.fetch_or(1u, std::memory_order_release);
+        if (HasBlockFlag(brokenType, BlockFluid))
+            soundEvents_.fetch_or(524288u, std::memory_order_release);
         if (brokenDefinition != nullptr) {
             if (brokenDefinition->preferredTool == BlockTool::Axe)
                 soundEvents_.fetch_or(128u, std::memory_order_release);
