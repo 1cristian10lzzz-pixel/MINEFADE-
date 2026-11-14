@@ -100,6 +100,15 @@ void AppendPlayerBox(std::vector<WorldVertex>& output, const Vec3& anchor, float
                             localCenter, {0.0f, 0.0f, 0.0f});
 }
 
+void AppendEntityBoxAnimated(std::vector<WorldVertex>& output, const Vec3& anchor,
+                             const Vec3& centerOffset, const Vec3& half,
+                             const std::array<float, 3>& color,
+                             const Vec3& pivotOffset, const Vec3& rotation) {
+    // A -90 degree basis maps the player-local right/back axes to world X/Z.
+    AppendPlayerBoxAnimated(output, anchor, -kPi * 0.5f, centerOffset, half,
+                            color, pivotOffset, rotation);
+}
+
 std::uint8_t WorldSolidForRust(std::int32_t x, std::int32_t y, std::int32_t z, void* userData) {
     const auto* world = static_cast<const VoxelWorld*>(userData);
     return world != nullptr && world->IsSolid(x, y, z) ? 1u : 0u;
@@ -221,11 +230,10 @@ void Player::AppendMesh(std::vector<WorldVertex>& output) const {
     const Vec3 anchor = position;
     if(contactShadows)
         AppendContactShadow(output,{anchor.x,anchor.y-0.98f,anchor.z},0.48f,0.34f,1.0f);
-    const float stride = pose.left_leg_pitch * 0.45f;
-
     MfPlayerPose pose{};
     const MfPlayerState state = ToRustPlayerState(*this);
     minefade_player_compute_pose(&state, animationQuality, animationsEnabled ? 1u : 0u, &pose);
+    const float stride = pose.left_leg_pitch * 0.45f;
     // Original Minefade adventurer silhouette: boots, trousers, tunic, arms, hands,
     // face and hair. Every part is transformed by the player's yaw, not world axes.
     static constexpr std::array<std::array<float,3>,6> skinPalette{{
@@ -513,119 +521,128 @@ void EntitySystem::Update(const VoxelWorld& world, float deltaSeconds) {
 
 void EntitySystem::AppendMesh(std::vector<WorldVertex>& output) const {
     for (const Entity& entity : entities_) {
-        if(contactShadows_)
-            AppendContactShadow(output,{entity.position.x,entity.position.y-0.98f,entity.position.z},0.55f,0.42f,0.78f);
-        const float gait = std::sin(entity.phase * 8.0f) * 0.12f;
-        const float legA = gait;
-        const float legB = -gait;
+        MfEntityPose pose{};
+        minefade_entity_compute_pose(entity.kind, entity.phase, animationTime_,
+                                     animationQuality_, animationsEnabled_ ? 1u : 0u, &pose);
+        if (contactShadows_)
+            AppendContactShadow(output,
+                {entity.position.x, entity.position.y - 0.98f, entity.position.z},
+                0.55f, 0.42f, 0.78f);
+
+        const float bob = pose.body_bob;
         if (entity.kind == 0) {
-            // Minefade meadow creature: wool body, head and four animated legs.
             const std::array<float, 3> wool{0.91f, 0.88f, 0.78f};
             const std::array<float, 3> face{0.63f, 0.47f, 0.37f};
             const std::array<float, 3> hoof{0.28f, 0.24f, 0.21f};
-            AppendCube(output, {entity.position.x, entity.position.y + 0.58f, entity.position.z},
-                       {0.48f, 0.38f, 0.64f}, wool);
-            AppendCube(output, {entity.position.x, entity.position.y + 0.73f, entity.position.z + 0.64f},
-                       {0.24f, 0.25f, 0.24f}, face);
-            AppendCube(output, {entity.position.x - 0.27f, entity.position.y + 0.22f + legA, entity.position.z - 0.34f},
-                       {0.10f, 0.24f, 0.11f}, hoof);
-            AppendCube(output, {entity.position.x + 0.27f, entity.position.y + 0.22f + legB, entity.position.z - 0.34f},
-                       {0.10f, 0.24f, 0.11f}, hoof);
-            AppendCube(output, {entity.position.x - 0.27f, entity.position.y + 0.22f + legB, entity.position.z + 0.36f},
-                       {0.10f, 0.24f, 0.11f}, hoof);
-            AppendCube(output, {entity.position.x + 0.27f, entity.position.y + 0.22f + legA, entity.position.z + 0.36f},
-                       {0.10f, 0.24f, 0.11f}, hoof);
-            const std::array<float, 3> eye{0.12f, 0.10f, 0.08f};
-            AppendCube(output, {entity.position.x - 0.13f, entity.position.y + 0.79f, entity.position.z + 0.855f},
-                       {0.035f, 0.045f, 0.028f}, eye);
-            AppendCube(output, {entity.position.x + 0.13f, entity.position.y + 0.79f, entity.position.z + 0.855f},
-                       {0.035f, 0.045f, 0.028f}, eye);
-            AppendCube(output, {entity.position.x, entity.position.y + 0.62f, entity.position.z + 0.87f},
-                       {0.12f, 0.08f, 0.045f}, face);
-            AppendCube(output, {entity.position.x, entity.position.y + 0.70f, entity.position.z - 0.71f},
-                       {0.055f, 0.07f, 0.15f}, wool);
+            AppendEntityBoxAnimated(output, entity.position, {0.0f,0.58f+bob,0.0f},
+                {0.48f,0.38f,0.64f}, wool, {0.0f,0.58f,0.0f}, {0.0f,0.0f,0.0f});
+            AppendEntityBoxAnimated(output, entity.position, {0.0f,0.73f+bob,0.64f},
+                {0.24f,0.25f,0.24f}, face, {0.0f,0.74f,0.54f}, {pose.head_pitch,0.0f,0.0f});
+            const std::array<Vec3,4> legs{{
+                {-0.27f,0.22f,-0.34f},{0.27f,0.22f,-0.34f},
+                {-0.27f,0.22f,0.36f},{0.27f,0.22f,0.36f}}};
+            const std::array<float,4> swings{{pose.front_left_leg_pitch,pose.front_right_leg_pitch,
+                                               pose.rear_left_leg_pitch,pose.rear_right_leg_pitch}};
+            for (std::size_t i=0;i<legs.size();++i) {
+                const Vec3& c=legs[i];
+                AppendEntityBoxAnimated(output,entity.position,
+                    {c.x,c.y+bob,c.z},{0.10f,0.24f,0.11f},hoof,
+                    {c.x,0.43f,c.z},{swings[i],0.0f,0.0f});
+            }
+            const std::array<float,3> eye{0.12f,0.10f,0.08f};
+            AppendEntityBoxAnimated(output,entity.position,{-0.13f,0.79f+bob,0.855f},
+                {0.035f,0.045f,0.028f},eye,{0.0f,0.74f,0.54f},{pose.head_pitch,0.0f,0.0f});
+            AppendEntityBoxAnimated(output,entity.position,{0.13f,0.79f+bob,0.855f},
+                {0.035f,0.045f,0.028f},eye,{0.0f,0.74f,0.54f},{pose.head_pitch,0.0f,0.0f});
+            AppendEntityBoxAnimated(output,entity.position,{0.0f,0.62f+bob,0.87f},
+                {0.12f,0.08f,0.045f},face,{0.0f,0.74f,0.54f},{pose.head_pitch,0.0f,0.0f});
+            AppendEntityBoxAnimated(output,entity.position,{0.0f,0.70f+bob,-0.71f},
+                {0.055f,0.07f,0.15f},wool,{0.0f,0.70f,-0.56f},{0.0f,pose.tail_yaw,0.0f});
         } else if (entity.kind == 1) {
-            // Short-bodied bovine with contrasting patches and a larger head.
-            const std::array<float, 3> hide{0.83f, 0.80f, 0.70f};
-            const std::array<float, 3> patch{0.23f, 0.20f, 0.19f};
-            const std::array<float, 3> muzzle{0.66f, 0.47f, 0.39f};
-            AppendCube(output, {entity.position.x, entity.position.y + 0.66f, entity.position.z},
-                       {0.54f, 0.43f, 0.72f}, hide);
-            AppendCube(output, {entity.position.x - 0.25f, entity.position.y + 0.79f, entity.position.z - 0.10f},
-                       {0.17f, 0.22f, 0.18f}, patch);
-            AppendCube(output, {entity.position.x + 0.20f, entity.position.y + 0.54f, entity.position.z + 0.18f},
-                       {0.16f, 0.18f, 0.19f}, patch);
-            AppendCube(output, {entity.position.x, entity.position.y + 0.80f, entity.position.z + 0.72f},
-                       {0.29f, 0.29f, 0.27f}, hide);
-            AppendCube(output, {entity.position.x, entity.position.y + 0.62f, entity.position.z + 0.97f},
-                       {0.20f, 0.13f, 0.12f}, muzzle);
-            AppendCube(output, {entity.position.x - 0.34f, entity.position.y + 0.22f + legA, entity.position.z - 0.42f},
-                       {0.11f, 0.25f, 0.11f}, patch);
-            AppendCube(output, {entity.position.x + 0.34f, entity.position.y + 0.22f + legB, entity.position.z - 0.42f},
-                       {0.11f, 0.25f, 0.11f}, patch);
-            AppendCube(output, {entity.position.x - 0.34f, entity.position.y + 0.22f + legB, entity.position.z + 0.42f},
-                       {0.11f, 0.25f, 0.11f}, patch);
-            AppendCube(output, {entity.position.x + 0.34f, entity.position.y + 0.22f + legA, entity.position.z + 0.42f},
-                       {0.11f, 0.25f, 0.11f}, patch);
-            const std::array<float, 3> eye{0.10f, 0.08f, 0.07f};
-            const std::array<float, 3> horn{0.88f, 0.82f, 0.67f};
-            AppendCube(output, {entity.position.x - 0.17f, entity.position.y + 0.88f, entity.position.z + 0.94f},
-                       {0.04f, 0.05f, 0.028f}, eye);
-            AppendCube(output, {entity.position.x + 0.17f, entity.position.y + 0.88f, entity.position.z + 0.94f},
-                       {0.04f, 0.05f, 0.028f}, eye);
-            AppendCube(output, {entity.position.x - 0.22f, entity.position.y + 1.13f, entity.position.z + 0.68f},
-                       {0.065f, 0.15f, 0.065f}, horn);
-            AppendCube(output, {entity.position.x + 0.22f, entity.position.y + 1.13f, entity.position.z + 0.68f},
-                       {0.065f, 0.15f, 0.065f}, horn);
-            AppendCube(output, {entity.position.x, entity.position.y + 0.70f, entity.position.z - 0.73f},
-                       {0.045f, 0.06f, 0.20f}, hide);
+            const std::array<float,3> hide{0.83f,0.80f,0.70f};
+            const std::array<float,3> patch{0.23f,0.20f,0.19f};
+            const std::array<float,3> muzzle{0.66f,0.47f,0.39f};
+            AppendEntityBoxAnimated(output,entity.position,{0.0f,0.66f+bob,0.0f},
+                {0.54f,0.43f,0.72f},hide,{0.0f,0.66f,0.0f},{0.0f,0.0f,0.0f});
+            AppendEntityBoxAnimated(output,entity.position,{-0.25f,0.79f+bob,-0.10f},
+                {0.17f,0.22f,0.18f},patch,{0.0f,0.66f,0.0f},{0.0f,0.0f,0.0f});
+            AppendEntityBoxAnimated(output,entity.position,{0.20f,0.54f+bob,0.18f},
+                {0.16f,0.18f,0.19f},patch,{0.0f,0.66f,0.0f},{0.0f,0.0f,0.0f});
+            AppendEntityBoxAnimated(output,entity.position,{0.0f,0.80f+bob,0.72f},
+                {0.29f,0.29f,0.27f},hide,{0.0f,0.82f,0.64f},{pose.head_pitch,0.0f,0.0f});
+            AppendEntityBoxAnimated(output,entity.position,{0.0f,0.62f+bob,0.97f},
+                {0.20f,0.13f,0.12f},muzzle,{0.0f,0.82f,0.64f},{pose.head_pitch,0.0f,0.0f});
+            const std::array<Vec3,4> legs{{
+                {-0.34f,0.22f,-0.42f},{0.34f,0.22f,-0.42f},
+                {-0.34f,0.22f,0.42f},{0.34f,0.22f,0.42f}}};
+            const std::array<float,4> swings{{pose.front_left_leg_pitch,pose.front_right_leg_pitch,
+                                               pose.rear_left_leg_pitch,pose.rear_right_leg_pitch}};
+            for (std::size_t i=0;i<legs.size();++i) {
+                const Vec3& c=legs[i];
+                AppendEntityBoxAnimated(output,entity.position,
+                    {c.x,c.y+bob,c.z},{0.11f,0.25f,0.11f},patch,
+                    {c.x,0.47f,c.z},{swings[i],0.0f,0.0f});
+            }
+            const std::array<float,3> eye{0.10f,0.08f,0.07f};
+            const std::array<float,3> horn{0.88f,0.82f,0.67f};
+            for (float side : {-1.0f,1.0f}) {
+                AppendEntityBoxAnimated(output,entity.position,{side*0.17f,0.88f+bob,0.94f},
+                    {0.04f,0.05f,0.028f},eye,{0.0f,0.82f,0.64f},{pose.head_pitch,0.0f,0.0f});
+                AppendEntityBoxAnimated(output,entity.position,{side*0.22f,1.13f+bob,0.68f},
+                    {0.065f,0.15f,0.065f},horn,{0.0f,0.82f,0.64f},{pose.head_pitch,0.0f,0.0f});
+            }
+            AppendEntityBoxAnimated(output,entity.position,{0.0f,0.70f+bob,-0.73f},
+                {0.045f,0.06f,0.20f},hide,{0.0f,0.70f,-0.55f},{0.0f,pose.tail_yaw,0.0f});
         } else {
-            // Small bird with independent wing flap, compact body, head and beak.
-            const std::array<float, 3> feather{0.89f, 0.85f, 0.75f};
-            const std::array<float, 3> beak{0.91f, 0.60f, 0.18f};
-            const std::array<float, 3> foot{0.80f, 0.49f, 0.15f};
-            const float flap=std::sin(entity.phase*13.0f)*0.16f;
-            AppendCube(output, {entity.position.x, entity.position.y + 0.39f, entity.position.z},
-                       {0.34f, 0.30f, 0.42f}, feather);
-            AppendCube(output, {entity.position.x, entity.position.y + 0.69f, entity.position.z + 0.36f},
-                       {0.20f, 0.20f, 0.20f}, feather);
-            AppendCube(output, {entity.position.x, entity.position.y + 0.61f, entity.position.z + 0.59f},
-                       {0.11f, 0.07f, 0.10f}, beak);
-            AppendCube(output, {entity.position.x - 0.13f, entity.position.y + 0.12f + legA, entity.position.z},
-                       {0.045f, 0.13f, 0.045f}, foot);
-            AppendCube(output, {entity.position.x + 0.13f, entity.position.y + 0.12f + legB, entity.position.z},
-                       {0.045f, 0.13f, 0.045f}, foot);
-            const std::array<float, 3> eye{0.12f, 0.09f, 0.05f};
-            const std::array<float, 3> wing{0.70f, 0.66f, 0.57f};
-            AppendCube(output, {entity.position.x - 0.12f, entity.position.y + 0.73f, entity.position.z + 0.52f},
-                       {0.035f, 0.04f, 0.025f}, eye);
-            AppendCube(output, {entity.position.x + 0.12f, entity.position.y + 0.73f, entity.position.z + 0.52f},
-                       {0.035f, 0.04f, 0.025f}, eye);
-            AppendCube(output, {entity.position.x - 0.27f, entity.position.y + 0.40f + flap, entity.position.z - 0.03f},
-                       {0.13f, 0.11f, 0.31f}, wing);
-            AppendCube(output, {entity.position.x + 0.27f, entity.position.y + 0.40f - flap, entity.position.z - 0.03f},
-                       {0.13f, 0.11f, 0.31f}, wing);
-            AppendCube(output, {entity.position.x, entity.position.y + 0.36f, entity.position.z - 0.47f},
-                       {0.12f, 0.09f, 0.24f}, feather);
+            const std::array<float,3> feather{0.89f,0.85f,0.75f};
+            const std::array<float,3> beak{0.91f,0.60f,0.18f};
+            const std::array<float,3> foot{0.80f,0.49f,0.15f};
+            const std::array<float,3> wing{0.70f,0.66f,0.57f};
+            AppendEntityBoxAnimated(output,entity.position,{0.0f,0.39f+bob,0.0f},
+                {0.34f,0.30f,0.42f},feather,{0.0f,0.39f,0.0f},{0.0f,0.0f,0.0f});
+            AppendEntityBoxAnimated(output,entity.position,{0.0f,0.69f+bob,0.36f},
+                {0.20f,0.20f,0.20f},feather,{0.0f,0.69f,0.36f},{pose.head_pitch,pose.head_yaw,0.0f});
+            AppendEntityBoxAnimated(output,entity.position,{0.0f,0.61f+bob,0.59f},
+                {0.11f,0.07f,0.10f},beak,{0.0f,0.69f,0.36f},{pose.head_pitch,0.0f,0.0f});
+            for (float side : {-1.0f,1.0f}) {
+                const float legPitch = side < 0.0f ? pose.front_left_leg_pitch : pose.front_right_leg_pitch;
+                AppendEntityBoxAnimated(output,entity.position,{side*0.13f,0.12f+bob,0.0f},
+                    {0.045f,0.13f,0.045f},foot,{side*0.13f,0.25f,0.0f},{legPitch,0.0f,0.0f});
+            }
+            AppendEntityBoxAnimated(output,entity.position,{-0.27f,0.40f+bob,-0.03f},
+                {0.13f,0.11f,0.31f},wing,{-0.14f,0.40f,-0.03f},{0.0f,0.0f,pose.left_wing_roll});
+            AppendEntityBoxAnimated(output,entity.position,{0.27f,0.40f+bob,-0.03f},
+                {0.13f,0.11f,0.31f},wing,{0.14f,0.40f,-0.03f},{0.0f,0.0f,pose.right_wing_roll});
+            AppendEntityBoxAnimated(output,entity.position,{0.0f,0.36f+bob,-0.47f},
+                {0.12f,0.09f,0.24f},feather,{0.0f,0.36f,-0.25f},{0.0f,pose.tail_yaw,0.0f});
+            const std::array<float,3> eye{0.12f,0.09f,0.05f};
+            for (float side : {-1.0f,1.0f}) {
+                AppendEntityBoxAnimated(output,entity.position,{side*0.12f,0.73f+bob,0.52f},
+                    {0.035f,0.04f,0.025f},eye,{0.0f,0.69f,0.36f},{pose.head_pitch,pose.head_yaw,0.0f});
+            }
         }
     }
 }
 
 void EnvironmentSystem::Update(float deltaSeconds) {
-    timeOfDay_ += std::clamp(deltaSeconds, 0.0f, 0.1f) / 720.0f;
-    if (timeOfDay_ >= 1.0f) timeOfDay_ -= 1.0f;
-    const float sun = std::sin(timeOfDay_ * 2.0f * kPi - kPi * 0.5f);
-    daylight_ = std::clamp(0.17f + (sun + 1.0f) * 0.415f, 0.17f, 1.0f);
+    MfEnvironmentState state{timeOfDay_, daylight_};
+    minefade_environment_update(&state, deltaSeconds);
+    timeOfDay_ = state.time_of_day;
+    daylight_ = state.daylight;
 }
 
 std::array<float, 3> EnvironmentSystem::SkyColor() const {
-    const float night = 1.0f - daylight_;
-    return {0.42f - night * 0.30f, 0.68f - night * 0.48f, 0.88f - night * 0.30f};
+    const MfEnvironmentState state{timeOfDay_, daylight_};
+    std::array<float,3> colour{};
+    minefade_environment_sky_color(&state, colour.data());
+    return colour;
 }
 
 std::array<float, 3> EnvironmentSystem::SunDirection() const {
-    const float angle = timeOfDay_ * 2.0f * kPi;
-    return {-std::cos(angle), -std::max(0.12f, std::sin(angle)), -0.35f};
+    const MfEnvironmentState state{timeOfDay_, daylight_};
+    std::array<float,3> direction{};
+    minefade_environment_sun_direction(&state, direction.data());
+    return direction;
 }
 
 } // namespace minefade
