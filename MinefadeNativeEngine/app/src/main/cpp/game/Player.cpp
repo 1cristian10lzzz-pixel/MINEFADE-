@@ -358,6 +358,8 @@ void Player::Update(const VoxelWorld& world, float deltaSeconds) {
         state.movement_x *= 0.46f;
         state.movement_y *= 0.46f;
     }
+    state.movement_x *= std::clamp(speedMultiplier, 0.25f, 3.0f);
+    state.movement_y *= std::clamp(speedMultiplier, 0.25f, 3.0f);
     minefade_player_update(&state, deltaSeconds, inFluid, WorldSolidForRust,
                            const_cast<VoxelWorld*>(&world));
     ApplyRustPlayerState(*this, state);
@@ -461,15 +463,35 @@ void DroppedItemSystem::AppendMesh(std::vector<WorldVertex>& output, const Camer
 void EntitySystem::SpawnInitial(const VoxelWorld& world) {
     if (initialized_) return;
     constexpr std::array<Vec3, 3> positions{{{5.0f, 0.0f, 5.0f}, {11.0f, 0.0f, 4.0f}, {13.0f, 0.0f, 12.0f}}};
-    for (std::size_t i = 0; i < entities_.size(); ++i) {
-        entities_[i].position = positions[i];
-        entities_[i].position.y = static_cast<float>(world.GetSurfaceHeight(
-            FloorToInt(positions[i].x), FloorToInt(positions[i].z))) + 1.0f;
-        entities_[i].phase = static_cast<float>(i) * 2.0f;
-        entities_[i].speed = 0.18f + static_cast<float>(i) * 0.07f;
-        entities_[i].kind = static_cast<int>(i % 3u);
+    entities_.reserve(32u);
+    for (std::size_t i = 0; i < positions.size(); ++i) {
+        Entity entity;
+        entity.position = positions[i];
+        entity.position.y = static_cast<float>(world.GetSurfaceHeight(
+            FloorToInt(entity.position.x), FloorToInt(entity.position.z))) + 1.0f;
+        entity.phase = static_cast<float>(i) * 2.0f;
+        entity.speed = 0.18f + static_cast<float>(i) * 0.07f;
+        entity.kind = static_cast<int>(i % 3u);
+        entities_.push_back(entity);
     }
     initialized_ = true;
+}
+
+bool EntitySystem::SpawnEntity(const Vec3& nearPosition, int kind, const VoxelWorld& world) {
+    if (entities_.size() >= 128u || kind < 0 || kind > 2) return false;
+    const float index = static_cast<float>(entities_.size());
+    const float angle = index * 2.39996323f;
+    const float radius = 1.8f + std::fmod(index, 3.0f) * 0.35f;
+    Entity entity;
+    entity.position.x = nearPosition.x + std::cos(angle) * radius;
+    entity.position.z = nearPosition.z + std::sin(angle) * radius;
+    entity.position.y = static_cast<float>(world.GetSurfaceHeight(
+        FloorToInt(entity.position.x), FloorToInt(entity.position.z))) + 1.0f;
+    entity.phase = animationTime_ + index * 0.73f;
+    entity.speed = 0.12f + std::fmod(index, 4.0f) * 0.025f;
+    entity.kind = kind;
+    entities_.push_back(entity);
+    return true;
 }
 
 void EntitySystem::Update(const VoxelWorld& world, float deltaSeconds) {
