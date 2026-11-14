@@ -15,12 +15,13 @@ namespace minefade {
 namespace {
 constexpr const char* kTag = "MinefadeNative";
 constexpr float kPi = 3.14159265358979323846f;
+// Captures driver compiler/linker diagnostics for the startup error screen.
+std::string gWorldShaderDiagnostic;
 #define ENGINE_LOGI(...) __android_log_print(ANDROID_LOG_INFO, kTag, __VA_ARGS__)
 #define ENGINE_LOGE(...) __android_log_print(ANDROID_LOG_ERROR, kTag, __VA_ARGS__)
 #define ENGINE_LOGW(...) __android_log_print(ANDROID_LOG_WARN, kTag, __VA_ARGS__)
 
-constexpr char kWorldVertexShader[] = R"(
-#version 300 es
+constexpr char kWorldVertexShader[] = R"(#version 300 es
 precision highp float;
 layout(location=0) in vec3 aPosition;
 layout(location=1) in vec3 aNormal;
@@ -59,8 +60,7 @@ void main() {
 }
 )";
 
-constexpr char kWorldFragmentShader[] = R"(
-#version 300 es
+constexpr char kWorldFragmentShader[] = R"(#version 300 es
 precision mediump float;
 in mediump vec3 vColor;
 in mediump vec2 vTexCoord;
@@ -142,8 +142,17 @@ Engine::Mat4 Engine::Multiply(const Mat4& a, const Mat4& b) {
 }
 
 GLuint Engine::CompileShader(GLenum type, const char* source) {
+    const char* stage = type == GL_VERTEX_SHADER ? "vertex" : "fragment";
     const GLuint shader = glCreateShader(type);
-    if (shader == 0) return 0;
+    if (shader == 0) {
+        const GLenum error = glGetError();
+        char code[24]{};
+        std::snprintf(code, sizeof(code), "0x%04X", static_cast<unsigned int>(error));
+        gWorldShaderDiagnostic = std::string("glCreateShader(") + stage +
+                ") devolvió 0; GL error " + code;
+        ENGINE_LOGE("%s", gWorldShaderDiagnostic.c_str());
+        return 0;
+    }
     glShaderSource(shader, 1, &source, nullptr);
     glCompileShader(shader);
     GLint compiled = GL_FALSE;
@@ -151,9 +160,14 @@ GLuint Engine::CompileShader(GLenum type, const char* source) {
     if (compiled != GL_TRUE) {
         GLint length = 0;
         glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &length);
-        std::string log(static_cast<std::size_t>(std::max(length, 1)), '\0');
-        glGetShaderInfoLog(shader, length, nullptr, log.data());
-        ENGINE_LOGE("World shader failed: %s", log.c_str());
+        std::string log(static_cast<std::size_t>(std::max(length, 1)), '\\0');
+        GLsizei written = 0;
+        glGetShaderInfoLog(shader, static_cast<GLsizei>(log.size()), &written, log.data());
+        if (written > 0) log.resize(static_cast<std::size_t>(written));
+        else log.clear();
+        gWorldShaderDiagnostic = std::string("Falló la compilación del shader ") + stage +
+                (log.empty() ? ": el controlador no entregó un registro GLSL." : ": " + log);
+        ENGINE_LOGE("%s", gWorldShaderDiagnostic.c_str());
         glDeleteShader(shader);
         return 0;
     }
@@ -161,22 +175,35 @@ GLuint Engine::CompileShader(GLenum type, const char* source) {
 }
 
 bool Engine::CreateWorldProgram() {
+    gWorldShaderDiagnostic.clear();
     const auto destroyCurrentProgram = [this]() {
         if (worldProgram_ != 0) glDeleteProgram(worldProgram_);
         worldProgram_ = 0;
     };
-    const auto buildProgram = [this, &destroyCurrentProgram](const char* vertexSource, const char* fragmentSource) {
+    const auto buildProgram = [this, &destroyCurrentProgram](const char* vertexSource,
+                                                              const char* fragmentSource,
+                                                              std::string& diagnostic) {
+        diagnostic.clear();
         const GLuint vertex = CompileShader(GL_VERTEX_SHADER, vertexSource);
+        if (vertex == 0) {
+            diagnostic = gWorldShaderDiagnostic;
+            return false;
+        }
         const GLuint fragment = CompileShader(GL_FRAGMENT_SHADER, fragmentSource);
-        if (vertex == 0 || fragment == 0) {
-            if (vertex != 0) glDeleteShader(vertex);
-            if (fragment != 0) glDeleteShader(fragment);
+        if (fragment == 0) {
+            diagnostic = gWorldShaderDiagnostic;
+            glDeleteShader(vertex);
             return false;
         }
         worldProgram_ = glCreateProgram();
         if (worldProgram_ == 0) {
+            const GLenum error = glGetError();
+            char code[24]{};
+            std::snprintf(code, sizeof(code), "0x%04X", static_cast<unsigned int>(error));
+            diagnostic = std::string("glCreateProgram devolvió 0; GL error ") + code;
             glDeleteShader(vertex);
             glDeleteShader(fragment);
+            ENGINE_LOGE("%s", diagnostic.c_str());
             return false;
         }
         glAttachShader(worldProgram_, vertex);
@@ -189,9 +216,14 @@ bool Engine::CreateWorldProgram() {
         if (linked != GL_TRUE) {
             GLint length = 0;
             glGetProgramiv(worldProgram_, GL_INFO_LOG_LENGTH, &length);
-            std::string log(static_cast<std::size_t>(std::max(length, 1)), '\0');
-            glGetProgramInfoLog(worldProgram_, length, nullptr, log.data());
-            ENGINE_LOGE("World program link failed: %s", log.c_str());
+            std::string log(static_cast<std::size_t>(std::max(length, 1)), '\\0');
+            GLsizei written = 0;
+            glGetProgramInfoLog(worldProgram_, static_cast<GLsizei>(log.size()), &written, log.data());
+            if (written > 0) log.resize(static_cast<std::size_t>(written));
+            else log.clear();
+            diagnostic = log.empty() ? "El programa no enlazó y el controlador no entregó un registro."
+                                     : "Falló el enlace GLSL: " + log;
+            ENGINE_LOGE("%s", diagnostic.c_str());
             destroyCurrentProgram();
             return false;
         }
@@ -212,7 +244,8 @@ bool Engine::CreateWorldProgram() {
         fogFarLocation_ = glGetUniformLocation(worldProgram_, "uFogFar");
     };
 
-    if (buildProgram(kWorldVertexShader, kWorldFragmentShader)) {
+    std::string fullDiagnostic;
+    if (buildProgram(kWorldVertexShader, kWorldFragmentShader, fullDiagnostic)) {
         fetchLocations();
         if (mvpLocation_ >= 0 && lightLocation_ >= 0 && daylightLocation_ >= 0 &&
             atlasLocation_ >= 0 && useAtlasLocation_ >= 0 && timeLocation_ >= 0 &&
@@ -225,15 +258,17 @@ bool Engine::CreateWorldProgram() {
             ENGINE_LOGI("Full world shader compiled and linked");
             return true;
         }
-        ENGINE_LOGE("Full world shader linked but one or more required uniforms were optimised out");
+        fullDiagnostic = "El shader principal enlazó, pero falta al menos un uniform obligatorio.";
+        ENGINE_LOGE("%s", fullDiagnostic.c_str());
         destroyCurrentProgram();
+    } else {
+        ENGINE_LOGW("Primary world shader rejected: %s", fullDiagnostic.c_str());
     }
 
     // Some mobile driver versions are fragile with larger shader variants. Keep a
     // deliberately small ES 3.0 path so the world remains playable without fog,
     // animated water or per-fragment lighting if the full program is rejected.
-    constexpr char fallbackVertex[] = R"(
-#version 300 es
+    constexpr char fallbackVertex[] = R"(#version 300 es
 precision highp float;
 layout(location=0) in vec3 aPosition;
 layout(location=2) in vec3 aColor;
@@ -247,8 +282,7 @@ void main() {
     vTexCoord = aTexCoord;
 }
 )";
-    constexpr char fallbackFragment[] = R"(
-#version 300 es
+    constexpr char fallbackFragment[] = R"(#version 300 es
 precision mediump float;
 in mediump vec3 vColor;
 in mediump vec2 vTexCoord;
@@ -260,13 +294,20 @@ void main() {
     outColor = vec4(texel.rgb * vColor, texel.a);
 }
 )";
-    if (!buildProgram(fallbackVertex, fallbackFragment)) {
+    std::string fallbackDiagnostic;
+    if (!buildProgram(fallbackVertex, fallbackFragment, fallbackDiagnostic)) {
         destroyCurrentProgram();
+        gWorldShaderDiagnostic = "Shader principal: " + fullDiagnostic +
+                "\\nShader alternativo: " + fallbackDiagnostic;
+        if (gWorldShaderDiagnostic.size() > 760u) gWorldShaderDiagnostic.resize(760u);
         return false;
     }
     fetchLocations();
     if (mvpLocation_ < 0 || atlasLocation_ < 0 || useAtlasLocation_ < 0) {
-        ENGINE_LOGE("Fallback world shader is missing a required uniform");
+        fallbackDiagnostic = "El shader alternativo enlazó, pero faltan uniforms obligatorios.";
+        gWorldShaderDiagnostic = "Shader principal: " + fullDiagnostic +
+                "\\nShader alternativo: " + fallbackDiagnostic;
+        ENGINE_LOGE("%s", gWorldShaderDiagnostic.c_str());
         destroyCurrentProgram();
         return false;
     }
@@ -394,8 +435,13 @@ bool Engine::Initialise(float displayDensity, const std::uint8_t* atlasPixels,
 
     // Clear any stale driver error before attributing a failure to a startup stage.
     while (glGetError() != GL_NO_ERROR) { }
-    if (!CreateWorldProgram())
-        return failInitialisation("No se pudo compilar o enlazar el shader principal del mundo. Revisa el registro GLSL del controlador.");
+    if (!CreateWorldProgram()) {
+        std::string reason = "No se pudo compilar o enlazar el shader principal del mundo.";
+        if (!gWorldShaderDiagnostic.empty()) {
+            reason += "\\nDetalle GLSL: " + gWorldShaderDiagnostic;
+        }
+        return failInitialisation(reason);
+    }
     if (!UploadBlockAtlas(atlasPixels, atlasBytes, atlasWidth, atlasHeight)) {
         return failInitialisation("No se pudo cargar la textura atlas de bloques. Comprueba sus dimensiones, memoria gráfica y GL_MAX_TEXTURE_SIZE.");
     }
