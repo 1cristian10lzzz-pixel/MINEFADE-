@@ -628,28 +628,32 @@ void Engine::Resize(int width, int height) {
 void Engine::RebuildWorldMesh() {
     world_.BuildMesh(worldMesh_, static_cast<int>(std::floor(player_.position.x)),
                      static_cast<int>(std::floor(player_.position.z)),
-                     renderDistanceChunks_, &transparentWorldMesh_);
+                     renderDistanceChunks_, &transparentWorldMesh_, &worldChunkRanges_);
 
-    // Alpha blending is order-dependent. Sort transparent triangles from far to near
-    // so overlapping water/glass surfaces blend more consistently on mobile GPUs.
-    if (transparentWorldMesh_.size() < 6u) return;
-    const Vec3 eye = ViewPosition();
-    using Triangle = std::array<WorldVertex, 3>;
-    std::vector<std::pair<float, Triangle>> sorted;
-    sorted.reserve(transparentWorldMesh_.size() / 3u);
-    for (std::size_t i = 0; i + 2u < transparentWorldMesh_.size(); i += 3u) {
-        Triangle triangle{transparentWorldMesh_[i], transparentWorldMesh_[i + 1u], transparentWorldMesh_[i + 2u]};
-        const float cx = (triangle[0].x + triangle[1].x + triangle[2].x) / 3.0f - eye.x;
-        const float cy = (triangle[0].y + triangle[1].y + triangle[2].y) / 3.0f - eye.y;
-        const float cz = (triangle[0].z + triangle[1].z + triangle[2].z) / 3.0f - eye.z;
-        sorted.emplace_back(cx * cx + cy * cy + cz * cz, triangle);
-    }
-    std::sort(sorted.begin(), sorted.end(), [](const auto& a, const auto& b) {
-        return a.first > b.first;
-    });
-    std::size_t cursor = 0;
-    for (const auto& entry : sorted) {
-        for (const WorldVertex& vertex : entry.second) transparentWorldMesh_[cursor++] = vertex;
+    // Keep each chunk's transparent triangles far-to-near without changing the
+    // chunk ranges. The renderer sorts the chunk ranges again as the camera moves.
+    for (const ChunkMeshRange& range : worldChunkRanges_) {
+        if (range.transparentCount < 6u) continue;
+        using Triangle = std::array<WorldVertex,3>;
+        std::vector<std::pair<float,Triangle>> sorted;
+        sorted.reserve(range.transparentCount/3u);
+        const Vec3 eye=ViewPosition();
+        const std::size_t first=range.transparentFirst;
+        const std::size_t last=first+range.transparentCount;
+        for (std::size_t i=first;i+2u<last;i+=3u) {
+            Triangle triangle{transparentWorldMesh_[i],transparentWorldMesh_[i+1u],
+                              transparentWorldMesh_[i+2u]};
+            const float cx=(triangle[0].x+triangle[1].x+triangle[2].x)/3.0f-eye.x;
+            const float cy=(triangle[0].y+triangle[1].y+triangle[2].y)/3.0f-eye.y;
+            const float cz=(triangle[0].z+triangle[1].z+triangle[2].z)/3.0f-eye.z;
+            sorted.emplace_back(cx*cx+cy*cy+cz*cz,triangle);
+        }
+        std::sort(sorted.begin(),sorted.end(),[](const auto& a,const auto& b){
+            return a.first>b.first;
+        });
+        std::size_t cursor=first;
+        for (const auto& entry:sorted)
+            for (const WorldVertex& vertex:entry.second) transparentWorldMesh_[cursor++]=vertex;
     }
 }
 
@@ -672,6 +676,9 @@ void Engine::UploadWorldMesh() {
     glEnableVertexAttribArray(3);
     glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, sizeof(WorldVertex),
                           reinterpret_cast<const void*>(offsetof(WorldVertex, u)));
+    glEnableVertexAttribArray(4);
+    glVertexAttribPointer(4, 1, GL_FLOAT, GL_FALSE, sizeof(WorldVertex),
+                          reinterpret_cast<const void*>(offsetof(WorldVertex, atlasTile)));
     glBindVertexArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     worldVertexCount_ = static_cast<GLsizei>(worldMesh_.size());
@@ -696,6 +703,9 @@ void Engine::UploadTransparentWorldMesh() {
     glEnableVertexAttribArray(3);
     glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, sizeof(WorldVertex),
                           reinterpret_cast<const void*>(offsetof(WorldVertex, u)));
+    glEnableVertexAttribArray(4);
+    glVertexAttribPointer(4, 1, GL_FLOAT, GL_FALSE, sizeof(WorldVertex),
+                          reinterpret_cast<const void*>(offsetof(WorldVertex, atlasTile)));
     glBindVertexArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     transparentVertexCount_ = static_cast<GLsizei>(transparentWorldMesh_.size());
@@ -796,6 +806,9 @@ void Engine::UploadEntityMesh() {
     glEnableVertexAttribArray(3);
     glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, sizeof(WorldVertex),
                           reinterpret_cast<const void*>(offsetof(WorldVertex, u)));
+    glEnableVertexAttribArray(4);
+    glVertexAttribPointer(4, 1, GL_FLOAT, GL_FALSE, sizeof(WorldVertex),
+                          reinterpret_cast<const void*>(offsetof(WorldVertex, atlasTile)));
     glBindVertexArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     entityVertexCount_ = static_cast<GLsizei>(entityMesh_.size());
