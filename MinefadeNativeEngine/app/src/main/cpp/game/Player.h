@@ -108,6 +108,7 @@ public:
     std::array<float, 3> SunDirection() const;
     float Daylight() const { return daylight_; }
     float TimeOfDay() const { return timeOfDay_; }
+    void SetTimeOfDay(float value);
 private:
     float timeOfDay_{0.25f};
     float daylight_{1.0f};
