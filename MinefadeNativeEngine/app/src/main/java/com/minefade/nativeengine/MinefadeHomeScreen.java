@@ -137,6 +137,17 @@ public final class MinefadeHomeScreen extends FrameLayout {
                 .setInterpolator(new DecelerateInterpolator()).start();
     }
 
+    private void animateAvatarIn(View view, int index) {
+        if (!preferences.getBoolean("avatar_transition_animations", true)) {
+            view.setAlpha(1f);
+            view.setScaleX(1f);
+            view.setScaleY(1f);
+            view.setTranslationY(0f);
+            return;
+        }
+        animateIn(view, index);
+    }
+
     private void haptic(View view) {
         if (clickSound != null) clickSound.run();
         if (!preferences.getBoolean("menu_haptics", true)) return;
@@ -539,8 +550,8 @@ public final class MinefadeHomeScreen extends FrameLayout {
                 line.addView(tile, cell);
             }
         }
-        animateIn(previewCard, 0);
-        animateIn(optionShell, 1);
+        animateAvatarIn(previewCard, 0);
+        animateAvatarIn(optionShell, 1);
     }
 
     private void showSettingsPage() {
