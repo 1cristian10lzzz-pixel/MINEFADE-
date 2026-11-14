@@ -30,6 +30,9 @@ public:
     void SetPickupToast(const std::string& text);
     void SetPerspectiveEnabled(bool enabled);
     void SetCrouchEnabled(bool enabled);
+    void SetChestContents(const std::string& markup);
+    void SetChatMessage(const std::string& message);
+    void SetChestButtonVisible(bool visible);
     void SetQuickbarSlot(int slot, const std::string& label, bool selected);
     void SetInventoryContents(const std::string& markup);
     void SetPanelVisible(const char* elementId, bool visible);
