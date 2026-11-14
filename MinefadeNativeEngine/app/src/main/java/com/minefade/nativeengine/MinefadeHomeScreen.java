@@ -1350,6 +1350,9 @@ public final class MinefadeHomeScreen extends FrameLayout {
         private final Path path = new Path();
         private float rotation = -24.0f;
         private float previousX;
+        private float idleTime;
+        private long lastFrameMs;
+        private long suppressAutoRotationUntilMs;
         private float projectionCenterX;
         private float projectionGround;
         private float projectionUnit;
@@ -1401,6 +1404,56 @@ public final class MinefadeHomeScreen extends FrameLayout {
             return projected;
         }
 
+        private float[][] posedPoints(float[][] vertices,
+                                      float pivotX, float pivotY, float pivotZ,
+                                      float pitch, float yaw, float roll) {
+            float cp = (float) Math.cos(pitch), sp = (float) Math.sin(pitch);
+            float cy = (float) Math.cos(yaw), sy = (float) Math.sin(yaw);
+            float cr = (float) Math.cos(roll), sr = (float) Math.sin(roll);
+            float[][] projected = new float[vertices.length][2];
+            for (int i = 0; i < vertices.length; i++) {
+                float x = vertices[i][0] - pivotX;
+                float y = vertices[i][1] - pivotY;
+                float z = vertices[i][2] - pivotZ;
+                float y1 = y * cp - z * sp;
+                float z1 = y * sp + z * cp;
+                float x2 = x * cy + z1 * sy;
+                float z2 = -x * sy + z1 * cy;
+                float x3 = x2 * cr - y1 * sr;
+                float y3 = x2 * sr + y1 * cr;
+                projected[i] = project(pivotX + x3, pivotY + y3, pivotZ + z2);
+            }
+            return projected;
+        }
+
+        private void cubeAnimated(Canvas canvas, float x, float y, float z,
+                                  float halfX, float halfY, float halfZ,
+                                  int frontColor, int sideColor, int topColor,
+                                  float pivotX, float pivotY, float pivotZ,
+                                  float pitch, float yaw, float roll) {
+            float left = x - halfX, right = x + halfX;
+            float bottom = y - halfY, top = y + halfY;
+            float back = z - halfZ, front = z + halfZ;
+            int visibleZ = rotationCos >= 0.0f ? 1 : -1;
+            int visibleX = -rotationSin >= 0.0f ? 1 : -1;
+            float sideX = visibleX > 0 ? right : left;
+            float[][] side = visibleX > 0
+                    ? new float[][]{{sideX,bottom,back},{sideX,bottom,front},
+                                    {sideX,top,front},{sideX,top,back}}
+                    : new float[][]{{sideX,bottom,front},{sideX,bottom,back},
+                                    {sideX,top,back},{sideX,top,front}};
+            polygon(canvas, sideColor, posedPoints(side,pivotX,pivotY,pivotZ,pitch,yaw,roll));
+            float frontZ = visibleZ > 0 ? front : back;
+            float[][] frontFace = visibleZ > 0
+                    ? new float[][]{{left,bottom,frontZ},{right,bottom,frontZ},
+                                    {right,top,frontZ},{left,top,frontZ}}
+                    : new float[][]{{right,bottom,frontZ},{left,bottom,frontZ},
+                                    {left,top,frontZ},{right,top,frontZ}};
+            polygon(canvas, frontColor, posedPoints(frontFace,pivotX,pivotY,pivotZ,pitch,yaw,roll));
+            float[][] topFace = {{left,top,back},{right,top,back},{right,top,front},{left,top,front}};
+            polygon(canvas, topColor, posedPoints(topFace,pivotX,pivotY,pivotZ,pitch,yaw,roll));
+        }
+
         private void cube(Canvas canvas, float x, float y, float z,
                           float halfX, float halfY, float halfZ,
                           int frontColor, int sideColor, int topColor) {
@@ -1437,6 +1490,7 @@ public final class MinefadeHomeScreen extends FrameLayout {
             switch (event.getActionMasked()) {
                 case android.view.MotionEvent.ACTION_DOWN:
                     previousX = event.getX();
+                    suppressAutoRotationUntilMs = SystemClock.uptimeMillis() + 1800L;
                     return true;
                 case android.view.MotionEvent.ACTION_MOVE:
                     float dx = event.getX() - previousX;
@@ -1444,6 +1498,7 @@ public final class MinefadeHomeScreen extends FrameLayout {
                     rotation += dx * 0.85f;
                     if (rotation > 360f) rotation -= 360f;
                     if (rotation < -360f) rotation += 360f;
+                    suppressAutoRotationUntilMs = SystemClock.uptimeMillis() + 1800L;
                     invalidate();
                     return true;
                 case android.view.MotionEvent.ACTION_UP:
@@ -1462,6 +1517,27 @@ public final class MinefadeHomeScreen extends FrameLayout {
 
         @Override protected void onDraw(Canvas canvas) {
             super.onDraw(canvas);
+            long nowMs = SystemClock.uptimeMillis();
+            float frameDelta = lastFrameMs == 0L ? 0.0f : Math.min(0.05f, (nowMs - lastFrameMs) / 1000.0f);
+            lastFrameMs = nowMs;
+            boolean idleMotion = preferences.getBoolean("avatar_idle_animation", true)
+                    && preferences.getBoolean("menu_animations", true)
+                    && !preferences.getBoolean("reduce_motion", false)
+                    && isShown();
+            if (idleMotion) {
+                idleTime += frameDelta;
+                if (nowMs >= suppressAutoRotationUntilMs) rotation += frameDelta * 4.2f;
+                if (rotation > 360f) rotation -= 360f;
+                postInvalidateOnAnimation();
+            }
+            float breath = idleMotion ? (float) Math.sin(idleTime * 1.8f) * 0.027f : 0.0f;
+            float armSway = idleMotion ? (float) Math.sin(idleTime * 1.15f) * 0.045f : 0.0f;
+            float headSway = idleMotion ? (float) Math.sin(idleTime * 0.68f) * 0.035f : 0.0f;
+            float legSway = idleMotion ? (float) Math.sin(idleTime * 1.15f) * 0.012f : 0.0f;
+            float blinkPhase = idleTime % 5.0f;
+            float eyelid = idleMotion && blinkPhase > 4.78f
+                    ? (float) Math.sin((blinkPhase - 4.78f) / 0.22f * Math.PI) : 0.0f;
+            float eyeOpen = Math.max(0.08f, 1.0f - eyelid * 0.94f);
             float width = getWidth(), height = getHeight();
             projectionCenterX = width * 0.50f;
             projectionGround = height * 0.875f;
@@ -1492,39 +1568,39 @@ public final class MinefadeHomeScreen extends FrameLayout {
             int accessory = avatarStyles[5] % 6;
 
             // Boots, trouser legs, hips and belt.
-            cube(canvas,-0.22f,0.20f,0.015f,0.17f,0.19f,0.25f,
-                    0xff27384a,0xff172538,0xff63798b);
-            cube(canvas, 0.22f,0.20f,0.015f,0.17f,0.19f,0.25f,
-                    0xff27384a,0xff172538,0xff63798b);
-            cube(canvas,-0.22f,0.77f,0.0f,0.145f,0.42f,0.16f,
-                    0xff344b65,0xff203044,0xff75899b);
-            cube(canvas, 0.22f,0.77f,0.0f,0.145f,0.42f,0.16f,
-                    0xff405b78,0xff203044,0xff8294a6);
+            cubeAnimated(canvas,-0.22f,0.20f+legSway,0.015f,0.17f,0.19f,0.25f,
+                    0xff27384a,0xff172538,0xff63798b,-0.22f,0.40f,0.015f,legSway*0.8f,0,0);
+            cubeAnimated(canvas,0.22f,0.20f-legSway,0.015f,0.17f,0.19f,0.25f,
+                    0xff27384a,0xff172538,0xff63798b,0.22f,0.40f,0.015f,-legSway*0.8f,0,0);
+            cubeAnimated(canvas,-0.22f,0.77f+legSway,0.0f,0.145f,0.42f,0.16f,
+                    0xff344b65,0xff203044,0xff75899b,-0.22f,1.18f,0.0f,legSway,0,0);
+            cubeAnimated(canvas,0.22f,0.77f-legSway,0.0f,0.145f,0.42f,0.16f,
+                    0xff405b78,0xff203044,0xff8294a6,0.22f,1.18f,0.0f,-legSway,0,0);
             cube(canvas,0.0f,1.33f,0.0f,0.37f,0.17f,0.22f,
                     0xffaa7d46,0xff5e452e,0xffe2c27d);
 
             // Cape layer stays behind the torso and rotates with the character.
             if (accessory == 2) {
-                cube(canvas,0.0f,1.92f,-0.30f,0.49f,0.83f,0.075f,
-                        0xff6b527f,0xff3b2d59,0xffb9a5d9);
+                cubeAnimated(canvas,0.0f,1.92f+breath,-0.30f,0.49f,0.83f,0.075f,
+                        0xff6b527f,0xff3b2d59,0xffb9a5d9,0.0f,2.6f,-0.30f,armSway*0.6f,0,0);
             }
 
             // Torso and articulated arm pieces.
-            cube(canvas,0.0f,1.94f,0.0f,0.44f,0.59f,0.27f,
-                    outfit,0xff263b54,0xff9bc39a);
-            cube(canvas,-0.58f,1.96f,0.0f,0.15f,0.47f,0.18f,
-                    outfit,0xff263b54,0xffa7c5a0);
-            cube(canvas, 0.58f,1.96f,0.0f,0.15f,0.47f,0.18f,
-                    outfit,0xff263b54,0xffa7c5a0);
-            cube(canvas,0.0f,2.60f,0.0f,0.17f,0.16f,0.16f,
-                    skin,0xff93694e,0xfff5d4b0);
+            cubeAnimated(canvas,0.0f,1.94f+breath,0.0f,0.44f,0.59f,0.27f,
+                    outfit,0xff263b54,0xff9bc39a,0.0f,1.94f,0.0f,breath*0.45f,0,0);
+            cubeAnimated(canvas,-0.58f,1.96f,0.0f,0.15f,0.47f,0.18f,
+                    outfit,0xff263b54,0xffa7c5a0,-0.58f,2.38f,0.0f,armSway,0,0);
+            cubeAnimated(canvas,0.58f,1.96f,0.0f,0.15f,0.47f,0.18f,
+                    outfit,0xff263b54,0xffa7c5a0,0.58f,2.38f,0.0f,-armSway,0,0);
+            cubeAnimated(canvas,0.0f,2.60f+breath,0.0f,0.17f,0.16f,0.16f,
+                    skin,0xff93694e,0xfff5d4b0,0.0f,2.60f,0.0f,0,headSway,0);
 
             // Head, face, hair cap and selectable hairstyle silhouettes.
-            cube(canvas,0.0f,3.10f,0.0f,0.37f,0.42f,0.31f,
-                    skin,0xff95694e,0xfff6d5b3);
-            cube(canvas,0.0f,3.48f,-0.015f,0.40f,
+            cubeAnimated(canvas,0.0f,3.10f+breath*0.2f,0.0f,0.37f,0.42f,0.31f,
+                    skin,0xff95694e,0xfff6d5b3,0.0f,3.10f,0.0f,0,headSway,0);
+            cubeAnimated(canvas,0.0f,3.48f+breath*0.2f,-0.015f,0.40f,
                     avatarStyles[1]==5?0.22f:0.13f,0.35f,
-                    hair,0xff3c302b,0xffd0a16a);
+                    hair,0xff3c302b,0xffd0a16a,0.0f,3.10f,0.0f,0,headSway,0);
             if (avatarStyles[1]==1 || avatarStyles[1]==2 || avatarStyles[1]==4) {
                 cube(canvas,-0.34f,3.12f,-0.015f,0.12f,0.37f,0.26f,
                         hair,0xff3c302b,0xffc18c59);
@@ -1533,10 +1609,10 @@ public final class MinefadeHomeScreen extends FrameLayout {
                 cube(canvas,0.33f,2.99f,-0.06f,0.12f,0.52f,0.23f,
                         hair,0xff3c302b,0xffc18c59);
             }
-            cube(canvas,-0.15f,3.12f,0.319f,0.055f,0.065f,0.025f,
-                    eye,0xff18232d,0xffe7f1f4);
-            cube(canvas, 0.15f,3.12f,0.319f,0.055f,0.065f,0.025f,
-                    eye,0xff18232d,0xffe7f1f4);
+            cubeAnimated(canvas,-0.15f,3.12f,0.319f,0.055f,0.065f*eyeOpen,0.025f,
+                    eye,0xff18232d,0xffe7f1f4,0.0f,3.10f,0.0f,0,headSway,0);
+            cubeAnimated(canvas,0.15f,3.12f,0.319f,0.055f,0.065f*eyeOpen,0.025f,
+                    eye,0xff18232d,0xffe7f1f4,0.0f,3.10f,0.0f,0,headSway,0);
             cube(canvas,0.0f,2.96f,0.326f,0.075f,0.025f,0.015f,
                     0xff9d6558,0xff744c43,0xffc88b79);
 
