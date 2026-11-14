@@ -973,6 +973,15 @@ void Engine::Render() {
                                             0.08f, 120.0f);
         const Mat4 view = LookAt(eye, target, {0.0f, 1.0f, 0.0f});
         const Mat4 mvp = Multiply(projection, view);
+        const CameraFrustum frustum = ExtractFrustum(mvp);
+        const auto chunkVisible = [&](const ChunkMeshRange& range) {
+            const float minX = static_cast<float>(range.chunkX * VoxelWorld::kChunkSize);
+            const float minZ = static_cast<float>(range.chunkZ * VoxelWorld::kChunkSize);
+            return frustum.IntersectsAabb(minX, 0.0f, minZ,
+                minX + static_cast<float>(VoxelWorld::kChunkSize),
+                static_cast<float>(VoxelWorld::kWorldHeight),
+                minZ + static_cast<float>(VoxelWorld::kChunkSize));
+        };
         const auto sun = environment_.SunDirection();
 
         glEnable(GL_DEPTH_TEST);
@@ -994,7 +1003,36 @@ void Engine::Render() {
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, blockAtlasTexture_);
         glBindVertexArray(worldVao_);
-        glDrawArrays(GL_TRIANGLES, 0, worldVertexCount_);
+        if (worldChunkRanges_.empty()) {
+            glDrawArrays(GL_TRIANGLES, 0, worldVertexCount_);
+        } else {
+            std::size_t batchFirst=0u, batchCount=0u;
+            const auto flushOpaqueBatch=[&]() {
+                if (batchCount>0u) {
+                    glDrawArrays(GL_TRIANGLES,static_cast<GLint>(batchFirst),
+                                 static_cast<GLsizei>(batchCount));
+                    batchCount=0u;
+                }
+            };
+            for (const ChunkMeshRange& range : worldChunkRanges_) {
+                if (range.opaqueCount==0u) continue;
+                if (!chunkVisible(range)) {
+                    flushOpaqueBatch();
+                    continue;
+                }
+                if (batchCount==0u) {
+                    batchFirst=range.opaqueFirst;
+                    batchCount=range.opaqueCount;
+                } else if (batchFirst+batchCount==range.opaqueFirst) {
+                    batchCount+=range.opaqueCount;
+                } else {
+                    flushOpaqueBatch();
+                    batchFirst=range.opaqueFirst;
+                    batchCount=range.opaqueCount;
+                }
+            }
+            flushOpaqueBatch();
+        }
         glBindVertexArray(0);
         glBindTexture(GL_TEXTURE_2D, 0);
 
@@ -1022,7 +1060,22 @@ void Engine::Render() {
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
             glDepthMask(GL_FALSE);
             glBindVertexArray(transparentVao_);
-            glDrawArrays(GL_TRIANGLES, 0, transparentVertexCount_);
+            std::vector<const ChunkMeshRange*> transparentVisible;
+            transparentVisible.reserve(worldChunkRanges_.size());
+            for (const ChunkMeshRange& range : worldChunkRanges_)
+                if (range.transparentCount>0u && chunkVisible(range))
+                    transparentVisible.push_back(&range);
+            std::sort(transparentVisible.begin(),transparentVisible.end(),
+                [&](const ChunkMeshRange* a,const ChunkMeshRange* b) {
+                    const float ax=(static_cast<float>(a->chunkX)+0.5f)*VoxelWorld::kChunkSize-eye.x;
+                    const float az=(static_cast<float>(a->chunkZ)+0.5f)*VoxelWorld::kChunkSize-eye.z;
+                    const float bx=(static_cast<float>(b->chunkX)+0.5f)*VoxelWorld::kChunkSize-eye.x;
+                    const float bz=(static_cast<float>(b->chunkZ)+0.5f)*VoxelWorld::kChunkSize-eye.z;
+                    return ax*ax+az*az > bx*bx+bz*bz;
+                });
+            for (const ChunkMeshRange* range : transparentVisible)
+                glDrawArrays(GL_TRIANGLES,static_cast<GLint>(range->transparentFirst),
+                             static_cast<GLsizei>(range->transparentCount));
             glBindVertexArray(0);
             glDepthMask(GL_TRUE);
             glDisable(GL_BLEND);
