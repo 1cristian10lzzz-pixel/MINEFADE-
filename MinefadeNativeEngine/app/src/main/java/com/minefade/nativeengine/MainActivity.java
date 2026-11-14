@@ -20,6 +20,8 @@ import android.view.WindowManager;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
+import android.widget.ScrollView;
+import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -232,6 +234,38 @@ public final class MainActivity extends Activity {
             Toast.makeText(this, "El mundo todavía se está preparando.", Toast.LENGTH_SHORT).show();
             return;
         }
+
+        LinearLayout panel = new LinearLayout(this);
+        panel.setOrientation(LinearLayout.VERTICAL);
+        panel.setPadding(dp(12),dp(10),dp(12),dp(8));
+        panel.setBackground(new GradientDrawable(GradientDrawable.Orientation.TL_BR,
+                new int[]{0xff142638,0xff0d1a28}));
+
+        ScrollView historyScroll = new ScrollView(this);
+        historyScroll.setFillViewport(false);
+        historyScroll.setVerticalScrollBarEnabled(true);
+        historyScroll.setClipChildren(true);
+        historyScroll.setClipToPadding(true);
+        TextView history = statusText(
+                "MINEFADE · CHAT DE COMANDOS\nEscribe /ayuda para ver la lista.\n"
+                + "Ejemplos: /oveja 3 · /zombi · /modo creativo · /tiempo noche\n",
+                10,0xffdce8ef,false);
+        history.setGravity(Gravity.TOP | Gravity.LEFT);
+        history.setPadding(dp(8),dp(8),dp(8),dp(8));
+        history.setMinHeight(dp(170));
+        history.setBackground(new GradientDrawable(GradientDrawable.Orientation.TL_BR,
+                new int[]{0xff0b1724,0xff13283a}));
+        historyScroll.addView(history,new ScrollView.LayoutParams(-1,-2));
+        LinearLayout.LayoutParams historyParams = new LinearLayout.LayoutParams(-1,dp(210));
+        panel.addView(historyScroll,historyParams);
+
+        LinearLayout sendRow = new LinearLayout(this);
+        sendRow.setOrientation(LinearLayout.HORIZONTAL);
+        sendRow.setGravity(Gravity.CENTER_VERTICAL);
+        LinearLayout.LayoutParams sendRowParams = new LinearLayout.LayoutParams(-1,dp(46));
+        sendRowParams.topMargin = dp(8);
+        panel.addView(sendRow,sendRowParams);
+
         EditText command = new EditText(this);
         command.setSingleLine(true);
         command.setText("/");
@@ -239,17 +273,48 @@ public final class MainActivity extends Activity {
         command.setTextColor(Color.WHITE);
         command.setHintTextColor(0xff9fb4c1);
         command.setHint("/oveja");
+        command.setTextSize(12);
         command.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
-        new AlertDialog.Builder(this)
-                .setTitle("Comandos de Minefade")
-                .setMessage("Prueba /oveja, /vaca, /pollo o /ayuda")
-                .setView(command)
-                .setNegativeButton("Cancelar", null)
-                .setPositiveButton("Ejecutar", (dialog, which) -> {
-                    String result = surfaceView == null ? "No hay un mundo activo."
-                            : surfaceView.executeCommand(command.getText().toString());
-                    Toast.makeText(this, result, Toast.LENGTH_LONG).show();
-                }).show();
+        command.setPadding(dp(10),0,dp(10),0);
+        command.setBackground(new GradientDrawable(GradientDrawable.Orientation.TL_BR,
+                new int[]{0xff1b3347,0xff132638}));
+        sendRow.addView(command,new LinearLayout.LayoutParams(0,-1,1f));
+
+        Button send = new Button(this);
+        send.setText("ENVIAR");
+        send.setTextSize(10);
+        send.setTextColor(0xfff1f7fa);
+        send.setAllCaps(false);
+        LinearLayout.LayoutParams sendParams = new LinearLayout.LayoutParams(dp(88),dp(42));
+        sendParams.leftMargin = dp(7);
+        sendRow.addView(send,sendParams);
+
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setTitle("Chat de Minefade")
+                .setView(panel)
+                .setNegativeButton("Cerrar",null)
+                .create();
+        final Runnable[] execute = new Runnable[1];
+        execute[0] = () -> {
+            String typed = command.getText().toString().trim();
+            if (typed.isEmpty() || "/".equals(typed)) return;
+            if (surfaceView == null || !engineReady) {
+                history.append("\nMotor no disponible.\n");
+                return;
+            }
+            String result = surfaceView.executeCommand(typed);
+            history.append("\n> " + typed + "\n" + result + "\n");
+            historyScroll.post(() -> historyScroll.fullScroll(View.FOCUS_DOWN));
+            command.setText("/");
+            command.setSelection(command.length());
+        };
+        send.setOnClickListener(v -> execute[0].run());
+        command.setOnEditorActionListener((view, actionId, event) -> {
+            execute[0].run();
+            return true;
+        });
+        dialog.show();
+        command.requestFocus();
     }
 
     private void pickModFile() {
