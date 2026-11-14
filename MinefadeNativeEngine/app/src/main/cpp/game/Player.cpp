@@ -494,7 +494,10 @@ std::size_t DroppedItemSystem::Update(const VoxelWorld& world, const Player& pla
 void DroppedItemSystem::AppendMesh(std::vector<WorldVertex>& output) const {
     for (const DroppedItem& item : drops_) {
         const BlockId block=static_cast<BlockId>(item.itemId);
-        AppendTexturedBlockCube(output,block,item.position,{0.13f,0.13f,0.13f});
+        const float spin=item.age*1.45f;
+        const float bob=std::sin(item.age*3.4f)*0.055f;
+        AppendAnimatedTexturedBlockCube(output,block,item.position,
+            {0.13f,0.13f,0.13f},spin,bob);
     }
 }
 
