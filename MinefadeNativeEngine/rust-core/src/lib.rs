@@ -162,6 +162,108 @@ pub extern "C" fn minefade_core_abi_version() -> u32 {
     1
 }
 
+/// Check that an encoded inventory can accept an item without mutating it.
+/// Each non-empty slot stores item_id * 1000 + quantity.
+#[no_mangle]
+pub unsafe extern "C" fn minefade_inventory_can_add(
+    counts: *const u32,
+    slot_count: u32,
+    item_id: u16,
+    amount: u16,
+    stack_limit: u16,
+) -> u8 {
+    if counts.is_null() || item_id == 0 || amount == 0 || slot_count == 0 {
+        return 0;
+    }
+    let Some(counts) = (unsafe { core::slice::from_raw_parts(counts, slot_count as usize) }).into() else {
+        return 0;
+    };
+    let maximum = if stack_limit == 0 { 64u32 } else { (stack_limit as u32).min(999) };
+    if maximum == 0 { return 0; }
+    let mut remaining = amount as u32;
+    for encoded in counts.iter().copied() {
+        if encoded == 0 || encoded / 1000 != item_id as u32 { continue; }
+        let quantity = encoded % 1000;
+        if quantity < maximum {
+            remaining = remaining.saturating_sub(maximum.saturating_sub(quantity).min(remaining));
+        }
+        if remaining == 0 { return 1; }
+    }
+    for encoded in counts.iter().copied() {
+        if encoded == 0 {
+            remaining = remaining.saturating_sub(maximum.min(remaining));
+        }
+        if remaining == 0 { return 1; }
+    }
+    0
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn minefade_inventory_add(
+    counts: *mut u32,
+    slot_count: u32,
+    item_id: u16,
+    amount: u16,
+    stack_limit: u16,
+) -> u8 {
+    if unsafe { minefade_inventory_can_add(counts, slot_count, item_id, amount, stack_limit) } == 0 {
+        return 0;
+    }
+    let Some(counts) = (unsafe { counts.as_mut() }) else { return 0 };
+    let slots = unsafe { core::slice::from_raw_parts_mut(counts, slot_count as usize) };
+    let maximum = if stack_limit == 0 { 64u32 } else { (stack_limit as u32).min(999) };
+    let item = item_id as u32;
+    let mut remaining = amount as u32;
+    for encoded in slots.iter_mut() {
+        if *encoded == 0 || *encoded / 1000 != item { continue; }
+        let quantity = *encoded % 1000;
+        if quantity >= maximum { continue; }
+        let moved = maximum.saturating_sub(quantity).min(remaining);
+        *encoded = item * 1000 + quantity + moved;
+        remaining -= moved;
+        if remaining == 0 { return 1; }
+    }
+    for encoded in slots.iter_mut() {
+        if *encoded != 0 { continue; }
+        let moved = maximum.min(remaining);
+        *encoded = item * 1000 + moved;
+        remaining -= moved;
+        if remaining == 0 { return 1; }
+    }
+    0
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn minefade_inventory_selected_item_id(
+    counts: *const u32,
+    slot_count: u32,
+    selected_slot: u32,
+) -> u16 {
+    if counts.is_null() || selected_slot >= slot_count { return 0; }
+    let slots = unsafe { core::slice::from_raw_parts(counts, slot_count as usize) };
+    let encoded = slots[selected_slot as usize];
+    if encoded == 0 { 0 } else { (encoded / 1000).min(u16::MAX as u32) as u16 }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn minefade_inventory_consume_selected(
+    counts: *mut u32,
+    slot_count: u32,
+    selected_slot: u32,
+    amount: u16,
+) -> u8 {
+    if counts.is_null() || selected_slot >= slot_count || amount == 0 { return 0; }
+    let slots = unsafe { core::slice::from_raw_parts_mut(counts, slot_count as usize) };
+    let encoded = slots[selected_slot as usize];
+    if encoded == 0 { return 0; }
+    let item = encoded / 1000;
+    let quantity = encoded % 1000;
+    if quantity < amount as u32 { return 0; }
+    let remaining = quantity - amount as u32;
+    slots[selected_slot as usize] = if remaining == 0 { 0 } else { item * 1000 + remaining };
+    1
+}
+
 #[no_mangle]
 pub unsafe extern "C" fn minefade_player_set_movement(
     state: *mut MfPlayerState,
@@ -508,6 +610,33 @@ mod tests {
 
     extern "C" fn flat_surface(_x: i32, _z: i32, _user: *mut c_void) -> i32 {
         0
+    }
+
+    #[test]
+    fn inventory_merges_stacks_and_fills_empty_slots() {
+        let mut slots = [2008u32, 0, 0, 0, 0, 0, 0, 0, 0];
+        assert_eq!(unsafe { minefade_inventory_can_add(slots.as_ptr(), 9, 2, 60, 64) }, 1);
+        assert_eq!(unsafe { minefade_inventory_add(slots.as_mut_ptr(), 9, 2, 60, 64) }, 1);
+        assert_eq!(slots[0], 2064);
+        assert_eq!(slots[1], 2004);
+        assert_eq!(unsafe { minefade_inventory_selected_item_id(slots.as_ptr(), 9, 1) }, 2);
+        assert_eq!(unsafe { minefade_inventory_consume_selected(slots.as_mut_ptr(), 9, 1, 4) }, 1);
+        assert_eq!(slots[1], 0);
+    }
+
+    #[test]
+    fn inventory_rejects_overflow_atomically_and_observes_stack_limit() {
+        let mut slots = [2064u32, 2064, 3064, 0, 0, 0, 0, 0, 0];
+        let before = slots;
+        assert_eq!(unsafe { minefade_inventory_can_add(slots.as_ptr(), 3, 2, 1, 64) }, 0);
+        assert_eq!(unsafe { minefade_inventory_add(slots.as_mut_ptr(), 3, 2, 1, 64) }, 0);
+        assert_eq!(slots, before);
+        let mut restricted = [0u32; 9];
+        assert_eq!(unsafe { minefade_inventory_add(restricted.as_mut_ptr(), 9, 69, 9, 16) }, 1);
+        assert_eq!(restricted[0], 69016);
+        assert_eq!(restricted[1], 6909);
+        assert_eq!(unsafe { minefade_inventory_consume_selected(restricted.as_mut_ptr(), 9, 0, 17) }, 0);
+        assert_eq!(restricted[0], 69016);
     }
 
     #[test]
