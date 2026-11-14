@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 /** Owns EGL ES 3 and serialises native input/render calls on the GL thread. */
 public final class MinefadeSurfaceView extends GLSurfaceView {
@@ -31,6 +32,8 @@ public final class MinefadeSurfaceView extends GLSurfaceView {
 
     public MinefadeSurfaceView(Context context, SoundEffects soundEffects, float displayDensity,
                                boolean multiplayerMode, int playerSlot, String storagePath,
+                               String modsDirectory, long worldSeed, int gameMode,
+                               boolean allowCheats, boolean starterChest,
                                LanMultiplayerService multiplayer, InitializationListener listener) {
         super(context);
         initializationListener = listener;
@@ -39,7 +42,8 @@ public final class MinefadeSurfaceView extends GLSurfaceView {
         setEGLConfigChooser(8, 8, 8, 8, 16, 0);
         setPreserveEGLContextOnPause(true);
         setRenderer(new EngineRenderer(context, soundEffects, displayDensity,
-                multiplayerMode, playerSlot, storagePath, multiplayer));
+                multiplayerMode, playerSlot, storagePath, modsDirectory, worldSeed,
+                gameMode, allowCheats, starterChest, multiplayer));
         setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);
         setFocusable(true);
         setFocusableInTouchMode(true);
@@ -131,6 +135,31 @@ public final class MinefadeSurfaceView extends GLSurfaceView {
             if (nativeReady) NativeBridge.nativeTouch(nativeAction, pointerId, x, y);
         });
         return true;
+    }
+
+    /** Run a typed command on the native simulation thread and return its Spanish response. */
+    public String executeCommand(String command) {
+        if (!nativeReady) return "El mundo no está listo.";
+        final CountDownLatch completed = new CountDownLatch(1);
+        final AtomicReference<String> result = new AtomicReference<>("No se pudo ejecutar el comando.");
+        queueEvent(() -> {
+            try {
+                String value = NativeBridge.nativeExecuteCommand(command == null ? "" : command);
+                result.set(value == null ? "" : value);
+            } catch (LinkageError | RuntimeException error) {
+                Log.e(TAG, "Native command failed", error);
+                result.set("El motor no pudo ejecutar ese comando.");
+            } finally {
+                completed.countDown();
+            }
+        });
+        try {
+            if (!completed.await(5, TimeUnit.SECONDS)) return "El motor está ocupado; vuelve a intentarlo.";
+        } catch (InterruptedException error) {
+            Thread.currentThread().interrupt();
+            return "Se interrumpió la ejecución del comando.";
+        }
+        return result.get();
     }
 
     private static byte[] readBlockAtlas(AssetManager assets) {
@@ -242,10 +271,17 @@ public final class MinefadeSurfaceView extends GLSurfaceView {
         private final boolean multiplayerMode;
         private final int playerSlot;
         private final String storagePath;
+        private final String modsDirectory;
+        private final long worldSeed;
+        private final int gameMode;
+        private final boolean allowCheats;
+        private final boolean starterChest;
         private final LanMultiplayerService multiplayer;
 
         EngineRenderer(Context context, SoundEffects soundEffects, float displayDensity,
                        boolean multiplayerMode, int playerSlot, String storagePath,
+                       String modsDirectory, long worldSeed, int gameMode,
+                       boolean allowCheats, boolean starterChest,
                        LanMultiplayerService multiplayer) {
             assetManager = context.getAssets();
             this.soundEffects = soundEffects;
@@ -253,6 +289,11 @@ public final class MinefadeSurfaceView extends GLSurfaceView {
             this.multiplayerMode = multiplayerMode;
             this.playerSlot = Math.max(0, Math.min(31, playerSlot));
             this.storagePath = storagePath;
+            this.modsDirectory = modsDirectory;
+            this.worldSeed = worldSeed;
+            this.gameMode = Math.max(0, Math.min(2, gameMode));
+            this.allowCheats = allowCheats;
+            this.starterChest = starterChest;
             this.multiplayer = multiplayer;
         }
 
@@ -267,6 +308,8 @@ public final class MinefadeSurfaceView extends GLSurfaceView {
                 // Set mode and storage on the same GL thread as nativeInit/render.
                 NativeBridge.nativeSetMultiplayerMode(multiplayerMode, playerSlot);
                 NativeBridge.nativeSetStoragePath(storagePath);
+                NativeBridge.nativeSetWorldOptions(gameMode, allowCheats, starterChest, worldSeed);
+                NativeBridge.nativeSetModsDirectory(modsDirectory);
                 int quality = Math.max(0, Math.min(2, preferences.getInt("graphics_quality", 1)));
                 int renderDistance = Math.max(1, Math.min(3,
                         preferences.getInt("render_distance", 1) + 1));
