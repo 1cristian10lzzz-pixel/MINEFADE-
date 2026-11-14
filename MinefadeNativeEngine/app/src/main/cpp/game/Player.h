@@ -18,6 +18,9 @@ public:
     float movementY{0.0f};
     bool grounded{false};
     float walkPhase{0.0f};
+    float animationTime{0.0f};
+    std::uint8_t animationQuality{2};
+    bool animationsEnabled{true};
     std::array<int, 6> appearance{{0,0,0,0,0,0}};
     bool contactShadows{true};
 
@@ -27,6 +30,7 @@ public:
     void Rotate(float deltaX, float deltaY);
     void Jump();
     void SetAppearance(const std::array<int, 6>& appearance);
+    void SetAnimationOptions(std::uint8_t quality, bool enabled);
     void SetContactShadows(bool enabled) { contactShadows = enabled; }
     // Keeps saved player positions out of solid blocks and finds nearby open ground.
     bool ResolveSafeSpawn(const VoxelWorld& world);
@@ -81,11 +85,15 @@ public:
     void Update(const VoxelWorld& world, float deltaSeconds);
     void AppendMesh(std::vector<WorldVertex>& output) const;
     void SetContactShadows(bool enabled) { contactShadows_ = enabled; }
+    void SetAnimationOptions(std::uint8_t quality, bool enabled) { animationQuality_ = quality > 2 ? 2 : quality; animationsEnabled_ = enabled; }
     std::size_t Count() const { return entities_.size(); }
 private:
     std::array<Entity, 3> entities_{};
     bool initialized_{false};
     bool contactShadows_{true};
+    std::uint8_t animationQuality_{2};
+    bool animationsEnabled_{true};
+    float animationTime_{0.0f};
 };
 
 class EnvironmentSystem {
