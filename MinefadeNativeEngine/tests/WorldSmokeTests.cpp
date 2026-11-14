@@ -77,6 +77,54 @@ int main() {
     world.BuildMesh(mesh);
     assert(!mesh.empty());
     assert(mesh.size() % 3u == 0u);
+    // A 4x4x4 opaque stone volume inside one chunk must collapse to six
+    // greedy rectangles (36 vertices), not 384 individual block faces.
+    VoxelWorld greedyWorld(0x47524545u);
+    greedyWorld.GenerateAround(8, 8, 0);
+    std::vector<WorldVertex> greedyBefore;
+    greedyWorld.BuildMesh(greedyBefore, 8, 8, 0);
+    for (int y = 80; y < 84; ++y)
+        for (int z = 4; z < 8; ++z)
+            for (int x = 4; x < 8; ++x)
+                assert(greedyWorld.SetBlock(x, y, z, BlockId::Stone));
+    std::vector<WorldVertex> greedyAfter;
+    greedyWorld.BuildMesh(greedyAfter, 8, 8, 0);
+    assert(greedyAfter.size() == greedyBefore.size() + 36u);
+    std::vector<WorldVertex> greedyTransparent;
+    std::vector<ChunkMeshRange> greedyRanges;
+    std::vector<WorldVertex> greedyOpaque;
+    greedyWorld.BuildMesh(greedyOpaque, 8, 8, 0, &greedyTransparent, &greedyRanges);
+    assert(greedyRanges.size() == 1u);
+    assert(greedyRanges[0].chunkX == 0 && greedyRanges[0].chunkZ == 0);
+    assert(greedyRanges[0].opaqueFirst == 0u);
+    assert(greedyRanges[0].opaqueCount == greedyOpaque.size());
+    assert(greedyRanges[0].lodLevel == 0);
+    assert(greedyOpaque.size() >= 36u);
+
+    // Frustum AABB tests use a simple [-4,+4] cube around the camera.
+    CameraFrustum testFrustum;
+    testFrustum.valid = true;
+    testFrustum.planes = {{
+        { 1.0f, 0.0f, 0.0f, 4.0f}, {-1.0f, 0.0f, 0.0f, 4.0f},
+        { 0.0f, 1.0f, 0.0f, 4.0f}, { 0.0f,-1.0f, 0.0f, 4.0f},
+        { 0.0f, 0.0f, 1.0f, 4.0f}, { 0.0f, 0.0f,-1.0f, 4.0f}
+    }};
+    assert(testFrustum.IntersectsAabb(-1.0f,-1.0f,-1.0f,1.0f,1.0f,1.0f));
+    assert(!testFrustum.IntersectsAabb(8.0f,0.0f,0.0f,10.0f,1.0f,1.0f));
+    assert(!testFrustum.IntersectsAabb(-1.0f,-1.0f,8.0f,1.0f,1.0f,10.0f));
+
+    // A generated but excluded chunk must not hide the last visible ring's
+    // boundary surfaces, as if its neighbour were unloaded.
+    VoxelWorld edgeWorld(0x45444745u);
+    edgeWorld.GenerateAround(8, 8, 1);
+    for (int y = 80; y < 84; ++y)
+        for (int z = 4; z < 8; ++z)
+            for (int x = 15; x < 16; ++x)
+                assert(edgeWorld.SetBlock(x, y, z, BlockId::Stone));
+    std::vector<WorldVertex> edgeMesh;
+    edgeWorld.BuildMesh(edgeMesh, 8, 8, 0);
+    assert(edgeMesh.size() >= 36u);
+
     std::vector<WorldVertex> transparentMesh;
     world.SetBlock(8, height + 8, 8, BlockId::Water);
     world.BuildMesh(mesh, 8, 8, 1, &transparentMesh);
