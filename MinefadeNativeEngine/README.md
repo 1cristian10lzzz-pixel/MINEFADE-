@@ -184,3 +184,19 @@ El editor usa una proyección 3D de piezas voxel dibujadas por Canvas; el jugado
 - El ave ambiental mueve las alas de forma independiente; oveja, vaca y jugador conservan animaciones de marcha básicas.
 
 **Pendiente visual:** las sombras de contacto no sustituyen un shadow map; el agua tiene ondas de superficie, pero aún no existe propagación de flujo, alturas por bloque ni refracción física; el ítem en mano es un mesh de bloque compacto con una manga sencilla, no una animación completa de brazo/herramienta.
+
+
+## Review10 — controles táctiles y render optimizado
+
+La rama `minefade-render-optimization` prepara Review10 sobre la base Review9, con paquete de prueba independiente `com.minefade.nativeengine.review10`.
+
+- **Controles del mundo:** HUD con joystick de cuatro direcciones visible, salto y agacharse; barra rápida más grande y de mayor contraste. La zona táctil del joystick se excluye de la captura de clics de RmlUi sin bloquear los huecos de la barra rápida.
+- **Editor de avatar:** disposición apaisada de dos columnas, controles/estilos a la izquierda y personaje a la derecha. Se redibujan iconos vectoriales por módulo y miniaturas más legibles; se añaden detalles al rostro, botas, manos y accesorios de la vista previa.
+- **Paneles y desplazamiento:** los visores verticales y horizontales limitan el dibujo a su propio rectángulo para que el contenido desplazado no pinte por encima de las pestañas ni de otros módulos.
+- **Logros:** ocho objetivos con progreso persistente para entrada al mundo, minería, construcción, recogidas y saltos. Los contadores se alimentan de eventos emitidos por el motor durante la partida.
+- **Modelos:** oveja, vaca y ave conservan sus poses Rust y reciben detalles geométricos pequeños y movimiento secundario suave de orejas/cola; el ave añade plumas de cola.
+- **Malla greedy:** las caras exteriores de cubos opacos coplanares con la misma textura se combinan en rectángulos por chunk. El atlas repite la textura dentro de cada cara grande para evitar estirar el tile.
+- **Visibilidad y detalle:** descarte por frustum de AABB de chunks, criaturas y jugadores remotos; caras ocultas por bloques vecinos no se emiten; LOD por distancia simplifica bloques de detalle en chunks lejanos.
+- **CPU/GPU:** dos workers construyen las mallas de chunks de forma determinista; se conservan buffers por chunk/material y se fusionan rangos opacos contiguos en llamadas de dibujo. Las transparencias mantienen un pase separado y orden aproximado por distancia.
+
+**Límites importantes:** el descarte de oclusión se hace por caras cubiertas por vecinos; no hay consultas de oclusión GPU ni shadow maps. El LOD actual es por distancia del chunk, no por objeto individual. La generación y construcción de mallas tienen trabajo paralelo, pero la simulación física/IA general no se ha movido íntegramente a workers. El atlas sigue siendo un atlas 2D, no texture arrays. No se afirma FPS concreto ni validación física en GPU Mali hasta probarlo en el teléfono.
