@@ -91,12 +91,12 @@ jobs:
                "*/.externalNativeBuild/*" "*/intermediates/*" \
                "*/outputs/*" "*/tmp/*" "*/target/*" "*/rust-target/*" \
                "Minefade-0.7.0-source.zip"
-          test -s Minefade-0.6.0-source.zip
+          test -s Minefade-0.7.0-source.zip
 
       - name: Upload complete source
         uses: actions/upload-artifact@v4
         with:
-          name: Minefade-0.6.0-source
+          name: Minefade-0.7.0-source
           path: Minefade-0.7.0-source.zip
           if-no-files-found: error
           retention-days: 14
