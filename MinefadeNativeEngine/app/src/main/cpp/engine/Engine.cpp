@@ -160,7 +160,7 @@ GLuint Engine::CompileShader(GLenum type, const char* source) {
     if (compiled != GL_TRUE) {
         GLint length = 0;
         glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &length);
-        std::string log(static_cast<std::size_t>(std::max(length, 1)), '\\0');
+        std::string log(static_cast<std::size_t>(std::max(length, 1)), '\0');
         GLsizei written = 0;
         glGetShaderInfoLog(shader, static_cast<GLsizei>(log.size()), &written, log.data());
         if (written > 0) log.resize(static_cast<std::size_t>(written));
@@ -216,7 +216,7 @@ bool Engine::CreateWorldProgram() {
         if (linked != GL_TRUE) {
             GLint length = 0;
             glGetProgramiv(worldProgram_, GL_INFO_LOG_LENGTH, &length);
-            std::string log(static_cast<std::size_t>(std::max(length, 1)), '\\0');
+            std::string log(static_cast<std::size_t>(std::max(length, 1)), '\0');
             GLsizei written = 0;
             glGetProgramInfoLog(worldProgram_, static_cast<GLsizei>(log.size()), &written, log.data());
             if (written > 0) log.resize(static_cast<std::size_t>(written));
@@ -298,7 +298,7 @@ void main() {
     if (!buildProgram(fallbackVertex, fallbackFragment, fallbackDiagnostic)) {
         destroyCurrentProgram();
         gWorldShaderDiagnostic = "Shader principal: " + fullDiagnostic +
-                "\\nShader alternativo: " + fallbackDiagnostic;
+                "\nShader alternativo: " + fallbackDiagnostic;
         if (gWorldShaderDiagnostic.size() > 760u) gWorldShaderDiagnostic.resize(760u);
         return false;
     }
@@ -306,7 +306,7 @@ void main() {
     if (mvpLocation_ < 0 || atlasLocation_ < 0 || useAtlasLocation_ < 0) {
         fallbackDiagnostic = "El shader alternativo enlazó, pero faltan uniforms obligatorios.";
         gWorldShaderDiagnostic = "Shader principal: " + fullDiagnostic +
-                "\\nShader alternativo: " + fallbackDiagnostic;
+                "\nShader alternativo: " + fallbackDiagnostic;
         ENGINE_LOGE("%s", gWorldShaderDiagnostic.c_str());
         destroyCurrentProgram();
         return false;
@@ -438,7 +438,7 @@ bool Engine::Initialise(float displayDensity, const std::uint8_t* atlasPixels,
     if (!CreateWorldProgram()) {
         std::string reason = "No se pudo compilar o enlazar el shader principal del mundo.";
         if (!gWorldShaderDiagnostic.empty()) {
-            reason += "\\nDetalle GLSL: " + gWorldShaderDiagnostic;
+            reason += "\nDetalle GLSL: " + gWorldShaderDiagnostic;
         }
         return failInitialisation(reason);
     }
