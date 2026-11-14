@@ -154,6 +154,35 @@ Engine::Mat4 Engine::Multiply(const Mat4& a, const Mat4& b) {
     return result;
 }
 
+CameraFrustum Engine::ExtractFrustum(const Mat4& mvp) {
+    const auto row=[&](int index) {
+        return std::array<float,4>{
+            mvp.v[static_cast<std::size_t>(index)],
+            mvp.v[static_cast<std::size_t>(4+index)],
+            mvp.v[static_cast<std::size_t>(8+index)],
+            mvp.v[static_cast<std::size_t>(12+index)]
+        };
+    };
+    const auto r0=row(0), r1=row(1), r2=row(2), r3=row(3);
+    const auto makePlane=[](const std::array<float,4>& a,
+                            const std::array<float,4>& b,float sign) {
+        FrustumPlane plane{a[0]+sign*b[0],a[1]+sign*b[1],
+                           a[2]+sign*b[2],a[3]+sign*b[3]};
+        const float length=std::sqrt(std::max(
+            plane.x*plane.x+plane.y*plane.y+plane.z*plane.z,0.000001f));
+        plane.x/=length; plane.y/=length; plane.z/=length; plane.d/=length;
+        return plane;
+    };
+    CameraFrustum frustum;
+    frustum.planes={{
+        makePlane(r3,r0, 1.0f),makePlane(r3,r0,-1.0f),
+        makePlane(r3,r1, 1.0f),makePlane(r3,r1,-1.0f),
+        makePlane(r3,r2, 1.0f),makePlane(r3,r2,-1.0f)
+    }};
+    frustum.valid=true;
+    return frustum;
+}
+
 GLuint Engine::CompileShader(GLenum type, const char* source) {
     const char* stage = type == GL_VERTEX_SHADER ? "vertex" : "fragment";
     const GLuint shader = glCreateShader(type);
@@ -614,6 +643,7 @@ void Engine::Shutdown() {
     timeLocation_ = qualityLocation_ = waterWavesLocation_ = -1;
     cameraLocation_ = fogColorLocation_ = fogNearLocation_ = fogFarLocation_ = -1;
     worldVertexCount_ = transparentVertexCount_ = entityVertexCount_ = itemVertexCount_ = 0;
+    worldChunkRanges_.clear();
     ready_ = false;
     touches_.clear();
 }
@@ -782,6 +812,9 @@ void Engine::UploadItemMesh() {
     glEnableVertexAttribArray(3);
     glVertexAttribPointer(3,2,GL_FLOAT,GL_FALSE,sizeof(WorldVertex),
                           reinterpret_cast<const void*>(offsetof(WorldVertex,u)));
+    glEnableVertexAttribArray(4);
+    glVertexAttribPointer(4,1,GL_FLOAT,GL_FALSE,sizeof(WorldVertex),
+                          reinterpret_cast<const void*>(offsetof(WorldVertex,atlasTile)));
     glBindVertexArray(0);
     glBindBuffer(GL_ARRAY_BUFFER,0);
     itemVertexCount_=static_cast<GLsizei>(itemMesh_.size());
