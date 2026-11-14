@@ -25,7 +25,7 @@ pub struct MfPlayerState {
 }
 
 #[repr(C)]
-#[derive(Clone, Copy, Debug, Default)]
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct MfPlayerPose {
     pub left_arm_pitch: f32,
     pub right_arm_pitch: f32,
