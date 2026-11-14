@@ -1080,10 +1080,18 @@ public final class MinefadeHomeScreen extends FrameLayout {
 
     private static final class Backdrop extends View {
         private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        private final long createdAt = SystemClock.uptimeMillis();
         Backdrop(Context context) { super(context); }
         @Override protected void onDraw(Canvas canvas) {
             super.onDraw(canvas);
             float w = getWidth(), h = getHeight();
+            boolean animate = getContext().getSharedPreferences("minefade_ui", Context.MODE_PRIVATE)
+                    .getBoolean("menu_background_animations", true)
+                    && !getContext().getSharedPreferences("minefade_ui", Context.MODE_PRIVATE)
+                    .getBoolean("reduce_motion", false);
+            float time = (SystemClock.uptimeMillis() - createdAt) / 1000.0f;
+            float driftX = animate ? (float) Math.sin(time * 0.23f) * w * 0.012f : 0.0f;
+            float driftY = animate ? (float) Math.cos(time * 0.19f) * h * 0.010f : 0.0f;
             paint.setShader(new LinearGradient(0, 0, w, h,
                     new int[]{0xff0b1726, 0xff10283a, 0xff0b1422},
                     null, Shader.TileMode.CLAMP));
@@ -1096,9 +1104,9 @@ public final class MinefadeHomeScreen extends FrameLayout {
             paint.setColor(0x164c9cba);
             paint.setStyle(Paint.Style.STROKE);
             paint.setStrokeWidth(Math.max(1f, density));
-            canvas.drawCircle(w * 0.82f, h * 0.25f, Math.max(w, h) * 0.22f, paint);
-            canvas.drawCircle(w * 0.82f, h * 0.25f, Math.max(w, h) * 0.34f, paint);
-            canvas.drawCircle(w * 0.82f, h * 0.25f, Math.max(w, h) * 0.46f, paint);
+            canvas.drawCircle(w * 0.82f + driftX, h * 0.25f + driftY, Math.max(w, h) * 0.22f, paint);
+            canvas.drawCircle(w * 0.82f + driftX, h * 0.25f + driftY, Math.max(w, h) * 0.34f, paint);
+            canvas.drawCircle(w * 0.82f + driftX, h * 0.25f + driftY, Math.max(w, h) * 0.46f, paint);
             canvas.drawArc(new RectF(-w * 0.42f, h * 0.52f, w * 0.55f, h * 1.45f),
                     205, 115, false, paint);
             paint.setColor(0x124c9cba);
@@ -1107,8 +1115,10 @@ public final class MinefadeHomeScreen extends FrameLayout {
             paint.setStyle(Paint.Style.FILL);
             paint.setColor(0x337ed6bd);
             for (int i = 0; i < 24; i++) {
-                float px = (i * 79 % 997) / 997f * w;
-                float py = (i * 137 % 991) / 991f * h;
+                float px = (i * 79 % 997) / 997f * w
+                        + (animate ? (float) Math.sin(time * 0.28f + i * 0.7f) * density * 5.0f : 0.0f);
+                float py = (i * 137 % 991) / 991f * h
+                        + (animate ? (float) Math.cos(time * 0.22f + i * 0.47f) * density * 7.0f : 0.0f);
                 float radius = density * (i % 5 == 0 ? 2.0f : 0.8f);
                 canvas.drawCircle(px, py, radius, paint);
             }
@@ -1118,6 +1128,7 @@ public final class MinefadeHomeScreen extends FrameLayout {
                     null, Shader.TileMode.CLAMP));
             canvas.drawRect(0, 0, w, h, paint);
             paint.setShader(null);
+            if (animate && isAttachedToWindow()) postInvalidateDelayed(42L);
         }
     }
 
