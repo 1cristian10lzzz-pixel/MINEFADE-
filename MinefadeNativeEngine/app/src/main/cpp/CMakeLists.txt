@@ -1,6 +1,46 @@
 cmake_minimum_required(VERSION 3.22.1)
 project(minefade_native_engine LANGUAGES C CXX)
 
+# Rust owns deterministic gameplay simulation and animation evaluation.
+# OpenGL ES and RmlUi stay in this C++ library as the platform rendering adapters.
+find_program(CARGO_EXECUTABLE cargo REQUIRED)
+get_filename_component(MINEFADE_NATIVE_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../../../../" ABSOLUTE)
+set(MINEFADE_RUST_MANIFEST "${MINEFADE_NATIVE_ROOT}/rust-core/Cargo.toml")
+set(MINEFADE_RUST_TARGET_DIR "${CMAKE_CURRENT_BINARY_DIR}/rust-target")
+
+if(ANDROID_ABI STREQUAL "arm64-v8a")
+    set(MINEFADE_RUST_TARGET "aarch64-linux-android")
+    set(MINEFADE_RUST_LINKER "${CMAKE_ANDROID_NDK}/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android24-clang")
+elseif(ANDROID_ABI STREQUAL "armeabi-v7a")
+    set(MINEFADE_RUST_TARGET "armv7-linux-androideabi")
+    set(MINEFADE_RUST_LINKER "${CMAKE_ANDROID_NDK}/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi24-clang")
+else()
+    message(FATAL_ERROR "Minefade Rust core has no Android target mapping for ABI: ${ANDROID_ABI}")
+endif()
+
+set(MINEFADE_RUST_LIBRARY
+    "${MINEFADE_RUST_TARGET_DIR}/${MINEFADE_RUST_TARGET}/release/libminefade_core.a")
+add_custom_command(
+    OUTPUT "${MINEFADE_RUST_LIBRARY}"
+    COMMAND ${CMAKE_COMMAND} -E env
+        "CARGO_TARGET_DIR=${MINEFADE_RUST_TARGET_DIR}"
+        "CARGO_TARGET_${MINEFADE_RUST_TARGET_TOKEN}_LINKER=${MINEFADE_RUST_LINKER}"
+        ${CARGO_EXECUTABLE} build
+        --manifest-path "${MINEFADE_RUST_MANIFEST}"
+        --release --target "${MINEFADE_RUST_TARGET}"
+    DEPENDS
+        "${MINEFADE_RUST_MANIFEST}"
+        "${MINEFADE_NATIVE_ROOT}/rust-core/src/lib.rs"
+        "${MINEFADE_NATIVE_ROOT}/rust-core/include/minefade_core.h"
+    WORKING_DIRECTORY "${MINEFADE_NATIVE_ROOT}"
+    COMMENT "Building Minefade Rust gameplay/animation core for ${ANDROID_ABI}"
+    VERBATIM
+)
+add_custom_target(minefade_rust_build DEPENDS "${MINEFADE_RUST_LIBRARY}")
+add_library(minefade_rust_core STATIC IMPORTED GLOBAL)
+set_target_properties(minefade_rust_core PROPERTIES IMPORTED_LOCATION "${MINEFADE_RUST_LIBRARY}")
+add_dependencies(minefade_rust_core minefade_rust_build)
+
 include(FetchContent)
 
 set(CMAKE_CXX_STANDARD 20)
@@ -63,6 +103,7 @@ add_library(minefade_native SHARED
 
 target_include_directories(minefade_native PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
+    ${MINEFADE_NATIVE_ROOT}/rust-core/include
 )
 
 target_compile_features(minefade_native PRIVATE cxx_std_20)
@@ -78,6 +119,7 @@ find_library(gles-lib GLESv3 REQUIRED)
 find_library(m-lib m REQUIRED)
 
 target_link_libraries(minefade_native PRIVATE
+    minefade_rust_core
     RmlUi::Core
     Freetype::Freetype
     ${gles-lib}
@@ -87,4 +129,4 @@ target_link_libraries(minefade_native PRIVATE
 )
 
 # The RmlUi dependency is pinned to 6.3 and FreeType to 2.13.3 for reproducible builds.
-message(STATUS "Minefade: C++20, OpenGL ES 3, RmlUi 6.3, FreeType 2.13.3")
+message(STATUS "Minefade: Rust gameplay core + C++20 GLES3/RmlUi 6.3 + FreeType 2.13.3")
