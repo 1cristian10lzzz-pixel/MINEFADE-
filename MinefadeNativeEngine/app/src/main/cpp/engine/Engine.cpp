@@ -697,8 +697,13 @@ void Engine::RebuildEntityMesh() {
                 eye.y+forward.y*0.66f-0.28f,
                 eye.z+forward.z*0.66f+right.z*0.30f
             };
-            AppendTexturedBlockCube(itemMesh_,static_cast<BlockId>(selected),
-                                    held,{0.105f,0.105f,0.105f});
+            const float movementAmount=std::clamp(
+                std::abs(player_.movementX)+std::abs(player_.movementY),0.0f,1.0f);
+            const float handBob=std::sin(player_.animationTime*1.6f)*0.012f
+                +std::cos(player_.walkPhase*2.0f)*0.022f*movementAmount;
+            const float handYaw=player_.yaw+std::sin(player_.walkPhase)*0.055f*movementAmount;
+            AppendAnimatedTexturedBlockCube(itemMesh_,static_cast<BlockId>(selected),
+                held,{0.105f,0.105f,0.105f},handYaw,handBob);
             const std::array<float,3> sleeve{0.28f,0.43f,0.38f};
             AppendCube(entityMesh_,{held.x-right.x*0.19f,held.y-0.12f,held.z-right.z*0.19f},
                        {0.085f,0.16f,0.085f},sleeve);
