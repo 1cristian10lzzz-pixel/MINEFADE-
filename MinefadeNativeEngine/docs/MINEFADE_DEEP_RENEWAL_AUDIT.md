@@ -46,7 +46,7 @@ C++ sigue siendo responsable del host Android/JNI, mundo voxel/guardado, contene
 
 - Las mallas de criaturas se recalculan y suben como máximo a 30 Hz; los objetos caídos/buffers de ítems se suben con una frecuencia limitada a 20 Hz, mientras la simulación sigue usando el delta de frame acotado.
 - Se conserva el shader GLSL ES 3.00 y el backend GLES. La corrección anterior del encabezado GLSL y el diagnóstico del compilador quedan como base de esta rama.
-- No se declara todavía shadow mapping, oclusión avanzada ni un sistema de LOD como terminado: esas funciones requieren recursos, memoria, perfiles en GPU y validación en dispositivos reales.
+- Review10 añade greedy meshing de cubos opacos, descarte por frustum para AABB de chunks/entidades, descarte de caras vecinas cubiertas, LOD por distancia del chunk, dos workers de construcción de malla y batches contiguos de chunks opacos. No son consultas de oclusión GPU ni shadow maps y requieren validación visual/perfilado en dispositivo.
 
 ## Validación
 
@@ -65,7 +65,7 @@ Un test inicial de Rust descubrió dos problemas de prueba (comparación del val
 - IA de producción, pathfinding, combate, domesticación, drops y persistencia completa de criaturas.
 - Lluvia/clima, ciclo meteorológico, simulación de caudal/altura de fluidos y refracción.
 - Shadow maps, sombras proyectadas de alta calidad, luz indirecta, postprocesado, perfiles GPU y medidas reales de FPS/temperatura.
-- Frustum/occlusion culling, LOD, caché incremental de mallas y descarga de chunks lejanos a disco.
+- Caché incremental de mallas, descarga de chunks lejanos a disco, oclusión GPU por consultas y LOD por objeto/entidad. El culling actual es por frustum y caras cubiertas por vecinos; el LOD actual es por distancia del chunk.
 - Sistema completo de crafting, cofres, durabilidad, armaduras funcionales, combate, hambre y progresión.
 - Apariencias de avatar remotas en multijugador, sincronización de animación, multijugador Internet y prueba física de LAN/NSD.
 - Instalación/actualización sobre una firma de producción común.
@@ -73,3 +73,17 @@ Un test inicial de Rust descubrió dos problemas de prueba (comparación del val
 ## Instalación de prueba
 
 Review9 usa el identificador de paquete `com.minefade.nativeengine.review9` y almacenamiento privado independiente. No sustituye Review8 ni importa automáticamente sus mundos. No desinstales versiones anteriores ni borres datos para probar esta APK. La compilación CI no sustituye la prueba final en el teléfono Mali-G57.
+
+
+## Review10 — controles y optimización
+
+La rama `minefade-render-optimization` incorpora cambios de HUD, avatar, desplazamiento, logros y renderizado:
+- Editor de avatar en dos columnas con previsualización a la derecha e iconos vectoriales rediseñados.
+- Joystick nativo visible, teclas direccionales indicativas, salto, botón de agacharse y barra rápida de mayor tamaño/contraste; el D-pad se reserva solo dentro de sus límites reales.
+- ScrollViews/HorizontalScrollViews de avatar, ajustes y multijugador recortan el contenido a su viewport para evitar que la lista sobreponga pestañas y paneles.
+- Progreso guardado de ocho logros alimentado por eventos del motor.
+- Modelos de oveja/vaca/ave con detalles y movimientos secundarios leves; no se trata de una sustitución por modelos esqueléticos.
+- Greedy meshing agrupa caras opacas coplanares por tile, con UV local repetible; se guardan rangos de vértices por chunk/material.
+- Dos workers construyen mallas, LOD por distancia simplifica plantas/detalles y se descartan AABB fuera del frustum. Los chunks opacos contiguos se agrupan en llamadas de dibujo. Las caras vecinas ocultas se eliminan durante el propio meshing.
+
+La verificación CI de esta rama debe completarse por separado; hasta que pase tests C++/Rust, catálogo y Gradle no se considera listo el APK Review10. La comprobación automatizada no sustituye la prueba táctil y gráfica en el teléfono real.
