@@ -87,15 +87,42 @@ public final class SoundEffects {
         play(uiClick, 0.52f, 1.0f);
     }
 
-    /** Native sound-event bits: break=1, place=2, UI=4, pickup=8, jump=16, footstep=32. */
+    /**
+     * Native events: break=1, place=2, UI=4, pickup=8, jump=16, footstep=32.
+     * Material layers: stone/metal=64, wood=128, soil=256, foliage=512.
+     * Layering and rate variation create distinct tactile responses using the
+     * shipped PCM samples, without synchronous decoding or extra audio threads.
+     */
     public void playEvents(int events) {
         if (!preferences.getBoolean("sound_effects_enabled", true)) return;
         if ((events & 1) != 0) play(blockBreak, 0.82f, 1.0f);
         if ((events & 2) != 0) play(blockPlace, 0.72f, 1.0f);
         if ((events & 4) != 0) play(uiClick, 0.48f, 1.0f);
-        if ((events & 8) != 0) play(itemPickup, 0.88f, 1.0f);
-        if ((events & 16) != 0) play(jump, 0.74f, 1.0f);
+        if ((events & 8) != 0) {
+            play(itemPickup, 0.88f, 1.0f);
+            play(uiClick, 0.13f, 1.28f);
+        }
+        if ((events & 16) != 0) {
+            play(jump, 0.74f, 1.0f);
+            play(footstep, 0.10f, 0.82f);
+        }
         if ((events & 32) != 0) play(footstep, 0.32f, 1.0f);
+        if ((events & 64) != 0) {
+            play(blockBreak, 0.27f, 0.76f);
+            play(blockPlace, 0.10f, 1.18f);
+        }
+        if ((events & 128) != 0) {
+            play(footstep, 0.22f, 0.72f);
+            play(blockPlace, 0.18f, 0.90f);
+        }
+        if ((events & 256) != 0) {
+            play(footstep, 0.20f, 0.86f);
+            play(blockBreak, 0.12f, 1.14f);
+        }
+        if ((events & 512) != 0) {
+            play(itemPickup, 0.14f, 1.24f);
+            play(footstep, 0.12f, 1.18f);
+        }
     }
 
     public int loadedSampleCount() {
