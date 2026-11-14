@@ -18,6 +18,7 @@ public:
     float movementY{0.0f};
     bool grounded{false};
     bool crouching{false};
+    float speedMultiplier{1.0f};
     float walkPhase{0.0f};
     float animationTime{0.0f};
     std::uint8_t animationQuality{2};
@@ -31,6 +32,7 @@ public:
     void Rotate(float deltaX, float deltaY);
     void Jump();
     void SetCrouching(bool enabled) { crouching = enabled; }
+    void SetSpeedMultiplier(float multiplier) { speedMultiplier = multiplier; }
     void SetAppearance(const std::array<int, 6>& appearance);
     void SetAnimationOptions(std::uint8_t quality, bool enabled);
     void SetContactShadows(bool enabled) { contactShadows = enabled; }
@@ -89,8 +91,9 @@ public:
     void SetContactShadows(bool enabled) { contactShadows_ = enabled; }
     void SetAnimationOptions(std::uint8_t quality, bool enabled) { animationQuality_ = quality > 2 ? 2 : quality; animationsEnabled_ = enabled; }
     std::size_t Count() const { return entities_.size(); }
+    bool SpawnEntity(const Vec3& nearPosition, int kind, const VoxelWorld& world);
 private:
-    std::array<Entity, 3> entities_{};
+    std::vector<Entity> entities_;
     bool initialized_{false};
     bool contactShadows_{true};
     std::uint8_t animationQuality_{2};
