@@ -709,8 +709,14 @@ void Engine::RebuildEntityMesh() {
         Player remote;
         remote.position = {remotePlayers_[i], remotePlayers_[i + 1u], remotePlayers_[i + 2u]};
         remote.yaw = remotePlayers_[i + 3u];
-        remote.movementX = 0.25f;
-        remote.walkPhase = static_cast<float>(ElapsedSeconds() * 5.0);
+        // Network snapshots currently carry position/yaw only. Render a
+        // natural idle pose until movement deltas are available in the protocol,
+        // rather than making every connected player look permanently in motion.
+        remote.movementX = 0.0f;
+        remote.movementY = 0.0f;
+        remote.walkPhase = 0.0f;
+        remote.animationTime = static_cast<float>(ElapsedSeconds());
+        remote.SetAnimationOptions(static_cast<std::uint8_t>(animationQuality_), animationsEnabled_);
         remote.AppendMesh(entityMesh_);
     }
     // Block items use their own atlas-backed draw pass; entity models remain
