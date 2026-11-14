@@ -1218,6 +1218,17 @@ void Engine::Touch(int action, int pointerId, float x, float y) {
                 if (gameMode_ != 1) inventory_.ConsumeSelected();
                 RefreshInventoryUi();
                 soundEvents_.fetch_or(2u, std::memory_order_release);
+                if (const BlockDefinition* placedDefinition =
+                        GetBlockDefinition(static_cast<BlockId>(selected))) {
+                    if (placedDefinition->preferredTool == BlockTool::Axe)
+                        soundEvents_.fetch_or(128u, std::memory_order_release);
+                    else if (placedDefinition->preferredTool == BlockTool::Shovel)
+                        soundEvents_.fetch_or(256u, std::memory_order_release);
+                    else if (placedDefinition->preferredTool == BlockTool::Shears)
+                        soundEvents_.fetch_or(512u, std::memory_order_release);
+                    else if (placedDefinition->preferredTool == BlockTool::Pickaxe)
+                        soundEvents_.fetch_or(64u, std::memory_order_release);
+                }
                 RebuildWorldMesh();
                 UploadWorldMesh();
                 UploadTransparentWorldMesh();
@@ -1532,6 +1543,16 @@ void Engine::UpdateMining(float deltaSeconds) {
                                 brokenDefinition->dropId, 1u);
         }
         soundEvents_.fetch_or(1u, std::memory_order_release);
+        if (brokenDefinition != nullptr) {
+            if (brokenDefinition->preferredTool == BlockTool::Axe)
+                soundEvents_.fetch_or(128u, std::memory_order_release);
+            else if (brokenDefinition->preferredTool == BlockTool::Shovel)
+                soundEvents_.fetch_or(256u, std::memory_order_release);
+            else if (brokenDefinition->preferredTool == BlockTool::Shears)
+                soundEvents_.fetch_or(512u, std::memory_order_release);
+            else if (brokenDefinition->preferredTool == BlockTool::Pickaxe)
+                soundEvents_.fetch_or(64u, std::memory_order_release);
+        }
         RebuildWorldMesh();
         UploadWorldMesh();
         UploadTransparentWorldMesh();
