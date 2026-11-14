@@ -593,6 +593,8 @@ public final class MinefadeHomeScreen extends FrameLayout {
         };
         HorizontalScrollView moduleScroller = new HorizontalScrollView(getContext());
         moduleScroller.setHorizontalScrollBarEnabled(false);
+        moduleScroller.setClipChildren(true);
+        moduleScroller.setClipToPadding(true);
         LinearLayout.LayoutParams tabsParams = new LinearLayout.LayoutParams(-1, dp(42));
         tabsParams.topMargin = dp(8);
         tabsParams.bottomMargin = dp(7);
@@ -623,12 +625,16 @@ public final class MinefadeHomeScreen extends FrameLayout {
 
         ScrollView scroll = new ScrollView(getContext());
         scroll.setFillViewport(true);
-        scroll.setClipToPadding(false);
+        scroll.setClipChildren(true);
+        scroll.setClipToPadding(true);
         scroll.setVerticalScrollBarEnabled(true);
+        scroll.setOverScrollMode(View.OVER_SCROLL_IF_CONTENT_SCROLLS);
         LinearLayout.LayoutParams scrollParams = new LinearLayout.LayoutParams(-1, 0, 1f);
         root.addView(scroll, scrollParams);
         LinearLayout content = column();
         content.setPadding(dp(10), dp(9), dp(10), dp(14));
+        content.setClipChildren(true);
+        content.setClipToPadding(true);
         content.setBackground(shape(new int[]{0x33243e52, 0x22101d2b}, 15, 0x44506b80));
         scroll.addView(content, new ScrollView.LayoutParams(-1, -2));
 
@@ -905,7 +911,13 @@ public final class MinefadeHomeScreen extends FrameLayout {
 
         ScrollView scroll = new ScrollView(getContext());
         scroll.setFillViewport(true);
+        scroll.setClipChildren(true);
+        scroll.setClipToPadding(true);
+        scroll.setVerticalScrollBarEnabled(true);
+        scroll.setOverScrollMode(View.OVER_SCROLL_IF_CONTENT_SCROLLS);
         multiplayerGames = column();
+        multiplayerGames.setClipChildren(true);
+        multiplayerGames.setClipToPadding(true);
         scroll.addView(multiplayerGames, new ScrollView.LayoutParams(-1, -2));
         root.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1f));
         setNearbyGames(new ArrayList<>());
@@ -1270,6 +1282,83 @@ public final class MinefadeHomeScreen extends FrameLayout {
         }
     }
 
+    /** Purpose-drawn silhouettes keep the six avatar module icons consistent on every font. */
+    private static final class AvatarModuleGlyph extends View {
+        private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        private final Path path = new Path();
+        private final int module;
+        private final int tint;
+
+        AvatarModuleGlyph(Context context, int module, int tint) {
+            super(context);
+            this.module = module;
+            this.tint = tint;
+        }
+
+        private void polygon(Canvas canvas, float... points) {
+            path.reset();
+            path.moveTo(points[0], points[1]);
+            for (int i = 2; i < points.length; i += 2) path.lineTo(points[i], points[i + 1]);
+            path.close();
+            canvas.drawPath(path, paint);
+        }
+
+        @Override protected void onDraw(Canvas canvas) {
+            super.onDraw(canvas);
+            float cx = getWidth() * 0.5f, cy = getHeight() * 0.5f;
+            float unit = Math.min(getWidth(), getHeight()) * 0.42f;
+            paint.setColor(tint);
+            paint.setStyle(Paint.Style.FILL);
+            switch (module) {
+                case 0: // skin
+                    canvas.drawCircle(cx, cy, unit * 0.78f, paint);
+                    paint.setColor(0x553b2a25);
+                    canvas.drawArc(new RectF(cx-unit*0.8f,cy-unit*0.8f,cx+unit*0.8f,cy+unit*0.8f),
+                            205,130,false,paint);
+                    break;
+                case 1: // hair
+                    canvas.drawRoundRect(new RectF(cx-unit*0.78f,cy-unit*0.35f,
+                            cx+unit*0.78f,cy+unit*0.78f),unit*0.2f,unit*0.2f,paint);
+                    canvas.drawArc(new RectF(cx-unit*0.82f,cy-unit*0.95f,
+                            cx+unit*0.82f,cy+unit*0.68f),180,180,true,paint);
+                    break;
+                case 2: // eyes
+                    canvas.drawOval(new RectF(cx-unit*0.95f,cy-unit*0.3f,
+                            cx-unit*0.08f,cy+unit*0.38f),paint);
+                    canvas.drawOval(new RectF(cx+unit*0.08f,cy-unit*0.3f,
+                            cx+unit*0.95f,cy+unit*0.38f),paint);
+                    paint.setColor(0xff172638);
+                    canvas.drawCircle(cx-unit*0.50f,cy,unit*0.17f,paint);
+                    canvas.drawCircle(cx+unit*0.50f,cy,unit*0.17f,paint);
+                    break;
+                case 3: // clothing
+                    polygon(canvas,cx-unit*0.9f,cy-unit*0.45f,cx-unit*0.35f,cy-unit*0.95f,
+                            cx+unit*0.35f,cy-unit*0.95f,cx+unit*0.9f,cy-unit*0.45f,
+                            cx+unit*0.62f,cy+unit*0.95f,cx-unit*0.62f,cy+unit*0.95f);
+                    break;
+                case 4: // armour
+                    polygon(canvas,cx,cy-unit,cx+unit*0.82f,cy-unit*0.42f,
+                            cx+unit*0.64f,cy+unit*0.72f,cx,cy+unit,
+                            cx-unit*0.64f,cy+unit*0.72f,cx-unit*0.82f,cy-unit*0.42f);
+                    paint.setColor(0x66ffffff);
+                    paint.setStyle(Paint.Style.STROKE);
+                    paint.setStrokeWidth(Math.max(1f,unit*0.10f));
+                    canvas.drawLine(cx,cy-unit*0.64f,cx,cy+unit*0.72f,paint);
+                    canvas.drawLine(cx-unit*0.54f,cy-0.04f*unit,cx+unit*0.54f,cy-0.04f*unit,paint);
+                    break;
+                default: // accessories
+                    polygon(canvas,cx,cy-unit,cx+unit*0.25f,cy-unit*0.28f,
+                            cx+unit,cy,cx+unit*0.25f,cy+unit*0.28f,
+                            cx,cy+unit,cx-unit*0.25f,cy+unit*0.28f,
+                            cx-unit,cy,cx-unit*0.25f,cy-unit*0.28f);
+                    paint.setColor(0xffffe7a1);
+                    canvas.drawCircle(cx,cy,unit*0.20f,paint);
+                    break;
+            }
+            paint.setStyle(Paint.Style.FILL);
+        }
+    }
+
     /** A small perspective voxel-item thumbnail, drawn as geometry rather than emoji. */
     private final class AvatarOptionView extends View {
         private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -1309,7 +1398,7 @@ public final class MinefadeHomeScreen extends FrameLayout {
         @Override protected void onDraw(Canvas canvas) {
             super.onDraw(canvas);
             float cx = getWidth() * 0.5f, cy = getHeight() * 0.53f;
-            float unit = Math.min(getWidth(), getHeight()) * 0.34f;
+            float unit = Math.min(getWidth(), getHeight()) * 0.40f;
             int skin = new int[]{0xffe8c09c, 0xffc58d69, 0xff9b654c,
                     0xfff0c9a8, 0xffad7659, 0xff76513f}[choice % 6];
             int[] palette = {0xff8a5739, 0xff44313b, 0xffc49a57,
