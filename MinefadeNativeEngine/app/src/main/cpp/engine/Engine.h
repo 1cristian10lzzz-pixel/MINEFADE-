@@ -154,6 +154,7 @@ private:
     bool allowCheats_{false};
     bool starterChestEnabled_{false};
     bool starterChestOpen_{false};
+    Vec3 starterChestPosition_{};
     std::uint32_t requestedWorldSeed_{0x4D464445u};
     std::string modsDirectory_;
     int modSheepSpawns_{0};
@@ -162,7 +163,7 @@ private:
     float modPlayerSpeed_{1.0f};
     float modDaySpeed_{1.0f};
     std::array<std::uint32_t, 9> starterChestContents_{{
-        1064u, 5032u, 6416u, 2004u, 1704u, 5408u, 0u, 0u, 0u
+        1064u, 5064u, 64016u, 6004u, 3064u, 0u, 0u, 0u, 0u
     }};
     std::string storagePath_;
     VoxelWorld world_;
