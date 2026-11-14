@@ -263,6 +263,9 @@ public final class MinefadeSurfaceView extends GLSurfaceView {
                         fieldOfView, contactShadows);
                 NativeBridge.nativeSetInputOptions(sensitivityX, sensitivityY, joystickDeadzone, invertLookY, leftHanded);
                 NativeBridge.nativeSetHudOptions(showHudStats);
+                int animationQuality = Math.max(0, Math.min(2, preferences.getInt("animation_quality", 2)));
+                boolean worldAnimations = preferences.getBoolean("world_animations", true);
+                NativeBridge.nativeSetAnimationOptions(animationQuality, worldAnimations);
                 int[] avatarChoices = {
                         preferences.getInt("avatar_piel", 0),
                         preferences.getInt("avatar_cabello", 0),
