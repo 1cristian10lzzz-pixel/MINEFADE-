@@ -1272,6 +1272,13 @@ void Engine::HandleUiAction(const std::string& action) {
         crouching_ = !crouching_;
         player_.SetCrouching(crouching_);
         ui_.SetCrouchEnabled(crouching_);
+    } else if (action == "starter-chest-open") {
+        OpenStarterChest();
+    } else if (action == "starter-chest-close") {
+        starterChestOpen_ = false;
+        ui_.SetPanelVisible("starter-chest-panel", false);
+    } else if (action == "starter-chest-take") {
+        TakeStarterChestContents();
     } else if (action.rfind("slot-", 0) == 0 && action.size() == 6) {
         const char digit = action[5];
         if (digit >= '0' && digit <= '8') {
@@ -1279,6 +1286,153 @@ void Engine::HandleUiAction(const std::string& action) {
             RefreshInventoryUi();
         }
     }
+}
+
+std::string Engine::ExecuteCommand(const std::string& rawCommand) {
+    if (!ready_) return "El mundo todavía no está preparado.";
+    std::string command = rawCommand;
+    const std::size_t first = command.find_first_not_of(" \\t\\r\\n");
+    if (first == std::string::npos) return "Escribe /ayuda para ver los comandos.";
+    command = command.substr(first);
+    if (!command.empty() && command.front() == '/') command.erase(command.begin());
+    std::istringstream input(command);
+    std::string verb;
+    input >> verb;
+    std::transform(verb.begin(), verb.end(), verb.begin(),
+        [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+
+    if (verb == "ayuda" || verb == "help") {
+        return "/oveja [cantidad] · /vaca [cantidad] · /pollo [cantidad] · "
+               "/modo supervivencia|creativo|aventura · /tiempo dia|noche · "
+               "/dar <id> [cantidad] · /tp <x> <y> <z> · /semilla";
+    }
+    if (!allowCheats_) return "Los trucos están desactivados en este mundo. Actívalos en sus opciones.";
+
+    if (verb == "oveja" || verb == "vaca" || verb == "pollo") {
+        int count = 1;
+        if (!(input >> count)) count = 1;
+        count = std::clamp(count, 1, 16);
+        const int kind = verb == "oveja" ? 0 : (verb == "vaca" ? 1 : 2);
+        int created = 0;
+        for (int i = 0; i < count; ++i)
+            if (entities_.SpawnEntity(player_.position, kind, world_)) ++created;
+        RebuildEntityMesh();
+        UploadEntityMesh();
+        return created == 1 ? "Ha aparecido una " + verb + "."
+            : "Han aparecido " + std::to_string(created) + " entidades: " + verb + ".";
+    }
+    if (verb == "modo") {
+        std::string mode;
+        input >> mode;
+        std::transform(mode.begin(), mode.end(), mode.begin(),
+            [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+        if (mode == "creativo" || mode == "creative") gameMode_ = 1;
+        else if (mode == "aventura" || mode == "adventure") gameMode_ = 2;
+        else if (mode == "supervivencia" || mode == "survival") gameMode_ = 0;
+        else return "Uso: /modo supervivencia, /modo creativo o /modo aventura.";
+        return "Modo de juego: " + mode + ".";
+    }
+    if (verb == "tiempo" || verb == "time") {
+        std::string value;
+        input >> value;
+        std::transform(value.begin(), value.end(), value.begin(),
+            [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+        if (value == "dia" || value == "día" || value == "day") environment_.SetTimeOfDay(0.25f);
+        else if (value == "noche" || value == "night") environment_.SetTimeOfDay(0.75f);
+        else return "Uso: /tiempo dia o /tiempo noche.";
+        return "El tiempo del mundo ha cambiado.";
+    }
+    if (verb == "dar" || verb == "give") {
+        int itemId = 0, amount = 1;
+        if (!(input >> itemId)) return "Uso: /dar <id_del_bloque> [cantidad].";
+        if (!(input >> amount)) amount = 1;
+        itemId = std::clamp(itemId, 1, static_cast<int>(GetBlockDefinitionCount()) - 1);
+        amount = std::clamp(amount, 1, 999);
+        if (!inventory_.Add(static_cast<std::uint16_t>(itemId), static_cast<std::uint16_t>(amount)))
+            return "No hay espacio en el inventario o el bloque no admite esa cantidad.";
+        RefreshInventoryUi();
+        return "Objeto añadido al inventario.";
+    }
+    if (verb == "tp" || verb == "teletransportar") {
+        float x = 0.0f, y = 0.0f, z = 0.0f;
+        if (!(input >> x >> y >> z)) return "Uso: /tp <x> <y> <z>.";
+        if (!std::isfinite(x) || !std::isfinite(y) || !std::isfinite(z) ||
+            y < 1.0f || y >= static_cast<float>(VoxelWorld::kWorldHeight - 2))
+            return "La posición indicada no es válida.";
+        player_.position = {x, y, z};
+        player_.verticalVelocity = 0.0f;
+        if (!player_.ResolveSafeSpawn(world_)) return "No se encontró una posición segura cerca de esas coordenadas.";
+        RebuildWorldMesh();
+        UploadWorldMesh();
+        UploadTransparentWorldMesh();
+        return "Teletransporte completado.";
+    }
+    if (verb == "semilla" || verb == "seed") {
+        return "Semilla del mundo: " + std::to_string(world_.Seed()) + ".";
+    }
+    return "Comando desconocido. Escribe /ayuda.";
+}
+
+void Engine::OpenStarterChest() {
+    Vec3 target{};
+    BlockId type = BlockId::Air;
+    if (!starterChestEnabled_ ||
+        !world_.GetRayTargetBlock(ViewPosition(), ViewDirection(), 6.0f, &target, &type) ||
+        type != BlockId::Chest) {
+        ui_.SetChatMessage("Mira al cofre y pulsa COFRE para abrirlo.");
+        return;
+    }
+    starterChestPosition_ = target;
+    std::string markup;
+    for (std::size_t i = 0; i < starterChestContents_.size(); ++i) {
+        const std::uint32_t encoded = starterChestContents_[i];
+        if (encoded == 0u) continue;
+        const auto id = static_cast<std::uint16_t>(encoded / 1000u);
+        const auto amount = encoded % 1000u;
+        const BlockDefinition* definition = GetBlockDefinition(static_cast<BlockId>(id));
+        if (definition == nullptr || amount == 0u) continue;
+        markup += "<div class='inventory-row'><img class='inventory-icon' src='minefade://block/"
+            + std::to_string(id) + "'/><span>" + definition->nameEs + " × "
+            + std::to_string(amount) + "</span></div>";
+    }
+    ui_.SetChestContents(markup.empty() ? "<div class='inventory-row'>El cofre está vacío.</div>" : markup);
+    starterChestOpen_ = true;
+    ui_.SetPanelVisible("starter-chest-panel", true);
+}
+
+void Engine::TakeStarterChestContents() {
+    if (!starterChestOpen_) return;
+    std::uint32_t taken = 0u;
+    for (std::uint32_t& encoded : starterChestContents_) {
+        if (encoded == 0u) continue;
+        const auto itemId = static_cast<std::uint16_t>(encoded / 1000u);
+        const auto amount = static_cast<std::uint16_t>(encoded % 1000u);
+        if (itemId != 0u && amount != 0u && inventory_.Add(itemId, amount)) {
+            taken += amount;
+            encoded = 0u;
+        }
+    }
+    if (taken == 0u) {
+        ui_.SetChatMessage("No hay espacio libre suficiente en tu inventario.");
+        return;
+    }
+    const bool empty = std::all_of(starterChestContents_.begin(), starterChestContents_.end(),
+                                   [](std::uint32_t value) { return value == 0u; });
+    if (empty) {
+        world_.SetBlock(static_cast<int>(starterChestPosition_.x),
+                        static_cast<int>(starterChestPosition_.y),
+                        static_cast<int>(starterChestPosition_.z), BlockId::Air);
+        starterChestOpen_ = false;
+        ui_.SetPanelVisible("starter-chest-panel", false);
+        RebuildWorldMesh();
+        UploadWorldMesh();
+        UploadTransparentWorldMesh();
+        SaveWorld();
+    } else {
+        OpenStarterChest();
+    }
+    RefreshInventoryUi();
+    ui_.SetChatMessage("Has recogido " + std::to_string(taken) + " objetos del cofre.");
 }
 
 void Engine::UpdateMining(float deltaSeconds) {
