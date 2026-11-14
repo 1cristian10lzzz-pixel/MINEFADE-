@@ -651,6 +651,12 @@ void EntitySystem::AppendMesh(std::vector<WorldVertex>& output, const CameraFrus
     }
 }
 
+void EnvironmentSystem::SetTimeOfDay(float value) {
+    timeOfDay_ = std::fmod(std::clamp(value, 0.0f, 1.0f), 1.0f);
+    const float sun = std::sin(timeOfDay_ * 2.0f * 3.14159265358979323846f);
+    daylight_ = std::clamp(0.22f + std::max(0.0f, sun) * 0.78f, 0.16f, 1.0f);
+}
+
 void EnvironmentSystem::Update(float deltaSeconds) {
     MfEnvironmentState state{timeOfDay_, daylight_};
     minefade_environment_update(&state, deltaSeconds);
