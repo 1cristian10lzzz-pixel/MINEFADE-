@@ -47,6 +47,7 @@ typedef struct MfEntityPose {
     float rear_right_leg_pitch;
     float body_bob;
     float head_pitch;
+    float head_yaw;
     float tail_yaw;
     float left_wing_roll;
     float right_wing_roll;
