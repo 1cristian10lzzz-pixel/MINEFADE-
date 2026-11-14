@@ -1,6 +1,8 @@
 package com.minefade.nativeengine;
 
 import android.content.Context;
+import android.app.AlertDialog;
+import android.text.InputType;
 import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
 import android.graphics.Canvas;
@@ -23,6 +25,10 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.FrameLayout;
+import android.widget.EditText;
+import android.widget.CheckBox;
+import android.widget.Spinner;
+import android.widget.ArrayAdapter;
 import android.widget.LinearLayout;
 import android.widget.HorizontalScrollView;
 import android.widget.PopupMenu;
@@ -44,6 +50,9 @@ import java.util.List;
 public final class MinefadeHomeScreen extends FrameLayout {
     public interface Listener {
         void onPlay();
+        void onPlayWorld(WorldManager.WorldInfo world);
+        void onCreateWorld(WorldManager.WorldInfo world);
+        void onImportMod();
         void onHostMultiplayer();
         void onSearchMultiplayer();
         void onJoinMultiplayer(LanMultiplayerService.GameInfo game);
@@ -56,6 +65,8 @@ public final class MinefadeHomeScreen extends FrameLayout {
     private final int muted = Color.rgb(157, 177, 190);
     private final int panel = Color.rgb(17, 31, 45);
     private final int[] avatarStyles = new int[6];
+    private final WorldManager worldManager;
+    private final ModManager modManager;
     private final String[] avatarModules = {"piel", "cabello", "ojos", "ropa", "armadura", "accesorios"};
     private int avatarModuleIndex = 1;
     private String settingsModule = "video";
@@ -68,6 +79,8 @@ public final class MinefadeHomeScreen extends FrameLayout {
         this.listener = listener;
         this.clickSound = clickSound;
         preferences = context.getSharedPreferences("minefade_ui", Context.MODE_PRIVATE);
+        worldManager = new WorldManager(context);
+        modManager = new ModManager(context);
         for (int i = 0; i < avatarModules.length; i++)
             avatarStyles[i] = preferences.getInt("avatar_" + avatarModules[i], 0);
         avatarModuleIndex = Math.max(0, Math.min(5, preferences.getInt("avatar_module", 1)));
@@ -255,9 +268,9 @@ public final class MinefadeHomeScreen extends FrameLayout {
         buttons.add(menuButton("☷", "AJUSTES", "Gráficos, interfaz y controles",
                 new int[]{0xff51432c, 0xff302d2c}, 0xffffce72, 42,
                 () -> showSection("settings"), 3));
-        buttons.add(menuButton("✦", "LOGROS", "Retos y progreso",
-                new int[]{0xff4d3540, 0xff322b3d}, 0xffff9eaa, 42,
-                () -> showSection("achievements"), 4));
+        buttons.add(menuButton("▧", "MODS", "Paquetes y contenido adicional",
+                new int[]{0xff3a4c6b, 0xff242e48}, 0xff9db9ff, 42,
+                () -> showSection("mods"), 4));
 
         for (int i = 0; i < buttons.size(); i++) {
             LinearLayout.LayoutParams bp = new LinearLayout.LayoutParams(-1, dp(i == 0 ? 48 : 42));
@@ -294,48 +307,328 @@ public final class MinefadeHomeScreen extends FrameLayout {
         // in the APK and release notes rather than consuming game-menu space.
     }
 
-    private void showWorlds() {
-        final boolean hasSavedWorld = new File(getContext().getFilesDir(),
-                "worlds/default.mfworld").isFile();
-        LinearLayout root = pageRoot("JUGAR", "Continúa tu aventura o empieza una nueva.");
-        LinearLayout card = column();
-        card.setPadding(dp(17), dp(15), dp(17), dp(15));
-        card.setBackground(shape(new int[]{0xff1b453a, 0xff122c35}, 18, 0x6676b88d));
-        LinearLayout.LayoutParams cp = new LinearLayout.LayoutParams(-1, 0, 1f);
-        cp.topMargin = dp(13);
-        root.addView(card, cp);
-        LinearLayout top = row();
-        FrameLayout icon = new FrameLayout(getContext());
-        icon.setBackground(shape(new int[]{0xff315d48, 0xff1b473c}, 13, 0x557acb91));
-        icon.addView(new WorldMarkView(getContext()),
-                new FrameLayout.LayoutParams(-1, -1));
-        top.addView(icon, new LinearLayout.LayoutParams(dp(48), dp(48)));
-        LinearLayout identity = column();
-        identity.setPadding(dp(11), 0, 0, 0);
-        identity.addView(text(hasSavedWorld ? "TU PARTIDA" : "NUEVA AVENTURA", 15, white, true));
-        TextView subtitle = text(hasSavedWorld ? "Retoma tu exploración" : "Una aventura nueva te espera",
-                9, 0xffb7d1c5, false);
-        LinearLayout.LayoutParams sp = new LinearLayout.LayoutParams(-1, -2);
-        sp.topMargin = dp(4);
-        identity.addView(subtitle, sp);
-        top.addView(identity, new LinearLayout.LayoutParams(0, -2, 1f));
-        card.addView(top);
-        TextView description = text(hasSavedWorld
-                ? "Vuelve a tus construcciones, descubre nuevos lugares y sigue explorando."
-                : "Recorre nuevos biomas, encuentra cuevas y construye tu propio mundo.",
-                10, 0xffc0d3d9, false);
-        description.setGravity(Gravity.TOP);
-        LinearLayout.LayoutParams dp = new LinearLayout.LayoutParams(-1, -2);
-        dp.topMargin = this.dp(15);
-        card.addView(description, dp);
-        View spacer = new View(getContext());
-        card.addView(spacer, new LinearLayout.LayoutParams(1, 0, 1f));
-        TextView enter = actionButton(hasSavedWorld ? "CONTINUAR PARTIDA" : "CREAR MUNDO Y JUGAR", () -> listener.onPlay());
-        LinearLayout.LayoutParams ep = new LinearLayout.LayoutParams(-1, this.dp(46));
-        ep.topMargin = this.dp(12);
-        card.addView(enter, ep);
-        animateIn(card, 0);
+    private void addWorldTabs(LinearLayout root, boolean achievementsSelected) {
+        LinearLayout tabs = row();
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(-1, dp(38));
+        params.topMargin = dp(7);
+        root.addView(tabs, params);
+        TextView worlds = text("▦  MUNDOS", 10, achievementsSelected ? 0xffb8cbd5 : 0xffe8ffd8, true);
+        worlds.setGravity(Gravity.CENTER);
+        worlds.setBackground(shape(achievementsSelected
+                ? new int[]{0xff20374a,0xff142638} : new int[]{0xff365b48,0xff1e4039},
+                10, achievementsSelected ? 0x55496379 : 0xff91d77a));
+        tabs.addView(worlds, new LinearLayout.LayoutParams(0,-1,1f));
+        TextView achievements = text("✦  LOGROS", 10, achievementsSelected ? 0xffe8ffd8 : 0xffb8cbd5, true);
+        achievements.setGravity(Gravity.CENTER);
+        achievements.setBackground(shape(achievementsSelected
+                ? new int[]{0xff365b48,0xff1e4039} : new int[]{0xff20374a,0xff142638},
+                10, achievementsSelected ? 0xff91d77a : 0x55496379));
+        LinearLayout.LayoutParams ap = new LinearLayout.LayoutParams(0,-1,1f);
+        ap.leftMargin = dp(7);
+        tabs.addView(achievements, ap);
+        worlds.setOnClickListener(v -> { haptic(v); showWorlds(); });
+        achievements.setOnClickListener(v -> { haptic(v); showAchievementsPage(); });
     }
+
+    private void showWorlds() {
+        LinearLayout root = pageRoot("MUNDOS", "Crea y administra varias partidas independientes.");
+        addWorldTabs(root, false);
+
+        LinearLayout toolbar = row();
+        toolbar.setGravity(Gravity.CENTER_VERTICAL);
+        LinearLayout.LayoutParams toolbarParams = new LinearLayout.LayoutParams(-1, dp(40));
+        toolbarParams.topMargin = dp(8);
+        root.addView(toolbar, toolbarParams);
+        toolbar.addView(text("TUS PARTIDAS", 9, 0xffc6d8e1, true),
+                new LinearLayout.LayoutParams(0,-1,1f));
+        TextView create = actionButton("+ CREAR", this::showCreateWorld);
+        create.setTextSize(9);
+        create.setPadding(dp(12),0,dp(12),0);
+        toolbar.addView(create, new LinearLayout.LayoutParams(dp(104),dp(34)));
+
+        ScrollView scroll = new ScrollView(getContext());
+        scroll.setFillViewport(false);
+        scroll.setClipChildren(true);
+        scroll.setClipToPadding(true);
+        scroll.setVerticalScrollBarEnabled(true);
+        scroll.setOverScrollMode(View.OVER_SCROLL_IF_CONTENT_SCROLLS);
+        LinearLayout.LayoutParams scrollParams = new LinearLayout.LayoutParams(-1,0,1f);
+        scrollParams.topMargin = dp(6);
+        root.addView(scroll, scrollParams);
+        LinearLayout list = column();
+        list.setPadding(0,0,0,dp(5));
+        list.setClipChildren(true);
+        list.setClipToPadding(true);
+        scroll.addView(list, new ScrollView.LayoutParams(-1,-2));
+
+        List<WorldManager.WorldInfo> worlds = worldManager.listWorlds();
+        if (worlds.isEmpty()) {
+            LinearLayout empty = column();
+            empty.setGravity(Gravity.CENTER);
+            empty.setPadding(dp(18),dp(18),dp(18),dp(18));
+            empty.setBackground(shape(new int[]{0xff1b3346,0xff122536},16,0x66536f83));
+            empty.addView(new WorldMarkView(getContext()),new LinearLayout.LayoutParams(dp(70),dp(70)));
+            TextView title = text("TODAVÍA NO HAY MUNDOS",12,white,true);
+            title.setGravity(Gravity.CENTER);
+            LinearLayout.LayoutParams titleParams = new LinearLayout.LayoutParams(-1,-2);
+            titleParams.topMargin = dp(9);
+            empty.addView(title,titleParams);
+            TextView detail = text("Crea una partida, elige el modo y configura tus opciones antes de entrar.",9,muted,false);
+            detail.setGravity(Gravity.CENTER);
+            LinearLayout.LayoutParams detailParams = new LinearLayout.LayoutParams(-1,-2);
+            detailParams.topMargin = dp(5);
+            empty.addView(detail,detailParams);
+            TextView first = actionButton("CREAR MI PRIMER MUNDO",this::showCreateWorld);
+            LinearLayout.LayoutParams firstParams = new LinearLayout.LayoutParams(-2,dp(38));
+            firstParams.topMargin = dp(12);
+            empty.addView(first,firstParams);
+            list.addView(empty,new LinearLayout.LayoutParams(-1,0,1f));
+        } else {
+            for (WorldManager.WorldInfo world : worlds) {
+                LinearLayout card = row();
+                card.setPadding(dp(10),dp(8),dp(8),dp(8));
+                card.setBackground(shape(new int[]{0xff203a4c,0xff14283a},13,0x66536f83));
+                LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(-1,dp(70));
+                cardParams.bottomMargin = dp(7);
+                list.addView(card,cardParams);
+
+                FrameLayout icon = new FrameLayout(getContext());
+                icon.setBackground(shape(new int[]{0xff315d48,0xff1b473c},11,0x557acb91));
+                icon.addView(new WorldMarkView(getContext()),new FrameLayout.LayoutParams(-1,-1));
+                card.addView(icon,new LinearLayout.LayoutParams(dp(48),dp(48)));
+
+                LinearLayout labels = column();
+                labels.setGravity(Gravity.CENTER_VERTICAL);
+                labels.setPadding(dp(9),0,dp(5),0);
+                TextView name = text(world.name,11,white,true);
+                name.setMaxLines(1);
+                name.setEllipsize(android.text.TextUtils.TruncateAt.END);
+                labels.addView(name);
+                TextView meta = text(world.modeLabel() + "  ·  SEMILLA " + world.seed,7,muted,false);
+                meta.setMaxLines(1);
+                LinearLayout.LayoutParams metaParams = new LinearLayout.LayoutParams(-1,-2);
+                metaParams.topMargin = dp(4);
+                labels.addView(meta,metaParams);
+                card.addView(labels,new LinearLayout.LayoutParams(0,-1,1f));
+
+                TextView enter = actionButton("JUGAR",() -> {
+                    if (listener != null) listener.onPlayWorld(world);
+                });
+                enter.setTextSize(9);
+                enter.setPadding(dp(8),0,dp(8),0);
+                card.addView(enter,new LinearLayout.LayoutParams(dp(72),dp(34)));
+
+                TextView more = text("⋮",21,0xffc5d9e4,true);
+                more.setGravity(Gravity.CENTER);
+                card.addView(more,new LinearLayout.LayoutParams(dp(30),dp(42)));
+                more.setOnClickListener(v -> showWorldActions(world,more));
+            }
+        }
+        animateIn(list,0);
+    }
+
+    private void showWorldActions(WorldManager.WorldInfo world, View anchor) {
+        PopupMenu menu = new PopupMenu(getContext(),anchor);
+        menu.getMenu().add("Renombrar");
+        menu.getMenu().add("Eliminar mundo");
+        menu.setOnMenuItemClickListener(item -> {
+            if ("Renombrar".contentEquals(item.getTitle())) {
+                EditText name = new EditText(getContext());
+                name.setSingleLine(true);
+                name.setText(world.name);
+                name.setSelection(name.length());
+                new AlertDialog.Builder(getContext()).setTitle("Renombrar mundo")
+                        .setView(name).setNegativeButton("Cancelar",null)
+                        .setPositiveButton("Guardar",(dialog,which) -> {
+                            if (worldManager.renameWorld(world,name.getText().toString())) showWorlds();
+                        }).show();
+            } else {
+                new AlertDialog.Builder(getContext()).setTitle("Eliminar mundo")
+                        .setMessage("Se eliminará «"+world.name+"» y su partida guardada. No se puede deshacer.")
+                        .setNegativeButton("Cancelar",null)
+                        .setPositiveButton("Eliminar",(dialog,which) -> {
+                            worldManager.deleteWorld(world);
+                            showWorlds();
+                        }).show();
+            }
+            return true;
+        });
+        menu.show();
+    }
+
+    private void showCreateWorld() {
+        LinearLayout root = pageRoot("CREAR MUNDO","Configura tu partida antes de generar el terreno.");
+        ScrollView scroll = new ScrollView(getContext());
+        scroll.setFillViewport(false);
+        scroll.setClipChildren(true);
+        scroll.setClipToPadding(true);
+        LinearLayout.LayoutParams scrollParams = new LinearLayout.LayoutParams(-1,0,1f);
+        scrollParams.topMargin = dp(8);
+        root.addView(scroll,scrollParams);
+        LinearLayout form = column();
+        form.setPadding(dp(11),dp(10),dp(11),dp(12));
+        form.setBackground(shape(new int[]{0x44243f52,0x22101d2b},15,0x55466378));
+        scroll.addView(form,new ScrollView.LayoutParams(-1,-2));
+
+        form.addView(text("NOMBRE DEL MUNDO",9,0xffd8eaf0,true));
+        EditText name = new EditText(getContext());
+        name.setSingleLine(true);
+        name.setText("Mi mundo");
+        name.setTextSize(12);
+        name.setTextColor(white);
+        name.setHintTextColor(muted);
+        name.setHint("Nombre de la partida");
+        name.setPadding(dp(10),0,dp(10),0);
+        name.setBackground(shape(new int[]{0xff1b3042,0xff142638},10,0x665c7a8c));
+        LinearLayout.LayoutParams nameParams = new LinearLayout.LayoutParams(-1,dp(42));
+        nameParams.topMargin = dp(5);
+        form.addView(name,nameParams);
+
+        TextView seedTitle = text("SEMILLA DEL MUNDO",9,0xffd8eaf0,true);
+        LinearLayout.LayoutParams seedTitleParams = new LinearLayout.LayoutParams(-1,-2);
+        seedTitleParams.topMargin = dp(11);
+        form.addView(seedTitle,seedTitleParams);
+        EditText seed = new EditText(getContext());
+        seed.setSingleLine(true);
+        seed.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_SIGNED);
+        seed.setText(Long.toString(System.currentTimeMillis() / 1000L));
+        seed.setTextSize(11);
+        seed.setTextColor(white);
+        seed.setPadding(dp(10),0,dp(10),0);
+        seed.setBackground(shape(new int[]{0xff1b3042,0xff142638},10,0x665c7a8c));
+        LinearLayout.LayoutParams seedParams = new LinearLayout.LayoutParams(-1,dp(40));
+        seedParams.topMargin = dp(5);
+        form.addView(seed,seedParams);
+
+        TextView modeTitle = text("MODO DE JUEGO",9,0xffd8eaf0,true);
+        LinearLayout.LayoutParams modeTitleParams = new LinearLayout.LayoutParams(-1,-2);
+        modeTitleParams.topMargin = dp(11);
+        form.addView(modeTitle,modeTitleParams);
+        Spinner mode = new Spinner(getContext());
+        ArrayAdapter<String> modes = new ArrayAdapter<>(getContext(),
+                android.R.layout.simple_spinner_dropdown_item,
+                new String[]{"Supervivencia","Creativo","Aventura"});
+        mode.setAdapter(modes);
+        mode.setSelection(WorldManager.SURVIVAL);
+        LinearLayout.LayoutParams modeParams = new LinearLayout.LayoutParams(-1,dp(42));
+        modeParams.topMargin = dp(3);
+        form.addView(mode,modeParams);
+
+        CheckBox chest = new CheckBox(getContext());
+        chest.setText("Cofre inicial con recursos");
+        chest.setTextSize(10);
+        chest.setTextColor(white);
+        chest.setButtonTintList(ColorStateList.valueOf(0xffa9ee70));
+        chest.setChecked(true);
+        LinearLayout.LayoutParams chestParams = new LinearLayout.LayoutParams(-1,dp(42));
+        chestParams.topMargin = dp(5);
+        form.addView(chest,chestParams);
+
+        CheckBox cheats = new CheckBox(getContext());
+        cheats.setText("Permitir trucos y comandos");
+        cheats.setTextSize(10);
+        cheats.setTextColor(white);
+        cheats.setButtonTintList(ColorStateList.valueOf(0xffa9ee70));
+        cheats.setChecked(false);
+        LinearLayout.LayoutParams cheatsParams = new LinearLayout.LayoutParams(-1,dp(42));
+        form.addView(cheats,cheatsParams);
+
+        TextView note = text("El modo aventura limita la rotura y colocación de bloques. Los trucos se pueden cambiar solo si los activas aquí.",8,muted,false);
+        note.setMaxLines(3);
+        LinearLayout.LayoutParams noteParams = new LinearLayout.LayoutParams(-1,-2);
+        noteParams.topMargin = dp(7);
+        form.addView(note,noteParams);
+
+        TextView create = actionButton("CREAR MUNDO",() -> {
+            long parsedSeed;
+            try { parsedSeed = Long.parseLong(seed.getText().toString().trim()); }
+            catch (NumberFormatException error) { parsedSeed = System.currentTimeMillis(); }
+            WorldManager.WorldInfo world = worldManager.createWorld(
+                    name.getText().toString(),parsedSeed,mode.getSelectedItemPosition(),
+                    cheats.isChecked(),chest.isChecked());
+            if (world == null) {
+                new AlertDialog.Builder(getContext()).setTitle("No se pudo crear")
+                        .setMessage("No se pudo guardar la configuración del mundo. Comprueba el espacio disponible.")
+                        .setPositiveButton("Aceptar",null).show();
+                return;
+            }
+            if (listener != null) listener.onCreateWorld(world);
+        });
+        LinearLayout.LayoutParams createParams = new LinearLayout.LayoutParams(-1,dp(44));
+        createParams.topMargin = dp(10);
+        form.addView(create,createParams);
+    }
+
+    private void showModsPage() {
+        LinearLayout root = pageRoot("MODS","Importa y activa paquetes de datos .mfmod.");
+        LinearLayout actions = row();
+        LinearLayout.LayoutParams actionParams = new LinearLayout.LayoutParams(-1,dp(40));
+        actionParams.topMargin = dp(8);
+        root.addView(actions,actionParams);
+        TextView importButton = actionButton("IMPORTAR MOD",() -> {
+            if (listener != null) listener.onImportMod();
+        });
+        importButton.setTextSize(9);
+        actions.addView(importButton,new LinearLayout.LayoutParams(0,dp(36),1f));
+        TextView example = actionButton("EJEMPLO",() -> {
+            modManager.createExamplePack();
+            showModsPage();
+        });
+        example.setTextSize(9);
+        LinearLayout.LayoutParams exampleParams = new LinearLayout.LayoutParams(0,dp(36),1f);
+        exampleParams.leftMargin = dp(7);
+        actions.addView(example,exampleParams);
+
+        ScrollView scroll = new ScrollView(getContext());
+        scroll.setFillViewport(false);
+        scroll.setClipChildren(true);
+        scroll.setClipToPadding(true);
+        LinearLayout.LayoutParams scrollParams = new LinearLayout.LayoutParams(-1,0,1f);
+        scrollParams.topMargin = dp(8);
+        root.addView(scroll,scrollParams);
+        LinearLayout list = column();
+        list.setClipChildren(true);
+        list.setClipToPadding(true);
+        scroll.addView(list,new ScrollView.LayoutParams(-1,-2));
+        List<ModManager.ModInfo> mods = modManager.listMods();
+        if (mods.isEmpty()) {
+            TextView empty = text("No hay paquetes instalados. Importa un archivo .mfmod o crea el paquete de ejemplo.",10,muted,false);
+            empty.setGravity(Gravity.CENTER);
+            empty.setPadding(dp(16),dp(22),dp(16),dp(22));
+            list.addView(empty,new LinearLayout.LayoutParams(-1,-2));
+        }
+        for (ModManager.ModInfo mod : mods) {
+            LinearLayout card = row();
+            card.setPadding(dp(10),dp(8),dp(10),dp(8));
+            card.setBackground(shape(new int[]{0xff20384b,0xff142638},13,0x554d6b80));
+            LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(-1,dp(74));
+            cardParams.bottomMargin = dp(7);
+            list.addView(card,cardParams);
+            LinearLayout labels = column();
+            labels.setGravity(Gravity.CENTER_VERTICAL);
+            labels.addView(text(mod.name + "  ·  v" + mod.version,10,white,true));
+            TextView detail = text(mod.description,8,muted,false);
+            detail.setMaxLines(2);
+            LinearLayout.LayoutParams detailParams = new LinearLayout.LayoutParams(-1,-2);
+            detailParams.topMargin = dp(3);
+            labels.addView(detail,detailParams);
+            card.addView(labels,new LinearLayout.LayoutParams(0,-2,1f));
+            Switch enabled = new Switch(getContext());
+            enabled.setChecked(mod.enabled);
+            enabled.setButtonTintList(ColorStateList.valueOf(0xffa9ee70));
+            enabled.setOnCheckedChangeListener((button,checked) -> {
+                modManager.setEnabled(mod,checked);
+                showModsPage();
+            });
+            card.addView(enabled);
+        }
+        TextView footer = text("Los cambios se aplican al entrar en un mundo. Los paquetes son de datos y no ejecutan código nativo.",8,muted,false);
+        LinearLayout.LayoutParams footerParams = new LinearLayout.LayoutParams(-1,-2);
+        footerParams.topMargin = dp(6);
+        root.addView(footer,footerParams);
+    }
+
+    public void refreshMods() { showModsPage(); }
 
     private void showSection(String section) {
         if ("avatar".equals(section)) {
@@ -344,8 +637,10 @@ public final class MinefadeHomeScreen extends FrameLayout {
             showSettingsPage();
         } else if ("multiplayer".equals(section)) {
             showMultiplayerPage();
+        } else if ("mods".equals(section)) {
+            showModsPage();
         } else {
-            showAchievementsPage();
+            showWorlds();
         }
     }
 
@@ -971,7 +1266,8 @@ public final class MinefadeHomeScreen extends FrameLayout {
     }
 
     private void showAchievementsPage() {
-        LinearLayout root = pageRoot("LOGROS", "Progreso real de tu partida. Se guarda automáticamente.");
+        LinearLayout root = pageRoot("MUNDOS · LOGROS", "Progreso de tus aventuras guardado automáticamente.");
+        addWorldTabs(root, true);
         int mined = preferences.getInt("achievement_blocks_mined", 0);
         int placed = preferences.getInt("achievement_blocks_placed", 0);
         int collected = preferences.getInt("achievement_items_collected", 0);
