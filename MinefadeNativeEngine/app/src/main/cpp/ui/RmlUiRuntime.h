@@ -29,6 +29,7 @@ public:
     void SetTargetBlock(const std::string& name, float progress);
     void SetPickupToast(const std::string& text);
     void SetPerspectiveEnabled(bool enabled);
+    void SetCrouchEnabled(bool enabled);
     void SetQuickbarSlot(int slot, const std::string& label, bool selected);
     void SetInventoryContents(const std::string& markup);
     void SetPanelVisible(const char* elementId, bool visible);
