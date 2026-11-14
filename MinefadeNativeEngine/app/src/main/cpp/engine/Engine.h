@@ -152,6 +152,7 @@ private:
     RmlUiRuntime ui_;
     std::vector<WorldVertex> worldMesh_;
     std::vector<WorldVertex> transparentWorldMesh_;
+    std::vector<ChunkMeshRange> worldChunkRanges_;
     std::vector<WorldVertex> entityMesh_;
     std::vector<WorldVertex> itemMesh_;
     std::vector<float> remotePlayers_;
