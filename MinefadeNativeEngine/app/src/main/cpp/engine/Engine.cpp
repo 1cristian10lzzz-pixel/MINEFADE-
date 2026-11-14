@@ -438,6 +438,8 @@ bool Engine::Initialise(float displayDensity, const std::uint8_t* atlasPixels,
     inventoryVisible_ = false;
     pauseVisible_ = false;
     thirdPerson_ = false;
+    crouching_ = false;
+    player_.SetCrouching(false);
     miningPointerId_ = -1;
     miningElapsed_ = 0.0f;
     miningRequired_ = 0.0f;
@@ -1251,6 +1253,10 @@ void Engine::HandleUiAction(const std::string& action) {
         player_.Jump();
         if (wasGrounded && !player_.grounded)
             soundEvents_.fetch_or(16u, std::memory_order_release);
+    } else if (action == "crouch") {
+        crouching_ = !crouching_;
+        player_.SetCrouching(crouching_);
+        ui_.SetCrouchEnabled(crouching_);
     } else if (action.rfind("slot-", 0) == 0 && action.size() == 6) {
         const char digit = action[5];
         if (digit >= '0' && digit <= '8') {
