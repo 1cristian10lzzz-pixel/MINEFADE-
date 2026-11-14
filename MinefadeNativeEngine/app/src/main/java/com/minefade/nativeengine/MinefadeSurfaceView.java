@@ -209,6 +209,28 @@ public final class MinefadeSurfaceView extends GLSurfaceView {
                 + "\nNo se ha borrado el archivo del mundo.";
     }
 
+    private void recordAchievementEvents(int events) {
+        if (events == 0) return;
+        SharedPreferences.Editor editor = preferences.edit();
+        if ((events & 1) != 0) {
+            editor.putInt("achievement_blocks_mined",
+                    Math.min(100000, preferences.getInt("achievement_blocks_mined", 0) + 1));
+        }
+        if ((events & 2) != 0) {
+            editor.putInt("achievement_blocks_placed",
+                    Math.min(100000, preferences.getInt("achievement_blocks_placed", 0) + 1));
+        }
+        if ((events & 8) != 0) {
+            editor.putInt("achievement_items_collected",
+                    Math.min(100000, preferences.getInt("achievement_items_collected", 0) + 1));
+        }
+        if ((events & 16) != 0) {
+            editor.putInt("achievement_jumps",
+                    Math.min(100000, preferences.getInt("achievement_jumps", 0) + 1));
+        }
+        editor.apply();
+    }
+
     private static int clamp(int value) {
         return Math.max(0, Math.min(255, value));
     }
@@ -303,6 +325,7 @@ public final class MinefadeSurfaceView extends GLSurfaceView {
                     }
                 }
                 if (nativeReady) {
+                    preferences.edit().putBoolean("achievement_world_entered", true).apply();
                     Log.i(TAG, "Native renderer initialised successfully");
                     notifyReady();
                 }
@@ -355,8 +378,9 @@ public final class MinefadeSurfaceView extends GLSurfaceView {
                     int[] localEdits = NativeBridge.nativeConsumeBlockEdits();
                     if (localEdits.length > 0) multiplayer.publishBlockEdits(localEdits);
                 }
-                if (soundEffects != null)
-                    soundEffects.playEvents(NativeBridge.nativeConsumeSoundEvents());
+                int soundEvents = NativeBridge.nativeConsumeSoundEvents();
+                recordAchievementEvents(soundEvents);
+                if (soundEffects != null) soundEffects.playEvents(soundEvents);
             } catch (LinkageError | RuntimeException error) {
                 nativeReady = false;
                 Log.e(TAG, "Native render failed", error);
