@@ -541,6 +541,40 @@ pub unsafe extern "C" fn minefade_entity_compute_pose(
             right_wing_roll: -flap,
             eyelid: eyelid.clamp(0.0, 1.0),
         };
+    } else if kind == 4 || kind == 5 {
+        // Humanoid NPCs use the front leg channels as arm pivots and the rear
+        // channels as legs; both models share the same lightweight gait solver.
+        let arm_swing = (phase * 8.0).sin() * 0.18 * quality;
+        let raise = if kind == 4 { 0.12 } else { 0.035 };
+        *output = MfEntityPose {
+            front_left_leg_pitch: raise + arm_swing,
+            front_right_leg_pitch: raise - arm_swing,
+            rear_left_leg_pitch: -gait * 0.72,
+            rear_right_leg_pitch: gait * 0.72,
+            body_bob: (phase * 16.0).cos().abs() * 0.022 * quality,
+            head_pitch: idle * 0.035 * quality,
+            head_yaw: (time * 0.5 + phase).sin() * 0.045 * quality,
+            tail_yaw: 0.0,
+            left_wing_roll: 0.0,
+            right_wing_roll: 0.0,
+            eyelid: eyelid.clamp(0.0, 1.0),
+        };
+    } else if kind == 6 {
+        // Rabbits use a smaller, springier hopping gait rather than a heavy walk.
+        let hop = (phase * 6.0).sin();
+        *output = MfEntityPose {
+            front_left_leg_pitch: -hop * 0.18 * quality,
+            front_right_leg_pitch: hop * 0.18 * quality,
+            rear_left_leg_pitch: hop * 0.38 * quality,
+            rear_right_leg_pitch: -hop * 0.38 * quality,
+            body_bob: hop.abs() * 0.075 * quality,
+            head_pitch: idle * 0.055 * quality,
+            head_yaw: (time * 0.7).sin() * 0.035 * quality,
+            tail_yaw: (phase * 3.0).sin() * 0.20 * quality,
+            left_wing_roll: 0.0,
+            right_wing_roll: 0.0,
+            eyelid: eyelid.clamp(0.0, 1.0),
+        };
     } else {
         *output = MfEntityPose {
             front_left_leg_pitch: gait,
