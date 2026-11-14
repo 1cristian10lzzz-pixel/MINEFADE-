@@ -64,6 +64,19 @@ typedef int32_t (*MfSurfaceHeightCallback)(int32_t x, int32_t z, void* user_data
 
 uint32_t minefade_core_abi_version(void);
 
+#define MINEFADE_INVENTORY_SLOT_COUNT 9u
+
+uint8_t minefade_inventory_can_add(
+    const uint32_t* counts, uint32_t slot_count,
+    uint16_t item_id, uint16_t amount, uint16_t stack_limit);
+uint8_t minefade_inventory_add(
+    uint32_t* counts, uint32_t slot_count,
+    uint16_t item_id, uint16_t amount, uint16_t stack_limit);
+uint16_t minefade_inventory_selected_item_id(
+    const uint32_t* counts, uint32_t slot_count, uint32_t selected_slot);
+uint8_t minefade_inventory_consume_selected(
+    uint32_t* counts, uint32_t slot_count, uint32_t selected_slot, uint16_t amount);
+
 void minefade_player_set_movement(MfPlayerState* state, float x, float y);
 void minefade_player_rotate(MfPlayerState* state, float delta_x, float delta_y);
 void minefade_player_jump(MfPlayerState* state);
