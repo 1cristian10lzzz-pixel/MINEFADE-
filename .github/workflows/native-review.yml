@@ -2,7 +2,7 @@ name: Minefade Native Source Review
 
 on:
   push:
-    branches: [minefade-deep-renewal, minefade-render-optimization]
+    branches: [minefade-deep-renewal, minefade-render-optimization, minefade-worlds-mods-commands]
   workflow_dispatch:
 
 permissions:
@@ -74,7 +74,7 @@ jobs:
       - name: Upload review APK
         uses: actions/upload-artifact@v4
         with:
-          name: Minefade-0.7.1-Review10-APK
+          name: Minefade-0.8.0-Review11-APK
           path: MinefadeNativeEngine/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 14
@@ -85,18 +85,18 @@ jobs:
           set -euo pipefail
           # Include generated catalogue/atlas files produced by the preceding step.
           # git archive omits worktree changes, so package the checked-out tree itself.
-          zip -r -q Minefade-0.7.1-source.zip . \
+          zip -r -q Minefade-0.8.0-source.zip . \
             -x ".git/*" "*/.git/*" \
                "*/build/*" "*/.gradle/*" "*/.cxx/*" \
                "*/.externalNativeBuild/*" "*/intermediates/*" \
                "*/outputs/*" "*/tmp/*" "*/target/*" "*/rust-target/*" \
                "Minefade-0.7.1-source.zip"
-          test -s Minefade-0.7.1-source.zip
+          test -s Minefade-0.8.0-source.zip
 
       - name: Upload complete source
         uses: actions/upload-artifact@v4
         with:
-          name: Minefade-0.7.0-source
-          path: Minefade-0.7.0-source.zip
+          name: Minefade-0.8.0-source
+          path: Minefade-0.8.0-source.zip
           if-no-files-found: error
           retention-days: 14
