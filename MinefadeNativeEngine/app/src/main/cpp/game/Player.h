@@ -83,7 +83,7 @@ class EntitySystem {
 public:
     void SpawnInitial(const VoxelWorld& world);
     void Update(const VoxelWorld& world, float deltaSeconds);
-    void AppendMesh(std::vector<WorldVertex>& output) const;
+    void AppendMesh(std::vector<WorldVertex>& output, const CameraFrustum* frustum = nullptr) const;
     void SetContactShadows(bool enabled) { contactShadows_ = enabled; }
     void SetAnimationOptions(std::uint8_t quality, bool enabled) { animationQuality_ = quality > 2 ? 2 : quality; animationsEnabled_ = enabled; }
     std::size_t Count() const { return entities_.size(); }
