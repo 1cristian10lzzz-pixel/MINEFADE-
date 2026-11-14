@@ -17,17 +17,18 @@ import android.graphics.drawable.RippleDrawable;
 import android.os.Build;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
+import android.os.SystemClock;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
+import android.widget.HorizontalScrollView;
+import android.widget.PopupMenu;
 import android.widget.ScrollView;
 import android.widget.SeekBar;
 import android.widget.Switch;
-import android.widget.Spinner;
-import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
 import java.io.File;
@@ -69,6 +70,7 @@ public final class MinefadeHomeScreen extends FrameLayout {
         preferences = context.getSharedPreferences("minefade_ui", Context.MODE_PRIVATE);
         for (int i = 0; i < avatarModules.length; i++)
             avatarStyles[i] = preferences.getInt("avatar_" + avatarModules[i], 0);
+        avatarModuleIndex = Math.max(0, Math.min(5, preferences.getInt("avatar_module", 1)));
         settingsModule = preferences.getString("settings_module", "video");
         setClipChildren(false);
         setClipToPadding(false);
@@ -127,9 +129,11 @@ public final class MinefadeHomeScreen extends FrameLayout {
             return;
         }
         view.setAlpha(0f);
-        view.setTranslationY(dp(12));
-        view.animate().alpha(1f).translationY(0f)
-                .setStartDelay(index * 42L).setDuration(280L)
+        view.setScaleX(0.985f);
+        view.setScaleY(0.985f);
+        view.setTranslationY(dp(10));
+        view.animate().alpha(1f).scaleX(1f).scaleY(1f).translationY(0f)
+                .setStartDelay(index * 36L).setDuration(340L)
                 .setInterpolator(new DecelerateInterpolator()).start();
     }
 
@@ -403,52 +407,65 @@ public final class MinefadeHomeScreen extends FrameLayout {
     }
 
     private void showAvatarPage() {
-        LinearLayout root = pageRoot("AVATAR", "Personaliza cada pieza del personaje.");
-        LinearLayout body = row();
-        LinearLayout.LayoutParams bodyParams = new LinearLayout.LayoutParams(-1, 0, 1f);
-        bodyParams.topMargin = dp(9);
-        root.addView(body, bodyParams);
+        LinearLayout root = pageRoot("AVATAR", "Elige estilo, equipo y detalles del personaje.");
 
-        // The editor occupies the left side; the character remains large and
-        // visible on the right while the user changes individual appearance slots.
-        LinearLayout editor = column();
-        editor.setPadding(0, 0, dp(9), 0);
-        body.addView(editor, new LinearLayout.LayoutParams(0, -1, 1.16f));
+        FrameLayout previewCard = new FrameLayout(getContext());
+        previewCard.setBackground(shape(new int[]{0xff1c3b50, 0xff0d1a2a}, 18, 0x77668ba0));
+        previewCard.setClipToOutline(true);
+        LinearLayout.LayoutParams previewCardParams = new LinearLayout.LayoutParams(-1, 0, 1.08f);
+        previewCardParams.topMargin = dp(8);
+        root.addView(previewCard, previewCardParams);
+
+        LinearLayout previewOverlay = column();
+        previewOverlay.setPadding(dp(10), dp(8), dp(10), dp(7));
+        previewOverlay.setGravity(Gravity.CENTER_HORIZONTAL);
+        previewCard.addView(previewOverlay, new FrameLayout.LayoutParams(-1, -1));
+        TextView previewState = text("VISTA EN TIEMPO REAL", 9, 0xffd8eaf0, true);
+        previewState.setGravity(Gravity.CENTER);
+        previewOverlay.addView(previewState, new LinearLayout.LayoutParams(-1, dp(19)));
+        FrameLayout previewFrame = new FrameLayout(getContext());
+        LinearLayout.LayoutParams avatarParams = new LinearLayout.LayoutParams(-1, 0, 1f);
+        avatarParams.topMargin = dp(2);
+        avatarParams.bottomMargin = dp(1);
+        previewOverlay.addView(previewFrame, avatarParams);
+        avatarPreview = new AvatarPreview(getContext());
+        previewFrame.addView(avatarPreview, new FrameLayout.LayoutParams(-1, -1));
+        TextView rotateHint = text("ARRASTRA PARA GIRAR  ·  ANIMACIÓN DE REPOSO", 8, 0xff9db7c6, true);
+        rotateHint.setGravity(Gravity.CENTER);
+        previewOverlay.addView(rotateHint, new LinearLayout.LayoutParams(-1, dp(18)));
 
         String[] moduleLabels = {"PIEL", "CABELLO", "OJOS", "ROPA", "ARMADURA", "ACCESORIOS"};
-        for (int r = 0; r < 2; r++) {
-            LinearLayout tabs = row();
-            LinearLayout.LayoutParams tabsParams = new LinearLayout.LayoutParams(-1, dp(34));
-            if (r > 0) tabsParams.topMargin = dp(5);
-            editor.addView(tabs, tabsParams);
-            for (int col = 0; col < 3; col++) {
-                final int module = r * 3 + col;
-                boolean selected = avatarModuleIndex == module;
-                TextView tab = text(moduleLabels[module], 8,
-                        selected ? 0xffd8ffb5 : 0xffa9bfcd, true);
-                tab.setGravity(Gravity.CENTER);
-                tab.setBackground(shape(selected
-                        ? new int[]{0xff345b48, 0xff203e39}
-                        : new int[]{0xff203448, 0xff15283a},
-                        9, selected ? 0xff83c76f : 0x554b667b));
-                tab.setOnClickListener(v -> {
-                    haptic(v);
-                    avatarModuleIndex = module;
-                    preferences.edit().putInt("avatar_module", module).apply();
-                    showAvatarPage();
-                });
-                LinearLayout.LayoutParams tabParams = new LinearLayout.LayoutParams(0, -1, 1f);
-                if (col > 0) tabParams.leftMargin = dp(5);
-                tabs.addView(tab, tabParams);
-            }
+        String[] moduleIcons = {"◉", "✦", "◌", "▣", "⬟", "◇"};
+        HorizontalScrollView moduleScroller = new HorizontalScrollView(getContext());
+        moduleScroller.setHorizontalScrollBarEnabled(false);
+        LinearLayout.LayoutParams tabsParams = new LinearLayout.LayoutParams(-1, dp(42));
+        tabsParams.topMargin = dp(8);
+        tabsParams.bottomMargin = dp(7);
+        root.addView(moduleScroller, tabsParams);
+        LinearLayout tabs = row();
+        tabs.setPadding(dp(1), 0, dp(1), 0);
+        moduleScroller.addView(tabs, new HorizontalScrollView.LayoutParams(-2, -1));
+        for (int i = 0; i < moduleLabels.length; i++) {
+            final int module = i;
+            boolean selected = avatarModuleIndex == module;
+            TextView tab = text(moduleIcons[i] + "  " + moduleLabels[i], 9,
+                    selected ? 0xffe2ffd1 : 0xffb8cbd5, true);
+            tab.setGravity(Gravity.CENTER);
+            tab.setPadding(dp(12), 0, dp(12), 0);
+            tab.setBackground(shape(selected
+                    ? new int[]{0xff3a624e, 0xff1c403b}
+                    : new int[]{0xff20374a, 0xff142638},
+                    11, selected ? 0xff9be17e : 0x66516c7f));
+            tab.setOnClickListener(v -> {
+                haptic(v);
+                avatarModuleIndex = module;
+                preferences.edit().putInt("avatar_module", module).apply();
+                showAvatarPage();
+            });
+            LinearLayout.LayoutParams tp = new LinearLayout.LayoutParams(-2, -1);
+            if (i > 0) tp.leftMargin = dp(6);
+            tabs.addView(tab, tp);
         }
-
-        LinearLayout optionsPanel = column();
-        optionsPanel.setPadding(dp(8), dp(7), dp(8), dp(5));
-        optionsPanel.setBackground(shape(new int[]{0x4420394e, 0x22101e2d}, 13, 0x443d5d72));
-        LinearLayout.LayoutParams panelParams = new LinearLayout.LayoutParams(-1, 0, 1f);
-        panelParams.topMargin = dp(7);
-        editor.addView(optionsPanel, panelParams);
 
         String[][] optionNames = {
                 {"Marfil", "Arena", "Miel", "Cobre", "Ébano", "Oliva"},
@@ -458,36 +475,57 @@ public final class MinefadeHomeScreen extends FrameLayout {
                 {"Sin placas", "Cuero", "Hierro", "Cobalto", "Cristal", "Élite"},
                 {"Ninguno", "Hombrera", "Capa", "Amuleto", "Diadema", "Mochila"}
         };
-        TextView section = text(moduleLabels[avatarModuleIndex] + "  ·  SELECCIÓN",
-                9, 0xffc7dce7, true);
-        LinearLayout.LayoutParams sectionParams = new LinearLayout.LayoutParams(-1, dp(19));
-        sectionParams.bottomMargin = dp(5);
-        optionsPanel.addView(section, sectionParams);
+        LinearLayout optionShell = column();
+        optionShell.setPadding(dp(8), dp(7), dp(8), dp(8));
+        optionShell.setBackground(shape(new int[]{0x44243f52, 0x22101d2b}, 15, 0x55466378));
+        LinearLayout.LayoutParams optionShellParams = new LinearLayout.LayoutParams(-1, 0, 1.12f);
+        root.addView(optionShell, optionShellParams);
+
+        LinearLayout optionHeading = row();
+        optionHeading.addView(text(moduleLabels[avatarModuleIndex] + "  ·  6 ESTILOS", 10, 0xffd8eaf0, true),
+                new LinearLayout.LayoutParams(0, dp(22), 1f));
+        TextView selectedName = text(optionNames[avatarModuleIndex][avatarStyles[avatarModuleIndex]], 9,
+                0xffb9f27c, true);
+        selectedName.setGravity(Gravity.CENTER);
+        optionHeading.addView(selectedName, new LinearLayout.LayoutParams(-2, dp(22)));
+        optionShell.addView(optionHeading);
+
+        ScrollView optionScroll = new ScrollView(getContext());
+        optionScroll.setFillViewport(false);
+        optionScroll.setVerticalScrollBarEnabled(false);
+        optionScroll.setClipToPadding(false);
+        LinearLayout.LayoutParams optionScrollParams = new LinearLayout.LayoutParams(-1, 0, 1f);
+        optionScrollParams.topMargin = dp(3);
+        optionShell.addView(optionScroll, optionScrollParams);
+        LinearLayout grid = column();
+        grid.setClipChildren(false);
+        grid.setClipToPadding(false);
+        optionScroll.addView(grid, new ScrollView.LayoutParams(-1, -2));
 
         for (int r = 0; r < 2; r++) {
             LinearLayout line = row();
-            LinearLayout.LayoutParams lineParams = new LinearLayout.LayoutParams(-1, 0, 1f);
-            if (r > 0) lineParams.topMargin = dp(5);
-            optionsPanel.addView(line, lineParams);
+            LinearLayout.LayoutParams lineParams = new LinearLayout.LayoutParams(-1, dp(94));
+            if (r > 0) lineParams.topMargin = dp(6);
+            grid.addView(line, lineParams);
             for (int col = 0; col < 3; col++) {
                 final int choice = r * 3 + col;
                 boolean selected = avatarStyles[avatarModuleIndex] == choice;
                 LinearLayout tile = column();
                 tile.setGravity(Gravity.CENTER);
-                tile.setPadding(dp(3), dp(3), dp(3), dp(3));
+                tile.setPadding(dp(4), dp(4), dp(4), dp(4));
                 tile.setBackground(shape(selected
-                        ? new int[]{0xff365747, 0xff203e3a}
-                        : new int[]{0xff263c50, 0xff172b3f},
-                        10, selected ? 0xff91d47a : 0x444b6b80));
+                        ? new int[]{0xff365a48, 0xff1d3e39}
+                        : new int[]{0xff263d51, 0xff172b3f},
+                        12, selected ? 0xff9ae17c : 0x554a687c));
                 FrameLayout icon = new FrameLayout(getContext());
                 icon.addView(new AvatarOptionView(getContext(), avatarModuleIndex, choice),
                         new FrameLayout.LayoutParams(-1, -1));
                 tile.addView(icon, new LinearLayout.LayoutParams(-1, 0, 1f));
-                TextView label = text(optionNames[avatarModuleIndex][choice], 7,
-                        selected ? 0xffe2f7d4 : 0xffc1d0d8, selected);
+                TextView label = text(optionNames[avatarModuleIndex][choice], 9,
+                        selected ? 0xffe4f8d7 : 0xffc2d2dc, selected);
                 label.setGravity(Gravity.CENTER);
                 label.setMaxLines(1);
-                LinearLayout.LayoutParams labelParams = new LinearLayout.LayoutParams(-1, dp(15));
+                LinearLayout.LayoutParams labelParams = new LinearLayout.LayoutParams(-1, dp(18));
                 labelParams.topMargin = dp(2);
                 tile.addView(label, labelParams);
                 tile.setOnClickListener(v -> {
@@ -497,89 +535,69 @@ public final class MinefadeHomeScreen extends FrameLayout {
                     showAvatarPage();
                 });
                 LinearLayout.LayoutParams cell = new LinearLayout.LayoutParams(0, -1, 1f);
-                if (col > 0) cell.leftMargin = dp(5);
+                if (col > 0) cell.leftMargin = dp(6);
                 line.addView(tile, cell);
             }
         }
-
-        FrameLayout previewCard = new FrameLayout(getContext());
-        previewCard.setBackground(shape(new int[]{0xff1a3449, 0xff101b2b}, 17, 0x665a7b92));
-        previewCard.setClipToOutline(true);
-        body.addView(previewCard, new LinearLayout.LayoutParams(0, -1, 0.84f));
-        LinearLayout previewOverlay = column();
-        previewOverlay.setPadding(dp(8), dp(8), dp(8), dp(8));
-        previewOverlay.setGravity(Gravity.TOP | Gravity.CENTER_HORIZONTAL);
-        previewCard.addView(previewOverlay, new FrameLayout.LayoutParams(-1, -1));
-        TextView previewTitle = text("VISTA DEL PERSONAJE", 8, 0xffc8dce7, true);
-        previewTitle.setGravity(Gravity.CENTER);
-        previewOverlay.addView(previewTitle, new LinearLayout.LayoutParams(-1, dp(18)));
-        avatarPreview = new AvatarPreview(getContext());
-        FrameLayout previewFrame = new FrameLayout(getContext());
-        LinearLayout.LayoutParams previewParams = new LinearLayout.LayoutParams(-1, 0, 1f);
-        previewParams.topMargin = dp(4);
-        previewOverlay.addView(previewFrame, previewParams);
-        previewFrame.addView(avatarPreview, new FrameLayout.LayoutParams(-1, -1));
-        TextView rotate = text("DESLIZA PARA GIRAR", 7, 0xff91aaba, true);
-        rotate.setGravity(Gravity.CENTER);
-        previewOverlay.addView(rotate, new LinearLayout.LayoutParams(-1, dp(17)));
+        animateIn(previewCard, 0);
+        animateIn(optionShell, 1);
     }
 
     private void showSettingsPage() {
-        LinearLayout root = pageRoot("AJUSTES", "Opciones agrupadas por categoría.");
-        LinearLayout body = row();
-        LinearLayout.LayoutParams bodyParams = new LinearLayout.LayoutParams(-1, 0, 1f);
-        bodyParams.topMargin = dp(9);
-        root.addView(body, bodyParams);
+        LinearLayout root = pageRoot("AJUSTES", "Ajusta gráficos, controles y comportamiento.");
 
-        LinearLayout navigation = column();
-        navigation.setPadding(0, 0, dp(7), 0);
-        body.addView(navigation, new LinearLayout.LayoutParams(0, -1, 0.66f));
         String[][] modules = {
-                {"video", "VÍDEO", "Imagen y rendimiento"},
-                {"audio", "AUDIO", "Efectos y volumen"},
-                {"controls", "CONTROLES", "Tacto y cámara"},
-                {"interface", "INTERFAZ", "HUD y animaciones"},
-                {"accessibility", "ACCESIBILIDAD", "Comodidad visual"}
+                {"video", "VÍDEO", "◈"},
+                {"audio", "AUDIO", "♫"},
+                {"controls", "CONTROLES", "⌖"},
+                {"interface", "HUD", "▤"},
+                {"animation", "ANIMACIÓN", "✧"},
+                {"accessibility", "ACCESO", "◉"}
         };
+        HorizontalScrollView moduleScroller = new HorizontalScrollView(getContext());
+        moduleScroller.setHorizontalScrollBarEnabled(false);
+        LinearLayout.LayoutParams tabsParams = new LinearLayout.LayoutParams(-1, dp(42));
+        tabsParams.topMargin = dp(8);
+        tabsParams.bottomMargin = dp(7);
+        root.addView(moduleScroller, tabsParams);
+        LinearLayout tabs = row();
+        tabs.setPadding(dp(1), 0, dp(1), 0);
+        moduleScroller.addView(tabs, new HorizontalScrollView.LayoutParams(-2, -1));
         for (String[] module : modules) {
             boolean active = settingsModule.equals(module[0]);
-            LinearLayout item = row();
-            item.setGravity(Gravity.CENTER_VERTICAL);
-            item.setPadding(dp(8), dp(5), dp(5), dp(5));
-            item.setBackground(shape(active
-                    ? new int[]{0xff315443, 0xff1d3a3a}
-                    : new int[]{0xff203448, 0xff152638},
-                    10, active ? 0xff83c76f : 0x444d687c));
-            LinearLayout labels = column();
-            labels.addView(text(module[1], 8, active ? 0xffe1ffd0 : white, true));
-            TextView description = text(module[2], 7, muted, false);
-            LinearLayout.LayoutParams dp = new LinearLayout.LayoutParams(-1, -2);
-            dp.topMargin = dp(2);
-            labels.addView(description, dp);
-            item.addView(labels, new LinearLayout.LayoutParams(0, -2, 1f));
-            item.setOnClickListener(v -> {
+            TextView tab = text(module[2] + "  " + module[1], 9,
+                    active ? 0xffe4ffd6 : 0xffb8cbd5, true);
+            tab.setGravity(Gravity.CENTER);
+            tab.setPadding(dp(12), 0, dp(12), 0);
+            tab.setBackground(shape(active
+                    ? new int[]{0xff355b48, 0xff1d403a}
+                    : new int[]{0xff20374a, 0xff142638},
+                    11, active ? 0xff91d77a : 0x55496379));
+            tab.setOnClickListener(v -> {
                 haptic(v);
                 settingsModule = module[0];
                 preferences.edit().putString("settings_module", settingsModule).apply();
                 showSettingsPage();
             });
-            LinearLayout.LayoutParams itemParams = new LinearLayout.LayoutParams(-1, 0, 1f);
-            itemParams.bottomMargin = dp(5);
-            navigation.addView(item, itemParams);
+            LinearLayout.LayoutParams itemParams = new LinearLayout.LayoutParams(-2, -1);
+            if (tabs.getChildCount() > 0) itemParams.leftMargin = dp(6);
+            tabs.addView(tab, itemParams);
         }
 
         ScrollView scroll = new ScrollView(getContext());
         scroll.setFillViewport(true);
         scroll.setClipToPadding(false);
+        scroll.setVerticalScrollBarEnabled(true);
+        LinearLayout.LayoutParams scrollParams = new LinearLayout.LayoutParams(-1, 0, 1f);
+        root.addView(scroll, scrollParams);
         LinearLayout content = column();
-        content.setPadding(dp(9), dp(8), dp(8), dp(9));
-        content.setBackground(shape(new int[]{0x33233d51, 0x22101d2b}, 13, 0x33445f73));
-        scroll.addView(content);
-        body.addView(scroll, new LinearLayout.LayoutParams(0, -1, 1.64f));
+        content.setPadding(dp(10), dp(9), dp(10), dp(14));
+        content.setBackground(shape(new int[]{0x33243e52, 0x22101d2b}, 15, 0x44506b80));
+        scroll.addView(content, new ScrollView.LayoutParams(-1, -2));
 
         switch (settingsModule) {
             case "audio":
-                settingsHeading(content, "SONIDO DEL JUEGO", "Ajusta la mezcla de efectos que se reproduce en el dispositivo.");
+                settingsHeading(content, "SONIDO DEL JUEGO", "Ajusta la mezcla que reproduce el dispositivo.");
                 content.addView(soundVolumeControl());
                 content.addView(settingSwitch("Efectos de juego", "Rotura, colocación, pasos, salto y recogida.",
                         "sound_effects_enabled", true));
@@ -587,7 +605,7 @@ public final class MinefadeHomeScreen extends FrameLayout {
                         "ui_sounds_enabled", true));
                 break;
             case "controls":
-                settingsHeading(content, "CONTROLES TÁCTILES", "Ajusta cada eje y el lado de movimiento.");
+                settingsHeading(content, "CONTROLES TÁCTILES", "Ajusta cada eje y la disposición de movimiento.");
                 int legacyTouch = preferences.getInt("touch_sensitivity", 100);
                 content.addView(settingSlider("Sensibilidad horizontal", "Velocidad de giro de izquierda a derecha.",
                         "touch_sensitivity_x", 35, 150, legacyTouch, "%"));
@@ -597,9 +615,11 @@ public final class MinefadeHomeScreen extends FrameLayout {
                         "joystick_deadzone", 5, 30, 12, "%"));
                 content.addView(settingSwitch("Invertir eje vertical", "Invierte el movimiento arriba y abajo.",
                         "invert_look_y", false));
-                content.addView(settingSwitch("Controles para mano izquierda", "Mueve el joystick al lado derecho y refleja el botón de salto.",
+                content.addView(settingSwitch("Controles para mano izquierda", "Mueve el joystick al lado derecho y refleja el salto.",
                         "left_handed_controls", false));
-                content.addView(menuButton("↺", "RESTABLECER CONTROLES", "Recupera la configuración predeterminada.",
+                content.addView(settingSwitch("Respuesta háptica", "Vibración breve al tocar elementos del menú.",
+                        "menu_haptics", true));
+                content.addView(menuButton("↺", "RESTABLECER CONTROLES", "Recupera los valores predeterminados.",
                         new int[]{0xff3a4b5d, 0xff263648}, 0xffa9c6d8, 38, () -> {
                             preferences.edit().putInt("touch_sensitivity", 100)
                                     .putInt("touch_sensitivity_x", 100).putInt("touch_sensitivity_y", 100)
@@ -608,48 +628,57 @@ public final class MinefadeHomeScreen extends FrameLayout {
                                     .putBoolean("menu_haptics", true).apply();
                             showSettingsPage();
                         }, 4));
-                content.addView(settingSwitch("Animación de respuesta táctil", "Pequeña vibración al pulsar controles.",
-                        "menu_haptics", true));
                 break;
             case "interface":
-                settingsHeading(content, "INTERFAZ Y HUD", "Preferencias visuales de los menús y la pantalla de juego.");
-                content.addView(settingSwitch("Animaciones de interfaz", "Transiciones suaves entre pantallas.",
+                settingsHeading(content, "INTERFAZ Y HUD", "Preferencias visuales de menús y pantalla de juego.");
+                content.addView(settingSwitch("Animaciones de interfaz", "Entradas y transiciones suaves.",
                         "menu_animations", true));
-                content.addView(settingSwitch("Mostrar información superior", "Oculta FPS, chunks y datos del HUD durante la partida.",
+                content.addView(settingSwitch("Mostrar información superior", "FPS, chunks y datos de estado en el HUD.",
                         "show_hud_stats", true));
-                content.addView(settingSwitch("Vibración de interfaz", "Respuesta táctil en botones del menú.",
-                        "menu_haptics", true));
-                content.addView(settingSlider("Escala del HUD", "Tamaño preferido de los elementos de pantalla.",
+                content.addView(settingSlider("Escala del HUD", "Tamaño de elementos durante la partida.",
                         "hud_scale", 80, 120, 100, "%"));
+                content.addView(settingSwitch("Animar el fondo de menús", "Partículas ambientales y movimiento sutil.",
+                        "menu_background_animations", true));
+                break;
+            case "animation":
+                settingsHeading(content, "ANIMACIÓN DEL JUEGO", "Controla las poses que calcula el núcleo Rust.");
+                content.addView(settingSwitch("Animaciones del mundo", "Movimiento de jugador, criaturas, alas, cabeza y reposo.",
+                        "world_animations", true));
+                content.addView(settingChoice("Calidad de animación", "Más detalle de pose; menor carga en ahorro.",
+                        "animation_quality", new String[]{"Ahorro", "Equilibrada", "Completa"}, 2));
+                content.addView(settingSwitch("Movimiento de reposo del avatar", "Respiración, parpadeo y giro automático de la vista previa.",
+                        "avatar_idle_animation", true));
+                content.addView(settingSwitch("Suavizar transiciones de apariencia", "Intercambios visuales al seleccionar estilos.",
+                        "avatar_transition_animations", true));
                 break;
             case "accessibility":
-                settingsHeading(content, "ACCESIBILIDAD", "Reduce efectos visuales y adapta la lectura.");
-                content.addView(settingSwitch("Reducir movimiento", "Evita desplazamientos y entradas animadas.",
+                settingsHeading(content, "ACCESIBILIDAD", "Adapta movimiento, contraste y lectura.");
+                content.addView(settingSwitch("Reducir movimiento", "Desactiva movimiento decorativo y transiciones.",
                         "reduce_motion", false));
-                content.addView(settingSwitch("Contraste reforzado", "Aumenta la separación visual de los paneles.",
+                content.addView(settingSwitch("Contraste reforzado", "Aumenta la separación de paneles y controles.",
                         "high_contrast", false));
-                content.addView(settingSlider("Tamaño del texto", "Preferencia de tamaño para los menús.",
+                content.addView(settingSlider("Tamaño del texto", "Escala preferida para los menús.",
                         "menu_text_scale", 85, 125, 100, "%"));
+                content.addView(settingSwitch("Animaciones de avatar", "Permite movimiento de reposo en el editor.",
+                        "avatar_idle_animation", true));
                 break;
             default:
-                settingsHeading(content, "VÍDEO Y RENDIMIENTO", "Opciones gráficas que se aplican al iniciar el mundo.");
+                settingsHeading(content, "VÍDEO Y RENDIMIENTO", "Ajustes gráficos que se aplican al entrar al mundo.");
                 content.addView(settingChoice("Calidad gráfica", "Iluminación y coste de renderizado.",
                         "graphics_quality", new String[]{"Ahorro", "Equilibrado", "Alta"}, 1));
-                content.addView(settingChoice("Distancia de visión", "Más chunks visibles requieren más memoria y GPU.",
+                content.addView(settingChoice("Distancia de visión", "Más chunks consumen memoria y GPU.",
                         "render_distance", new String[]{"Cercana · 3×3", "Normal · 5×5", "Amplia · 7×7"}, 1));
                 content.addView(settingSlider("Campo de visión", "Ángulo de cámara en primera y tercera persona.",
                         "field_of_view", 60, 100, 68, "°"));
-                content.addView(settingSwitch("Ondulación del agua", "Animación suave de la superficie del agua.",
+                content.addView(settingSwitch("Ondulación del agua", "Movimiento suave de la superficie.",
                         "water_waves", true));
-                content.addView(settingSwitch("Sombras de contacto", "Oscurecimiento suave bajo el jugador y las criaturas.",
+                content.addView(settingSwitch("Sombras de contacto", "Oscurecimiento suave bajo jugador y criaturas.",
                         "contact_shadows", true));
-                TextView note = text("Los cambios gráficos se cargan la próxima vez que entres a un mundo.", 8, muted, false);
-                note.setGravity(Gravity.TOP);
-                LinearLayout.LayoutParams np = new LinearLayout.LayoutParams(-1, -2);
-                np.topMargin = dp(7);
-                content.addView(note, np);
+                content.addView(settingSwitch("Limitar efectos de alto coste", "Deja los efectos avanzados para dispositivos compatibles.",
+                        "adaptive_graphics", true));
                 break;
         }
+        animateIn(content, 0);
     }
 
     private void settingsHeading(LinearLayout parent, String title, String subtitle) {
