@@ -17,6 +17,7 @@ public:
     float movementX{0.0f};
     float movementY{0.0f};
     bool grounded{false};
+    bool crouching{false};
     float walkPhase{0.0f};
     float animationTime{0.0f};
     std::uint8_t animationQuality{2};
@@ -29,6 +30,7 @@ public:
     void SetMovement(float x, float y);
     void Rotate(float deltaX, float deltaY);
     void Jump();
+    void SetCrouching(bool enabled) { crouching = enabled; }
     void SetAppearance(const std::array<int, 6>& appearance);
     void SetAnimationOptions(std::uint8_t quality, bool enabled);
     void SetContactShadows(bool enabled) { contactShadows = enabled; }
