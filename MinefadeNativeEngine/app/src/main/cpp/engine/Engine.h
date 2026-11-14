@@ -58,6 +58,7 @@ private:
     static Mat4 Perspective(float fovRadians, float aspect, float nearPlane, float farPlane);
     static Mat4 LookAt(const Vec3& eye, const Vec3& target, const Vec3& up);
     static Mat4 Multiply(const Mat4& a, const Mat4& b);
+    static CameraFrustum ExtractFrustum(const Mat4& mvp);
     static GLuint CompileShader(GLenum type, const char* source);
     bool CreateWorldProgram();
     bool UploadBlockAtlas(const std::uint8_t* pixels, std::size_t bytes, int width, int height);
