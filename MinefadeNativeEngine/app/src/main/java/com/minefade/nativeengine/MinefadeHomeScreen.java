@@ -418,55 +418,86 @@ public final class MinefadeHomeScreen extends FrameLayout {
     }
 
     private void showAvatarPage() {
-        LinearLayout root = pageRoot("AVATAR", "Elige estilo, equipo y detalles del personaje.");
+        LinearLayout root = pageRoot("AVATAR", "Personaliza el aspecto del personaje.");
+
+        // Landscape editor: the character preview stays on the RIGHT while every
+        // customization module and choice remains on the LEFT.
+        LinearLayout body = row();
+        body.setClipChildren(true);
+        body.setClipToPadding(true);
+        LinearLayout.LayoutParams bodyParams = new LinearLayout.LayoutParams(-1, 0, 1f);
+        bodyParams.topMargin = dp(8);
+        root.addView(body, bodyParams);
+
+        LinearLayout editor = column();
+        editor.setPadding(dp(7), dp(6), dp(7), dp(6));
+        editor.setBackground(shape(new int[]{0x44243f52, 0x22101d2b}, 15, 0x55466378));
+        LinearLayout.LayoutParams editorParams = new LinearLayout.LayoutParams(0, -1, 1.38f);
+        editorParams.rightMargin = dp(9);
+        body.addView(editor, editorParams);
 
         FrameLayout previewCard = new FrameLayout(getContext());
         previewCard.setBackground(shape(new int[]{0xff1c3b50, 0xff0d1a2a}, 18, 0x77668ba0));
         previewCard.setClipToOutline(true);
-        LinearLayout.LayoutParams previewCardParams = new LinearLayout.LayoutParams(-1, 0, 1.08f);
-        previewCardParams.topMargin = dp(8);
-        root.addView(previewCard, previewCardParams);
+        previewCard.setClipChildren(true);
+        body.addView(previewCard, new LinearLayout.LayoutParams(0, -1, 0.96f));
 
         LinearLayout previewOverlay = column();
-        previewOverlay.setPadding(dp(10), dp(8), dp(10), dp(7));
+        previewOverlay.setPadding(dp(7), dp(7), dp(7), dp(7));
         previewOverlay.setGravity(Gravity.CENTER_HORIZONTAL);
         previewCard.addView(previewOverlay, new FrameLayout.LayoutParams(-1, -1));
-        TextView previewState = text("VISTA EN TIEMPO REAL", 9, 0xffd8eaf0, true);
+        TextView previewState = text("PERSONAJE", 10, 0xffd8eaf0, true);
         previewState.setGravity(Gravity.CENTER);
-        previewOverlay.addView(previewState, new LinearLayout.LayoutParams(-1, dp(19)));
+        previewOverlay.addView(previewState, new LinearLayout.LayoutParams(-1, dp(20)));
         FrameLayout previewFrame = new FrameLayout(getContext());
         LinearLayout.LayoutParams avatarParams = new LinearLayout.LayoutParams(-1, 0, 1f);
         avatarParams.topMargin = dp(2);
-        avatarParams.bottomMargin = dp(1);
+        avatarParams.bottomMargin = dp(2);
         previewOverlay.addView(previewFrame, avatarParams);
         avatarPreview = new AvatarPreview(getContext());
         previewFrame.addView(avatarPreview, new FrameLayout.LayoutParams(-1, -1));
-        TextView rotateHint = text("ARRASTRA PARA GIRAR  ·  ANIMACIÓN DE REPOSO", 8, 0xff9db7c6, true);
+        TextView rotateHint = text("DESLIZA PARA GIRAR", 8, 0xffb6cedb, true);
         rotateHint.setGravity(Gravity.CENTER);
-        previewOverlay.addView(rotateHint, new LinearLayout.LayoutParams(-1, dp(18)));
+        previewOverlay.addView(rotateHint, new LinearLayout.LayoutParams(-1, dp(19)));
 
         String[] moduleLabels = {"PIEL", "CABELLO", "OJOS", "ROPA", "ARMADURA", "ACCESORIOS"};
-        String[] moduleIcons = {"◉", "✦", "◌", "▣", "⬟", "◇"};
+        String[][] optionNames = {
+                {"Marfil", "Arena", "Miel", "Cobre", "Ébano", "Oliva"},
+                {"Corto", "Despeinado", "Ondulado", "Largo", "Trenzado", "Cresta"},
+                {"Avellana", "Azules", "Verdes", "Grises", "Oscuros", "Ámbar"},
+                {"Aventurero", "Explorador", "Artesano", "Nómada", "Guardián", "Real"},
+                {"Sin placas", "Cuero", "Hierro", "Cobalto", "Cristal", "Élite"},
+                {"Ninguno", "Hombrera", "Capa", "Amuleto", "Diadema", "Mochila"}
+        };
+
         HorizontalScrollView moduleScroller = new HorizontalScrollView(getContext());
         moduleScroller.setHorizontalScrollBarEnabled(false);
+        moduleScroller.setFillViewport(false);
+        moduleScroller.setClipChildren(true);
+        moduleScroller.setClipToPadding(true);
         LinearLayout.LayoutParams tabsParams = new LinearLayout.LayoutParams(-1, dp(42));
-        tabsParams.topMargin = dp(8);
         tabsParams.bottomMargin = dp(7);
-        root.addView(moduleScroller, tabsParams);
+        editor.addView(moduleScroller, tabsParams);
         LinearLayout tabs = row();
         tabs.setPadding(dp(1), 0, dp(1), 0);
         moduleScroller.addView(tabs, new HorizontalScrollView.LayoutParams(-2, -1));
         for (int i = 0; i < moduleLabels.length; i++) {
             final int module = i;
             boolean selected = avatarModuleIndex == module;
-            TextView tab = text(moduleIcons[i] + "  " + moduleLabels[i], 9,
-                    selected ? 0xffe2ffd1 : 0xffb8cbd5, true);
+            LinearLayout tab = row();
             tab.setGravity(Gravity.CENTER);
-            tab.setPadding(dp(12), 0, dp(12), 0);
+            tab.setPadding(dp(9), 0, dp(10), 0);
             tab.setBackground(shape(selected
                     ? new int[]{0xff3a624e, 0xff1c403b}
                     : new int[]{0xff20374a, 0xff142638},
                     11, selected ? 0xff9be17e : 0x66516c7f));
+            tab.addView(new AvatarModuleGlyph(getContext(), module, selected
+                    ? 0xffc9f4a1 : 0xffa8c3d0),
+                    new LinearLayout.LayoutParams(dp(22), dp(22)));
+            TextView label = text(moduleLabels[i], 8, selected ? 0xffe2ffd1 : 0xffb8cbd5, true);
+            LinearLayout.LayoutParams labelParams = new LinearLayout.LayoutParams(-2, -1);
+            labelParams.leftMargin = dp(5);
+            tab.addView(label, labelParams);
             tab.setOnClickListener(v -> {
                 haptic(v);
                 avatarModuleIndex = module;
@@ -478,25 +509,17 @@ public final class MinefadeHomeScreen extends FrameLayout {
             tabs.addView(tab, tp);
         }
 
-        String[][] optionNames = {
-                {"Marfil", "Arena", "Miel", "Cobre", "Ébano", "Oliva"},
-                {"Corto", "Despeinado", "Ondulado", "Largo", "Trenzado", "Cresta"},
-                {"Avellana", "Azules", "Verdes", "Grises", "Oscuros", "Ámbar"},
-                {"Aventurero", "Explorador", "Artesano", "Nómada", "Guardián", "Real"},
-                {"Sin placas", "Cuero", "Hierro", "Cobalto", "Cristal", "Élite"},
-                {"Ninguno", "Hombrera", "Capa", "Amuleto", "Diadema", "Mochila"}
-        };
         LinearLayout optionShell = column();
-        optionShell.setPadding(dp(8), dp(7), dp(8), dp(8));
-        optionShell.setBackground(shape(new int[]{0x44243f52, 0x22101d2b}, 15, 0x55466378));
-        LinearLayout.LayoutParams optionShellParams = new LinearLayout.LayoutParams(-1, 0, 1.12f);
-        root.addView(optionShell, optionShellParams);
+        optionShell.setPadding(dp(6), dp(6), dp(6), dp(5));
+        optionShell.setBackground(shape(new int[]{0x33243f52, 0x22101d2b}, 13, 0x55466378));
+        editor.addView(optionShell, new LinearLayout.LayoutParams(-1, 0, 1f));
 
         LinearLayout optionHeading = row();
-        optionHeading.addView(text(moduleLabels[avatarModuleIndex] + "  ·  6 ESTILOS", 10, 0xffd8eaf0, true),
-                new LinearLayout.LayoutParams(0, dp(22), 1f));
-        TextView selectedName = text(optionNames[avatarModuleIndex][avatarStyles[avatarModuleIndex]], 9,
-                0xffb9f27c, true);
+        optionHeading.setGravity(Gravity.CENTER_VERTICAL);
+        optionHeading.addView(text(moduleLabels[avatarModuleIndex] + "  ·  6 ESTILOS",
+                9, 0xffd8eaf0, true), new LinearLayout.LayoutParams(0, dp(22), 1f));
+        TextView selectedName = text(optionNames[avatarModuleIndex][avatarStyles[avatarModuleIndex]],
+                9, 0xffb9f27c, true);
         selectedName.setGravity(Gravity.CENTER);
         optionHeading.addView(selectedName, new LinearLayout.LayoutParams(-2, dp(22)));
         optionShell.addView(optionHeading);
@@ -504,18 +527,20 @@ public final class MinefadeHomeScreen extends FrameLayout {
         ScrollView optionScroll = new ScrollView(getContext());
         optionScroll.setFillViewport(false);
         optionScroll.setVerticalScrollBarEnabled(false);
-        optionScroll.setClipToPadding(false);
+        optionScroll.setClipChildren(true);
+        optionScroll.setClipToPadding(true);
+        optionScroll.setOverScrollMode(View.OVER_SCROLL_IF_CONTENT_SCROLLS);
         LinearLayout.LayoutParams optionScrollParams = new LinearLayout.LayoutParams(-1, 0, 1f);
         optionScrollParams.topMargin = dp(3);
         optionShell.addView(optionScroll, optionScrollParams);
         LinearLayout grid = column();
-        grid.setClipChildren(false);
-        grid.setClipToPadding(false);
+        grid.setClipChildren(true);
+        grid.setClipToPadding(true);
         optionScroll.addView(grid, new ScrollView.LayoutParams(-1, -2));
 
         for (int r = 0; r < 2; r++) {
             LinearLayout line = row();
-            LinearLayout.LayoutParams lineParams = new LinearLayout.LayoutParams(-1, dp(94));
+            LinearLayout.LayoutParams lineParams = new LinearLayout.LayoutParams(-1, dp(82));
             if (r > 0) lineParams.topMargin = dp(6);
             grid.addView(line, lineParams);
             for (int col = 0; col < 3; col++) {
@@ -523,21 +548,22 @@ public final class MinefadeHomeScreen extends FrameLayout {
                 boolean selected = avatarStyles[avatarModuleIndex] == choice;
                 LinearLayout tile = column();
                 tile.setGravity(Gravity.CENTER);
-                tile.setPadding(dp(4), dp(4), dp(4), dp(4));
+                tile.setPadding(dp(3), dp(3), dp(3), dp(3));
                 tile.setBackground(shape(selected
                         ? new int[]{0xff365a48, 0xff1d3e39}
                         : new int[]{0xff263d51, 0xff172b3f},
-                        12, selected ? 0xff9ae17c : 0x554a687c));
+                        11, selected ? 0xff9ae17c : 0x554a687c));
                 FrameLayout icon = new FrameLayout(getContext());
+                icon.setClipChildren(true);
                 icon.addView(new AvatarOptionView(getContext(), avatarModuleIndex, choice),
                         new FrameLayout.LayoutParams(-1, -1));
                 tile.addView(icon, new LinearLayout.LayoutParams(-1, 0, 1f));
-                TextView label = text(optionNames[avatarModuleIndex][choice], 9,
+                TextView label = text(optionNames[avatarModuleIndex][choice], 8,
                         selected ? 0xffe4f8d7 : 0xffc2d2dc, selected);
                 label.setGravity(Gravity.CENTER);
                 label.setMaxLines(1);
-                LinearLayout.LayoutParams labelParams = new LinearLayout.LayoutParams(-1, dp(18));
-                labelParams.topMargin = dp(2);
+                LinearLayout.LayoutParams labelParams = new LinearLayout.LayoutParams(-1, dp(16));
+                labelParams.topMargin = dp(1);
                 tile.addView(label, labelParams);
                 tile.setOnClickListener(v -> {
                     haptic(v);
@@ -546,12 +572,12 @@ public final class MinefadeHomeScreen extends FrameLayout {
                     showAvatarPage();
                 });
                 LinearLayout.LayoutParams cell = new LinearLayout.LayoutParams(0, -1, 1f);
-                if (col > 0) cell.leftMargin = dp(6);
+                if (col > 0) cell.leftMargin = dp(5);
                 line.addView(tile, cell);
             }
         }
         animateAvatarIn(previewCard, 0);
-        animateAvatarIn(optionShell, 1);
+        animateAvatarIn(editor, 1);
     }
 
     private void showSettingsPage() {
