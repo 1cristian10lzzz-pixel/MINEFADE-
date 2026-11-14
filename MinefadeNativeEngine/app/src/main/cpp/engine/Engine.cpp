@@ -8,6 +8,9 @@
 #include <cstddef>
 #include <cstdio>
 #include <filesystem>
+#include <fstream>
+#include <sstream>
+#include <cctype>
 #include <limits>
 #include <string>
 #include <utility>
@@ -528,6 +531,7 @@ bool Engine::Initialise(float displayDensity, const std::uint8_t* atlasPixels,
         return failInitialisation(std::string("Error al reservar buffers OpenGL: ") + code);
     }
 
+    bool loadedExistingWorld = false;
     if (multiplayerMode_) {
         // All LAN peers start from the same deterministic seed. The host's block
         // edits are then replicated as authoritative block-change events.
@@ -539,27 +543,32 @@ bool Engine::Initialise(float displayDensity, const std::uint8_t* atlasPixels,
                             static_cast<float>(world_.GetSurfaceHeight(spawnX, spawnZ)) + 1.05f,
                             static_cast<float>(spawnZ)};
     } else if (!storagePath_.empty()) {
-        if (!world_.Load(storagePath_, player_.position, inventory_.counts)) {
-            // Keep a copy of a damaged/unsupported save before replacing it with
-            // a fresh playable world. This avoids silently destroying old progress.
+        loadedExistingWorld = world_.Load(storagePath_, player_.position, inventory_.counts);
+        if (!loadedExistingWorld) {
+            // Preserve an unreadable existing save before making a fresh world.
             std::error_code backupError;
             const bool saveExists = std::filesystem::exists(storagePath_, backupError) && !backupError;
             if (saveExists) {
                 const std::string backupPath = storagePath_ + ".recovery-backup";
                 std::filesystem::copy_file(storagePath_, backupPath,
                     std::filesystem::copy_options::none, backupError);
-                if (!backupError) {
-                    ENGINE_LOGE("Unreadable world save preserved at %s", backupPath.c_str());
-                } else {
-                    ENGINE_LOGE("Could not preserve unreadable world save: %s", backupError.message().c_str());
-                }
+                if (!backupError) ENGINE_LOGE("Unreadable world preserved at %s", backupPath.c_str());
+                else ENGINE_LOGE("Could not preserve unreadable world: %s", backupError.message().c_str());
             }
+            world_ = VoxelWorld(requestedWorldSeed_);
             world_.GenerateAround(8, 8, 0);
             player_.position = {8.0f, static_cast<float>(world_.GetSurfaceHeight(8, 8)) + 1.05f, 8.0f};
         }
     } else {
+        world_ = VoxelWorld(requestedWorldSeed_);
         world_.GenerateAround(8, 8, 0);
         player_.position = {8.0f, static_cast<float>(world_.GetSurfaceHeight(8, 8)) + 1.05f, 8.0f};
+    }
+    if (starterChestEnabled_ && !loadedExistingWorld && !multiplayerMode_) {
+        const int chestX = 10;
+        const int chestZ = 8;
+        const int chestY = world_.GetSurfaceHeight(chestX, chestZ) + 1;
+        world_.SetBlock(chestX, chestY, chestZ, BlockId::Chest);
     }
     if (!player_.ResolveSafeSpawn(world_)) {
         ENGINE_LOGE("Saved spawn is obstructed and no nearby safe position was found");
@@ -581,7 +590,13 @@ bool Engine::Initialise(float displayDensity, const std::uint8_t* atlasPixels,
     footstepElapsed_ = 0.0f;
     lastChunkX_ = static_cast<int>(std::floor(player_.position.x / 16.0f));
     lastChunkZ_ = static_cast<int>(std::floor(player_.position.z / 16.0f));
+    LoadEnabledMods();
+    player_.SetSpeedMultiplier(modPlayerSpeed_);
     entities_.SpawnInitial(world_);
+    const Vec3 modSpawn = player_.position;
+    for (int i = 0; i < modSheepSpawns_; ++i) entities_.SpawnEntity(modSpawn, 0, world_);
+    for (int i = 0; i < modCowSpawns_; ++i) entities_.SpawnEntity(modSpawn, 1, world_);
+    for (int i = 0; i < modBirdSpawns_; ++i) entities_.SpawnEntity(modSpawn, 2, world_);
     RebuildWorldMesh();
     UploadWorldMesh();
     UploadTransparentWorldMesh();
@@ -901,7 +916,7 @@ void Engine::Render() {
     lastFrame_ = now;
     if (!paused_) {
         const float safeDelta = std::clamp(delta, 0.0f, 0.05f);
-        environment_.Update(safeDelta);
+        environment_.Update(safeDelta * modDaySpeed_);
         player_.Update(world_, safeDelta);
         entities_.Update(world_, safeDelta);
 
@@ -1127,7 +1142,7 @@ void Engine::Touch(int action, int pointerId, float x, float y) {
         state.uiHandled = !uiUnhandled;
         state.joystick = uiUnhandled && (leftHandedControls_ ? x > static_cast<float>(width_) * 0.58f
                 : x < static_cast<float>(width_) * 0.42f);
-        state.mining = uiUnhandled && !state.joystick;
+        state.mining = uiUnhandled && !state.joystick && gameMode_ != 2;
         touches_[pointerId] = state;
         if (state.joystick) player_.SetMovement(0.0f, 0.0f);
         return;
@@ -1181,13 +1196,13 @@ void Engine::Touch(int action, int pointerId, float x, float y) {
             // a stationary hold; moving the finger turns the gesture into camera look.
             const std::uint16_t selected = inventory_.SelectedItemId();
             Vec3 placed{};
-            if (selected > 0 && world_.PlaceRay(ViewPosition(), ViewDirection(), 6.0f,
+            if (gameMode_ != 2 && selected > 0 && world_.PlaceRay(ViewPosition(), ViewDirection(), 6.0f,
                                                 static_cast<BlockId>(selected), &placed)) {
                 pendingBlockEdits_.insert(pendingBlockEdits_.end(), {
                     static_cast<int>(placed.x), static_cast<int>(placed.y), static_cast<int>(placed.z),
                     static_cast<int>(selected)
                 });
-                inventory_.ConsumeSelected();
+                if (gameMode_ != 1) inventory_.ConsumeSelected();
                 RefreshInventoryUi();
                 soundEvents_.fetch_or(2u, std::memory_order_release);
                 RebuildWorldMesh();
@@ -1325,9 +1340,13 @@ void Engine::UpdateMining(float deltaSeconds) {
         return;
     }
 
-    // Bare-hand time follows block hardness. Tool tiers and their bonuses are not
-    // available in this nine-slot prototype inventory yet.
-    miningRequired_ = std::clamp(definition->hardness * 1.5f, 0.18f, 10.0f);
+    if (gameMode_ == 2) {
+        ui_.SetTargetBlock(definition->nameEs, 0.0f);
+        return;
+    }
+    // Creative mode breaks ordinary blocks almost instantly; survival keeps the hardness curve.
+    miningRequired_ = gameMode_ == 1 ? 0.07f
+        : std::clamp(definition->hardness * 1.5f, 0.18f, 10.0f);
     miningElapsed_ += std::clamp(deltaSeconds, 0.0f, 0.05f);
     const float progress = std::clamp(miningElapsed_ / miningRequired_, 0.0f, 1.0f);
     ui_.SetTargetBlock(definition->nameEs, progress);
@@ -1424,7 +1443,73 @@ void Engine::Resume() {
     paused_ = pauseVisible_ || inventoryVisible_;
 }
 
-void Engine::SetStoragePath(std::string path) { storagePath_ = std::move(path) + "/worlds/default.mfworld"; }
+void Engine::SetStoragePath(std::string path) {
+    if (path.size() >= 8u && path.compare(path.size() - 8u, 8u, ".mfworld") == 0)
+        storagePath_ = std::move(path);
+    else
+        storagePath_ = std::move(path) + "/worlds/default.mfworld";
+}
+
+void Engine::SetWorldOptions(int gameMode, bool allowCheats, bool starterChest, std::uint32_t seed) {
+    if (ready_) return;
+    gameMode_ = std::clamp(gameMode, 0, 2);
+    allowCheats_ = allowCheats;
+    starterChestEnabled_ = starterChest;
+    requestedWorldSeed_ = seed == 0u ? 0x4D464445u : seed;
+}
+
+void Engine::SetModsDirectory(std::string path) {
+    if (!ready_) modsDirectory_ = std::move(path);
+}
+
+void Engine::LoadEnabledMods() {
+    modSheepSpawns_ = modCowSpawns_ = modBirdSpawns_ = 0;
+    modPlayerSpeed_ = 1.0f;
+    modDaySpeed_ = 1.0f;
+    if (modsDirectory_.empty()) return;
+    std::error_code error;
+    if (!std::filesystem::is_directory(modsDirectory_, error) || error) return;
+    std::vector<std::filesystem::path> packs;
+    for (const auto& entry : std::filesystem::directory_iterator(modsDirectory_, error)) {
+        if (error) break;
+        if (!entry.is_regular_file()) continue;
+        if (entry.path().extension() == ".mfmod") packs.push_back(entry.path());
+    }
+    std::sort(packs.begin(), packs.end());
+    for (const auto& pack : packs) {
+        std::ifstream file(pack);
+        if (!file) continue;
+        std::unordered_map<std::string, std::string> values;
+        std::string line;
+        std::size_t bytes = 0;
+        while (std::getline(file, line) && bytes < 32768u) {
+            bytes += line.size();
+            const std::size_t first = line.find_first_not_of(" \t\r");
+            if (first == std::string::npos || line[first] == '#') continue;
+            const std::size_t split = line.find('=', first);
+            if (split == std::string::npos) continue;
+            const std::string key = line.substr(first, split - first);
+            const std::size_t valueStart = line.find_first_not_of(" \t", split + 1);
+            if (valueStart == std::string::npos) continue;
+            std::string value = line.substr(valueStart);
+            const std::size_t valueEnd = value.find_last_not_of(" \t\r");
+            if (valueEnd != std::string::npos) value.resize(valueEnd + 1);
+            if (key.size() <= 64u && value.size() <= 512u) values[key] = value;
+        }
+        const auto enabled = values.find("enabled");
+        if (enabled == values.end() || enabled->second != "true") continue;
+        const auto number = [&values](const char* key, float fallback) {
+            const auto found = values.find(key);
+            if (found == values.end()) return fallback;
+            try { return std::stof(found->second); } catch (...) { return fallback; }
+        };
+        modSheepSpawns_ = std::clamp(modSheepSpawns_ + static_cast<int>(number("spawn.sheep", 0.0f)), 0, 24);
+        modCowSpawns_ = std::clamp(modCowSpawns_ + static_cast<int>(number("spawn.cow", 0.0f)), 0, 24);
+        modBirdSpawns_ = std::clamp(modBirdSpawns_ + static_cast<int>(number("spawn.bird", 0.0f)), 0, 24);
+        modPlayerSpeed_ = std::clamp(modPlayerSpeed_ * number("player.speed", 1.0f), 0.5f, 2.0f);
+        modDaySpeed_ = std::clamp(modDaySpeed_ * number("world.day_speed", 1.0f), 0.25f, 4.0f);
+    }
+}
 
 bool Engine::ConsumeExitRequest() {
     return exitRequested_.exchange(false, std::memory_order_acq_rel);
