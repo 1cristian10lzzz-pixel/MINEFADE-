@@ -200,3 +200,20 @@ La rama `minefade-render-optimization` prepara Review10 sobre la base Review9, c
 - **CPU/GPU:** dos workers construyen las mallas de chunks de forma determinista; se conservan buffers por chunk/material y se fusionan rangos opacos contiguos en llamadas de dibujo. Las transparencias mantienen un pase separado y orden aproximado por distancia.
 
 **Límites importantes:** el descarte de oclusión se hace por caras cubiertas por vecinos; no hay consultas de oclusión GPU ni shadow maps. El LOD actual es por distancia del chunk, no por objeto individual. La generación y construcción de mallas tienen trabajo paralelo, pero la simulación física/IA general no se ha movido íntegramente a workers. El atlas sigue siendo un atlas 2D, no texture arrays. No se afirma FPS concreto ni validación física en GPU Mali hasta probarlo en el teléfono.
+
+
+## Minefade 0.8.0 — mundos, mods y comandos
+
+La rama `minefade-worlds-mods-commands` prepara la revisión 0.8.0:
+
+- **Mundos independientes:** cada partida tiene carpeta, archivo de mundo y metadatos propios. La pantalla lista las partidas, permite crear, renombrar y eliminar, y conserva el antiguo `default.mfworld` como «Mundo anterior» durante la migración inicial.
+- **Creación de mundo:** nombre, semilla, supervivencia/creativo/aventura, trucos y cofre inicial. El cofre conserva su inventario junto al archivo de mundo.
+- **Modificaciones:** el módulo MODS permite importar y activar/desactivar archivos `.mfmod`. La primera API carga únicamente pares `clave=valor` con límites; no ejecuta scripts ni código nativo. Efectos incluidos: población adicional de ovejas, vacas, aves y cerdos, velocidad del jugador y velocidad del ciclo día/noche.
+- **Comandos:** `/ayuda`, `/oveja [cantidad]`, `/vaca [cantidad]`, `/pollo [cantidad]`, `/cerdo [cantidad]`, `/modo supervivencia|creativo|aventura`, `/tiempo dia|noche`, `/dar <id> [cantidad]`, `/tp <x> <y> <z>` y `/semilla`. Los comandos de trucos requieren que se activen en la creación del mundo.
+- **Creativo:** el inventario abre el catálogo de bloques colocables, permite seleccionar un bloque en la barra rápida y no consume el stack al colocar. Aventura no permite minar ni colocar; supervivencia mantiene las reglas anteriores.
+- **Fauna:** se añade un modelo de cerdo con patas articuladas, hocico, orejas y movimiento suave de cola; el nuevo comando y los mods pueden generarlo.
+- **Texturas y audio:** el generador procedural añade iluminación por cara y patrones específicos para deepslate, cobre envejecido, amatista, prismarina, terracota, piedra del End y panales. Los eventos de audio se estratifican por tipo de material usando las muestras PCM existentes.
+
+Los mundos separados solo guardan partidas creadas desde el nuevo gestor. La copia antigua se migra como mundo independiente al primer inicio. Los mods de datos tienen efectos limitados a las claves documentadas; esto no es todavía una API de scripting, Java mod loader o carga de bibliotecas nativas. La lista de comandos tampoco es paridad completa con Minecraft: se limita a los comandos enumerados y solo funciona dentro de un mundo con trucos permitidos.
+
+El modo creativo reutiliza el catálogo de bloques placeables y la barra rápida de nueve ranuras; no añade aún recetas, herramientas ni un sistema de inventario de doble mano.
