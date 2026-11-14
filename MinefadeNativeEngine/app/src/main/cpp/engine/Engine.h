@@ -28,6 +28,9 @@ public:
     void Pause();
     void Resume();
     void SetStoragePath(std::string path);
+    void SetWorldOptions(int gameMode, bool allowCheats, bool starterChest, std::uint32_t seed);
+    void SetModsDirectory(std::string path);
+    std::string ExecuteCommand(const std::string& command);
     bool ConsumeExitRequest();
     std::uint32_t ConsumeSoundEvents();
     void SetMultiplayerMode(bool enabled, int playerSlot);
@@ -70,6 +73,9 @@ private:
     void UploadItemMesh();
     void HandleUiAction(const std::string& action);
     void SaveWorld();
+    void LoadEnabledMods();
+    void OpenStarterChest();
+    void TakeStarterChestContents();
     void RefreshInventoryUi();
     void UpdateMining(float deltaSeconds);
     Vec3 ViewPosition() const;
@@ -144,6 +150,20 @@ private:
     bool pauseVisible_{false};
     bool thirdPerson_{false};
     bool crouching_{false};
+    int gameMode_{0};
+    bool allowCheats_{false};
+    bool starterChestEnabled_{false};
+    bool starterChestOpen_{false};
+    std::uint32_t requestedWorldSeed_{0x4D464445u};
+    std::string modsDirectory_;
+    int modSheepSpawns_{0};
+    int modCowSpawns_{0};
+    int modBirdSpawns_{0};
+    float modPlayerSpeed_{1.0f};
+    float modDaySpeed_{1.0f};
+    std::array<std::uint32_t, 9> starterChestContents_{{
+        1064u, 5032u, 6416u, 2004u, 1704u, 5408u, 0u, 0u, 0u
+    }};
     std::string storagePath_;
     VoxelWorld world_;
     Player player_;
