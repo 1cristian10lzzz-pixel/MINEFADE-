@@ -801,7 +801,7 @@ void Engine::RebuildEntityMesh() {
     }
     // Block items use their own atlas-backed draw pass; entity models remain
     // vertex-coloured and therefore do not sample an arbitrary texture pixel.
-    droppedItems_.AppendMesh(itemMesh_);
+    droppedItems_.AppendMesh(itemMesh_, &frustum);
 }
 
 void Engine::UploadItemMesh() {
