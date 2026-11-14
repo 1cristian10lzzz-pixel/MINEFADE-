@@ -794,6 +794,16 @@ mod tests {
         let mut pose = MfEntityPose::default();
         unsafe { minefade_entity_compute_pose(2, entity.phase, 1.0, 2, 1, &mut pose) };
         assert!(pose.left_wing_roll.abs() > 0.0);
+        for kind in 0..=6 {
+            unsafe { minefade_entity_compute_pose(kind, 1.2, 1.8, 2, 1, &mut pose) };
+            assert!(pose.front_left_leg_pitch.is_finite());
+            assert!(pose.front_right_leg_pitch.is_finite());
+            assert!(pose.rear_left_leg_pitch.is_finite());
+            assert!(pose.rear_right_leg_pitch.is_finite());
+            assert!(pose.body_bob.is_finite());
+            assert!(pose.head_yaw.is_finite());
+            assert!(pose.eyelid.is_finite());
+        }
         let mut env = MfEnvironmentState { time_of_day: 0.25, daylight: 1.0 };
         unsafe { minefade_environment_update(&mut env, 60.0) };
         assert!(env.time_of_day > 0.25 && env.daylight.is_finite());
