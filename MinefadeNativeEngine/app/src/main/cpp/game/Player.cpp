@@ -472,8 +472,11 @@ void EntitySystem::Update(const VoxelWorld& world, float deltaSeconds) {
     }
 }
 
-void EntitySystem::AppendMesh(std::vector<WorldVertex>& output) const {
+void EntitySystem::AppendMesh(std::vector<WorldVertex>& output, const CameraFrustum* frustum) const {
     for (const Entity& entity : entities_) {
+        if (frustum != nullptr && !frustum->IntersectsAabb(
+                entity.position.x-0.85f,entity.position.y-0.10f,entity.position.z-0.85f,
+                entity.position.x+0.85f,entity.position.y+1.65f,entity.position.z+0.85f)) continue;
         MfEntityPose pose{};
         minefade_entity_compute_pose(entity.kind, entity.phase, animationTime_,
                                      animationQuality_, animationsEnabled_ ? 1u : 0u, &pose);
