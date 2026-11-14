@@ -74,7 +74,7 @@ public:
     // Returns the number of items picked up and writes the last picked item ID.
     std::size_t Update(const VoxelWorld& world, const Player& player, Inventory& inventory,
                        float deltaSeconds, std::uint16_t* lastPickedItemId = nullptr);
-    void AppendMesh(std::vector<WorldVertex>& output) const;
+    void AppendMesh(std::vector<WorldVertex>& output, const CameraFrustum* frustum = nullptr) const;
     std::size_t Count() const { return drops_.size(); }
 private:
     std::vector<DroppedItem> drops_;
