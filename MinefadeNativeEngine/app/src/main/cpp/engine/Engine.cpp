@@ -608,6 +608,7 @@ bool Engine::Initialise(float displayDensity, const std::uint8_t* atlasPixels,
     for (int i = 0; i < modSheepSpawns_; ++i) entities_.SpawnEntity(modSpawn, 0, world_);
     for (int i = 0; i < modCowSpawns_; ++i) entities_.SpawnEntity(modSpawn, 1, world_);
     for (int i = 0; i < modBirdSpawns_; ++i) entities_.SpawnEntity(modSpawn, 2, world_);
+    for (int i = 0; i < modPigSpawns_; ++i) entities_.SpawnEntity(modSpawn, 3, world_);
     RebuildWorldMesh();
     UploadWorldMesh();
     UploadTransparentWorldMesh();
@@ -1314,17 +1315,17 @@ std::string Engine::ExecuteCommand(const std::string& rawCommand) {
         [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
 
     if (verb == "ayuda" || verb == "help") {
-        return "/oveja [cantidad] · /vaca [cantidad] · /pollo [cantidad] · "
+        return "/oveja [cantidad] · /vaca [cantidad] · /pollo [cantidad] · /cerdo [cantidad] · "
                "/modo supervivencia|creativo|aventura · /tiempo dia|noche · "
                "/dar <id> [cantidad] · /tp <x> <y> <z> · /semilla";
     }
     if (!allowCheats_) return "Los trucos están desactivados en este mundo. Actívalos en sus opciones.";
 
-    if (verb == "oveja" || verb == "vaca" || verb == "pollo") {
+    if (verb == "oveja" || verb == "vaca" || verb == "pollo" || verb == "cerdo") {
         int count = 1;
         if (!(input >> count)) count = 1;
         count = std::clamp(count, 1, 16);
-        const int kind = verb == "oveja" ? 0 : (verb == "vaca" ? 1 : 2);
+        const int kind = verb == "oveja" ? 0 : (verb == "vaca" ? 1 : (verb == "pollo" ? 2 : 3));
         int created = 0;
         for (int i = 0; i < count; ++i)
             if (entities_.SpawnEntity(player_.position, kind, world_)) ++created;
@@ -1649,7 +1650,7 @@ void Engine::SetModsDirectory(std::string path) {
 }
 
 void Engine::LoadEnabledMods() {
-    modSheepSpawns_ = modCowSpawns_ = modBirdSpawns_ = 0;
+    modSheepSpawns_ = modCowSpawns_ = modBirdSpawns_ = modPigSpawns_ = 0;
     modPlayerSpeed_ = 1.0f;
     modDaySpeed_ = 1.0f;
     if (modsDirectory_.empty()) return;
@@ -1692,6 +1693,7 @@ void Engine::LoadEnabledMods() {
         modSheepSpawns_ = std::clamp(modSheepSpawns_ + static_cast<int>(number("spawn.sheep", 0.0f)), 0, 24);
         modCowSpawns_ = std::clamp(modCowSpawns_ + static_cast<int>(number("spawn.cow", 0.0f)), 0, 24);
         modBirdSpawns_ = std::clamp(modBirdSpawns_ + static_cast<int>(number("spawn.bird", 0.0f)), 0, 24);
+        modPigSpawns_ = std::clamp(modPigSpawns_ + static_cast<int>(number("spawn.pig", 0.0f)), 0, 24);
         modPlayerSpeed_ = std::clamp(modPlayerSpeed_ * number("player.speed", 1.0f), 0.5f, 2.0f);
         modDaySpeed_ = std::clamp(modDaySpeed_ * number("world.day_speed", 1.0f), 0.25f, 4.0f);
     }
