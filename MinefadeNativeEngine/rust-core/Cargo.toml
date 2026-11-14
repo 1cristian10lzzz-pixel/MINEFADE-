@@ -1,0 +1,18 @@
+[package]
+name = "minefade-core"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[lib]
+name = "minefade_core"
+crate-type = ["staticlib", "rlib"]
+
+[profile.release]
+panic = "abort"
+lto = true
+codegen-units = 1
+strip = "symbols"
+
+[profile.dev]
+panic = "abort"
