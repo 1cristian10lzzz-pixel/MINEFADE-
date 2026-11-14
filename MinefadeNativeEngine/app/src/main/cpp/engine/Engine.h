@@ -160,6 +160,7 @@ private:
     int modSheepSpawns_{0};
     int modCowSpawns_{0};
     int modBirdSpawns_{0};
+    int modPigSpawns_{0};
     float modPlayerSpeed_{1.0f};
     float modDaySpeed_{1.0f};
     std::array<std::uint32_t, 9> starterChestContents_{{
