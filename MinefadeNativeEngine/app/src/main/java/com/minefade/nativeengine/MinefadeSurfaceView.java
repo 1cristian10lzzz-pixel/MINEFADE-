@@ -24,8 +24,8 @@ public final class MinefadeSurfaceView extends GLSurfaceView {
 
     private static final String TAG = "Minefade";
     private static final int ATLAS_WIDTH = 576;
-    private static final int ATLAS_HEIGHT = 522;
-    private static final int ATLAS_TILE_COUNT = 918;
+    private static final int ATLAS_HEIGHT = 594;
+    private static final int ATLAS_TILE_COUNT = 1026;
     private volatile boolean nativeReady;
     private final InitializationListener initializationListener;
     private final SharedPreferences preferences;
