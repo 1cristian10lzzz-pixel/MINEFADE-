@@ -10,9 +10,11 @@ set(MINEFADE_RUST_TARGET_DIR "${CMAKE_CURRENT_BINARY_DIR}/rust-target")
 
 if(ANDROID_ABI STREQUAL "arm64-v8a")
     set(MINEFADE_RUST_TARGET "aarch64-linux-android")
+    set(MINEFADE_RUST_TARGET_TOKEN "AARCH64_LINUX_ANDROID")
     set(MINEFADE_RUST_LINKER "${CMAKE_ANDROID_NDK}/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android24-clang")
 elseif(ANDROID_ABI STREQUAL "armeabi-v7a")
     set(MINEFADE_RUST_TARGET "armv7-linux-androideabi")
+    set(MINEFADE_RUST_TARGET_TOKEN "ARMV7_LINUX_ANDROIDEABI")
     set(MINEFADE_RUST_LINKER "${CMAKE_ANDROID_NDK}/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi24-clang")
 else()
     message(FATAL_ERROR "Minefade Rust core has no Android target mapping for ABI: ${ANDROID_ABI}")
@@ -39,8 +41,6 @@ add_custom_command(
 add_custom_target(minefade_rust_build DEPENDS "${MINEFADE_RUST_LIBRARY}")
 add_library(minefade_rust_core STATIC IMPORTED GLOBAL)
 set_target_properties(minefade_rust_core PROPERTIES IMPORTED_LOCATION "${MINEFADE_RUST_LIBRARY}")
-add_dependencies(minefade_rust_core minefade_rust_build)
-
 include(FetchContent)
 
 set(CMAKE_CXX_STANDARD 20)
@@ -100,6 +100,8 @@ add_library(minefade_native SHARED
     ui/RmlUiOpenGLES.cpp
     ui/RmlUiRuntime.cpp
 )
+
+add_dependencies(minefade_native minefade_rust_build)
 
 target_include_directories(minefade_native PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
