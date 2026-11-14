@@ -68,12 +68,17 @@ button:active { background: #47789b; }
 #pickup { position: absolute; z-index: 5; right: 12dp; bottom: 54dp; color: #ffffff; font-size: 11dp; text-shadow: 0dp 1dp 3dp #000000; background: #102131bb; border: 1dp #d9e9a455; border-radius: 9dp; padding: 6dp 9dp; pointer-events: none; }
 
 #inventory-panel { z-index: 9; }
+#starter-chest-panel { z-index: 11; width: 280dp; margin-left: -140dp; max-height: 70%; }
+#starter-chest-panel .actions { justify-content: center; }
+#starter-chest-panel button { min-width: 104dp; }
+#chat-message { position: absolute; z-index: 12; left: 50%; bottom: 62dp; width: 78%; margin-left: -39%; padding: 7dp 10dp; border-radius: 10dp; border: 1dp #d9e9a466; background: #101d2be8; color: #f3f7f8; font-size: 10dp; text-align: center; display: none; pointer-events: none; }
 </style>
 </head>
 <body>
 <div id="topbar">
   <div class="actions">
     <div id="stats">FPS -- · Chunks --</div>
+    <button id="starter-chest-open">COFRE</button>
     <button id="inventory">⋯</button>
     <button id="perspective">◉</button>
     <button id="pause">Ⅱ</button>
@@ -104,6 +109,14 @@ button:active { background: #47789b; }
     <button id="save-exit">Guardar y salir</button>
   </div>
 </div>
+<div id="starter-chest-panel" class="panel">
+  <div id="starter-chest-items"></div>
+  <div class="actions">
+    <button id="starter-chest-take">Recoger todo</button>
+    <button id="starter-chest-close">Cerrar</button>
+  </div>
+</div>
+<div id="chat-message"></div>
 </body>
 </rml>
 )RML";
@@ -208,6 +221,9 @@ bool RmlUiRuntime::Initialise(int width, int height, float displayDensity, Actio
     AttachAction("inventory-close", "inventory-close");
     AttachAction("jump", "jump");
     AttachAction("crouch", "crouch");
+    AttachAction("starter-chest-open", "starter-chest-open");
+    AttachAction("starter-chest-close", "starter-chest-close");
+    AttachAction("starter-chest-take", "starter-chest-take");
     for (int slot = 0; slot < 9; ++slot) {
         const std::string id = "slot-" + std::to_string(slot);
         AttachAction(id.c_str(), id.c_str());
@@ -354,6 +370,26 @@ void RmlUiRuntime::SetCrouchEnabled(bool enabled) {
         element->SetProperty("border", enabled ? "2dp #e2ffb0" : "1dp #c3d8e888");
         element->SetProperty("color", enabled ? "#102119" : "#f5fbff");
     }
+}
+
+void RmlUiRuntime::SetChestContents(const std::string& markup) {
+    if (document_ == nullptr) return;
+    if (Rml::Element* element = document_->GetElementById("starter-chest-items"))
+        element->SetInnerRML(markup);
+}
+
+void RmlUiRuntime::SetChatMessage(const std::string& message) {
+    if (document_ == nullptr) return;
+    if (Rml::Element* element = document_->GetElementById("chat-message")) {
+        element->SetInnerRML(message);
+        element->SetProperty("display", message.empty() ? "none" : "block");
+    }
+}
+
+void RmlUiRuntime::SetChestButtonVisible(bool visible) {
+    if (document_ == nullptr) return;
+    if (Rml::Element* element = document_->GetElementById("starter-chest-open"))
+        element->SetProperty("display", visible ? "block" : "none");
 }
 
 void RmlUiRuntime::SetQuickbarSlot(int slot,const std::string& label,bool selected) {
