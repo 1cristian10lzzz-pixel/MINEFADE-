@@ -156,7 +156,25 @@ ES.update({
     'raw_iron_block':'Bloque de hierro en bruto',
     'raw_gold_block':'Bloque de oro en bruto',
     'raw_copper_block':'Bloque de cobre en bruto',
-    'copper_block':'Bloque de cobre'
+    'copper_block':'Bloque de cobre',
+    'cherry_log':'Tronco de cerezo','stripped_cherry_log':'Tronco de cerezo descortezado',
+    'cherry_planks':'Tablones de cerezo','cherry_leaves':'Hojas de cerezo',
+    'cherry_sapling':'Brote de cerezo','cherry_stairs':'Escaleras de cerezo',
+    'cherry_slab':'Losa de cerezo','pink_petals':'Pétalos rosas',
+    'mangrove_log':'Tronco de mangle','stripped_mangrove_log':'Tronco de mangle descortezado',
+    'mangrove_planks':'Tablones de mangle','mangrove_leaves':'Hojas de mangle',
+    'mangrove_propagule':'Propágulo de mangle','mangrove_roots':'Raíces de mangle',
+    'muddy_mangrove_roots':'Raíces de mangle embarradas','mud':'Barro',
+    'packed_mud':'Barro compacto','mud_bricks':'Ladrillos de barro',
+    'mud_brick_stairs':'Escaleras de ladrillos de barro','mud_brick_slab':'Losa de ladrillos de barro',
+    'sculk':'Sculk','sculk_catalyst':'Catalizador de sculk','sculk_sensor':'Sensor de sculk',
+    'sculk_shrieker':'Chillador de sculk','reinforced_deepslate':'Pizarra profunda reforzada',
+    'blackstone':'Piedra negra','polished_blackstone':'Piedra negra pulida',
+    'gilded_blackstone':'Piedra negra dorada','crying_obsidian':'Obsidiana llorosa',
+    'crimson_planks':'Tablones carmesí','warped_planks':'Tablones distorsionados',
+    'crimson_stairs':'Escaleras carmesí','warped_stairs':'Escaleras distorsionadas',
+    'ochre_froglight':'Luz de rana ocre','verdant_froglight':'Luz de rana verdosa',
+    'pearlescent_froglight':'Luz de rana nacarada'
 })
 
 COLOR_NAMES = {
@@ -192,13 +210,25 @@ def classify(key: str, block: dict) -> tuple[str,int,float,str,int,int]:
         shape='Cube'; flags=1|2; hardness=-1.0; tool='None'; light=0; stack=64
     elif k == 'amethyst_cluster':
         shape='Thin'; flags=1|4; hardness=1.5; tool='Pickaxe'; light=5; stack=64
+    elif k in {'ochre_froglight','verdant_froglight','pearlescent_froglight'}:
+        shape='Cube'; flags=1|2|32; hardness=0.3; tool='Pickaxe'; light=15; stack=64
+    elif k == 'sculk_catalyst':
+        shape='Cube'; flags=1|2|32; hardness=3.0; tool='Hoe'; light=3; stack=64
+    elif k == 'sculk_shrieker':
+        shape='Cube'; flags=1|2; hardness=3.0; tool='Hoe'; light=0; stack=64
+    elif k == 'reinforced_deepslate':
+        shape='Cube'; flags=1|2; hardness=55.0; tool='Pickaxe'; light=0; stack=64
+    elif k == 'crying_obsidian':
+        shape='Cube'; flags=1|2|32; hardness=50.0; tool='Pickaxe'; light=10; stack=64
+    elif k == 'sculk_sensor':
+        shape='Cube'; flags=1|2; hardness=3.0; tool='Hoe'; light=0; stack=64
     elif k == 'air' or k in {'info_update','info_update2','movingblock','reserved6','pistonarmcollision','structure_void'}:
         shape='None'; flags=0; hardness=0.0; tool='None'; light=0; stack=64
     elif k in {'barrier','invisiblebedrock'}:
         shape='None'; flags=1; hardness=-1.0; tool='None'; light=0; stack=64
     elif k in {'water','flowing_water','lava','flowing_lava','bubble_column'}:
         shape='Fluid'; flags=4|8; hardness=100.0 if 'lava' in k else 100.0; tool='None'; light=15 if 'lava' in k else 0; stack=64
-    elif (any(w in k for w in ['sapling','tallgrass','seagrass','flower','mushroom','deadbush','wheat','beetroot','double_plant','sea_pickle','coral_fan','bamboo_sapling','nether_wart','carrots','potatoes']) and
+    elif (any(w in k for w in ['sapling','propagule','pink_petals','tallgrass','seagrass','flower','mushroom','deadbush','wheat','beetroot','double_plant','sea_pickle','coral_fan','bamboo_sapling','nether_wart','carrots','potatoes']) and
           not k.endswith('_mushroom_block') and k != 'nether_wart_block'):
         shape='CrossPlant'; flags=16; hardness=0.0; tool='None'; light=3 if 'sea_pickle' in k else 0; stack=64
     elif 'slab' in k and not k.startswith('double_'):
@@ -228,8 +258,8 @@ def classify(key: str, block: dict) -> tuple[str,int,float,str,int,int]:
         if k == 'bedrock': hardness=-1.0
         elif 'ancient_debris' in k or 'netherite_block' in k or 'obsidian' in k: hardness=50.0
         elif 'deepslate' in k: hardness=3.0
-        elif any(w in k for w in ['dirt','sand','gravel','farmland','path','grass']): hardness=0.6; tool='Shovel'
-        elif any(w in k for w in ['log','planks','wood','hay','bookshelf','jukebox','noteblock']): hardness=2.0; tool='Axe'
+        elif any(w in k for w in ['dirt','mud','sand','gravel','farmland','path','grass']): hardness=0.6; tool='Shovel'
+        elif any(w in k for w in ['log','planks','wood','roots','hay','bookshelf','jukebox','noteblock']): hardness=2.0; tool='Axe'
         elif any(w in k for w in ['ore','stone','brick','prismarine','netherrack','nether_brick','quartz','cobble','furnace']): hardness=3.0 if 'ore' in k else 1.5
         elif any(w in k for w in ['gold','iron','diamond','emerald','lapis','copper']): hardness=5.0; tool='Pickaxe'
         if ('glowstone' in k or 'sealantern' in k or 'glowingobsidian' in k or
@@ -268,6 +298,13 @@ def palette(key: str, face: int) -> tuple[int,int,int]:
         if color in k and any(x in k for x in ['wool','stained','glazed','carpet','banner','concrete','shulker']):
             return rgb
     if 'deepslate' in k: return (65,69,77) if face != FACE_TOP else (76,79,88)
+    if 'cherry' in k: return (183,119,137) if face != FACE_TOP else (211,158,167)
+    if 'mangrove' in k: return (112,72,63) if face != FACE_TOP else (148,99,78)
+    if 'mud' in k: return (111,83,65)
+    if 'sculk' in k: return (25,77,83)
+    if 'blackstone' in k: return (48,49,58)
+    if 'reinforced_deepslate' in k: return (54,61,69)
+    if 'froglight' in k: return (211,181,108)
     if 'amethyst' in k: return (91,64,119) if face != FACE_BOTTOM else (63,45,89)
     if 'oxidized' in k and 'copper' in k: return (69,139,126)
     if 'weathered' in k and 'copper' in k: return (91,151,117)
@@ -470,6 +507,31 @@ def make_tile(key: str, face: int, block_idx: int) -> bytes:
                 mortar = (y % 4 == 0) or ((x + (4 if row % 2 else 0)) % 8 == 0)
                 if mortar: n -= 29
                 elif (x * 5 + y * 3 + block_idx) % 17 == 0: n += 11
+            elif 'sculk' in k:
+                vein = math.sin((x * 0.58 + block_idx) * 0.7) * math.cos(y * 0.66)
+                n += 26 if vein > 0.42 else (-16 if vein < -0.55 else 0)
+                if (x * 7 + y * 11 + block_idx) % 31 < 2: n += 36
+            elif 'cherry' in k or 'mangrove' in k:
+                grain = math.sin((x * 0.44 + y * 0.25 + block_idx) * 0.8)
+                n += int(grain * 14)
+                if 'leaves' in k and (x * 5 + y * 9 + block_idx) % 13 < 3: n += 22
+                if 'log' in k and face != FACE_SIDE:
+                    radius = math.sqrt((x - 7.5) ** 2 + (y - 7.5) ** 2)
+                    n += 18 if int(radius * 1.4) % 3 == 0 else -4
+            elif 'blackstone' in k or 'reinforced_deepslate' in k:
+                seam = (y + (x // 4) * 2 + block_idx) % 6
+                n += 14 if seam in (0, 1) else (-18 if seam == 4 else 0)
+                if (x * 11 + y * 3 + block_idx) % 23 == 0: n += 24
+            elif 'froglight' in k:
+                halo = math.sin(x * 0.54 + block_idx) + math.cos(y * 0.52)
+                n += 23 if halo > 0.35 else (-8 if halo < -0.6 else 0)
+                if x in (1,14) or y in (1,14): n += 9
+            elif 'pink_petals' in k:
+                petal = (x * 7 + y * 5 + block_idx) % 19
+                n += 30 if petal in (0,1,2,3) else (-10 if petal > 15 else 0)
+            elif 'mud' in k:
+                fleck = (x * 13 + y * 17 + block_idx) % 23
+                n += 18 if fleck < 3 else (-10 if fleck > 20 else 0)
             elif 'amethyst' in k:
                 # Distinct crystal facets and a dark geode-like matrix.
                 facet = (x * 3 + y * 5 + block_idx) % 8
