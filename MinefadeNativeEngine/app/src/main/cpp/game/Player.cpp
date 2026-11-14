@@ -536,6 +536,7 @@ void EntitySystem::AppendMesh(std::vector<WorldVertex>& output) const {
                 0.55f, 0.42f, 0.78f);
 
         const float bob = pose.body_bob;
+        const float eyeOpen = std::max(0.08f, 1.0f - pose.eyelid * 0.94f);
         if (entity.kind == 0) {
             const std::array<float, 3> wool{0.91f, 0.88f, 0.78f};
             const std::array<float, 3> face{0.63f, 0.47f, 0.37f};
@@ -543,7 +544,7 @@ void EntitySystem::AppendMesh(std::vector<WorldVertex>& output) const {
             AppendEntityBoxAnimated(output, entity.position, {0.0f,0.58f+bob,0.0f},
                 {0.48f,0.38f,0.64f}, wool, {0.0f,0.58f,0.0f}, {0.0f,0.0f,0.0f});
             AppendEntityBoxAnimated(output, entity.position, {0.0f,0.73f+bob,0.64f},
-                {0.24f,0.25f,0.24f}, face, {0.0f,0.74f,0.54f}, {pose.head_pitch,0.0f,0.0f});
+                {0.24f,0.25f,0.24f}, face, {0.0f,0.74f,0.54f}, {pose.head_pitch,pose.head_yaw,0.0f});
             const std::array<Vec3,4> legs{{
                 {-0.27f,0.22f,-0.34f},{0.27f,0.22f,-0.34f},
                 {-0.27f,0.22f,0.36f},{0.27f,0.22f,0.36f}}};
@@ -557,7 +558,7 @@ void EntitySystem::AppendMesh(std::vector<WorldVertex>& output) const {
             }
             const std::array<float,3> eye{0.12f,0.10f,0.08f};
             AppendEntityBoxAnimated(output,entity.position,{-0.13f,0.79f+bob,0.855f},
-                {0.035f,0.045f,0.028f},eye,{0.0f,0.74f,0.54f},{pose.head_pitch,0.0f,0.0f});
+                {0.035f,0.045f*eyeOpen,0.028f},eye,{0.0f,0.74f,0.54f},{pose.head_pitch,0.0f,0.0f});
             AppendEntityBoxAnimated(output,entity.position,{0.13f,0.79f+bob,0.855f},
                 {0.035f,0.045f,0.028f},eye,{0.0f,0.74f,0.54f},{pose.head_pitch,0.0f,0.0f});
             AppendEntityBoxAnimated(output,entity.position,{0.0f,0.62f+bob,0.87f},
@@ -593,7 +594,7 @@ void EntitySystem::AppendMesh(std::vector<WorldVertex>& output) const {
             const std::array<float,3> horn{0.88f,0.82f,0.67f};
             for (float side : {-1.0f,1.0f}) {
                 AppendEntityBoxAnimated(output,entity.position,{side*0.17f,0.88f+bob,0.94f},
-                    {0.04f,0.05f,0.028f},eye,{0.0f,0.82f,0.64f},{pose.head_pitch,0.0f,0.0f});
+                    {0.04f,0.05f*eyeOpen,0.028f},eye,{0.0f,0.82f,0.64f},{pose.head_pitch,0.0f,0.0f});
                 AppendEntityBoxAnimated(output,entity.position,{side*0.22f,1.13f+bob,0.68f},
                     {0.065f,0.15f,0.065f},horn,{0.0f,0.82f,0.64f},{pose.head_pitch,0.0f,0.0f});
             }
@@ -624,7 +625,7 @@ void EntitySystem::AppendMesh(std::vector<WorldVertex>& output) const {
             const std::array<float,3> eye{0.12f,0.09f,0.05f};
             for (float side : {-1.0f,1.0f}) {
                 AppendEntityBoxAnimated(output,entity.position,{side*0.12f,0.73f+bob,0.52f},
-                    {0.035f,0.04f,0.025f},eye,{0.0f,0.69f,0.36f},{pose.head_pitch,pose.head_yaw,0.0f});
+                    {0.035f,0.04f*eyeOpen,0.025f},eye,{0.0f,0.69f,0.36f},{pose.head_pitch,pose.head_yaw,0.0f});
             }
         }
     }
