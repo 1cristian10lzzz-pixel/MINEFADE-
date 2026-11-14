@@ -382,7 +382,7 @@ public final class MinefadeHomeScreen extends FrameLayout {
             LinearLayout.LayoutParams firstParams = new LinearLayout.LayoutParams(-2,dp(38));
             firstParams.topMargin = dp(12);
             empty.addView(first,firstParams);
-            list.addView(empty,new LinearLayout.LayoutParams(-1,0,1f));
+            list.addView(empty,new LinearLayout.LayoutParams(-1,dp(224)));
         } else {
             for (WorldManager.WorldInfo world : worlds) {
                 LinearLayout card = row();
