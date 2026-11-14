@@ -119,7 +119,6 @@ private:
     void StartNextChunkJob();
     const Chunk* FindChunk(int chunkX, int chunkZ) const;
     Chunk* FindChunk(int chunkX, int chunkZ);
-    bool IsChunkFullySealed(const Chunk& chunk) const;
 
     std::uint32_t seed_;
     std::map<std::pair<int, int>, Chunk> chunks_;
