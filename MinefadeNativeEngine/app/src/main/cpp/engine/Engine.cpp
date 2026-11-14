@@ -1,4 +1,5 @@
 #include "Engine.h"
+#include "minefade_core.h"
 
 #include <android/log.h>
 
@@ -438,6 +439,10 @@ bool Engine::Initialise(float displayDensity, const std::uint8_t* atlasPixels,
         Shutdown();
         return false;
     };
+
+    if (minefade_core_abi_version() != MINEFADE_CORE_ABI_VERSION) {
+        return failInitialisation("La versión ABI del núcleo Rust no coincide con la esperada por el motor C++.");
+    }
 
     // Clear any stale driver error before attributing a failure to a startup stage.
     while (glGetError() != GL_NO_ERROR) { }
