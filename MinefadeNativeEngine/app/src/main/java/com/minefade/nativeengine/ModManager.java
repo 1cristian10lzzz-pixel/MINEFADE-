@@ -155,7 +155,7 @@ public final class ModManager {
                 if (key.matches("[a-zA-Z0-9_.-]{1,64}") && content.length() <= 512)
                     values.put(key, content);
             }
-            if (!"1".equals(values.get("version")) && values.get("version") == null) return null;
+            if (!"1".equals(values.get("version")) && !"1.0".equals(values.get("version"))) return null;
             return new ModInfo(file, values);
         } catch (Exception ignored) {
             return null;
