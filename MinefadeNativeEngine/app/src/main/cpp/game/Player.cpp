@@ -497,6 +497,10 @@ void EntitySystem::AppendMesh(std::vector<WorldVertex>& output, const CameraFrus
 
         const float bob = pose.body_bob;
         const float eyeOpen = std::max(0.08f, 1.0f - pose.eyelid * 0.94f);
+        const float earIdle = animationsEnabled_
+            ? std::sin(animationTime_ * 2.15f + entity.phase) * 0.075f : 0.0f;
+        const float tailIdle = animationsEnabled_
+            ? std::sin(animationTime_ * 1.7f + entity.phase * 1.3f) * 0.12f : 0.0f;
         if (entity.kind == 0) {
             const std::array<float, 3> wool{0.91f, 0.88f, 0.78f};
             const std::array<float, 3> face{0.63f, 0.47f, 0.37f};
@@ -524,7 +528,16 @@ void EntitySystem::AppendMesh(std::vector<WorldVertex>& output, const CameraFrus
             AppendEntityBoxAnimated(output,entity.position,{0.0f,0.62f+bob,0.87f},
                 {0.12f,0.08f,0.045f},face,{0.0f,0.74f,0.54f},{pose.head_pitch,0.0f,0.0f});
             AppendEntityBoxAnimated(output,entity.position,{0.0f,0.70f+bob,-0.71f},
-                {0.055f,0.07f,0.15f},wool,{0.0f,0.70f,-0.56f},{0.0f,pose.tail_yaw,0.0f});
+                {0.055f,0.07f,0.15f},wool,{0.0f,0.70f,-0.56f},{0.0f,pose.tail_yaw+tailIdle,0.0f});
+            // Low-poly ears and nose give the sheep a more recognisable face.
+            for (float side : {-1.0f,1.0f}) {
+                AppendEntityBoxAnimated(output,entity.position,{side*0.27f,0.84f+bob,0.66f},
+                    {0.10f,0.075f,0.16f},face,{0.0f,0.74f,0.54f},
+                    {0.0f,0.0f,side*earIdle});
+            }
+            AppendEntityBoxAnimated(output,entity.position,{0.0f,0.60f+bob,0.915f},
+                {0.07f,0.045f,0.025f},{0.33f,0.25f,0.22f},
+                {0.0f,0.74f,0.54f},{pose.head_pitch,0.0f,0.0f});
         } else if (entity.kind == 1) {
             const std::array<float,3> hide{0.83f,0.80f,0.70f};
             const std::array<float,3> patch{0.23f,0.20f,0.19f};
@@ -559,7 +572,19 @@ void EntitySystem::AppendMesh(std::vector<WorldVertex>& output, const CameraFrus
                     {0.065f,0.15f,0.065f},horn,{0.0f,0.82f,0.64f},{pose.head_pitch,0.0f,0.0f});
             }
             AppendEntityBoxAnimated(output,entity.position,{0.0f,0.70f+bob,-0.73f},
-                {0.045f,0.06f,0.20f},hide,{0.0f,0.70f,-0.55f},{0.0f,pose.tail_yaw,0.0f});
+                {0.045f,0.06f,0.20f},hide,{0.0f,0.70f,-0.55f},{0.0f,pose.tail_yaw+tailIdle,0.0f});
+            // The cow gains small flicking ears, nostrils and a soft underside silhouette.
+            for (float side : {-1.0f,1.0f}) {
+                AppendEntityBoxAnimated(output,entity.position,{side*0.31f,0.94f+bob,0.67f},
+                    {0.13f,0.075f,0.18f},hide,{0.0f,0.82f,0.64f},
+                    {0.0f,0.0f,side*earIdle});
+                AppendEntityBoxAnimated(output,entity.position,{side*0.105f,0.61f+bob,1.085f},
+                    {0.035f,0.045f,0.018f},{0.22f,0.15f,0.13f},
+                    {0.0f,0.82f,0.64f},{pose.head_pitch,0.0f,0.0f});
+            }
+            AppendEntityBoxAnimated(output,entity.position,{0.0f,0.29f+bob,0.23f},
+                {0.22f,0.12f,0.20f},{0.68f,0.52f,0.48f},
+                {0.0f,0.42f,0.23f},{tailIdle*0.12f,0.0f,0.0f});
         } else {
             const std::array<float,3> feather{0.89f,0.85f,0.75f};
             const std::array<float,3> beak{0.91f,0.60f,0.18f};
@@ -581,7 +606,17 @@ void EntitySystem::AppendMesh(std::vector<WorldVertex>& output, const CameraFrus
             AppendEntityBoxAnimated(output,entity.position,{0.27f,0.40f+bob,-0.03f},
                 {0.13f,0.11f,0.31f},wing,{0.14f,0.40f,-0.03f},{0.0f,0.0f,pose.right_wing_roll});
             AppendEntityBoxAnimated(output,entity.position,{0.0f,0.36f+bob,-0.47f},
-                {0.12f,0.09f,0.24f},feather,{0.0f,0.36f,-0.25f},{0.0f,pose.tail_yaw,0.0f});
+                {0.12f,0.09f,0.24f},feather,{0.0f,0.36f,-0.25f},{0.0f,pose.tail_yaw+tailIdle,0.0f});
+            // Three small tail feathers and a subtle crest keep the bird animated
+            // even between wing movements and give it a less block-like profile.
+            for (float side : {-1.0f,0.0f,1.0f}) {
+                AppendEntityBoxAnimated(output,entity.position,{side*0.095f,0.39f+bob,-0.67f},
+                    {0.055f,0.055f,0.18f},feather,{side*0.06f,0.39f,-0.50f},
+                    {tailIdle*0.18f,pose.tail_yaw+side*0.08f,0.0f});
+            }
+            AppendEntityBoxAnimated(output,entity.position,{0.0f,0.92f+bob,0.30f},
+                {0.08f,0.12f,0.08f},{0.78f,0.44f,0.29f},
+                {0.0f,0.69f,0.36f},{pose.head_pitch*0.5f,pose.head_yaw,0.0f});
             const std::array<float,3> eye{0.12f,0.09f,0.05f};
             for (float side : {-1.0f,1.0f}) {
                 AppendEntityBoxAnimated(output,entity.position,{side*0.12f,0.73f+bob,0.52f},
