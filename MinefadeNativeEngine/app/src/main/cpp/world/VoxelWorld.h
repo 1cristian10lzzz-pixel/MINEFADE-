@@ -3,6 +3,7 @@
 #include "../blocks/BlockRegistry.h"
 
 #include <array>
+#include <cstddef>
 #include <cstdint>
 #include <deque>
 #include <future>
@@ -25,6 +26,37 @@ struct WorldVertex {
     float nx, ny, nz;
     float r, g, b;
     float u, v;
+    // Atlas tile index; UVs are local and may repeat across greedy-merged faces.
+    float atlasTile{0.0f};
+};
+
+struct FrustumPlane { float x{0.0f}, y{0.0f}, z{0.0f}, d{0.0f}; };
+
+struct CameraFrustum {
+    std::array<FrustumPlane, 6> planes{};
+    bool valid{false};
+
+    bool IntersectsAabb(float minX, float minY, float minZ,
+                        float maxX, float maxY, float maxZ) const noexcept {
+        if (!valid) return true;
+        for (const FrustumPlane& plane : planes) {
+            const float px = plane.x >= 0.0f ? maxX : minX;
+            const float py = plane.y >= 0.0f ? maxY : minY;
+            const float pz = plane.z >= 0.0f ? maxZ : minZ;
+            if (plane.x * px + plane.y * py + plane.z * pz + plane.d < 0.0f) return false;
+        }
+        return true;
+    }
+};
+
+struct ChunkMeshRange {
+    int chunkX{0};
+    int chunkZ{0};
+    std::size_t opaqueFirst{0};
+    std::size_t opaqueCount{0};
+    std::size_t transparentFirst{0};
+    std::size_t transparentCount{0};
+    int lodLevel{0};
 };
 
 class VoxelWorld {
@@ -56,7 +88,8 @@ public:
 
     void BuildMesh(std::vector<WorldVertex>& output, int centerWorldX = 0,
                    int centerWorldZ = 0, int radiusInChunks = -1,
-                   std::vector<WorldVertex>* transparentOutput = nullptr) const;
+                   std::vector<WorldVertex>* transparentOutput = nullptr,
+                   std::vector<ChunkMeshRange>* chunkRanges = nullptr) const;
     bool Save(const std::string& filePath, const Vec3& playerPosition,
               const std::array<std::uint32_t, 9>& inventory) const;
     bool Load(const std::string& filePath, Vec3& playerPosition,
@@ -86,6 +119,7 @@ private:
     void StartNextChunkJob();
     const Chunk* FindChunk(int chunkX, int chunkZ) const;
     Chunk* FindChunk(int chunkX, int chunkZ);
+    bool IsChunkFullySealed(const Chunk& chunk) const;
 
     std::uint32_t seed_;
     std::map<std::pair<int, int>, Chunk> chunks_;
@@ -96,6 +130,7 @@ private:
         std::future<Chunk> future;
     };
     static constexpr std::size_t kChunkWorkerCount = 2;
+    static constexpr std::size_t kMeshWorkerCount = 2;
     std::vector<ChunkJob> pendingChunkJobs_;
     bool asyncGenerationDisabled_{false};
 };
