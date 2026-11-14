@@ -34,6 +34,7 @@ public:
     void SetGraphicsOptions(int quality, int renderDistanceChunks, bool waterWaves, float fieldOfView, bool contactShadows);
     void SetInputOptions(float sensitivityX, float sensitivityY, float joystickDeadzone, bool invertLookY, bool leftHanded);
     void SetHudOptions(bool showStats);
+    void SetAnimationOptions(int quality, bool enabled);
     void SetAvatarAppearance(const int* values, std::size_t count);
     void GetPlayerState(float output[4]) const;
     void SetRemotePlayers(const float* values, std::size_t floatCount);
@@ -133,6 +134,10 @@ private:
     float pendingJoystickDeadzone_{0.12f};
     bool showHudStats_{true};
     bool pendingShowHudStats_{true};
+    int animationQuality_{2};
+    int pendingAnimationQuality_{2};
+    bool animationsEnabled_{true};
+    bool pendingAnimationsEnabled_{true};
     std::array<int, 6> avatarAppearance_{{0,0,0,0,0,0}};
     bool inventoryVisible_{false};
     bool pauseVisible_{false};
