@@ -353,6 +353,12 @@ int main() {
     std::vector<WorldVertex> entityMesh;
     entities.AppendMesh(entityMesh);
     assert(!entityMesh.empty());
+    assert(entities.SpawnEntity({8.0f, 0.0f, 8.0f}, 3, world)); // pig
+    assert(entities.Count() == 4u);
+    entityMesh.clear();
+    entities.AppendMesh(entityMesh);
+    assert(entityMesh.size() > 0u);
+    assert(!entities.SpawnEntity({8.0f,0.0f,8.0f},4,world)); // unknown entity kind rejected
 
     EnvironmentSystem environment;
     const float initialDaylight = environment.Daylight();
@@ -360,6 +366,9 @@ int main() {
     assert(environment.Daylight() >= 0.17f && environment.Daylight() <= 1.0f);
     assert(environment.TimeOfDay() != 0.25f);
     assert(initialDaylight > 0.0f);
+    environment.SetTimeOfDay(0.75f);
+    assert(std::abs(environment.TimeOfDay() - 0.75f) < 0.001f);
+    assert(environment.Daylight() < 0.5f);
 
     const std::size_t initialMeshSize = mesh.size();
     world.GenerateAround(40, 40, 1);
