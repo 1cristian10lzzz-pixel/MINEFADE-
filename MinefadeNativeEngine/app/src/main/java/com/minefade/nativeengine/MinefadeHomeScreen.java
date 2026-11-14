@@ -338,24 +338,24 @@ public final class MinefadeHomeScreen extends FrameLayout {
         removeAllViews();
         addView(new Backdrop(getContext()), new LayoutParams(-1, -1));
         LinearLayout root = column();
-        root.setPadding(dp(18), dp(12), dp(18), dp(12));
+        root.setPadding(dp(16), dp(10), dp(16), dp(12));
         addView(root, new LayoutParams(-1, -1));
 
         LinearLayout header = row();
-        TextView back = text("‹", 31, white, true);
+        TextView back = text("‹", 29, white, true);
         back.setGravity(Gravity.CENTER);
-        back.setBackground(shape(new int[]{0x442d4659, 0x22202d3b}, 12, 0x66516c82));
+        back.setBackground(shape(new int[]{0x55364f62, 0x33202d3b}, 13, 0x886b879b));
         back.setOnClickListener(v -> showHome());
-        header.addView(back, new LinearLayout.LayoutParams(dp(42), dp(38)));
+        header.addView(back, new LinearLayout.LayoutParams(dp(42), dp(40)));
         LinearLayout titleBox = column();
         titleBox.setPadding(dp(10), 0, 0, 0);
-        titleBox.addView(text(title, 18, white, true));
-        TextView desc = text(subtitle, 9, muted, false);
+        titleBox.addView(text(title, 16, white, true));
+        TextView desc = text(subtitle, 8, muted, false);
         LinearLayout.LayoutParams descParams = new LinearLayout.LayoutParams(-1, -2);
         descParams.topMargin = dp(3);
         titleBox.addView(desc, descParams);
         header.addView(titleBox, new LinearLayout.LayoutParams(0, -2, 1f));
-        root.addView(header, new LinearLayout.LayoutParams(-1, dp(42)));
+        root.addView(header, new LinearLayout.LayoutParams(-1, dp(44)));
         return root;
     }
 
@@ -653,9 +653,9 @@ public final class MinefadeHomeScreen extends FrameLayout {
     }
 
     private void settingsHeading(LinearLayout parent, String title, String subtitle) {
-        TextView heading = text(title, 10, 0xffcbe2ed, true);
+        TextView heading = text(title, 11, 0xffd8edf6, true);
         parent.addView(heading);
-        TextView detail = text(subtitle, 8, muted, false);
+        TextView detail = text(subtitle, 9, muted, false);
         detail.setGravity(Gravity.TOP);
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(-1, -2);
         params.topMargin = dp(4);
@@ -666,8 +666,8 @@ public final class MinefadeHomeScreen extends FrameLayout {
     private View settingChoice(String title, String subtitle, String key,
                                String[] entries, int defaultValue) {
         LinearLayout card = column();
-        card.setPadding(dp(10), dp(8), dp(10), dp(7));
-        card.setBackground(shape(new int[]{0xff1c3043, 0xff142334}, 11, 0x554b6478));
+        card.setPadding(dp(11), dp(9), dp(11), dp(8));
+        card.setBackground(shape(new int[]{0xff20394d, 0xff142638}, 13, 0x665b788d));
         card.addView(text(title, 10, white, true));
         TextView detail = text(subtitle, 8, muted, false);
         LinearLayout.LayoutParams detailParams = new LinearLayout.LayoutParams(-1, -2);
@@ -740,7 +740,7 @@ public final class MinefadeHomeScreen extends FrameLayout {
     private View soundVolumeControl() {
         LinearLayout card = column();
         card.setPadding(dp(12), dp(9), dp(12), dp(8));
-        card.setBackground(shape(new int[]{0xff1c3043, 0xff142334}, 13, 0x554b6478));
+        card.setBackground(shape(new int[]{0xff20394d, 0xff142638}, 14, 0x665b788d));
         LinearLayout heading = row();
         heading.addView(text("Volumen de efectos", 12, white, true),
                 new LinearLayout.LayoutParams(0, dp(22), 1f));
@@ -775,7 +775,7 @@ public final class MinefadeHomeScreen extends FrameLayout {
 
     private View settingSwitch(String title, String subtitle, String key, boolean defaultValue) {
         LinearLayout card = row();
-        card.setPadding(dp(12), dp(7), dp(10), dp(7));
+        card.setPadding(dp(12), dp(8), dp(11), dp(8));
         card.setBackground(shape(new int[]{0xff1c3043, 0xff142334}, 13, 0x554b6478));
         LinearLayout labels = column();
         labels.addView(text(title, 12, white, true));
