@@ -1,6 +1,12 @@
 #include "Player.h"
 #include "minefade_core.h"
 
+static_assert(sizeof(MfPlayerState) == 44u, "Rust/C player state ABI mismatch");
+static_assert(sizeof(MfPlayerPose) == 40u, "Rust/C player pose ABI mismatch");
+static_assert(sizeof(MfEntityState) == 24u, "Rust/C entity state ABI mismatch");
+static_assert(sizeof(MfEntityPose) == 44u, "Rust/C entity pose ABI mismatch");
+static_assert(sizeof(MfEnvironmentState) == 8u, "Rust/C environment ABI mismatch");
+
 #include <algorithm>
 #include <cmath>
 
