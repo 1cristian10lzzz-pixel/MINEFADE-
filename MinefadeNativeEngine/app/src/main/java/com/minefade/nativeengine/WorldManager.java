@@ -175,6 +175,17 @@ public final class WorldManager {
             String name = json.optString("name", "Mundo");
             long seed = json.optLong("seed", 0x4D464445L);
             int mode = Math.max(SURVIVAL, Math.min(ADVENTURE, json.optInt("gameMode", SURVIVAL)));
+            File modeOverride = new File(folder, "world.mfworld.mode");
+            if (modeOverride.isFile()) {
+                try (FileInputStream modeInput = new FileInputStream(modeOverride)) {
+                    byte[] modeBytes = new byte[4];
+                    if (modeInput.read(modeBytes) == 4) {
+                        int storedMode = (modeBytes[0] & 0xff) | ((modeBytes[1] & 0xff) << 8)
+                                | ((modeBytes[2] & 0xff) << 16) | (modeBytes[3] << 24);
+                        mode = Math.max(SURVIVAL, Math.min(ADVENTURE, storedMode));
+                    }
+                } catch (Exception ignored) { }
+            }
             boolean cheats = json.optBoolean("allowCheats", false);
             boolean chest = json.optBoolean("starterChest", false);
             long created = json.optLong("createdAt", metadata.lastModified());
