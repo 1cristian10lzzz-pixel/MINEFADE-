@@ -685,8 +685,6 @@ public final class MinefadeHomeScreen extends FrameLayout {
                         "water_waves", true));
                 content.addView(settingSwitch("Sombras de contacto", "Oscurecimiento suave bajo jugador y criaturas.",
                         "contact_shadows", true));
-                content.addView(settingSwitch("Limitar efectos de alto coste", "Deja los efectos avanzados para dispositivos compatibles.",
-                        "adaptive_graphics", true));
                 break;
         }
         animateIn(content, 0);
