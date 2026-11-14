@@ -175,9 +175,7 @@ pub unsafe extern "C" fn minefade_inventory_can_add(
     if counts.is_null() || item_id == 0 || amount == 0 || slot_count == 0 {
         return 0;
     }
-    let Some(counts) = (unsafe { core::slice::from_raw_parts(counts, slot_count as usize) }).into() else {
-        return 0;
-    };
+    let counts = unsafe { core::slice::from_raw_parts(counts, slot_count as usize) };
     let maximum = if stack_limit == 0 { 64u32 } else { (stack_limit as u32).min(999) };
     if maximum == 0 { return 0; }
     let mut remaining = amount as u32;
@@ -209,7 +207,7 @@ pub unsafe extern "C" fn minefade_inventory_add(
     if unsafe { minefade_inventory_can_add(counts, slot_count, item_id, amount, stack_limit) } == 0 {
         return 0;
     }
-    let Some(counts) = (unsafe { counts.as_mut() }) else { return 0 };
+    if counts.is_null() || slot_count == 0 { return 0; }
     let slots = unsafe { core::slice::from_raw_parts_mut(counts, slot_count as usize) };
     let maximum = if stack_limit == 0 { 64u32 } else { (stack_limit as u32).min(999) };
     let item = item_id as u32;
@@ -632,7 +630,7 @@ mod tests {
         assert_eq!(unsafe { minefade_inventory_add(slots.as_mut_ptr(), 3, 2, 1, 64) }, 0);
         assert_eq!(slots, before);
         let mut restricted = [0u32; 9];
-        assert_eq!(unsafe { minefade_inventory_add(restricted.as_mut_ptr(), 9, 69, 9, 16) }, 1);
+        assert_eq!(unsafe { minefade_inventory_add(restricted.as_mut_ptr(), 9, 69, 25, 16) }, 1);
         assert_eq!(restricted[0], 69016);
         assert_eq!(restricted[1], 6909);
         assert_eq!(unsafe { minefade_inventory_consume_selected(restricted.as_mut_ptr(), 9, 0, 17) }, 0);
