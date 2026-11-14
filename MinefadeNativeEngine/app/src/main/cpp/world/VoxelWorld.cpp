@@ -779,4 +779,26 @@ void AppendTexturedBlockCube(std::vector<WorldVertex>& output,BlockId block,
     AppendBox(output,x0,y0,z0,x1,y1,z1,*definition);
 }
 
+void AppendAnimatedTexturedBlockCube(std::vector<WorldVertex>& output,BlockId block,
+                                     const Vec3& center,const Vec3& half,
+                                     float yawRadians,float verticalOffset) {
+    std::vector<WorldVertex> local;
+    local.reserve(36u);
+    Vec3 animatedCenter=center;
+    animatedCenter.y+=verticalOffset;
+    AppendTexturedBlockCube(local,block,animatedCenter,half);
+    const float cosine=std::cos(yawRadians);
+    const float sine=std::sin(yawRadians);
+    for(WorldVertex& vertex:local) {
+        const float x=vertex.x-animatedCenter.x;
+        const float z=vertex.z-animatedCenter.z;
+        vertex.x=animatedCenter.x+x*cosine+z*sine;
+        vertex.z=animatedCenter.z-x*sine+z*cosine;
+        const float nx=vertex.nx, nz=vertex.nz;
+        vertex.nx=nx*cosine+nz*sine;
+        vertex.nz=-nx*sine+nz*cosine;
+    }
+    output.insert(output.end(),local.begin(),local.end());
+}
+
 } // namespace minefade
