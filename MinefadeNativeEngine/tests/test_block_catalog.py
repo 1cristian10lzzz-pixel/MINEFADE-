@@ -70,7 +70,16 @@ modern_keys = {
     "deepslate_emerald_ore", "deepslate_lapis_ore", "deepslate_diamond_ore",
     "ancient_debris", "netherite_block", "amethyst_block", "budding_amethyst",
     "amethyst_cluster", "calcite", "tuff", "basalt", "raw_iron_block",
-    "raw_gold_block", "raw_copper_block", "copper_block"
+    "raw_gold_block", "raw_copper_block", "copper_block",
+    "cherry_log", "stripped_cherry_log", "cherry_planks", "cherry_leaves",
+    "cherry_sapling", "cherry_stairs", "cherry_slab", "pink_petals",
+    "mangrove_log", "stripped_mangrove_log", "mangrove_planks", "mangrove_leaves",
+    "mangrove_propagule", "mangrove_roots", "muddy_mangrove_roots", "mud",
+    "packed_mud", "mud_bricks", "mud_brick_stairs", "mud_brick_slab",
+    "sculk", "sculk_catalyst", "sculk_sensor", "sculk_shrieker",
+    "reinforced_deepslate", "blackstone", "polished_blackstone", "gilded_blackstone",
+    "crying_obsidian", "crimson_planks", "warped_planks", "crimson_stairs",
+    "warped_stairs", "ochre_froglight", "verdant_froglight", "pearlescent_froglight"
 }
 assert modern_keys.issubset(set(source_keys))
 assert modern_keys.issubset(set(by_key))
