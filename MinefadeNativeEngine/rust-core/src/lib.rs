@@ -482,7 +482,7 @@ mod tests {
     use super::*;
 
     extern "C" fn flat_ground(_x: i32, y: i32, _z: i32, _user: *mut c_void) -> u8 {
-        if y <= 0 { 1 } else { 0 }
+        if y <= 1 { 1 } else { 0 }
     }
 
     extern "C" fn flat_surface(_x: i32, _z: i32, _user: *mut c_void) -> i32 {
@@ -501,7 +501,7 @@ mod tests {
 
     #[test]
     fn jump_and_gravity_preserve_ground_and_vertical_limits() {
-        let mut state = MfPlayerState { x: 0.5, y: 1.0, z: 0.5, grounded: 1, ..Default::default() };
+        let mut state = MfPlayerState { x: 0.5, y: 2.0, z: 0.5, grounded: 1, ..Default::default() };
         unsafe { minefade_player_jump(&mut state) };
         assert_eq!(state.grounded, 0);
         assert!(state.vertical_velocity > 7.0);
