@@ -317,6 +317,15 @@ void RmlUiRuntime::SetPerspectiveEnabled(bool enabled) {
     }
 }
 
+void RmlUiRuntime::SetCrouchEnabled(bool enabled) {
+    if (document_ == nullptr) return;
+    if (Rml::Element* element = document_->GetElementById("crouch")) {
+        element->SetProperty("background-color", enabled ? "#8bbf75ee" : "#20394ce8");
+        element->SetProperty("border", enabled ? "2dp #e2ffb0" : "1dp #c3d8e888");
+        element->SetProperty("color", enabled ? "#102119" : "#f5fbff");
+    }
+}
+
 void RmlUiRuntime::SetQuickbarSlot(int slot,const std::string& label,bool selected) {
     if(document_==nullptr||slot<0||slot>=9)return;
     const std::string id="slot-"+std::to_string(slot);
