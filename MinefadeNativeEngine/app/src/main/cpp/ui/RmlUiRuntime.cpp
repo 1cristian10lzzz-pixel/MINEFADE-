@@ -130,6 +130,7 @@ bool RmlUiRuntime::Initialise(int width, int height, float displayDensity, Actio
     Shutdown();
     width_ = width > 0 ? width : 1;
     height_ = height > 0 ? height : 1;
+    density_ = displayDensity > 0.25f ? displayDensity : 1.0f;
     callback_ = std::move(callback);
 
     if (!renderer_.Initialise()) {
@@ -272,11 +273,17 @@ void RmlUiRuntime::Resize(int width, int height) {
 
 bool RmlUiRuntime::Touch(int action, float x, float y) {
     if (!ready_ || context_ == nullptr) return true;
-    const bool joystickSide = leftHanded_ ? x >= static_cast<float>(width_) * 0.58f
-                                          : x <= static_cast<float>(width_) * 0.42f;
-    // Reserve the visible lower-corner D-pad for native continuous movement.
-    // RmlUi must not capture these touches as generic document clicks.
-    if (joystickSide && y >= static_cast<float>(height_) * 0.58f) {
+    const float padSize = 108.0f * density_;
+    const float padMargin = 14.0f * density_;
+    const float padBottom = 54.0f * density_;
+    const float padLeft = leftHanded_
+        ? static_cast<float>(width_) - padMargin - padSize : padMargin;
+    const float padTop = static_cast<float>(height_) - padBottom - padSize;
+    // Reserve only the actual D-pad bounds for native continuous movement.
+    // This leaves the first/last hotbar slots and nearby buttons clickable.
+    const bool inJoystickPad = x >= padLeft && x <= padLeft + padSize &&
+        y >= padTop && y <= static_cast<float>(height_) - padBottom;
+    if (inJoystickPad) {
         mouseCaptured_ = false;
         return true;
     }
