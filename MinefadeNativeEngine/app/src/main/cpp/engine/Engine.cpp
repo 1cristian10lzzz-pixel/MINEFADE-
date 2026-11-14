@@ -400,6 +400,10 @@ bool Engine::Initialise(float displayDensity, const std::uint8_t* atlasPixels,
     contactShadows_ = pendingContactShadows_;
     player_.SetContactShadows(contactShadows_);
     entities_.SetContactShadows(contactShadows_);
+    animationQuality_ = pendingAnimationQuality_;
+    animationsEnabled_ = pendingAnimationsEnabled_;
+    player_.SetAnimationOptions(static_cast<std::uint8_t>(animationQuality_), animationsEnabled_);
+    entities_.SetAnimationOptions(static_cast<std::uint8_t>(animationQuality_), animationsEnabled_);
     lookSensitivityX_ = pendingLookSensitivityX_;
     lookSensitivityY_ = pendingLookSensitivityY_;
     invertLookY_ = pendingInvertLookY_;
@@ -1313,6 +1317,19 @@ void Engine::SetHudOptions(bool showStats) {
     pendingShowHudStats_ = showStats;
     showHudStats_ = showStats;
     ui_.SetStatusVisible(showHudStats_);
+}
+
+void Engine::SetAnimationOptions(int quality, bool enabled) {
+    pendingAnimationQuality_ = std::clamp(quality, 0, 2);
+    pendingAnimationsEnabled_ = enabled;
+    animationQuality_ = pendingAnimationQuality_;
+    animationsEnabled_ = pendingAnimationsEnabled_;
+    player_.SetAnimationOptions(static_cast<std::uint8_t>(animationQuality_), animationsEnabled_);
+    entities_.SetAnimationOptions(static_cast<std::uint8_t>(animationQuality_), animationsEnabled_);
+    if (ready_) {
+        RebuildEntityMesh();
+        UploadEntityMesh();
+    }
 }
 
 void Engine::SetAvatarAppearance(const int* values,std::size_t count) {
