@@ -302,8 +302,14 @@ def palette(key: str, face: int) -> tuple[int,int,int]:
         if color in k and any(x in k for x in ['wool','stained','glazed','carpet','banner','concrete','shulker']):
             return rgb
     if 'deepslate' in k: return (65,69,77) if face != FACE_TOP else (76,79,88)
+    if 'pink_petals' in k: return (214,121,157)
+    if 'cherry_sapling' in k: return (86,143,63)
+    if 'cherry_leaves' in k: return (197,117,143)
     if 'cherry' in k: return (183,119,137) if face != FACE_TOP else (211,158,167)
+    if 'mangrove_leaves' in k or 'mangrove_propagule' in k: return (85,139,66)
     if 'mangrove' in k: return (112,72,63) if face != FACE_TOP else (148,99,78)
+    if 'crimson' in k: return (116,48,54)
+    if 'warped' in k: return (52,119,106)
     if 'mud' in k: return (111,83,65)
     if 'sculk' in k: return (25,77,83)
     if 'blackstone' in k: return (48,49,58)
