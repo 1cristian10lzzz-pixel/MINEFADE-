@@ -9,6 +9,8 @@ Android Activity / GLSurfaceView (Java)
            │    ├─ movimiento, rotación, salto, gravedad y colisión por callbacks
            │    ├─ poses del jugador: brazos, piernas, torso, cabeza, respiración y blink
            │    ├─ poses de criaturas: marcha, cola, cabeza, alas y blink
+           │    ├─ inventario: stack capacity, merge, atomic add, selection and consume
+           │    ├─ dropped-item gravity, voxel collision and bounce (C++ retains pickup/storage)
            │    └─ reloj día/noche, iluminación base, cielo y dirección solar
            ├─ Player / Inventory / DroppedItemSystem / EntitySystem (C++)
            ├─ VoxelWorld
@@ -27,9 +29,9 @@ Android Activity / GLSurfaceView (Java)
 
 ## Frontera Rust/C++
 
-Rust es ahora el núcleo de simulación y evaluación de poses, no una reescritura indiscriminada de todo el juego. `rust-core` expone una ABI C con versión y estructuras `repr(C)`; CMake compila la biblioteca estática para `aarch64-linux-android` y `armv7-linux-androideabi`. El código C++ mantiene el acceso a Android/JNI, RmlUi, OpenGL ES, mundo voxel, catálogo, guardados, mallas y transporte LAN. Los tamaños de las estructuras de la ABI tienen comprobaciones `static_assert` en C++ y el motor valida la versión ABI al arrancar.
+Rust es ahora el núcleo de simulación, inventario y evaluación de poses, no una reescritura indiscriminada de todo el juego. `rust-core` expone una ABI C con versión y estructuras `repr(C)`; CMake compila la biblioteca estática para `aarch64-linux-android` y `armv7-linux-androideabi`. El código C++ mantiene el acceso a Android/JNI, RmlUi, OpenGL ES, mundo voxel, catálogo, guardados, mallas y transporte LAN. Los tamaños de las estructuras de la ABI tienen comprobaciones `static_assert` en C++ y el motor valida la versión ABI al arrancar.
 
-Esta frontera preserva una única autoridad de mundo/colisiones en C++ y evita duplicar chunks o guardados en Rust. La simulación Rust consulta el mundo mediante callbacks de solo lectura.
+Esta frontera preserva una única autoridad de mundo/colisiones en C++ y evita duplicar chunks o guardados en Rust. La simulación Rust consulta el mundo mediante callbacks de solo lectura. El array de nueve slots sigue almacenándose en C++ para mantener el formato del guardado, pero todas las decisiones de capacidad/pila/consumo se ejecutan en Rust. Los drops mantienen su colección/recogida en C++, mientras gravedad, colisiones, rebote y edad se calculan en Rust.
 
 ## Catálogo de bloques
 
