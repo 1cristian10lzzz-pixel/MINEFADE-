@@ -11,8 +11,8 @@ android {
         applicationId = "com.minefade.nativeengine"
         minSdk = 24
         targetSdk = 36
-        versionCode = 12
-        versionName = "0.6.0-mali-shader-fix"
+        versionCode = 13
+        versionName = "0.7.0-rust-animation"
 
         ndk {
             abiFilters += listOf("arm64-v8a", "armeabi-v7a")
@@ -43,10 +43,10 @@ android {
 
     buildTypes {
         debug {
-            // A distinct package avoids signature conflicts with older review APKs.
+            // A distinct package avoids signature conflicts with older review APKs and preserve their private world data.
             // Existing installations and their private world data remain untouched.
-            applicationIdSuffix = ".review8"
-            versionNameSuffix = "-review8"
+            applicationIdSuffix = ".review9"
+            versionNameSuffix = "-review9"
             isMinifyEnabled = false
             isDebuggable = true
         }
