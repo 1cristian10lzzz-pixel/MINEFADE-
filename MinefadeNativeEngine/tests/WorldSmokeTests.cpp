@@ -360,11 +360,14 @@ int main() {
     entities.AppendMesh(entityMesh);
     assert(!entityMesh.empty());
     assert(entities.SpawnEntity({8.0f, 0.0f, 8.0f}, 3, world)); // pig
-    assert(entities.Count() == 4u);
+    assert(entities.SpawnEntity({8.0f, 0.0f, 8.0f}, 4, world)); // zombie
+    assert(entities.SpawnEntity({8.0f, 0.0f, 8.0f}, 5, world)); // skeleton
+    assert(entities.SpawnEntity({8.0f, 0.0f, 8.0f}, 6, world)); // rabbit
+    assert(entities.Count() == 7u);
     entityMesh.clear();
     entities.AppendMesh(entityMesh);
     assert(entityMesh.size() > 0u);
-    assert(!entities.SpawnEntity({8.0f,0.0f,8.0f},4,world)); // unknown entity kind rejected
+    assert(!entities.SpawnEntity({8.0f,0.0f,8.0f},7,world)); // unknown entity kind rejected
 
     EnvironmentSystem environment;
     const float initialDaylight = environment.Daylight();
