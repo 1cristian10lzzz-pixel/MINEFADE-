@@ -407,6 +407,12 @@ pub unsafe extern "C" fn minefade_entity_compute_pose(
     let time = finite_or(animation_time, 0.0);
     let gait = (phase * 8.0).sin() * 0.24 * quality;
     let idle = (time * 1.2 + phase).sin();
+    let blink_cycle = (time + phase * 0.12).rem_euclid(6.0);
+    let eyelid = if blink_cycle > 5.72 {
+        ((blink_cycle - 5.72) / 0.28 * PI).sin().abs()
+    } else {
+        0.0
+    };
 
     if kind == 2 {
         let flap = (phase * 13.0).sin() * 0.72 * quality;
@@ -421,7 +427,7 @@ pub unsafe extern "C" fn minefade_entity_compute_pose(
             tail_yaw: (phase * 2.4).sin() * 0.12 * quality,
             left_wing_roll: flap,
             right_wing_roll: -flap,
-            eyelid: 0.0,
+            eyelid: eyelid.clamp(0.0, 1.0),
         };
     } else {
         *output = MfEntityPose {
@@ -435,7 +441,7 @@ pub unsafe extern "C" fn minefade_entity_compute_pose(
             tail_yaw: (phase * 2.1).sin() * 0.16 * quality,
             left_wing_roll: 0.0,
             right_wing_roll: 0.0,
-            eyelid: 0.0,
+            eyelid: eyelid.clamp(0.0, 1.0),
         };
     }
 }
