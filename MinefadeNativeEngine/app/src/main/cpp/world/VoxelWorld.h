@@ -104,5 +104,8 @@ void AppendCube(std::vector<WorldVertex>& output, const Vec3& center, const Vec3
                 const std::array<float, 3>& color);
 void AppendTexturedBlockCube(std::vector<WorldVertex>& output, BlockId block,
                              const Vec3& center, const Vec3& half);
+void AppendAnimatedTexturedBlockCube(std::vector<WorldVertex>& output, BlockId block,
+                                     const Vec3& center, const Vec3& half,
+                                     float yawRadians, float verticalOffset);
 
 } // namespace minefade
