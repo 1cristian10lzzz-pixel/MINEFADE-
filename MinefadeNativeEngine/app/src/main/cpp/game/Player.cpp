@@ -478,7 +478,7 @@ void EntitySystem::SpawnInitial(const VoxelWorld& world) {
 }
 
 bool EntitySystem::SpawnEntity(const Vec3& nearPosition, int kind, const VoxelWorld& world) {
-    if (entities_.size() >= 128u || kind < 0 || kind > 3) return false;
+    if (entities_.size() >= 128u || kind < 0 || kind > 6) return false;
     const float index = static_cast<float>(entities_.size());
     const float angle = index * 2.39996323f;
     const float radius = 1.8f + std::fmod(index, 3.0f) * 0.35f;
@@ -511,7 +511,7 @@ void EntitySystem::AppendMesh(std::vector<WorldVertex>& output, const CameraFrus
     for (const Entity& entity : entities_) {
         if (frustum != nullptr && !frustum->IntersectsAabb(
                 entity.position.x-0.85f,entity.position.y-0.10f,entity.position.z-0.85f,
-                entity.position.x+0.85f,entity.position.y+1.65f,entity.position.z+0.85f)) continue;
+                entity.position.x+0.85f,entity.position.y+2.15f,entity.position.z+0.85f)) continue;
         MfEntityPose pose{};
         minefade_entity_compute_pose(entity.kind, entity.phase, animationTime_,
                                      animationQuality_, animationsEnabled_ ? 1u : 0u, &pose);
@@ -647,7 +647,7 @@ void EntitySystem::AppendMesh(std::vector<WorldVertex>& output, const CameraFrus
                 AppendEntityBoxAnimated(output,entity.position,{side*0.12f,0.73f+bob,0.52f},
                     {0.035f,0.04f*eyeOpen,0.025f},eye,{0.0f,0.69f,0.36f},{pose.head_pitch,pose.head_yaw,0.0f});
             }
-        } else {
+        } else if (entity.kind == 3) {
             // Pig: wider pink body, four articulated legs, short snout and curled tail.
             const std::array<float,3> pink{0.84f,0.50f,0.52f};
             const std::array<float,3> pale{0.96f,0.69f,0.70f};
@@ -681,6 +681,90 @@ void EntitySystem::AppendMesh(std::vector<WorldVertex>& output, const CameraFrus
             AppendEntityBoxAnimated(output,entity.position,{0.0f,0.55f+bob,-0.69f},
                 {0.045f,0.065f,0.16f},pale,{0.0f,0.56f,-0.55f},
                 {0.0f,pose.tail_yaw+tailIdle,tailIdle*0.45f});
+        } else if (entity.kind == 4) {
+            // Zombie humanoid: green skin, blue tunic and an unmistakable raised-arm pose.
+            const std::array<float,3> skin{0.26f,0.48f,0.27f};
+            const std::array<float,3> skinLight{0.39f,0.62f,0.34f};
+            const std::array<float,3> shirt{0.18f,0.40f,0.58f};
+            const std::array<float,3> pants{0.16f,0.24f,0.36f};
+            AppendEntityBoxAnimated(output,entity.position,{0.0f,1.04f+bob,0.0f},
+                {0.29f,0.34f,0.17f},shirt,{0.0f,1.04f,0.0f},{0.0f,0.0f,0.0f});
+            AppendEntityBoxAnimated(output,entity.position,{0.0f,1.58f+bob,0.025f},
+                {0.235f,0.235f,0.22f},skin,{0.0f,1.58f,0.025f},{pose.head_pitch,pose.head_yaw,0.0f});
+            AppendEntityBoxAnimated(output,entity.position,{0.0f,1.47f+bob,0.245f},
+                {0.15f,0.045f,0.025f},skinLight,{0.0f,1.58f,0.025f},{pose.head_pitch,pose.head_yaw,0.0f});
+            for (float side : {-1.0f,1.0f}) {
+                const float armPitch = side < 0.0f ? pose.front_left_leg_pitch : pose.front_right_leg_pitch;
+                const float legPitch = side < 0.0f ? pose.rear_left_leg_pitch : pose.rear_right_leg_pitch;
+                AppendEntityBoxAnimated(output,entity.position,{side*0.37f,1.24f+bob,0.0f},
+                    {0.12f,0.31f,0.13f},shirt,{side*0.34f,1.43f,0.0f},{armPitch,0.0f,side*0.04f});
+                AppendEntityBoxAnimated(output,entity.position,{side*0.37f,0.90f+bob,0.015f},
+                    {0.105f,0.11f,0.11f},skin,{side*0.34f,1.43f,0.0f},{armPitch,0.0f,0.0f});
+                AppendEntityBoxAnimated(output,entity.position,{side*0.15f,0.43f+bob,0.0f},
+                    {0.13f,0.34f,0.14f},pants,{side*0.15f,0.77f,0.0f},{legPitch,0.0f,0.0f});
+                AppendEntityBoxAnimated(output,entity.position,{side*0.15f,0.12f+bob,0.06f},
+                    {0.13f,0.10f,0.20f},{0.20f,0.16f,0.13f},
+                    {side*0.15f,0.77f,0.0f},{legPitch,0.0f,0.0f});
+            }
+            const std::array<float,3> eye{0.78f,0.12f,0.10f};
+            for (float side : {-1.0f,1.0f})
+                AppendEntityBoxAnimated(output,entity.position,{side*0.105f,1.60f+bob,0.245f},
+                    {0.035f,0.04f*eyeOpen,0.022f},eye,{0.0f,1.58f,0.025f},{pose.head_pitch,pose.head_yaw,0.0f});
+        } else if (entity.kind == 5) {
+            // Skeleton: separated bone segments and a rib cage built from narrow voxel parts.
+            const std::array<float,3> bone{0.82f,0.83f,0.76f};
+            const std::array<float,3> shadowBone{0.48f,0.50f,0.48f};
+            const std::array<float,3> dark{0.11f,0.13f,0.15f};
+            AppendEntityBoxAnimated(output,entity.position,{0.0f,1.57f+bob,0.0f},
+                {0.22f,0.22f,0.19f},bone,{0.0f,1.57f,0.0f},{pose.head_pitch,pose.head_yaw,0.0f});
+            for (int rib=0;rib<3;++rib) {
+                const float y=1.22f-static_cast<float>(rib)*0.13f+bob;
+                AppendEntityBoxAnimated(output,entity.position,{0.0f,y,0.02f},
+                    {0.22f,0.035f,0.12f},shadowBone,{0.0f,1.06f,0.0f},{0.0f,0.0f,0.0f});
+            }
+            AppendEntityBoxAnimated(output,entity.position,{0.0f,0.99f+bob,-0.02f},
+                {0.10f,0.18f,0.10f},bone,{0.0f,1.06f,0.0f},{0.0f,0.0f,0.0f});
+            for (float side : {-1.0f,1.0f}) {
+                const float armPitch = side < 0.0f ? pose.front_left_leg_pitch : pose.front_right_leg_pitch;
+                const float legPitch = side < 0.0f ? pose.rear_left_leg_pitch : pose.rear_right_leg_pitch;
+                AppendEntityBoxAnimated(output,entity.position,{side*0.29f,1.24f+bob,0.0f},
+                    {0.055f,0.28f,0.06f},bone,{side*0.29f,1.48f,0.0f},{armPitch,0.0f,0.0f});
+                AppendEntityBoxAnimated(output,entity.position,{side*0.29f,0.88f+bob,0.0f},
+                    {0.045f,0.16f,0.05f},bone,{side*0.29f,1.00f,0.0f},{armPitch,0.0f,0.0f});
+                AppendEntityBoxAnimated(output,entity.position,{side*0.13f,0.48f+bob,0.0f},
+                    {0.06f,0.30f,0.07f},bone,{side*0.13f,0.78f,0.0f},{legPitch,0.0f,0.0f});
+                AppendEntityBoxAnimated(output,entity.position,{side*0.13f,0.14f+bob,0.06f},
+                    {0.07f,0.08f,0.14f},shadowBone,{side*0.13f,0.78f,0.0f},{legPitch,0.0f,0.0f});
+                AppendEntityBoxAnimated(output,entity.position,{side*0.085f,1.60f+bob,0.19f},
+                    {0.04f,0.045f*eyeOpen,0.025f},dark,{0.0f,1.57f,0.0f},{pose.head_pitch,pose.head_yaw,0.0f});
+            }
+        } else {
+            // Rabbit: compact body, tall ears, strong hind legs and a springy idle hop.
+            const std::array<float,3> fur{0.78f,0.73f,0.65f};
+            const std::array<float,3> innerEar{0.83f,0.47f,0.50f};
+            const std::array<float,3> paw{0.67f,0.58f,0.53f};
+            AppendEntityBoxAnimated(output,entity.position,{0.0f,0.38f+bob,0.0f},
+                {0.28f,0.24f,0.38f},fur,{0.0f,0.38f,0.0f},{0.0f,0.0f,0.0f});
+            AppendEntityBoxAnimated(output,entity.position,{0.0f,0.65f+bob,0.32f},
+                {0.18f,0.18f,0.18f},fur,{0.0f,0.65f,0.32f},{pose.head_pitch,pose.head_yaw,0.0f});
+            for (float side : {-1.0f,1.0f}) {
+                const float pitch = side < 0.0f ? pose.front_left_leg_pitch : pose.front_right_leg_pitch;
+                AppendEntityBoxAnimated(output,entity.position,{side*0.12f,0.95f+bob,0.28f},
+                    {0.065f,0.23f,0.075f},fur,{side*0.10f,0.69f,0.28f},{0.0f,0.0f,side*earIdle});
+                AppendEntityBoxAnimated(output,entity.position,{side*0.12f,0.95f+bob,0.36f},
+                    {0.028f,0.16f,0.02f},innerEar,{side*0.10f,0.69f,0.28f},{0.0f,0.0f,side*earIdle});
+                AppendEntityBoxAnimated(output,entity.position,{side*0.12f,0.16f+bob,0.18f},
+                    {0.07f,0.12f,0.07f},paw,{side*0.12f,0.28f,0.18f},{pitch,0.0f,0.0f});
+                AppendEntityBoxAnimated(output,entity.position,{side*0.18f,0.13f+bob,-0.22f},
+                    {0.08f,0.13f,0.09f},paw,{side*0.18f,0.31f,-0.22f},{pitch,0.0f,0.0f});
+                AppendEntityBoxAnimated(output,entity.position,{side*0.09f,0.69f+bob,0.47f},
+                    {0.03f,0.035f*eyeOpen,0.025f},dark,{0.0f,0.65f,0.32f},{pose.head_pitch,pose.head_yaw,0.0f});
+            }
+            AppendEntityBoxAnimated(output,entity.position,{0.0f,0.40f+bob,-0.41f},
+                {0.09f,0.09f,0.10f},fur,{0.0f,0.40f,-0.32f},{0.0f,tailIdle,0.0f});
+            AppendEntityBoxAnimated(output,entity.position,{0.0f,0.56f+bob,0.49f},
+                {0.05f,0.04f,0.035f},{0.80f,0.35f,0.42f},
+                {0.0f,0.65f,0.32f},{pose.head_pitch,pose.head_yaw,0.0f});
         }
     }
 }
