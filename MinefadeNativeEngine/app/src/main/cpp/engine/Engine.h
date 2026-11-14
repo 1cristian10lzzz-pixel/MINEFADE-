@@ -163,6 +163,8 @@ private:
     float miningElapsed_{0.0f};
     float miningRequired_{0.0f};
     float footstepElapsed_{0.0f};
+    float entityMeshAccumulator_{0.0f};
+    float itemMeshAccumulator_{0.0f};
     std::string pickupToastText_;
     std::chrono::steady_clock::time_point pickupToastUntil_{};
     std::chrono::steady_clock::time_point lastFrame_{};
