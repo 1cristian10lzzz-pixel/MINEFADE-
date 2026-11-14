@@ -695,32 +695,41 @@ public final class MinefadeHomeScreen extends FrameLayout {
     private View settingChoice(String title, String subtitle, String key,
                                String[] entries, int defaultValue) {
         LinearLayout card = column();
-        card.setPadding(dp(11), dp(9), dp(11), dp(8));
-        card.setBackground(shape(new int[]{0xff20394d, 0xff142638}, 13, 0x665b788d));
-        card.addView(text(title, 10, white, true));
+        card.setPadding(dp(12), dp(9), dp(12), dp(9));
+        card.setBackground(shape(new int[]{0xff20394d, 0xff142638}, 14, 0x665b788d));
+        card.addView(text(title, 11, white, true));
         TextView detail = text(subtitle, 8, muted, false);
         LinearLayout.LayoutParams detailParams = new LinearLayout.LayoutParams(-1, -2);
         detailParams.topMargin = dp(3);
         card.addView(detail, detailParams);
-        Spinner spinner = new Spinner(getContext());
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(getContext(),
-                android.R.layout.simple_spinner_item, entries);
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinner.setAdapter(adapter);
-        spinner.setSelection(Math.max(0, Math.min(entries.length - 1,
-                preferences.getInt(key, defaultValue))));
-        spinner.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
-            @Override public void onItemSelected(android.widget.AdapterView<?> parent, View view,
-                                                 int position, long id) {
-                preferences.edit().putInt(key, position).apply();
-            }
-            @Override public void onNothingSelected(android.widget.AdapterView<?> parent) { }
+
+        int initial = Math.max(0, Math.min(entries.length - 1, preferences.getInt(key, defaultValue)));
+        LinearLayout selector = row();
+        selector.setGravity(Gravity.CENTER_VERTICAL);
+        selector.setPadding(dp(11), 0, dp(10), 0);
+        selector.setBackground(shape(new int[]{0xff304a5e, 0xff1e3447}, 10, 0x77617e91));
+        TextView current = text(entries[initial], 10, 0xffe6f4f7, true);
+        selector.addView(current, new LinearLayout.LayoutParams(0, dp(38), 1f));
+        TextView arrow = text("⌄", 18, 0xffb9f27c, true);
+        arrow.setGravity(Gravity.CENTER);
+        selector.addView(arrow, new LinearLayout.LayoutParams(dp(28), dp(38)));
+        selector.setOnClickListener(v -> {
+            haptic(v);
+            PopupMenu menu = new PopupMenu(getContext(), selector);
+            for (int i = 0; i < entries.length; i++) menu.getMenu().add(0, i, i, entries[i]);
+            menu.setOnMenuItemClickListener(item -> {
+                int index = Math.max(0, Math.min(entries.length - 1, item.getItemId()));
+                current.setText(entries[index]);
+                preferences.edit().putInt(key, index).apply();
+                return true;
+            });
+            menu.show();
         });
-        LinearLayout.LayoutParams spinnerParams = new LinearLayout.LayoutParams(-1, dp(37));
-        spinnerParams.topMargin = dp(3);
-        card.addView(spinner, spinnerParams);
+        LinearLayout.LayoutParams selectorParams = new LinearLayout.LayoutParams(-1, dp(38));
+        selectorParams.topMargin = dp(8);
+        card.addView(selector, selectorParams);
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(-1, -2);
-        params.bottomMargin = dp(7);
+        params.bottomMargin = dp(8);
         card.setLayoutParams(params);
         return card;
     }
