@@ -66,6 +66,7 @@ private:
     int blockAtlasHeight_{0};
     int width_{1};
     int height_{1};
+    float density_{1.0f};
     bool ready_{false};
     bool rmlInitialised_{false};
     bool mouseCaptured_{false};
