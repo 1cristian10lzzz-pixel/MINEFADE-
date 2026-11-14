@@ -1,6 +1,9 @@
 #include "Player.h"
 #include "minefade_core.h"
 
+static_assert(minefade::Inventory::kSlotCount == MINEFADE_INVENTORY_SLOT_COUNT,
+              "C++ inventory slot count differs from the Rust ABI");
+
 static_assert(sizeof(MfPlayerState) == 44u, "Rust/C player state ABI mismatch");
 static_assert(sizeof(MfPlayerPose) == 40u, "Rust/C player pose ABI mismatch");
 static_assert(sizeof(MfEntityState) == 24u, "Rust/C entity state ABI mismatch");
@@ -355,63 +358,31 @@ void Player::Update(const VoxelWorld& world, float deltaSeconds) {
 
 bool Inventory::CanAdd(std::uint16_t itemId, std::uint16_t amount) const {
     const BlockDefinition* definition = GetBlockDefinition(static_cast<BlockId>(itemId));
-    if (definition == nullptr || itemId == 0 || amount == 0) return false;
-    const std::uint32_t maximum = definition->stackLimit == 0 ? 64u : definition->stackLimit;
-    std::uint32_t remaining = amount;
-    for (const std::uint32_t encoded : counts) {
-        if (encoded == 0 || encoded / 1000u != itemId) continue;
-        const std::uint32_t quantity = encoded % 1000u;
-        if (quantity < maximum) remaining -= std::min(maximum - quantity, remaining);
-        if (remaining == 0) return true;
-    }
-    for (const std::uint32_t encoded : counts) {
-        if (encoded != 0) continue;
-        remaining -= std::min(maximum, remaining);
-        if (remaining == 0) return true;
-    }
-    return false;
+    if (definition == nullptr) return false;
+    return minefade_inventory_can_add(
+        counts.data(), static_cast<std::uint32_t>(counts.size()),
+        itemId, amount, definition->stackLimit) != 0;
 }
 
 bool Inventory::Add(std::uint16_t itemId, std::uint16_t amount) {
-    // Make insertion atomic: the caller can preserve the world block when the
-    // inventory is full, instead of silently losing the overflow quantity.
-    if (!CanAdd(itemId, amount)) return false;
     const BlockDefinition* definition = GetBlockDefinition(static_cast<BlockId>(itemId));
     if (definition == nullptr) return false;
-    const std::uint32_t maximum = definition->stackLimit == 0 ? 64u : definition->stackLimit;
-    std::uint32_t remaining = amount;
-    for (std::uint32_t& encoded : counts) {
-        if (encoded == 0 || encoded / 1000u != itemId) continue;
-        const std::uint32_t quantity = encoded % 1000u;
-        if (quantity >= maximum) continue;
-        const std::uint32_t moved = std::min(maximum - quantity, remaining);
-        encoded = static_cast<std::uint32_t>(itemId) * 1000u + quantity + moved;
-        remaining -= moved;
-        if (remaining == 0) return true;
-    }
-    for (std::uint32_t& encoded : counts) {
-        if (encoded != 0) continue;
-        const std::uint32_t moved = std::min(maximum, remaining);
-        encoded = static_cast<std::uint32_t>(itemId) * 1000u + moved;
-        remaining -= moved;
-        if (remaining == 0) return true;
-    }
-    return false; // CanAdd guarantees this branch is unreachable.
+    // Rust preflights the whole insertion before touching the nine encoded slots.
+    return minefade_inventory_add(
+        counts.data(), static_cast<std::uint32_t>(counts.size()),
+        itemId, amount, definition->stackLimit) != 0;
 }
 
 std::uint16_t Inventory::SelectedItemId() const {
-    if (selectedSlot >= counts.size() || counts[selectedSlot] == 0) return 0;
-    return static_cast<std::uint16_t>(counts[selectedSlot] / 1000u);
+    return minefade_inventory_selected_item_id(
+        counts.data(), static_cast<std::uint32_t>(counts.size()),
+        static_cast<std::uint32_t>(selectedSlot));
 }
 
 bool Inventory::ConsumeSelected(std::uint16_t amount) {
-    if (selectedSlot >= counts.size() || counts[selectedSlot] == 0 || amount == 0) return false;
-    const std::uint32_t itemId = counts[selectedSlot] / 1000u;
-    std::uint32_t quantity = counts[selectedSlot] % 1000u;
-    if (quantity < amount) return false;
-    quantity -= amount;
-    counts[selectedSlot] = quantity == 0 ? 0u : itemId * 1000u + quantity;
-    return true;
+    return minefade_inventory_consume_selected(
+        counts.data(), static_cast<std::uint32_t>(counts.size()),
+        static_cast<std::uint32_t>(selectedSlot), amount) != 0;
 }
 
 void DroppedItemSystem::Spawn(const Vec3& position, std::uint16_t itemId, std::uint16_t amount) {
