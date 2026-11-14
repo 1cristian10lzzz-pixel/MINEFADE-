@@ -740,6 +740,7 @@ void EntitySystem::AppendMesh(std::vector<WorldVertex>& output, const CameraFrus
             }
         } else {
             // Rabbit: compact body, tall ears, strong hind legs and a springy idle hop.
+            const std::array<float,3> dark{0.18f,0.13f,0.12f};
             const std::array<float,3> fur{0.78f,0.73f,0.65f};
             const std::array<float,3> innerEar{0.83f,0.47f,0.50f};
             const std::array<float,3> paw{0.67f,0.58f,0.53f};
