@@ -25,10 +25,12 @@ Se añadió `rust-core` como crate Rust estable que se compila a biblioteca est�
 - Normalización de controles, giro, límites de cámara y salto.
 - Movimiento horizontal, gravedad, agua/líquidos y colisiones por callbacks al mundo voxel C++.
 - Tiempo de animación, poses del jugador, balanceo de brazos/piernas, respiración, torso, cabeza, parpadeo y pose de salto.
-- Movimiento base, fase y poses de criaturas: marcha cuadrúpeda, cabeza, cola y batido independiente de alas del ave.
+- Movimiento base, fase y poses de criaturas: marcha cuadrúpeda, cabeza, cola, parpadeo y batido independiente de alas del ave.
+- Inventario de nueve slots: comprobación de capacidad, fusión de pilas, inserción atómica, selección y consumo.
+- Física de los objetos caídos: gravedad, colisión por callback, rebote, temporizador y base de la recogida en C++.
 - Actualización de ciclo día/noche, color del cielo y dirección solar.
 
-C++ sigue siendo responsable del host Android/JNI, mundo voxel/guardado, inventario, generación y mallas, RmlUi 6.3 y render OpenGL ES. Esta frontera evita una reescritura insegura de los subsistemas que dependen de APIs Android/GLES/RmlUi. La presencia del crate no significa que todo el motor esté escrito en Rust.
+C++ sigue siendo responsable del host Android/JNI, mundo voxel/guardado, contenedor de estado de inventario y drops, generación y mallas, recogida/proximidad, RmlUi 6.3 y render OpenGL ES. Las operaciones de inventario y la física elemental de drops ya se ejecutan en Rust. Esta frontera evita una reescritura insegura de los subsistemas que dependen de APIs Android/GLES/RmlUi. La presencia del crate no significa que todo el motor esté escrito en Rust.
 
 ### Avatar y menús
 
@@ -49,7 +51,7 @@ C++ sigue siendo responsable del host Android/JNI, mundo voxel/guardado, inventa
 ## Validación
 
 La rama Review9 ejecuta en CI:
-1. Pruebas unitarias de Rust para movimiento, salto/gravedad, poses, criaturas y ambiente.
+1. Pruebas unitarias de Rust para movimiento, salto/gravedad, poses, criaturas, ambiente, pilas/capacidad del inventario, consumo y rebote de objetos caídos.
 2. Smoke tests C++ del mundo, chunks, inventario, colisiones, jugador y entidades enlazados contra la biblioteca Rust.
 3. Pruebas Python del catálogo modular y atlas.
 4. Construcción Android con Gradle, CMake, NDK y las dos ABI arm64-v8a/armeabi-v7a.
