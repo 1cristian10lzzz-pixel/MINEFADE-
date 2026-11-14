@@ -1,4 +1,5 @@
 #include "Player.h"
+#include "minefade_core.h"
 
 #include <algorithm>
 #include <cmath>
@@ -42,9 +43,10 @@ void AppendContactShadow(std::vector<WorldVertex>& output,const Vec3& position,
     }
 }
 
-void AppendPlayerBox(std::vector<WorldVertex>& output, const Vec3& anchor, float yaw,
-                     const Vec3& localCenter, const Vec3& half,
-                     const std::array<float, 3>& color) {
+void AppendPlayerBoxAnimated(std::vector<WorldVertex>& output, const Vec3& anchor, float yaw,
+                             const Vec3& localCenter, const Vec3& half,
+                             const std::array<float, 3>& color,
+                             const Vec3& pivot, const Vec3& rotation) {
     static constexpr std::array<std::array<std::array<float, 3>, 4>, 6> faces{{
         {{{{1,0,0}},{{1,1,0}},{{1,1,1}},{{1,0,1}}}},
         {{{{0,0,1}},{{0,1,1}},{{0,1,0}},{{0,0,0}}}},
@@ -55,6 +57,19 @@ void AppendPlayerBox(std::vector<WorldVertex>& output, const Vec3& anchor, float
     }};
     static constexpr std::array<float, 6> shade{{0.84f, 0.84f, 1.0f, 0.56f, 0.91f, 0.91f}};
     static constexpr std::array<int, 6> order{{0, 1, 2, 0, 2, 3}};
+    const float cx = std::cos(rotation.x), sx = std::sin(rotation.x);
+    const float cy = std::cos(rotation.y), sy = std::sin(rotation.y);
+    const float cz = std::cos(rotation.z), sz = std::sin(rotation.z);
+    const auto transform = [&](float x, float y, float z) {
+        x -= pivot.x; y -= pivot.y; z -= pivot.z;
+        const float y1 = y * cx - z * sx;
+        const float z1 = y * sx + z * cx;
+        const float x2 = x * cy + z1 * sy;
+        const float z2 = -x * sy + z1 * cy;
+        const float x3 = x2 * cz - y1 * sz;
+        const float y3 = x2 * sz + y1 * cz;
+        return PlayerLocalPoint(anchor, yaw, pivot.x + x3, pivot.y + y3, pivot.z + z2);
+    };
     for (std::size_t face = 0; face < faces.size(); ++face) {
         std::array<Vec3, 4> points{};
         for (std::size_t i = 0; i < points.size(); ++i) {
@@ -62,7 +77,7 @@ void AppendPlayerBox(std::vector<WorldVertex>& output, const Vec3& anchor, float
             const float lx = localCenter.x + (p[0] * 2.0f - 1.0f) * half.x;
             const float ly = localCenter.y + (p[1] * 2.0f - 1.0f) * half.y;
             const float lz = localCenter.z + (p[2] * 2.0f - 1.0f) * half.z;
-            points[i] = PlayerLocalPoint(anchor, yaw, lx, ly, lz);
+            points[i] = transform(lx, ly, lz);
         }
         const Vec3 edgeA{points[1].x - points[0].x, points[1].y - points[0].y, points[1].z - points[0].z};
         const Vec3 edgeB{points[2].x - points[0].x, points[2].y - points[0].y, points[2].z - points[0].z};
@@ -77,6 +92,43 @@ void AppendPlayerBox(std::vector<WorldVertex>& output, const Vec3& anchor, float
         }
     }
 }
+
+void AppendPlayerBox(std::vector<WorldVertex>& output, const Vec3& anchor, float yaw,
+                     const Vec3& localCenter, const Vec3& half,
+                     const std::array<float, 3>& color) {
+    AppendPlayerBoxAnimated(output, anchor, yaw, localCenter, half, color,
+                            localCenter, {0.0f, 0.0f, 0.0f});
+}
+
+std::uint8_t WorldSolidForRust(std::int32_t x, std::int32_t y, std::int32_t z, void* userData) {
+    const auto* world = static_cast<const VoxelWorld*>(userData);
+    return world != nullptr && world->IsSolid(x, y, z) ? 1u : 0u;
+}
+
+std::int32_t WorldSurfaceForRust(std::int32_t x, std::int32_t z, void* userData) {
+    const auto* world = static_cast<const VoxelWorld*>(userData);
+    return world != nullptr ? world->GetSurfaceHeight(x, z) : 0;
+}
+
+MfPlayerState ToRustPlayerState(const Player& player) {
+    MfPlayerState state{};
+    state.x = player.position.x; state.y = player.position.y; state.z = player.position.z;
+    state.yaw = player.yaw; state.pitch = player.pitch;
+    state.vertical_velocity = player.verticalVelocity;
+    state.movement_x = player.movementX; state.movement_y = player.movementY;
+    state.walk_phase = player.walkPhase; state.animation_time = player.animationTime;
+    state.grounded = player.grounded ? 1u : 0u;
+    return state;
+}
+
+void ApplyRustPlayerState(Player& player, const MfPlayerState& state) {
+    player.position = {state.x, state.y, state.z};
+    player.yaw = state.yaw; player.pitch = state.pitch;
+    player.verticalVelocity = state.vertical_velocity;
+    player.movementX = state.movement_x; player.movementY = state.movement_y;
+    player.walkPhase = state.walk_phase; player.animationTime = state.animation_time;
+    player.grounded = state.grounded != 0;
+}
 }
 
 Vec3 Player::Forward() const {
@@ -87,23 +139,26 @@ Vec3 Player::Forward() const {
 Vec3 Player::CameraPosition() const { return {position.x, position.y + 1.58f, position.z}; }
 
 void Player::SetMovement(float x, float y) {
-    const float length = std::sqrt(x * x + y * y);
-    if (length > 1.0f) { x /= length; y /= length; }
-    movementX = std::clamp(x, -1.0f, 1.0f);
-    movementY = std::clamp(y, -1.0f, 1.0f);
+    MfPlayerState state = ToRustPlayerState(*this);
+    minefade_player_set_movement(&state, x, y);
+    ApplyRustPlayerState(*this, state);
 }
 
 void Player::Rotate(float deltaX, float deltaY) {
-    yaw += deltaX * 0.0042f;
-    pitch = std::clamp(pitch - deltaY * 0.0042f, -1.35f, 1.35f);
-    if (yaw > kPi) yaw -= 2.0f * kPi;
-    if (yaw < -kPi) yaw += 2.0f * kPi;
+    MfPlayerState state = ToRustPlayerState(*this);
+    minefade_player_rotate(&state, deltaX, deltaY);
+    ApplyRustPlayerState(*this, state);
 }
 
 void Player::Jump() {
-    if (!grounded) return;
-    verticalVelocity = 7.2f;
-    grounded = false;
+    MfPlayerState state = ToRustPlayerState(*this);
+    minefade_player_jump(&state);
+    ApplyRustPlayerState(*this, state);
+}
+
+void Player::SetAnimationOptions(std::uint8_t quality, bool enabled) {
+    animationQuality = std::min<std::uint8_t>(quality, 2u);
+    animationsEnabled = enabled;
 }
 
 void Player::SetAppearance(const std::array<int, 6>& values) {
@@ -166,9 +221,11 @@ void Player::AppendMesh(std::vector<WorldVertex>& output) const {
     const Vec3 anchor = position;
     if(contactShadows)
         AppendContactShadow(output,{anchor.x,anchor.y-0.98f,anchor.z},0.48f,0.34f,1.0f);
-    const float stride = (std::abs(movementX) + std::abs(movementY) > 0.05f)
-        ? std::sin(walkPhase) * 0.16f : 0.0f;
+    const float stride = pose.left_leg_pitch * 0.45f;
 
+    MfPlayerPose pose{};
+    const MfPlayerState state = ToRustPlayerState(*this);
+    minefade_player_compute_pose(&state, animationQuality, animationsEnabled ? 1u : 0u, &pose);
     // Original Minefade adventurer silhouette: boots, trousers, tunic, arms, hands,
     // face and hair. Every part is transformed by the player's yaw, not world axes.
     static constexpr std::array<std::array<float,3>,6> skinPalette{{
@@ -197,23 +254,36 @@ void Player::AppendMesh(std::vector<WorldVertex>& output) const {
     const std::array<float, 3> trousers{{0.19f, 0.25f, 0.43f}};
     const std::array<float, 3> boots{{0.25f, 0.16f, 0.11f}};
 
-    AppendPlayerBox(output, anchor, yaw, {0.0f, 1.08f, 0.0f}, {0.32f, 0.40f, 0.19f}, tunic);
-    AppendPlayerBox(output, anchor, yaw, {0.0f, 1.37f, 0.0f}, {0.33f, 0.10f, 0.195f}, trim);
+    AppendPlayerBoxAnimated(output, anchor, yaw,
+        {0.0f, 1.08f + pose.torso_bob, 0.0f}, {0.32f, 0.40f, 0.19f}, tunic,
+        {0.0f, 1.08f, 0.0f}, {pose.torso_pitch, 0.0f, 0.0f});
+    AppendPlayerBoxAnimated(output, anchor, yaw,
+        {0.0f, 1.37f + pose.torso_bob, 0.0f}, {0.33f, 0.10f, 0.195f}, trim,
+        {0.0f, 1.37f, 0.0f}, {pose.torso_pitch * 0.6f, 0.0f, 0.0f});
 
-    const float armSwing = stride * 0.78f;
-    AppendPlayerBox(output, anchor, yaw, {-0.43f, 1.08f, -armSwing}, {0.145f, 0.34f, 0.145f}, tunic);
-    AppendPlayerBox(output, anchor, yaw, { 0.43f, 1.08f,  armSwing}, {0.145f, 0.34f, 0.145f}, tunic);
-    AppendPlayerBox(output, anchor, yaw, {-0.43f, 0.68f, -armSwing}, {0.135f, 0.12f, 0.14f}, skin);
-    AppendPlayerBox(output, anchor, yaw, { 0.43f, 0.68f,  armSwing}, {0.135f, 0.12f, 0.14f}, skin);
+    const float torsoOffset = pose.torso_bob;
+    AppendPlayerBoxAnimated(output,anchor,yaw,{-0.43f,1.08f+torsoOffset,0.0f},{0.145f,0.34f,0.145f},tunic,
+        {-0.43f,1.38f,0.0f},{pose.left_arm_pitch,0.0f,0.0f});
+    AppendPlayerBoxAnimated(output,anchor,yaw,{0.43f,1.08f+torsoOffset,0.0f},{0.145f,0.34f,0.145f},tunic,
+        {0.43f,1.38f,0.0f},{pose.right_arm_pitch,0.0f,0.0f});
+    AppendPlayerBox(output,anchor,yaw,{-0.43f,0.68f+torsoOffset,0.0f},{0.135f,0.12f,0.14f},skin);
+    AppendPlayerBox(output,anchor,yaw,{0.43f,0.68f+torsoOffset,0.0f},{0.135f,0.12f,0.14f},skin);
 
-    AppendPlayerBox(output, anchor, yaw, {-0.17f, 0.43f,  stride}, {0.16f, 0.37f, 0.16f}, trousers);
-    AppendPlayerBox(output, anchor, yaw, { 0.17f, 0.43f, -stride}, {0.16f, 0.37f, 0.16f}, trousers);
-    AppendPlayerBox(output, anchor, yaw, {-0.17f, 0.105f, stride + 0.025f}, {0.165f, 0.105f, 0.205f}, boots);
-    AppendPlayerBox(output, anchor, yaw, { 0.17f, 0.105f,-stride + 0.025f}, {0.165f, 0.105f, 0.205f}, boots);
+    AppendPlayerBoxAnimated(output,anchor,yaw,{-0.17f,0.43f+stride,0.0f},{0.16f,0.37f,0.16f},trousers,
+        {-0.17f,0.80f,0.0f},{pose.left_leg_pitch,0.0f,0.0f});
+    AppendPlayerBoxAnimated(output,anchor,yaw,{0.17f,0.43f-stride,0.0f},{0.16f,0.37f,0.16f},trousers,
+        {0.17f,0.80f,0.0f},{pose.right_leg_pitch,0.0f,0.0f});
+    AppendPlayerBoxAnimated(output,anchor,yaw,{-0.17f,0.105f+stride,0.025f},{0.165f,0.105f,0.205f},boots,
+        {-0.17f,0.80f,0.0f},{pose.left_leg_pitch,0.0f,0.0f});
+    AppendPlayerBoxAnimated(output,anchor,yaw,{0.17f,0.105f-stride,0.025f},{0.165f,0.105f,0.205f},boots,
+        {0.17f,0.80f,0.0f},{pose.right_leg_pitch,0.0f,0.0f});
 
-    AppendPlayerBox(output, anchor, yaw, {0.0f, 1.63f, 0.015f}, {0.25f, 0.25f, 0.245f}, skin);
-    AppendPlayerBox(output, anchor, yaw, {0.0f, 1.83f, -0.015f}, {0.255f, 0.075f, 0.255f}, hair);
-    AppendPlayerBox(output, anchor, yaw, {0.0f, 1.63f, -0.225f}, {0.255f, 0.10f, 0.045f}, hair);
+    AppendPlayerBoxAnimated(output,anchor,yaw,{0.0f,1.63f+pose.torso_bob,0.015f},{0.25f,0.25f,0.245f},skin,
+        {0.0f,1.63f,0.015f},{pose.head_pitch,pose.head_yaw,0.0f});
+    AppendPlayerBoxAnimated(output,anchor,yaw,{0.0f,1.83f+pose.torso_bob,-0.015f},{0.255f,0.075f,0.255f},hair,
+        {0.0f,1.63f,0.015f},{pose.head_pitch,pose.head_yaw,0.0f});
+    AppendPlayerBoxAnimated(output,anchor,yaw,{0.0f,1.63f+pose.torso_bob,-0.225f},{0.255f,0.10f,0.045f},hair,
+        {0.0f,1.63f,0.015f},{pose.head_pitch,pose.head_yaw,0.0f});
     // Hairstyle slots alter the actual native silhouette, not just the menu swatch.
     if(hairstyle==1||hairstyle==2) {
         AppendPlayerBox(output,anchor,yaw,{-0.19f,1.72f,0.19f},{0.10f,0.18f,0.12f},hair);
@@ -230,8 +300,11 @@ void Player::AppendMesh(std::vector<WorldVertex>& output) const {
     }};
     const auto& eye=eyePalette[static_cast<std::size_t>(appearance[2])];
     const std::array<float,3> belt{{0.11f,0.16f,0.21f}};
-    AppendPlayerBox(output, anchor, yaw, {-0.105f,1.66f,0.245f},{0.035f,0.045f,0.018f},eye);
-    AppendPlayerBox(output, anchor, yaw, {0.105f,1.66f,0.245f},{0.035f,0.045f,0.018f},eye);
+    const float eyeOpen = std::max(0.08f, 1.0f - pose.eyelid * 0.92f);
+    AppendPlayerBoxAnimated(output,anchor,yaw,{-0.105f,1.66f+pose.torso_bob,0.245f},
+        {0.035f,0.045f*eyeOpen,0.018f},eye,{0.0f,1.63f,0.015f},{pose.head_pitch,pose.head_yaw,0.0f});
+    AppendPlayerBoxAnimated(output,anchor,yaw,{0.105f,1.66f+pose.torso_bob,0.245f},
+        {0.035f,0.045f*eyeOpen,0.018f},eye,{0.0f,1.63f,0.015f},{pose.head_pitch,pose.head_yaw,0.0f});
     AppendPlayerBox(output, anchor, yaw, {0.0f,1.57f,0.252f},{0.045f,0.035f,0.018f},trim);
     AppendPlayerBox(output, anchor, yaw, {0.0f,0.77f,0.0f},{0.325f,0.055f,0.198f},belt);
     AppendPlayerBox(output, anchor, yaw, {-0.22f,1.32f,0.0f},{0.13f,0.08f,0.205f},trim);
@@ -256,82 +329,14 @@ void Player::AppendMesh(std::vector<WorldVertex>& output) const {
 }
 
 void Player::Update(const VoxelWorld& world, float deltaSeconds) {
-    const float dt = std::clamp(deltaSeconds, 0.0f, 0.05f);
-    const float bodyRadius = 0.29f;
-    const float bodyHeight = 1.80f;
-    const auto collidesAt = [&world, bodyRadius, bodyHeight](float x, float y, float z) {
-        const int minX = FloorToInt(x - bodyRadius);
-        const int maxX = FloorToInt(x + bodyRadius);
-        const int minZ = FloorToInt(z - bodyRadius);
-        const int maxZ = FloorToInt(z + bodyRadius);
-        const int minY = FloorToInt(y + 0.06f);
-        const int maxY = FloorToInt(y + bodyHeight - 0.06f);
-        for (int blockY = minY; blockY <= maxY; ++blockY)
-            for (int blockZ = minZ; blockZ <= maxZ; ++blockZ)
-                for (int blockX = minX; blockX <= maxX; ++blockX)
-                    if (world.IsSolid(blockX, blockY, blockZ)) return true;
-        return false;
-    };
-
     const BlockId bodyBlock = world.GetBlock(FloorToInt(position.x),
                                                FloorToInt(position.y + 0.65f),
                                                FloorToInt(position.z));
-    const bool inFluid = HasBlockFlag(bodyBlock, BlockFluid);
-    const float speed = inFluid ? 2.35f : 5.0f;
-    const Vec3 forward{std::cos(yaw), 0.0f, std::sin(yaw)};
-    const Vec3 right{-forward.z, 0.0f, forward.x};
-    const float moveX = (forward.x * movementY + right.x * movementX) * speed * dt;
-    const float moveZ = (forward.z * movementY + right.z * movementX) * speed * dt;
-    if (std::abs(moveX) + std::abs(moveZ) > 0.0001f) {
-        walkPhase += dt * (inFluid ? 5.0f : 8.5f);
-        if (walkPhase > 2.0f * kPi) walkPhase -= 2.0f * kPi;
-    } else {
-        walkPhase = std::fmod(walkPhase, 2.0f * kPi);
-    }
-
-    // Substeps keep the player from tunnelling through a thin wall at low frame rates.
-    const int horizontalSteps = std::max(1, static_cast<int>(std::ceil(
-        std::max(std::abs(moveX), std::abs(moveZ)) / 0.12f)));
-    const float stepX = moveX / static_cast<float>(horizontalSteps);
-    const float stepZ = moveZ / static_cast<float>(horizontalSteps);
-    for (int step = 0; step < horizontalSteps; ++step) {
-        const float nextX = position.x + stepX;
-        if (!collidesAt(nextX, position.y, position.z)) position.x = nextX;
-        const float nextZ = position.z + stepZ;
-        if (!collidesAt(position.x, position.y, nextZ)) position.z = nextZ;
-    }
-
-    const float gravity = inFluid ? 5.0f : 22.0f;
-    verticalVelocity = std::max(verticalVelocity - gravity * dt, inFluid ? -2.0f : -32.0f);
-    const float verticalMove = verticalVelocity * dt;
-    const int verticalSteps = std::max(1, static_cast<int>(std::ceil(std::abs(verticalMove) / 0.10f)));
-    const float verticalStep = verticalMove / static_cast<float>(verticalSteps);
-    grounded = false;
-    for (int step = 0; step < verticalSteps; ++step) {
-        const float nextY = position.y + verticalStep;
-        if (!collidesAt(position.x, nextY, position.z)) {
-            position.y = nextY;
-            continue;
-        }
-        if (verticalStep < 0.0f) {
-            const int footBlockY = FloorToInt(nextY + 0.06f);
-            position.y = static_cast<float>(footBlockY + 1);
-            verticalVelocity = 0.0f;
-            grounded = true;
-        } else {
-            const int headBlockY = FloorToInt(nextY + bodyHeight - 0.06f);
-            position.y = static_cast<float>(headBlockY) - bodyHeight + 0.06f;
-            verticalVelocity = 0.0f;
-        }
-        break;
-    }
-
-    if (position.y <= 0.0f) {
-        position.y = 1.0f;
-        verticalVelocity = 0.0f;
-        grounded = true;
-    }
-    position.y = std::clamp(position.y, 1.0f, static_cast<float>(VoxelWorld::kWorldHeight - 2));
+    const std::uint8_t inFluid = HasBlockFlag(bodyBlock, BlockFluid) ? 1u : 0u;
+    MfPlayerState state = ToRustPlayerState(*this);
+    minefade_player_update(&state, deltaSeconds, inFluid, WorldSolidForRust,
+                           const_cast<VoxelWorld*>(&world));
+    ApplyRustPlayerState(*this, state);
 }
 
 bool Inventory::CanAdd(std::uint16_t itemId, std::uint16_t amount) const {
@@ -495,16 +500,14 @@ void EntitySystem::SpawnInitial(const VoxelWorld& world) {
 
 void EntitySystem::Update(const VoxelWorld& world, float deltaSeconds) {
     const float dt = std::clamp(deltaSeconds, 0.0f, 0.05f);
+    animationTime_ = std::fmod(animationTime_ + dt, 4096.0f);
     for (Entity& entity : entities_) {
-        entity.phase += dt * entity.speed;
-        const float targetX = entity.position.x + std::sin(entity.phase) * dt * 0.5f;
-        const float targetZ = entity.position.z + std::cos(entity.phase * 0.7f) * dt * 0.5f;
-        if (world.IsSolid(FloorToInt(targetX), FloorToInt(entity.position.y - 0.05f), FloorToInt(targetZ))) {
-            entity.position.x = targetX;
-            entity.position.z = targetZ;
-        }
-        entity.position.y = static_cast<float>(world.GetSurfaceHeight(
-            FloorToInt(entity.position.x), FloorToInt(entity.position.z))) + 1.0f;
+        MfEntityState state{entity.position.x, entity.position.y, entity.position.z,
+                            entity.phase, entity.speed, entity.kind};
+        minefade_entity_update(&state, dt, WorldSolidForRust, WorldSurfaceForRust,
+                               const_cast<VoxelWorld*>(&world));
+        entity.position = {state.x, state.y, state.z};
+        entity.phase = state.phase;
     }
 }
 
