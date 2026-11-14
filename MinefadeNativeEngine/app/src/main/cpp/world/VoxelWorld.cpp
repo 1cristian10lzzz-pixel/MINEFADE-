@@ -61,17 +61,19 @@ std::array<float, 3> FaceShade(int face) {
 }
 
 void AddFace(std::vector<WorldVertex>& out, const std::array<Vec3, 4>& p,
-             const std::array<float, 3>& color, std::uint16_t tile) {
+             const std::array<float, 3>& color, std::uint16_t tile,
+             float repeatU = 1.0f, float repeatV = 1.0f) {
     const Vec3 normal = Normalize(Cross(Subtract(p[1], p[0]), Subtract(p[2], p[0])));
-    float u0=0, v0=0, u1=1, v1=1;
-    GetAtlasUv(tile, u0, v0, u1, v1);
-    const std::array<std::array<float,2>,4> uv{{{{u0,v0}},{{u1,v0}},{{u1,v1}},{{u0,v1}}}};
+    const std::array<std::array<float,2>,4> uv{{
+        {{0.0f,0.0f}},{{repeatU,0.0f}},{{repeatU,repeatV}},{{0.0f,repeatV}}
+    }};
     constexpr int order[6] = {0, 1, 2, 0, 2, 3};
     for (int i : order) {
         const std::size_t index = static_cast<std::size_t>(i);
         const Vec3& v = p[index];
         out.push_back({v.x,v.y,v.z,normal.x,normal.y,normal.z,
-                       color[0],color[1],color[2],uv[index][0],uv[index][1]});
+                       color[0],color[1],color[2],uv[index][0],uv[index][1],
+                       static_cast<float>(tile)});
     }
 }
 
@@ -111,15 +113,20 @@ void AppendBox(std::vector<WorldVertex>& out, float x0, float y0, float z0,
 
 void AppendCrossPlant(std::vector<WorldVertex>& out, float x, float y, float z,
                       const BlockDefinition& def) {
-    float u0=0,v0=0,u1=1,v1=1; GetAtlasUv(def.tileSide,u0,v0,u1,v1);
-    const auto appendDouble = [&out,u0,v0,u1,v1](Vec3 a,Vec3 b,Vec3 c,Vec3 d) {
+    const auto appendDouble = [&out,tile=def.tileSide](Vec3 a,Vec3 b,Vec3 c,Vec3 d) {
         const Vec3 n=Normalize(Cross(Subtract(b,a),Subtract(c,a)));
         const std::array<Vec3,4> p{{a,b,c,d}};
-        const std::array<std::array<float,2>,4> uv{{{{u0,v0}},{{u1,v0}},{{u1,v1}},{{u0,v1}}}};
+        const std::array<std::array<float,2>,4> uv{{{{0,0}},{{1,0}},{{1,1}},{{0,1}}}};
         constexpr int order[6]={0,1,2,0,2,3};
-        for (int i:order) { auto j=static_cast<std::size_t>(i); const auto& q=p[j]; out.push_back({q.x,q.y,q.z,n.x,n.y,n.z,1,1,1,uv[j][0],uv[j][1]}); }
+        for (int i:order) {
+            const auto j=static_cast<std::size_t>(i); const auto& q=p[j];
+            out.push_back({q.x,q.y,q.z,n.x,n.y,n.z,1,1,1,uv[j][0],uv[j][1],static_cast<float>(tile)});
+        }
         constexpr int backOrder[6]={0,2,1,0,3,2};
-        for (int i:backOrder) { auto j=static_cast<std::size_t>(i); const auto& q=p[j]; out.push_back({q.x,q.y,q.z,-n.x,-n.y,-n.z,1,1,1,uv[j][0],uv[j][1]}); }
+        for (int i:backOrder) {
+            const auto j=static_cast<std::size_t>(i); const auto& q=p[j];
+            out.push_back({q.x,q.y,q.z,-n.x,-n.y,-n.z,1,1,1,uv[j][0],uv[j][1],static_cast<float>(tile)});
+        }
     };
     const float a=0.12f,b=0.88f;
     appendDouble({x+a,y,z+a},{x+a,y+0.9f,z+a},{x+b,y+0.9f,z+b},{x+b,y,z+b});
