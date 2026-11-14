@@ -121,6 +121,32 @@ Java_com_minefade_nativeengine_NativeBridge_nativeSetStoragePath(JNIEnv* env, jc
     env->ReleaseStringUTFChars(path, chars);
 }
 
+extern "C" JNIEXPORT void JNICALL
+Java_com_minefade_nativeengine_NativeBridge_nativeSetWorldOptions(
+        JNIEnv*, jclass, jint gameMode, jboolean allowCheats, jboolean starterChest, jlong seed) {
+    minefade::GetEngine().SetWorldOptions(static_cast<int>(gameMode),
+        allowCheats == JNI_TRUE, starterChest == JNI_TRUE, static_cast<std::uint32_t>(seed));
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_minefade_nativeengine_NativeBridge_nativeSetModsDirectory(JNIEnv* env, jclass, jstring path) {
+    if (path == nullptr) return;
+    const char* chars = env->GetStringUTFChars(path, nullptr);
+    if (chars == nullptr) return;
+    minefade::GetEngine().SetModsDirectory(chars);
+    env->ReleaseStringUTFChars(path, chars);
+}
+
+extern "C" JNIEXPORT jstring JNICALL
+Java_com_minefade_nativeengine_NativeBridge_nativeExecuteCommand(JNIEnv* env, jclass, jstring command) {
+    if (command == nullptr) return env->NewStringUTF("Comando vacío.");
+    const char* chars = env->GetStringUTFChars(command, nullptr);
+    if (chars == nullptr) return env->NewStringUTF("No se pudo leer el comando.");
+    const std::string result = minefade::GetEngine().ExecuteCommand(chars);
+    env->ReleaseStringUTFChars(command, chars);
+    return env->NewStringUTF(result.c_str());
+}
+
 extern "C" JNIEXPORT jboolean JNICALL
 Java_com_minefade_nativeengine_NativeBridge_nativeConsumeExitRequest(JNIEnv*, jclass) {
     return minefade::GetEngine().ConsumeExitRequest() ? JNI_TRUE : JNI_FALSE;
