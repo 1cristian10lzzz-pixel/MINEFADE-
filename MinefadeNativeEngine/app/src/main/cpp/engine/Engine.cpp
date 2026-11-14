@@ -744,7 +744,13 @@ void Engine::UploadTransparentWorldMesh() {
 void Engine::RebuildEntityMesh() {
     entityMesh_.clear();
     itemMesh_.clear();
-    entities_.AppendMesh(entityMesh_);
+    const Vec3 eye=ViewPosition();
+    const Vec3 target=ViewTarget();
+    const Mat4 projection=Perspective(fieldOfView_*(kPi/180.0f),
+        static_cast<float>(width_)/static_cast<float>(height_),0.08f,120.0f);
+    const Mat4 view=LookAt(eye,target,{0.0f,1.0f,0.0f});
+    const CameraFrustum frustum=ExtractFrustum(Multiply(projection,view));
+    entities_.AppendMesh(entityMesh_,&frustum);
     if (thirdPerson_) {
         player_.AppendMesh(entityMesh_);
     } else {
@@ -778,6 +784,9 @@ void Engine::RebuildEntityMesh() {
         Player remote;
         remote.position = {remotePlayers_[i], remotePlayers_[i + 1u], remotePlayers_[i + 2u]};
         remote.yaw = remotePlayers_[i + 3u];
+        if (!frustum.IntersectsAabb(
+                remote.position.x-0.62f,remote.position.y-0.08f,remote.position.z-0.62f,
+                remote.position.x+0.62f,remote.position.y+1.95f,remote.position.z+0.62f)) continue;
         // Network snapshots currently carry position/yaw only. Render a
         // natural idle pose until movement deltas are available in the protocol,
         // rather than making every connected player look permanently in motion.
