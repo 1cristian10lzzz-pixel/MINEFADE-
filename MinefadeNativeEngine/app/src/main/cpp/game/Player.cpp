@@ -478,7 +478,7 @@ void EntitySystem::SpawnInitial(const VoxelWorld& world) {
 }
 
 bool EntitySystem::SpawnEntity(const Vec3& nearPosition, int kind, const VoxelWorld& world) {
-    if (entities_.size() >= 128u || kind < 0 || kind > 2) return false;
+    if (entities_.size() >= 128u || kind < 0 || kind > 3) return false;
     const float index = static_cast<float>(entities_.size());
     const float angle = index * 2.39996323f;
     const float radius = 1.8f + std::fmod(index, 3.0f) * 0.35f;
@@ -610,7 +610,7 @@ void EntitySystem::AppendMesh(std::vector<WorldVertex>& output, const CameraFrus
             AppendEntityBoxAnimated(output,entity.position,{0.0f,0.29f+bob,0.23f},
                 {0.22f,0.12f,0.20f},{0.68f,0.52f,0.48f},
                 {0.0f,0.42f,0.23f},{tailIdle*0.12f,0.0f,0.0f});
-        } else {
+        } else if (entity.kind == 2) {
             const std::array<float,3> feather{0.89f,0.85f,0.75f};
             const std::array<float,3> beak{0.91f,0.60f,0.18f};
             const std::array<float,3> foot{0.80f,0.49f,0.15f};
@@ -647,6 +647,40 @@ void EntitySystem::AppendMesh(std::vector<WorldVertex>& output, const CameraFrus
                 AppendEntityBoxAnimated(output,entity.position,{side*0.12f,0.73f+bob,0.52f},
                     {0.035f,0.04f*eyeOpen,0.025f},eye,{0.0f,0.69f,0.36f},{pose.head_pitch,pose.head_yaw,0.0f});
             }
+        } else {
+            // Pig: wider pink body, four articulated legs, short snout and curled tail.
+            const std::array<float,3> pink{0.84f,0.50f,0.52f};
+            const std::array<float,3> pale{0.96f,0.69f,0.70f};
+            const std::array<float,3> hoof{0.30f,0.22f,0.23f};
+            AppendEntityBoxAnimated(output,entity.position,{0.0f,0.60f+bob,0.0f},
+                {0.49f,0.38f,0.63f},pink,{0.0f,0.60f,0.0f},{0.0f,0.0f,0.0f});
+            AppendEntityBoxAnimated(output,entity.position,{0.0f,0.77f+bob,0.60f},
+                {0.26f,0.24f,0.25f},pink,{0.0f,0.77f,0.52f},{pose.head_pitch,pose.head_yaw,0.0f});
+            AppendEntityBoxAnimated(output,entity.position,{0.0f,0.67f+bob,0.87f},
+                {0.18f,0.13f,0.10f},pale,{0.0f,0.77f,0.52f},{pose.head_pitch,pose.head_yaw,0.0f});
+            const std::array<Vec3,4> legs{{
+                {-0.29f,0.20f,-0.36f},{0.29f,0.20f,-0.36f},
+                {-0.29f,0.20f,0.36f},{0.29f,0.20f,0.36f}}};
+            const std::array<float,4> swings{{pose.front_left_leg_pitch,pose.front_right_leg_pitch,
+                                               pose.rear_left_leg_pitch,pose.rear_right_leg_pitch}};
+            for (std::size_t i=0;i<legs.size();++i) {
+                const Vec3& c=legs[i];
+                AppendEntityBoxAnimated(output,entity.position,{c.x,c.y+bob,c.z},
+                    {0.105f,0.22f,0.11f},hoof,{c.x,0.40f,c.z},{swings[i],0.0f,0.0f});
+            }
+            const std::array<float,3> eye{0.12f,0.08f,0.075f};
+            for (float side : {-1.0f,1.0f}) {
+                AppendEntityBoxAnimated(output,entity.position,{side*0.16f,0.82f+bob,0.80f},
+                    {0.035f,0.04f*eyeOpen,0.025f},eye,{0.0f,0.77f,0.52f},{pose.head_pitch,0.0f,0.0f});
+                AppendEntityBoxAnimated(output,entity.position,{side*0.18f,1.02f+bob,0.57f},
+                    {0.075f,0.11f,0.09f},pink,{0.0f,0.77f,0.52f},{0.0f,0.0f,side*earIdle});
+                AppendEntityBoxAnimated(output,entity.position,{side*0.075f,0.66f+bob,0.965f},
+                    {0.025f,0.035f,0.018f},{0.45f,0.21f,0.24f},
+                    {0.0f,0.77f,0.52f},{pose.head_pitch,0.0f,0.0f});
+            }
+            AppendEntityBoxAnimated(output,entity.position,{0.0f,0.55f+bob,-0.69f},
+                {0.045f,0.065f,0.16f},pale,{0.0f,0.56f,-0.55f},
+                {0.0f,pose.tail_yaw+tailIdle,tailIdle*0.45f});
         }
     }
 }
