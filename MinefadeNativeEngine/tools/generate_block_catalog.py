@@ -213,15 +213,19 @@ def classify(key: str, block: dict) -> tuple[str,int,float,str,int,int]:
     elif k in {'ochre_froglight','verdant_froglight','pearlescent_froglight'}:
         shape='Cube'; flags=1|2|32; hardness=0.3; tool='Pickaxe'; light=15; stack=64
     elif k == 'sculk_catalyst':
-        shape='Cube'; flags=1|2|32; hardness=3.0; tool='Hoe'; light=3; stack=64
+        shape='Cube'; flags=1|2|32; hardness=3.0; tool='Pickaxe'; light=3; stack=64
     elif k == 'sculk_shrieker':
-        shape='Cube'; flags=1|2; hardness=3.0; tool='Hoe'; light=0; stack=64
+        shape='Cube'; flags=1|2; hardness=3.0; tool='Pickaxe'; light=0; stack=64
     elif k == 'reinforced_deepslate':
         shape='Cube'; flags=1|2; hardness=55.0; tool='Pickaxe'; light=0; stack=64
     elif k == 'crying_obsidian':
         shape='Cube'; flags=1|2|32; hardness=50.0; tool='Pickaxe'; light=10; stack=64
     elif k == 'sculk_sensor':
-        shape='Cube'; flags=1|2; hardness=3.0; tool='Hoe'; light=0; stack=64
+        shape='Cube'; flags=1|2; hardness=3.0; tool='Pickaxe'; light=0; stack=64
+    elif k in {'mud','packed_mud'}:
+        shape='Cube'; flags=1|2; hardness=0.5 if k == 'mud' else 1.5; tool='Shovel' if k == 'mud' else 'Pickaxe'; light=0; stack=64
+    elif k == 'mud_bricks':
+        shape='Cube'; flags=1|2; hardness=1.5; tool='Pickaxe'; light=0; stack=64
     elif k == 'air' or k in {'info_update','info_update2','movingblock','reserved6','pistonarmcollision','structure_void'}:
         shape='None'; flags=0; hardness=0.0; tool='None'; light=0; stack=64
     elif k in {'barrier','invisiblebedrock'}:
