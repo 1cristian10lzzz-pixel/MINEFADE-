@@ -1,8 +1,17 @@
-# Minefade Native Engine — revisión integral de sistemas (0.6.0)
+# Minefade Native Engine — renovación profunda Rust/GLES (0.7.0)
 
-Reconstrucción nativa independiente de Minefade para Android: **C++20**, **OpenGL ES 3.0**, **RmlUi 6.3** y FreeType 2.13.3. El proyecto contiene únicamente el motor y recursos propios de esta rama Native Engine; no modifica el motor binario de Alpha 10.
+Motor de Minefade para Android con **núcleo de simulación y animación Rust**, puente C ABI, **C++20** para mundo voxel/JNI y adaptadores de render, **OpenGL ES 3.0**, **RmlUi 6.3** y FreeType 2.13.3. El proyecto contiene únicamente el motor y recursos propios de esta rama Native Engine; no modifica el motor binario de Alpha 10.
 
 > **Estado de entrega:** la rama de revisión tiene un workflow de GitHub Actions que ejecuta pruebas nativas, regenera el catálogo/atlas y compila el APK Android de revisión. El workflow confirma la compilación; eso no sustituye una prueba visual, táctil y de instalación en un teléfono físico.
+
+
+## Renovación profunda Review9 — Rust, animación y UI
+
+La rama `minefade-deep-renewal` incorpora un núcleo `rust-core` enlazado como biblioteca estática Android. Rust procesa movimiento, gravedad, colisiones por callbacks al mundo C++, poses del jugador/criaturas y el reloj/cielo del ambiente. C++ mantiene el mundo voxel y guardado, el host JNI, RmlUi y OpenGL ES. La migración es incremental y explícita; no se declara que todo el juego sea Rust.
+
+La pantalla Avatar se reorganiza alrededor de una previsualización grande con respiración, parpadeo, movimiento suave y giro automático; las seis categorías quedan en pestañas horizontales con opciones mayores. Ajustes pasa a categorías horizontales que aprovechan todo el ancho, contenido desplazable y opciones compactas emergentes. Se añade una categoría de animación con interruptor y calidad, conectada al core Rust. El fondo ambiental respeta Reducir movimiento. La geometría animada de criaturas se actualiza a 30 Hz y los buffers de ítems a 20 Hz para reducir presión de subida al GPU.
+
+El informe detallado de qué se encontró, qué se integró y qué sigue pendiente está en `docs/MINEFADE_DEEP_RENEWAL_AUDIT.md`. El sistema aún no tiene rig GLTF completo, clima/lluvia, shadow maps, simulación de fluidos completa, LOD/culling ni validación de rendimiento en un teléfono físico.
 
 ## Qué se mejoró en esta revisión
 
