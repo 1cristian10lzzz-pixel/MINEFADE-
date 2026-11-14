@@ -222,12 +222,18 @@ int main() {
     assert(stoneDropWasPickedUp);
 
     assert(GetBlockDefinitionCount() == static_cast<std::size_t>(BlockId::Count));
-    assert(GetBlockDefinitionCount() == 306u);
+    assert(GetBlockDefinitionCount() == 342u);
     assert(FindBlockDefinition("seaLantern") != nullptr);
     assert(FindBlockDefinition("copper_ore") != nullptr);
     assert(FindBlockDefinition("deepslate_diamond_ore") != nullptr);
     assert(FindBlockDefinition("deepslate_redstone_ore") != nullptr);
     assert(FindBlockDefinition("ancient_debris") != nullptr);
+    assert(FindBlockDefinition("cherry_planks") != nullptr);
+    assert(FindBlockDefinition("mangrove_propagule") != nullptr);
+    assert(FindBlockDefinition("mud_bricks") != nullptr);
+    assert(FindBlockDefinition("sculk_catalyst") != nullptr);
+    assert(FindBlockDefinition("reinforced_deepslate") != nullptr);
+    assert(FindBlockDefinition("pearlescent_froglight") != nullptr);
     assert(GetBlockDefinition(BlockId::CopperOre)->shape == BlockShape::Cube);
     assert(GetBlockDefinition(BlockId::DeepslateDiamondOre)->shape == BlockShape::Cube);
     assert(GetBlockDefinition(BlockId::AmethystCluster)->shape == BlockShape::Thin);
