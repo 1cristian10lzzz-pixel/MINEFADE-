@@ -609,6 +609,30 @@ int VoxelWorld::GetSurfaceHeight(int x,int z) const {
     for(int y=kWorldHeight-1;y>=0;--y)if(IsSolid(x,y,z))return y;
     return 0;
 }
+bool VoxelWorld::IsChunkFullySealed(const Chunk& chunk) const {
+    const auto opaqueBoundary = [&](int x, int y, int z) {
+        const BlockId block = chunk.blocks[Index(x,y,z)];
+        const BlockDefinition* def = GetBlockDefinition(block);
+        return def != nullptr && (def->flags & BlockOpaque) != 0u &&
+               (def->flags & (BlockTransparent | BlockFluid)) == 0u;
+    };
+    for (int z=0; z<kChunkSize; ++z) {
+        for (int x=0; x<kChunkSize; ++x) {
+            if (!opaqueBoundary(x,0,z) ||
+                !opaqueBoundary(x,kWorldHeight-1,z)) return false;
+        }
+    }
+    for (int y=1; y<kWorldHeight-1; ++y) {
+        for (int i=0; i<kChunkSize; ++i) {
+            if (!opaqueBoundary(0,y,i) ||
+                !opaqueBoundary(kChunkSize-1,y,i) ||
+                !opaqueBoundary(i,y,0) ||
+                !opaqueBoundary(i,y,kChunkSize-1)) return false;
+        }
+    }
+    return true;
+}
+
 
 bool VoxelWorld::GetRayTargetBlock(const Vec3& origin, const Vec3& direction, float maxDistance,
                                    Vec3* targetBlock, BlockId* targetType) const {
@@ -646,43 +670,252 @@ bool VoxelWorld::PlaceRay(const Vec3& origin,const Vec3& direction,float maxDist
     return true;
 }
 
-void VoxelWorld::BuildMesh(std::vector<WorldVertex>& output,int centerWorldX,int centerWorldZ,int radiusInChunks,
-                           std::vector<WorldVertex>* transparentOutput) const {
+void VoxelWorld::BuildMesh(std::vector<WorldVertex>& output,int centerWorldX,int centerWorldZ,
+                           int radiusInChunks,std::vector<WorldVertex>* transparentOutput,
+                           std::vector<ChunkMeshRange>* chunkRanges) const {
     output.clear();
     if (transparentOutput != nullptr) transparentOutput->clear();
-    const int centerChunkX=FloorDiv(centerWorldX,kChunkSize),centerChunkZ=FloorDiv(centerWorldZ,kChunkSize);
-    const std::size_t reserveChunks=radiusInChunks>=0?static_cast<std::size_t>((radiusInChunks*2+1)*(radiusInChunks*2+1)):chunks_.size();
-    output.reserve(std::min(chunks_.size(),reserveChunks)*14000u);
-    if (transparentOutput != nullptr)
-        transparentOutput->reserve(std::min(chunks_.size(), reserveChunks) * 1800u);
+    if (chunkRanges != nullptr) chunkRanges->clear();
+
+    const int centerChunkX=FloorDiv(centerWorldX,kChunkSize);
+    const int centerChunkZ=FloorDiv(centerWorldZ,kChunkSize);
+    struct ChunkMeshData {
+        std::vector<WorldVertex> opaque;
+        std::vector<WorldVertex> transparent;
+        int lod{0};
+    };
+
+    std::vector<const Chunk*> selected;
+    selected.reserve(chunks_.size());
+    for (const auto& entry : chunks_) {
+        const int cx=entry.first.first, cz=entry.first.second;
+        if (radiusInChunks>=0 &&
+            (std::abs(cx-centerChunkX)>radiusInChunks ||
+             std::abs(cz-centerChunkZ)>radiusInChunks)) continue;
+
+        // Conservative chunk-level occlusion: a chunk is rejected only when all
+        // six of its boundary surfaces are opaque and it is not beside the camera.
+        // Any doorway, transparent block, or air cell keeps the chunk visible.
+        if ((std::abs(cx-centerChunkX)>1 || std::abs(cz-centerChunkZ)>1) &&
+            IsChunkFullySealed(entry.second)) continue;
+        selected.push_back(&entry.second);
+    }
+
+    std::vector<ChunkMeshData> built(selected.size());
+    static constexpr int neighborOffsets[6][3] = {
+        {1,0,0},{-1,0,0},{0,1,0},{0,-1,0},{0,0,1},{0,0,-1}
+    };
     static constexpr std::array<std::array<Vec3,4>,6> faces{{
-        {{{1,0,0},{1,1,0},{1,1,1},{1,0,1}}},{{{0,0,1},{0,1,1},{0,1,0},{0,0,0}}},
-        {{{0,1,1},{1,1,1},{1,1,0},{0,1,0}}},{{{0,0,0},{1,0,0},{1,0,1},{0,0,1}}},
-        {{{1,0,1},{1,1,1},{0,1,1},{0,0,1}}},{{{0,0,0},{0,1,0},{1,1,0},{1,0,0}}}
+        {{{1,0,0},{1,1,0},{1,1,1},{1,0,1}}},
+        {{{0,0,1},{0,1,1},{0,1,0},{0,0,0}}},
+        {{{0,1,1},{1,1,1},{1,1,0},{0,1,0}}},
+        {{{0,0,0},{1,0,0},{1,0,1},{0,0,1}}},
+        {{{1,0,1},{1,1,1},{0,1,1},{0,0,1}}},
+        {{{0,0,0},{0,1,0},{1,1,0},{1,0,0}}}
     }};
-    static constexpr int offsets[6][3]={{1,0,0},{-1,0,0},{0,1,0},{0,-1,0},{0,0,1},{0,0,-1}};
-    for(const auto& entry:chunks_) {
-        if(radiusInChunks>=0&&(std::abs(entry.first.first-centerChunkX)>radiusInChunks||std::abs(entry.first.second-centerChunkZ)>radiusInChunks))continue;
-        const Chunk& chunk=entry.second;const int baseX=chunk.x*kChunkSize,baseZ=chunk.z*kChunkSize;
-        for(int y=0;y<kWorldHeight;++y)for(int z=0;z<kChunkSize;++z)for(int x=0;x<kChunkSize;++x) {
-            const BlockId block=chunk.blocks[Index(x,y,z)];if(block==BlockId::Air)continue;
-            const BlockDefinition* def=GetBlockDefinition(block);if(def==nullptr||def->shape==BlockShape::None)continue;
-            const bool transparent = (def->flags & (BlockTransparent | BlockFluid)) != 0u;
-            std::vector<WorldVertex>& destination =
-                (transparent && transparentOutput != nullptr) ? *transparentOutput : output;
-            const int wx=baseX+x,wz=baseZ+z;
-            if(def->shape!=BlockShape::Cube) { AppendBlockShape(destination,wx,y,wz,*def); continue; }
-            for(int face=0;face<6;++face) {
-                const BlockId neighbor=GetBlock(wx+offsets[face][0],y+offsets[face][1],wz+offsets[face][2]);
-                if(ShouldHideFace(block,neighbor))continue;
-                std::array<Vec3,4> points{};
-                for(std::size_t i=0;i<4;++i) {
-                    const Vec3& p=faces[static_cast<std::size_t>(face)][i];
-                    points[i]={static_cast<float>(wx)+p.x,static_cast<float>(y)+p.y,static_cast<float>(wz)+p.z};
+
+    const auto buildOneChunk = [&](std::size_t index) {
+        const Chunk& chunk=*selected[index];
+        ChunkMeshData& result=built[index];
+        const int baseX=chunk.x*kChunkSize, baseZ=chunk.z*kChunkSize;
+        const int chunkDistance=std::max(std::abs(chunk.x-centerChunkX),
+                                         std::abs(chunk.z-centerChunkZ));
+        result.lod = chunkDistance<=1 ? 0 : (chunkDistance==2 ? 1 : 2);
+
+        struct FaceCell { std::uint16_t tile{0}; bool visible{false}; };
+        const auto coordinates = [&](int face,int slice,int u,int v) {
+            if (face<=1) return std::array<int,3>{{slice,u,v}};
+            if (face<=3) return std::array<int,3>{{u,slice,v}};
+            return std::array<int,3>{{v,u,slice}};
+        };
+
+        // Greedy meshing: all full opaque cube faces are merged into maximal
+        // coplanar rectangles that share the same atlas tile and face lighting.
+        // Local UVs repeat inside the atlas tile, so large surfaces keep their
+        // pixel pattern instead of stretching one texel over an entire wall.
+        for (int face=0;face<6;++face) {
+            int sliceCount=0, maskU=0, maskV=0;
+            switch(face) {
+                case 0: case 1: sliceCount=kChunkSize; maskU=kWorldHeight; maskV=kChunkSize; break;
+                case 2: case 3: sliceCount=kWorldHeight; maskU=kChunkSize; maskV=kChunkSize; break;
+                default: sliceCount=kChunkSize; maskU=kWorldHeight; maskV=kChunkSize; break;
+            }
+            const std::size_t maskSize=static_cast<std::size_t>(maskU*maskV);
+            std::vector<FaceCell> mask(maskSize);
+            for (int slice=0;slice<sliceCount;++slice) {
+                std::fill(mask.begin(),mask.end(),FaceCell{});
+                for (int u=0;u<maskU;++u) {
+                    for (int v=0;v<maskV;++v) {
+                        const auto c=coordinates(face,slice,u,v);
+                        const int lx=c[0], ly=c[1], lz=c[2];
+                        const BlockId block=chunk.blocks[Index(lx,ly,lz)];
+                        if (block==BlockId::Air) continue;
+                        const BlockDefinition* def=GetBlockDefinition(block);
+                        if (def==nullptr || def->shape!=BlockShape::Cube ||
+                            (def->flags & BlockOpaque)==0u ||
+                            (def->flags & (BlockTransparent|BlockFluid))!=0u) continue;
+                        const int wx=baseX+lx, wz=baseZ+lz;
+                        const BlockId neighbor=GetBlock(wx+neighborOffsets[face][0],
+                            ly+neighborOffsets[face][1],wz+neighborOffsets[face][2]);
+                        if (ShouldHideFace(block,neighbor)) continue;
+                        FaceCell& cell=mask[static_cast<std::size_t>(u*maskV+v)];
+                        cell.tile=TileForFace(*def,face);
+                        cell.visible=true;
+                    }
                 }
-                AddFace(destination,points,FaceShade(face),TileForFace(*def,face));
+
+                for (int u=0;u<maskU;++u) {
+                    for (int v=0;v<maskV;++v) {
+                        FaceCell& first=mask[static_cast<std::size_t>(u*maskV+v)];
+                        if (!first.visible) continue;
+                        const std::uint16_t tile=first.tile;
+                        int width=1;
+                        while (u+width<maskU) {
+                            const FaceCell& next=mask[static_cast<std::size_t>((u+width)*maskV+v)];
+                            if (!next.visible || next.tile!=tile) break;
+                            ++width;
+                        }
+                        int height=1;
+                        bool canGrow=true;
+                        while (v+height<maskV && canGrow) {
+                            for (int du=0;du<width;++du) {
+                                const FaceCell& next=mask[static_cast<std::size_t>((u+du)*maskV+v+height)];
+                                if (!next.visible || next.tile!=tile) { canGrow=false; break; }
+                            }
+                            if (canGrow) ++height;
+                        }
+
+                        const auto c=coordinates(face,slice,u,v);
+                        Vec3 p0{};
+                        Vec3 axisU{},axisV{};
+                        switch(face) {
+                            case 0:
+                                p0={static_cast<float>(baseX+c[0]+1),static_cast<float>(c[1]),static_cast<float>(baseZ+c[2])};
+                                axisU={0,1,0}; axisV={0,0,1}; break;
+                            case 1:
+                                p0={static_cast<float>(baseX+c[0]),static_cast<float>(c[1]),static_cast<float>(baseZ+c[2]+1)};
+                                axisU={0,1,0}; axisV={0,0,-1}; break;
+                            case 2:
+                                p0={static_cast<float>(baseX+c[0]),static_cast<float>(c[1]+1),static_cast<float>(baseZ+c[2]+1)};
+                                axisU={1,0,0}; axisV={0,0,-1}; break;
+                            case 3:
+                                p0={static_cast<float>(baseX+c[0]),static_cast<float>(c[1]),static_cast<float>(baseZ+c[2])};
+                                axisU={1,0,0}; axisV={0,0,1}; break;
+                            case 4:
+                                p0={static_cast<float>(baseX+c[0]+1),static_cast<float>(c[1]),static_cast<float>(baseZ+c[2]+1)};
+                                axisU={0,1,0}; axisV={-1,0,0}; break;
+                            default:
+                                p0={static_cast<float>(baseX+c[0]),static_cast<float>(c[1]),static_cast<float>(baseZ+c[2])};
+                                axisU={0,1,0}; axisV={1,0,0}; break;
+                        }
+                        const Vec3 p1{p0.x+axisU.x*static_cast<float>(width),
+                                      p0.y+axisU.y*static_cast<float>(width),
+                                      p0.z+axisU.z*static_cast<float>(width)};
+                        const Vec3 p3{p0.x+axisV.x*static_cast<float>(height),
+                                      p0.y+axisV.y*static_cast<float>(height),
+                                      p0.z+axisV.z*static_cast<float>(height)};
+                        const Vec3 p2{p1.x+axisV.x*static_cast<float>(height),
+                                      p1.y+axisV.y*static_cast<float>(height),
+                                      p1.z+axisV.z*static_cast<float>(height)};
+                        AddFace(result.opaque,{{p0,p1,p2,p3}},FaceShade(face),tile,
+                                static_cast<float>(width),static_cast<float>(height));
+                        for (int du=0;du<width;++du)
+                            for (int dv=0;dv<height;++dv)
+                                mask[static_cast<std::size_t>((u+du)*maskV+v+dv)].visible=false;
+                    }
+                }
             }
         }
+
+        // Non-cube geometry and transparent cube surfaces retain their original
+        // block shapes. Distant chunks use cheaper silhouettes: tiny plants/thin
+        // details disappear at LOD2 and compound shapes collapse to one cube.
+        for (int y=0;y<kWorldHeight;++y) {
+            for (int z=0;z<kChunkSize;++z) {
+                for (int x=0;x<kChunkSize;++x) {
+                    const BlockId block=chunk.blocks[Index(x,y,z)];
+                    if (block==BlockId::Air) continue;
+                    const BlockDefinition* def=GetBlockDefinition(block);
+                    if (def==nullptr || def->shape==BlockShape::None) continue;
+                    const bool opaqueCube=def->shape==BlockShape::Cube &&
+                        (def->flags&BlockOpaque)!=0u &&
+                        (def->flags&(BlockTransparent|BlockFluid))==0u;
+                    if (opaqueCube) continue;
+
+                    if (result.lod>=1 && def->shape==BlockShape::CrossPlant) continue;
+                    if (result.lod>=2 && def->shape==BlockShape::Thin) continue;
+
+                    const int wx=baseX+x, wz=baseZ+z;
+                    const bool transparent=(def->flags&(BlockTransparent|BlockFluid))!=0u;
+                    std::vector<WorldVertex>& destination=transparent
+                        ? result.transparent : result.opaque;
+                    if (def->shape!=BlockShape::Cube) {
+                        const bool compoundOpaque=result.lod>=2 && !transparent &&
+                            def->shape!=BlockShape::Fluid;
+                        if (compoundOpaque) {
+                            AppendBox(destination,static_cast<float>(wx),static_cast<float>(y),
+                                      static_cast<float>(wz),static_cast<float>(wx+1),
+                                      static_cast<float>(y+1),static_cast<float>(wz+1),*def);
+                        } else {
+                            AppendBlockShape(destination,wx,y,wz,*def);
+                        }
+                        continue;
+                    }
+
+                    for (int face=0;face<6;++face) {
+                        const BlockId neighbor=GetBlock(wx+neighborOffsets[face][0],
+                            y+neighborOffsets[face][1],wz+neighborOffsets[face][2]);
+                        if (ShouldHideFace(block,neighbor)) continue;
+                        std::array<Vec3,4> points{};
+                        for (std::size_t i=0;i<4;++i) {
+                            const Vec3& p=faces[static_cast<std::size_t>(face)][i];
+                            points[i]={static_cast<float>(wx)+p.x,static_cast<float>(y)+p.y,
+                                       static_cast<float>(wz)+p.z};
+                        }
+                        AddFace(destination,points,FaceShade(face),TileForFace(*def,face));
+                    }
+                }
+            }
+        }
+    };
+
+    // Two independent CPU workers build disjoint chunk meshes. The result is
+    // merged in stable chunk order so VBO ranges stay deterministic.
+    const std::size_t workerCount=std::min(kMeshWorkerCount,selected.size());
+    if (workerCount<=1u) {
+        for (std::size_t i=0;i<selected.size();++i) buildOneChunk(i);
+    } else {
+        std::vector<std::future<void>> jobs;
+        jobs.reserve(workerCount);
+        for (std::size_t worker=0;worker<workerCount;++worker) {
+            jobs.push_back(std::async(std::launch::async,[&,worker,workerCount] {
+                for (std::size_t i=worker;i<selected.size();i+=workerCount) buildOneChunk(i);
+            }));
+        }
+        for (auto& job:jobs) job.get();
+    }
+
+    const std::size_t reserveChunks=selected.size();
+    output.reserve(reserveChunks*7000u);
+    if (transparentOutput!=nullptr) transparentOutput->reserve(reserveChunks*1200u);
+    for (std::size_t i=0;i<selected.size();++i) {
+        const ChunkMeshData& data=built[i];
+        ChunkMeshRange range;
+        range.chunkX=selected[i]->x;
+        range.chunkZ=selected[i]->z;
+        range.lodLevel=data.lod;
+        range.opaqueFirst=output.size();
+        output.insert(output.end(),data.opaque.begin(),data.opaque.end());
+        if (transparentOutput!=nullptr) {
+            range.opaqueCount=output.size()-range.opaqueFirst;
+            range.transparentFirst=transparentOutput->size();
+            transparentOutput->insert(transparentOutput->end(),data.transparent.begin(),data.transparent.end());
+            range.transparentCount=transparentOutput->size()-range.transparentFirst;
+        } else {
+            output.insert(output.end(),data.transparent.begin(),data.transparent.end());
+            range.opaqueCount=output.size()-range.opaqueFirst;
+        }
+        if (chunkRanges!=nullptr) chunkRanges->push_back(range);
     }
 }
 
