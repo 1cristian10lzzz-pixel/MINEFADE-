@@ -673,6 +673,19 @@ void VoxelWorld::BuildMesh(std::vector<WorldVertex>& output,int centerWorldX,int
         selected.push_back(&entry.second);
     }
 
+    // Neighbour queries outside the rendered radius must behave as air.
+    // Otherwise already-generated off-screen chunks can hide boundary faces
+    // belonging to the last visible ring and create holes at the view-distance edge.
+    const auto getMeshBlock = [&](int x,int y,int z) {
+        if (y<0 || y>=kWorldHeight) return BlockId::Air;
+        const int cx=FloorDiv(x,kChunkSize);
+        const int cz=FloorDiv(z,kChunkSize);
+        if (radiusInChunks>=0 &&
+            (std::abs(cx-centerChunkX)>radiusInChunks ||
+             std::abs(cz-centerChunkZ)>radiusInChunks)) return BlockId::Air;
+        return GetBlock(x,y,z);
+    };
+
     std::vector<ChunkMeshData> built(selected.size());
     static constexpr int neighborOffsets[6][3] = {
         {1,0,0},{-1,0,0},{0,1,0},{0,-1,0},{0,0,1},{0,0,-1}
@@ -727,7 +740,7 @@ void VoxelWorld::BuildMesh(std::vector<WorldVertex>& output,int centerWorldX,int
                             (def->flags & BlockOpaque)==0u ||
                             (def->flags & (BlockTransparent|BlockFluid))!=0u) continue;
                         const int wx=baseX+lx, wz=baseZ+lz;
-                        const BlockId neighbor=GetBlock(wx+neighborOffsets[face][0],
+                        const BlockId neighbor=getMeshBlock(wx+neighborOffsets[face][0],
                             ly+neighborOffsets[face][1],wz+neighborOffsets[face][2]);
                         if (ShouldHideFace(block,neighbor)) continue;
                         FaceCell& cell=mask[static_cast<std::size_t>(u*maskV+v)];
@@ -835,7 +848,7 @@ void VoxelWorld::BuildMesh(std::vector<WorldVertex>& output,int centerWorldX,int
                     }
 
                     for (int face=0;face<6;++face) {
-                        const BlockId neighbor=GetBlock(wx+neighborOffsets[face][0],
+                        const BlockId neighbor=getMeshBlock(wx+neighborOffsets[face][0],
                             y+neighborOffsets[face][1],wz+neighborOffsets[face][2]);
                         if (ShouldHideFace(block,neighbor)) continue;
                         std::array<Vec3,4> points{};
