@@ -73,6 +73,18 @@ pub struct MfEnvironmentState {
     pub daylight: f32,
 }
 
+#[repr(C)]
+#[derive(Clone, Copy, Debug, Default)]
+pub struct MfDroppedItemState {
+    pub x: f32,
+    pub y: f32,
+    pub z: f32,
+    pub velocity_x: f32,
+    pub velocity_y: f32,
+    pub velocity_z: f32,
+    pub age: f32,
+}
+
 pub type MfIsSolidCallback =
     Option<unsafe extern "C" fn(i32, i32, i32, *mut c_void) -> u8>;
 pub type MfSurfaceHeightCallback =
@@ -547,6 +559,60 @@ pub unsafe extern "C" fn minefade_entity_compute_pose(
 }
 
 #[no_mangle]
+pub unsafe extern "C" fn minefade_dropped_item_update(
+    state: *mut MfDroppedItemState,
+    delta_seconds: f32,
+    is_solid: MfIsSolidCallback,
+    user_data: *mut c_void,
+) {
+    let Some(state) = (unsafe { state.as_mut() }) else { return };
+    let dt = finite_or(delta_seconds, 0.0).clamp(0.0, 0.05);
+    if dt <= 0.0 { return; }
+    state.age = (finite_or(state.age, 0.0) + dt).max(0.0);
+    state.x = finite_or(state.x, 0.0);
+    state.y = finite_or(state.y, 0.0);
+    state.z = finite_or(state.z, 0.0);
+    state.velocity_x = finite_or(state.velocity_x, 0.0);
+    state.velocity_y = (finite_or(state.velocity_y, 0.0) - 17.5 * dt).max(-20.0);
+    state.velocity_z = finite_or(state.velocity_z, 0.0);
+
+    let next_x = state.x + state.velocity_x * dt;
+    if unsafe { cell_is_solid(is_solid, user_data, floor_i32(next_x), floor_i32(state.y - 0.10), floor_i32(state.z)) } {
+        state.velocity_x *= -0.22;
+    } else {
+        state.x = next_x;
+    }
+
+    let next_z = state.z + state.velocity_z * dt;
+    if unsafe { cell_is_solid(is_solid, user_data, floor_i32(state.x), floor_i32(state.y - 0.10), floor_i32(next_z)) } {
+        state.velocity_z *= -0.22;
+    } else {
+        state.z = next_z;
+    }
+
+    let next_y = state.y + state.velocity_y * dt;
+    let feet_block_y = floor_i32(next_y - 0.12);
+    if state.velocity_y <= 0.0
+        && unsafe { cell_is_solid(is_solid, user_data, floor_i32(state.x), feet_block_y, floor_i32(state.z)) }
+    {
+        state.y = (feet_block_y + 1) as f32 + 0.12;
+        state.velocity_y *= -0.20;
+        if state.velocity_y.abs() < 0.55 { state.velocity_y = 0.0; }
+        state.velocity_x *= 0.78;
+        state.velocity_z *= 0.78;
+    } else {
+        let head_block_y = floor_i32(next_y + 0.12);
+        if state.velocity_y > 0.0
+            && unsafe { cell_is_solid(is_solid, user_data, floor_i32(state.x), head_block_y, floor_i32(state.z)) }
+        {
+            state.velocity_y = 0.0;
+        } else {
+            state.y = next_y;
+        }
+    }
+}
+
+#[no_mangle]
 pub unsafe extern "C" fn minefade_environment_update(
     state: *mut MfEnvironmentState,
     delta_seconds: f32,
@@ -608,6 +674,20 @@ mod tests {
 
     extern "C" fn flat_surface(_x: i32, _z: i32, _user: *mut c_void) -> i32 {
         0
+    }
+
+    #[test]
+    fn dropped_item_physics_advances_age_and_bounces_on_ground() {
+        let mut item = MfDroppedItemState {
+            x: 0.5, y: 1.25, z: 0.5,
+            velocity_x: 0.0, velocity_y: -1.0, velocity_z: 0.0,
+            age: 0.0,
+        };
+        unsafe { minefade_dropped_item_update(&mut item, 0.05, Some(flat_ground), core::ptr::null_mut()) };
+        assert!(item.age > 0.0);
+        assert!(item.y >= 1.12);
+        assert!(item.velocity_y >= 0.0);
+        assert!(item.x.is_finite() && item.z.is_finite());
     }
 
     #[test]
