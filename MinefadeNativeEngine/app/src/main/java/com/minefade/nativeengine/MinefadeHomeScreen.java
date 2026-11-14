@@ -1547,7 +1547,13 @@ public final class MinefadeHomeScreen extends FrameLayout {
                     canvas.drawArc(new RectF(cx - unit * 0.82f, cy - unit * 0.75f,
                             cx + unit * 0.68f, cy + unit * 0.75f), 205, 125, false, paint);
                     break;
-                case 1: // hair silhouettes as shaded voxel locks
+                case 1: // head and hairstyle silhouette
+                    paint.setColor(skin);
+                    canvas.drawRoundRect(new RectF(cx-unit*0.57f,cy-unit*0.78f,
+                            cx+unit*0.57f,cy+unit*0.87f),unit*0.24f,unit*0.24f,paint);
+                    paint.setColor(0xffe7f2f5);
+                    canvas.drawCircle(cx-unit*0.22f,cy+unit*0.08f,unit*0.06f,paint);
+                    canvas.drawCircle(cx+unit*0.22f,cy+unit*0.08f,unit*0.06f,paint);
                     cube(canvas, cx, cy + unit * 0.20f, unit * 1.05f, unit * 1.0f,
                             unit * 0.35f, 0xffb87e5d, 0xff80533d, 0xffd6a17a);
                     if (choice == 3 || choice == 4) {
@@ -1631,7 +1637,7 @@ public final class MinefadeHomeScreen extends FrameLayout {
         }
     }
 
-    /** Rotatable, shaded voxel previeww built from 3D box parts and perspective projection. */
+    /** Rotatable, shaded voxel preview built from 3D box parts and perspective projection. */
     private final class AvatarPreview extends View {
         private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
         private final Path path = new Path();
@@ -1828,7 +1834,7 @@ public final class MinefadeHomeScreen extends FrameLayout {
             float width = getWidth(), height = getHeight();
             projectionCenterX = width * 0.50f;
             projectionGround = height * 0.875f;
-            projectionUnit = Math.min(width / 3.35f, height / 4.20f);
+            projectionUnit = Math.min(width / 3.10f, height / 4.05f);
             if (projectionUnit < dp(7)) return;
             float angle = (float) Math.toRadians(rotation);
             rotationCos = (float) Math.cos(angle);
