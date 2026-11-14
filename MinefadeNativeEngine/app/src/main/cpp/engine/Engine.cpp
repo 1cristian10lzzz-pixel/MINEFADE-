@@ -531,6 +531,8 @@ bool Engine::Initialise(float displayDensity, const std::uint8_t* atlasPixels,
         return failInitialisation(std::string("Error al reservar buffers OpenGL: ") + code);
     }
 
+    starterChestOpen_ = false;
+    starterChestContents_ = {{1064u, 5064u, 64016u, 6004u, 3064u, 0u, 0u, 0u, 0u}};
     bool loadedExistingWorld = false;
     if (multiplayerMode_) {
         // All LAN peers start from the same deterministic seed. The host's block
@@ -565,10 +567,19 @@ bool Engine::Initialise(float displayDensity, const std::uint8_t* atlasPixels,
         player_.position = {8.0f, static_cast<float>(world_.GetSurfaceHeight(8, 8)) + 1.05f, 8.0f};
     }
     if (starterChestEnabled_ && !loadedExistingWorld && !multiplayerMode_) {
-        const int chestX = 10;
-        const int chestZ = 8;
+        const int chestX = 8;
+        const int chestZ = 6;
         const int chestY = world_.GetSurfaceHeight(chestX, chestZ) + 1;
         world_.SetBlock(chestX, chestY, chestZ, BlockId::Chest);
+    } else if (starterChestEnabled_ && loadedExistingWorld && !storagePath_.empty()) {
+        std::ifstream chestFile(storagePath_ + ".chest", std::ios::binary);
+        if (chestFile) {
+            std::array<std::uint32_t,9> saved{};
+            chestFile.read(reinterpret_cast<char*>(saved.data()),
+                           static_cast<std::streamsize>(sizeof(saved)));
+            if (chestFile && chestFile.peek() == std::char_traits<char>::eof())
+                starterChestContents_ = saved;
+        }
     }
     if (!player_.ResolveSafeSpawn(world_)) {
         ENGINE_LOGE("Saved spawn is obstructed and no nearby safe position was found");
@@ -631,6 +642,7 @@ bool Engine::Initialise(float displayDensity, const std::uint8_t* atlasPixels,
     paused_ = false;
     thirdPerson_ = false;
     ui_.SetPerspectiveEnabled(false);
+    ui_.SetChestButtonVisible(starterChestEnabled_ && !multiplayerMode_);
     RefreshInventoryUi();
     ENGINE_LOGI("World ready: %zu chunks, %zu vertices, seed=%u",
                 world_.ChunkCount(), worldMesh_.size(), world_.Seed());
@@ -1574,10 +1586,30 @@ void Engine::SaveWorld() {
     // A user should still be able to enter and play while the storage problem is visible
     // in Logcat; the original world file remains untouched if the atomic save fails.
     try {
-        if (!world_.Save(storagePath_, player_.position, inventory_.counts))
+        if (!world_.Save(storagePath_, player_.position, inventory_.counts)) {
             ENGINE_LOGE("Failed to save world to %s", storagePath_.c_str());
-        else
+        } else {
             ENGINE_LOGI("World saved to private app storage");
+            if (starterChestEnabled_) {
+                const std::string chestPath = storagePath_ + ".chest";
+                const std::string tempPath = chestPath + ".tmp";
+                std::ofstream chestFile(tempPath, std::ios::binary | std::ios::trunc);
+                if (chestFile) {
+                    chestFile.write(reinterpret_cast<const char*>(starterChestContents_.data()),
+                                    static_cast<std::streamsize>(sizeof(starterChestContents_)));
+                    chestFile.flush();
+                    chestFile.close();
+                    std::error_code error;
+                    std::filesystem::rename(tempPath, chestPath, error);
+                    if (error) {
+                        std::filesystem::remove(chestPath, error);
+                        error.clear();
+                        std::filesystem::rename(tempPath, chestPath, error);
+                    }
+                    if (error) std::filesystem::remove(tempPath);
+                }
+            }
+        }
     } catch (const std::exception& error) {
         ENGINE_LOGE("World save raised an exception: %s", error.what());
     } catch (...) {
