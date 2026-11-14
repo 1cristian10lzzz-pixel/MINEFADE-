@@ -252,6 +252,18 @@ pub unsafe extern "C" fn minefade_player_update(
         }
     }
 
+    // Keep a grounded player resting on a supporting block. Without this
+    // contact probe, gravity is applied on every frame, the player drops a
+    // fraction of a centimetre, then gets snapped up by collision again.
+    // The probe happens after horizontal movement so walking off an edge still
+    // starts a real fall.
+    if state.grounded != 0 && state.vertical_velocity <= 0.0
+        && unsafe { collides_at(is_solid, user_data, state.x, state.y - 0.08, state.z) }
+    {
+        state.vertical_velocity = 0.0;
+        return;
+    }
+
     let gravity = if fluid { 5.0 } else { 22.0 };
     let terminal_velocity = if fluid { -2.0 } else { -32.0 };
     state.vertical_velocity = (state.vertical_velocity - gravity * dt).max(terminal_velocity);
