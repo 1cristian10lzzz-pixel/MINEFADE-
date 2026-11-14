@@ -3,6 +3,7 @@
 
 static_assert(minefade::Inventory::kSlotCount == MINEFADE_INVENTORY_SLOT_COUNT,
               "C++ inventory slot count differs from the Rust ABI");
+static_assert(sizeof(MfDroppedItemState) == 28u, "Rust/C dropped-item ABI mismatch");
 
 static_assert(sizeof(MfPlayerState) == 44u, "Rust/C player state ABI mismatch");
 static_assert(sizeof(MfPlayerPose) == 40u, "Rust/C player pose ABI mismatch");
@@ -403,46 +404,18 @@ std::size_t DroppedItemSystem::Update(const VoxelWorld& world, const Player& pla
     std::size_t pickedUp = 0u;
     for (auto it = drops_.begin(); it != drops_.end();) {
         DroppedItem& item = *it;
-        item.age += dt;
+        MfDroppedItemState state{
+            item.position.x, item.position.y, item.position.z,
+            item.velocity.x, item.velocity.y, item.velocity.z, item.age
+        };
+        minefade_dropped_item_update(&state, dt, WorldSolidForRust,
+                                     const_cast<VoxelWorld*>(&world));
+        item.position = {state.x, state.y, state.z};
+        item.velocity = {state.velocity_x, state.velocity_y, state.velocity_z};
+        item.age = state.age;
         if (item.age >= 300.0f || item.position.y < -2.0f) {
             it = drops_.erase(it);
             continue;
-        }
-
-        // Small, deterministic item physics: gravity, block collision and a soft bounce.
-        item.velocity.y = std::max(item.velocity.y - 17.5f * dt, -20.0f);
-        const float nextX = item.position.x + item.velocity.x * dt;
-        if (world.IsSolid(FloorToInt(nextX), FloorToInt(item.position.y - 0.10f),
-                          FloorToInt(item.position.z))) {
-            item.velocity.x *= -0.22f;
-        } else {
-            item.position.x = nextX;
-        }
-        const float nextZ = item.position.z + item.velocity.z * dt;
-        if (world.IsSolid(FloorToInt(item.position.x), FloorToInt(item.position.y - 0.10f),
-                          FloorToInt(nextZ))) {
-            item.velocity.z *= -0.22f;
-        } else {
-            item.position.z = nextZ;
-        }
-
-        const float nextY = item.position.y + item.velocity.y * dt;
-        const int feetBlockY = FloorToInt(nextY - 0.12f);
-        if (item.velocity.y <= 0.0f &&
-            world.IsSolid(FloorToInt(item.position.x), feetBlockY, FloorToInt(item.position.z))) {
-            item.position.y = static_cast<float>(feetBlockY + 1) + 0.12f;
-            item.velocity.y *= -0.20f;
-            if (std::abs(item.velocity.y) < 0.55f) item.velocity.y = 0.0f;
-            item.velocity.x *= 0.78f;
-            item.velocity.z *= 0.78f;
-        } else {
-            const int headBlockY = FloorToInt(nextY + 0.12f);
-            if (item.velocity.y > 0.0f &&
-                world.IsSolid(FloorToInt(item.position.x), headBlockY, FloorToInt(item.position.z))) {
-                item.velocity.y = 0.0f;
-            } else {
-                item.position.y = nextY;
-            }
         }
 
         if (item.age >= 0.55f) {
