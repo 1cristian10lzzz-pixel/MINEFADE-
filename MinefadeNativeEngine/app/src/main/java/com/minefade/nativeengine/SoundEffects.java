@@ -24,6 +24,20 @@ public final class SoundEffects {
     private final int itemPickup;
     private final int jump;
     private final int footstep;
+    private final int blockWood;
+    private final int blockStone;
+    private final int blockDirt;
+    private final int blockLeaves;
+    private final int sheepCall;
+    private final int cowCall;
+    private final int birdCall;
+    private final int pigCall;
+    private final int zombieCall;
+    private final int skeletonCall;
+    private final int rabbitCall;
+    private final int chestOpen;
+    private final int commandSuccess;
+    private final int waterSplash;
     private volatile float masterVolume;
     private volatile boolean released;
 
@@ -53,6 +67,20 @@ public final class SoundEffects {
         itemPickup = load(context, "audio/item_pickup.wav");
         jump = load(context, "audio/jump.wav");
         footstep = load(context, "audio/footstep.wav");
+        blockWood = load(context, "audio/block_wood.wav");
+        blockStone = load(context, "audio/block_stone.wav");
+        blockDirt = load(context, "audio/block_dirt.wav");
+        blockLeaves = load(context, "audio/block_leaves.wav");
+        sheepCall = load(context, "audio/sheep.wav");
+        cowCall = load(context, "audio/cow.wav");
+        birdCall = load(context, "audio/bird.wav");
+        pigCall = load(context, "audio/pig.wav");
+        zombieCall = load(context, "audio/zombie.wav");
+        skeletonCall = load(context, "audio/skeleton.wav");
+        rabbitCall = load(context, "audio/rabbit.wav");
+        chestOpen = load(context, "audio/chest_open.wav");
+        commandSuccess = load(context, "audio/command_success.wav");
+        waterSplash = load(context, "audio/water.wav");
         preferences.registerOnSharedPreferenceChangeListener(volumeListener);
     }
 
@@ -88,10 +116,10 @@ public final class SoundEffects {
     }
 
     /**
-     * Native events: break=1, place=2, UI=4, pickup=8, jump=16, footstep=32.
-     * Material layers: stone/metal=64, wood=128, soil=256, foliage=512.
-     * Layering and rate variation create distinct tactile responses using the
-     * shipped PCM samples, without synchronous decoding or extra audio threads.
+     * Native event bits: base break/place/UI/pickup/jump/step = 1..32;
+     * material cues stone/wood/soil/foliage = 64..512;
+     * creature calls sheep/cow/bird/pig/zombie/skeleton/rabbit = 1024..65536;
+     * chest/command/water = 131072/262144/524288.
      */
     public void playEvents(int events) {
         if (!preferences.getBoolean("sound_effects_enabled", true)) return;
@@ -120,9 +148,22 @@ public final class SoundEffects {
             play(blockBreak, 0.12f, 1.14f);
         }
         if ((events & 512) != 0) {
-            play(itemPickup, 0.14f, 1.24f);
-            play(footstep, 0.12f, 1.18f);
+            play(blockLeaves, 0.60f, 1.08f);
+            play(footstep, 0.10f, 1.18f);
         }
+        if ((events & 64) != 0) play(blockStone, 0.62f, 0.96f);
+        if ((events & 128) != 0) play(blockWood, 0.62f, 0.92f);
+        if ((events & 256) != 0) play(blockDirt, 0.66f, 0.94f);
+        if ((events & 1024) != 0) play(sheepCall, 0.76f, 1.0f);
+        if ((events & 2048) != 0) play(cowCall, 0.76f, 0.93f);
+        if ((events & 4096) != 0) play(birdCall, 0.62f, 1.08f);
+        if ((events & 8192) != 0) play(pigCall, 0.72f, 1.0f);
+        if ((events & 16384) != 0) play(zombieCall, 0.78f, 0.88f);
+        if ((events & 32768) != 0) play(skeletonCall, 0.72f, 0.96f);
+        if ((events & 65536) != 0) play(rabbitCall, 0.56f, 1.12f);
+        if ((events & 131072) != 0) play(chestOpen, 0.72f, 0.96f);
+        if ((events & 262144) != 0) play(commandSuccess, 0.54f, 1.0f);
+        if ((events & 524288) != 0) play(waterSplash, 0.48f, 0.92f);
     }
 
     public int loadedSampleCount() {
