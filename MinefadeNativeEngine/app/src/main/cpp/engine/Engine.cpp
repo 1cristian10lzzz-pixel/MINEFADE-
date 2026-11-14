@@ -1369,7 +1369,8 @@ std::string Engine::ExecuteCommand(const std::string& rawCommand) {
         else if (mode == "aventura" || mode == "adventure") gameMode_ = 2;
         else if (mode == "supervivencia" || mode == "survival") gameMode_ = 0;
         else return "Uso: /modo supervivencia, /modo creativo o /modo aventura.";
-        return "Modo de juego: " + mode + ".";
+        RefreshInventoryUi();
+        return "Modo de juego: " + mode + ". Se guardará con el mundo.";
     }
     if (verb == "tiempo" || verb == "time") {
         std::string value;
@@ -1640,6 +1641,25 @@ void Engine::SaveWorld() {
             ENGINE_LOGE("Failed to save world to %s", storagePath_.c_str());
         } else {
             ENGINE_LOGI("World saved to private app storage");
+            {
+                const std::string modePath = storagePath_ + ".mode";
+                const std::string modeTemp = modePath + ".tmp";
+                std::ofstream modeFile(modeTemp, std::ios::binary | std::ios::trunc);
+                if (modeFile) {
+                    const std::int32_t value = static_cast<std::int32_t>(gameMode_);
+                    modeFile.write(reinterpret_cast<const char*>(&value), sizeof(value));
+                    modeFile.flush();
+                    modeFile.close();
+                    std::error_code error;
+                    std::filesystem::rename(modeTemp, modePath, error);
+                    if (error) {
+                        std::filesystem::remove(modePath, error);
+                        error.clear();
+                        std::filesystem::rename(modeTemp, modePath, error);
+                    }
+                    if (error) std::filesystem::remove(modeTemp);
+                }
+            }
             if (starterChestEnabled_) {
                 const std::string chestPath = storagePath_ + ".chest";
                 const std::string tempPath = chestPath + ".tmp";
