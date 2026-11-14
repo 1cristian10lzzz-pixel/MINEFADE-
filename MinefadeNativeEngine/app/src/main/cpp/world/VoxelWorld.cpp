@@ -609,29 +609,6 @@ int VoxelWorld::GetSurfaceHeight(int x,int z) const {
     for(int y=kWorldHeight-1;y>=0;--y)if(IsSolid(x,y,z))return y;
     return 0;
 }
-bool VoxelWorld::IsChunkFullySealed(const Chunk& chunk) const {
-    const auto opaqueBoundary = [&](int x, int y, int z) {
-        const BlockId block = chunk.blocks[Index(x,y,z)];
-        const BlockDefinition* def = GetBlockDefinition(block);
-        return def != nullptr && (def->flags & BlockOpaque) != 0u &&
-               (def->flags & (BlockTransparent | BlockFluid)) == 0u;
-    };
-    for (int z=0; z<kChunkSize; ++z) {
-        for (int x=0; x<kChunkSize; ++x) {
-            if (!opaqueBoundary(x,0,z) ||
-                !opaqueBoundary(x,kWorldHeight-1,z)) return false;
-        }
-    }
-    for (int y=1; y<kWorldHeight-1; ++y) {
-        for (int i=0; i<kChunkSize; ++i) {
-            if (!opaqueBoundary(0,y,i) ||
-                !opaqueBoundary(kChunkSize-1,y,i) ||
-                !opaqueBoundary(i,y,0) ||
-                !opaqueBoundary(i,y,kChunkSize-1)) return false;
-        }
-    }
-    return true;
-}
 
 
 bool VoxelWorld::GetRayTargetBlock(const Vec3& origin, const Vec3& direction, float maxDistance,
@@ -693,11 +670,6 @@ void VoxelWorld::BuildMesh(std::vector<WorldVertex>& output,int centerWorldX,int
             (std::abs(cx-centerChunkX)>radiusInChunks ||
              std::abs(cz-centerChunkZ)>radiusInChunks)) continue;
 
-        // Conservative chunk-level occlusion: a chunk is rejected only when all
-        // six of its boundary surfaces are opaque and it is not beside the camera.
-        // Any doorway, transparent block, or air cell keeps the chunk visible.
-        if ((std::abs(cx-centerChunkX)>1 || std::abs(cz-centerChunkZ)>1) &&
-            IsChunkFullySealed(entry.second)) continue;
         selected.push_back(&entry.second);
     }
 
