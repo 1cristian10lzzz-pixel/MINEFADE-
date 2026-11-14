@@ -143,6 +143,7 @@ private:
     bool inventoryVisible_{false};
     bool pauseVisible_{false};
     bool thirdPerson_{false};
+    bool crouching_{false};
     std::string storagePath_;
     VoxelWorld world_;
     Player player_;
