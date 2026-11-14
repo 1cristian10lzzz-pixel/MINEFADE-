@@ -43,7 +43,7 @@ android {
 
     buildTypes {
         debug {
-            // A distinct package avoids signature conflicts with older review APKs and preserve their private world data.
+            // A distinct package avoids signature conflicts with older review APKs and preserves their private world data.
             // Existing installations and their private world data remain untouched.
             applicationIdSuffix = ".review9"
             versionNameSuffix = "-review9"
