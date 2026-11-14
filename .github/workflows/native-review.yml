@@ -5,6 +5,10 @@ on:
     branches: [minefade-deep-renewal, minefade-render-optimization, minefade-worlds-mods-commands]
   workflow_dispatch:
 
+concurrency:
+  group: minefade-review-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
