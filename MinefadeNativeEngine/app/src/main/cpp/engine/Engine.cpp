@@ -28,6 +28,7 @@ layout(location=0) in vec3 aPosition;
 layout(location=1) in vec3 aNormal;
 layout(location=2) in vec3 aColor;
 layout(location=3) in vec2 aTexCoord;
+layout(location=4) in float aAtlasTile;
 uniform mat4 uMvp;
 uniform vec3 uLightDirection;
 uniform float uDaylight;
@@ -37,6 +38,7 @@ uniform int uWaterWaves;
 uniform vec3 uCameraPosition;
 out mediump vec3 vColor;
 out mediump vec2 vTexCoord;
+flat out highp int vAtlasTile;
 out mediump float vFogDistance;
 void main() {
     vec3 position = aPosition;
@@ -58,6 +60,7 @@ void main() {
     else if (fluidCode < -0.5) material = vec3(0.36, 0.72, 0.91);
     vColor = material * illumination;
     vTexCoord = aTexCoord;
+    vAtlasTile = int(aAtlasTile + 0.5);
 }
 )";
 
@@ -65,6 +68,7 @@ constexpr char kWorldFragmentShader[] = R"(#version 300 es
 precision mediump float;
 in mediump vec3 vColor;
 in mediump vec2 vTexCoord;
+flat in highp int vAtlasTile;
 in mediump float vFogDistance;
 uniform sampler2D uBlockAtlas;
 uniform int uUseAtlas;
@@ -72,8 +76,16 @@ uniform vec3 uFogColor;
 uniform float uFogNear;
 uniform float uFogFar;
 out vec4 outColor;
+vec2 AtlasUv(vec2 localUv, int tile) {
+    vec2 atlasSize = vec2(textureSize(uBlockAtlas, 0));
+    float column = float(tile - (tile / 32) * 32);
+    float row = float(tile / 32);
+    vec2 pixel = vec2(column * 18.0 + 1.5 + fract(localUv.x) * 15.0,
+                      row * 18.0 + 1.5 + (1.0 - fract(localUv.y)) * 15.0);
+    return vec2(pixel.x / atlasSize.x, 1.0 - pixel.y / atlasSize.y);
+}
 void main() {
-    vec4 texel = (uUseAtlas == 1) ? texture(uBlockAtlas, vTexCoord) : vec4(1.0);
+    vec4 texel = (uUseAtlas == 1) ? texture(uBlockAtlas, AtlasUv(vTexCoord, vAtlasTile)) : vec4(1.0);
     vec3 litColor = texel.rgb * vColor;
     float fog = smoothstep(uFogNear, uFogFar, vFogDistance);
     outColor = vec4(mix(litColor, uFogColor, fog), texel.a);
@@ -274,24 +286,36 @@ precision highp float;
 layout(location=0) in vec3 aPosition;
 layout(location=2) in vec3 aColor;
 layout(location=3) in vec2 aTexCoord;
+layout(location=4) in float aAtlasTile;
 uniform mat4 uMvp;
 out mediump vec3 vColor;
 out mediump vec2 vTexCoord;
+flat out highp int vAtlasTile;
 void main() {
     gl_Position = uMvp * vec4(aPosition, 1.0);
     vColor = aColor;
     vTexCoord = aTexCoord;
+    vAtlasTile = int(aAtlasTile + 0.5);
 }
 )";
     constexpr char fallbackFragment[] = R"(#version 300 es
 precision mediump float;
 in mediump vec3 vColor;
 in mediump vec2 vTexCoord;
+flat in highp int vAtlasTile;
 uniform sampler2D uBlockAtlas;
 uniform int uUseAtlas;
 out vec4 outColor;
+vec2 AtlasUv(vec2 localUv, int tile) {
+    vec2 atlasSize = vec2(textureSize(uBlockAtlas, 0));
+    float column = float(tile - (tile / 32) * 32);
+    float row = float(tile / 32);
+    vec2 pixel = vec2(column * 18.0 + 1.5 + fract(localUv.x) * 15.0,
+                      row * 18.0 + 1.5 + (1.0 - fract(localUv.y)) * 15.0);
+    return vec2(pixel.x / atlasSize.x, 1.0 - pixel.y / atlasSize.y);
+}
 void main() {
-    vec4 texel = (uUseAtlas == 1) ? texture(uBlockAtlas, vTexCoord) : vec4(1.0);
+    vec4 texel = (uUseAtlas == 1) ? texture(uBlockAtlas, AtlasUv(vTexCoord, vAtlasTile)) : vec4(1.0);
     outColor = vec4(texel.rgb * vColor, texel.a);
 }
 )";
