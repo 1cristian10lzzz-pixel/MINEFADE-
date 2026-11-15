@@ -70,7 +70,7 @@ typedef int32_t (*MfSurfaceHeightCallback)(int32_t x, int32_t z, void* user_data
 
 uint32_t minefade_core_abi_version(void);
 
-#define MINEFADE_INVENTORY_SLOT_COUNT 9u
+#define MINEFADE_INVENTORY_SLOT_COUNT 36u
 
 uint8_t minefade_inventory_can_add(
     const uint32_t* counts, uint32_t slot_count,
