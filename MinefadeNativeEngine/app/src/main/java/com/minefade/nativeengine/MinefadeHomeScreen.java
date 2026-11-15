@@ -635,8 +635,8 @@ public final class MinefadeHomeScreen extends FrameLayout {
         scroll.setClipChildren(true);
         scroll.setClipToPadding(true);
         scroll.setVerticalScrollBarEnabled(false);
-        LinearLayout.LayoutParams scrollParams = new LinearLayout.LayoutParams(0, -1, 1f);
-        settingsBody.addView(scroll, scrollParams);
+        LinearLayout.LayoutParams scrollParams = new LinearLayout.LayoutParams(-1, 0, 1f);
+        root.addView(scroll, scrollParams);
         LinearLayout list = column();
         list.setPadding(0, 0, 0, dp(4));
         scroll.addView(list, new ScrollView.LayoutParams(-1, -2));
@@ -1075,8 +1075,8 @@ public final class MinefadeHomeScreen extends FrameLayout {
         scroll.setVerticalScrollBarEnabled(false);
         scroll.setSmoothScrollingEnabled(true);
         scroll.setOverScrollMode(View.OVER_SCROLL_NEVER);
-        LinearLayout.LayoutParams scrollParams = new LinearLayout.LayoutParams(-1, 0, 1f);
-        root.addView(scroll, scrollParams);
+        LinearLayout.LayoutParams scrollParams = new LinearLayout.LayoutParams(0, -1, 1f);
+        settingsBody.addView(scroll, scrollParams);
         LinearLayout content = column();
         content.setPadding(dp(10), dp(9), dp(10), dp(14));
         content.setClipChildren(true);
