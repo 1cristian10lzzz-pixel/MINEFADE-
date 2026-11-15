@@ -2,7 +2,7 @@ name: Minefade Native Source Review
 
 on:
   push:
-    branches: [minefade-deep-renewal, minefade-render-optimization, minefade-worlds-mods-commands, minefade-render-overhaul-review12, minefade-ultimate-overhaul-phase1, minefade-1.0-complete-overhaul]
+    branches: [minefade-deep-renewal, minefade-render-optimization, minefade-worlds-mods-commands, minefade-render-overhaul-review12, minefade-ultimate-overhaul-phase1, minefade-1.0-complete-overhaul, minefade-1.1-integral-upgrade]
   workflow_dispatch:
 
 concurrency:
@@ -27,7 +27,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if [[ "${GITHUB_REF_NAME:-}" == "minefade-ultimate-overhaul-phase1" || "${GITHUB_REF_NAME:-}" == "minefade-1.0-complete-overhaul" ]]; then
+          if [[ "${GITHUB_REF_NAME:-}" == "minefade-ultimate-overhaul-phase1" || "${GITHUB_REF_NAME:-}" == "minefade-1.0-complete-overhaul" || "${GITHUB_REF_NAME:-}" == "minefade-1.1-integral-upgrade" ]]; then
             echo "Phase 1 validates the committed source snapshot without replaying the temporary Review12 overlay."
           else
             cat review12-render/part-*.b64 | base64 --decode | xz -dc > /tmp/review12-render.patch
@@ -112,8 +112,8 @@ jobs:
           "$APKSIGNER" verify --verbose --print-certs "$APK"
 
           "$AAPT" dump badging "$APK" > /tmp/minefade-apk-badging.txt
-          grep -F "package: name='com.minefade.nativeengine.review11'" /tmp/minefade-apk-badging.txt
-          grep -F "versionName='0.8.0-worlds-mods-review11'" /tmp/minefade-apk-badging.txt
+          grep -F "package: name='com.minefade.nativeengine.review13'" /tmp/minefade-apk-badging.txt
+          grep -F "versionName='1.1.0-integral-review13'" /tmp/minefade-apk-badging.txt
 
           unzip -Z1 "$APK" | grep -Fx 'lib/arm64-v8a/libminefade_native.so'
           unzip -Z1 "$APK" | grep -Fx 'lib/armeabi-v7a/libminefade_native.so'
@@ -124,7 +124,7 @@ jobs:
       - name: Upload review APK
         uses: actions/upload-artifact@v4
         with:
-          name: Minefade-1.0-Complete-Overhaul-APK
+          name: Minefade-1.1-Integral-APK
           path: MinefadeNativeEngine/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 14
@@ -135,12 +135,12 @@ jobs:
           set -euo pipefail
           # Include generated catalogue/atlas files produced by the preceding step.
           # git archive omits worktree changes, so package the checked-out tree itself.
-          zip -r -q Minefade-1.0-Complete-Overhaul-source.zip . \
+          zip -r -q Minefade-1.1-Integral-source.zip . \
             -x ".git/*" "*/.git/*" \
                "*/build/*" "*/.gradle/*" "*/.cxx/*" \
                "*/.externalNativeBuild/*" "*/intermediates/*" \
                "*/outputs/*" "*/tmp/*" "*/target/*" "*/rust-target/*" \
-               "Minefade-1.0-Complete-Overhaul-source.zip"
+               "Minefade-1.1-Integral-source.zip"
           test -s Minefade-1.0-Complete-Overhaul-source.zip
 
       - name: Upload complete source
