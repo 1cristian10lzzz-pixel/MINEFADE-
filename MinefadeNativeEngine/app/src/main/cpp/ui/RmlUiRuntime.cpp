@@ -517,6 +517,13 @@ void RmlUiRuntime::SetInventoryContents(const std::string& markup) {
         inventoryListeners_.push_back(std::make_unique<ActionListener>(callback_, action));
         element->AddEventListener("click", inventoryListeners_.back().get());
     }
+    for (int slot = 0; slot < 36; ++slot) {
+        const std::string elementId = "inventory-slot-" + std::to_string(slot);
+        Rml::Element* element = document_->GetElementById(elementId);
+        if (element == nullptr) continue;
+        inventoryListeners_.push_back(std::make_unique<ActionListener>(callback_, elementId));
+        element->AddEventListener("click", inventoryListeners_.back().get());
+    }
 }
 
 void RmlUiRuntime::SetCraftingContents(const std::string& markup) {
@@ -534,6 +541,12 @@ void RmlUiRuntime::SetCraftingContents(const std::string& markup) {
         craftingListeners_.push_back(std::make_unique<ActionListener>(callback_, action));
         element->AddEventListener("click", craftingListeners_.back().get());
     }
+}
+
+void RmlUiRuntime::SetInventoryCatalogContents(const std::string& markup) {
+    if (document_ == nullptr) return;
+    if (Rml::Element* element = document_->GetElementById("inventory-catalog"))
+        element->SetInnerRML(markup);
 }
 
 void RmlUiRuntime::SetPanelVisible(const char* elementId, bool visible) {
