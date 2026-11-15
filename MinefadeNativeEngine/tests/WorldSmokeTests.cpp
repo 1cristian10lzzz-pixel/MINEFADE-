@@ -101,6 +101,27 @@ int main() {
     assert(greedyRanges[0].lodLevel == 0);
     assert(greedyOpaque.size() >= 36u);
 
+    // The nearest two rings retain full block detail; only the outer
+    // visible ring may use the lighter LOD1 representation.
+    VoxelWorld lodWorld(0x4c4f4431u);
+    lodWorld.GenerateAround(8, 8, 3);
+    std::vector<WorldVertex> lodMesh;
+    std::vector<ChunkMeshRange> lodRanges;
+    lodWorld.BuildMesh(lodMesh, 8, 8, 3, nullptr, &lodRanges);
+    bool foundLod2Chunk = false;
+    bool foundLod3Chunk = false;
+    for (const ChunkMeshRange& range : lodRanges) {
+        const int distance = std::max(std::abs(range.chunkX), std::abs(range.chunkZ));
+        if (distance <= 2) assert(range.lodLevel == 0);
+        if (distance == 3) {
+            assert(range.lodLevel == 1);
+            foundLod3Chunk = true;
+        }
+        if (distance > 3) foundLod2Chunk = true;
+    }
+    assert(foundLod3Chunk);
+    assert(!foundLod2Chunk);
+
     // Frustum AABB tests use a simple [-4,+4] cube around the camera.
     CameraFrustum testFrustum;
     testFrustum.valid = true;
