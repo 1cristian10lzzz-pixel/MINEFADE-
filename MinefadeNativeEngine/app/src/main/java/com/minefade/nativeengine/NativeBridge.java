@@ -24,7 +24,7 @@ public final class NativeBridge {
     public static native int nativeConsumeSoundEvents();
     public static native void nativeSetMultiplayerMode(boolean enabled, int playerSlot);
     public static native void nativeSetGraphicsOptions(int quality, int renderDistanceChunks, boolean waterWaves, float fieldOfView, boolean contactShadows);
-    public static native void nativeSetInputOptions(float sensitivityX, float sensitivityY, float joystickDeadzone, boolean invertLookY, boolean leftHanded, int controlMode);
+    public static native void nativeSetInputOptions(float sensitivityX, float sensitivityY, float joystickDeadzone, boolean invertLookY, boolean leftHanded, int controlMode, boolean autoJump);
     public static native void nativeSetHudOptions(boolean showStats);
     public static native void nativeSetAnimationOptions(int quality, boolean enabled);
     public static native void nativeSetAvatarAppearance(int[] choices);
