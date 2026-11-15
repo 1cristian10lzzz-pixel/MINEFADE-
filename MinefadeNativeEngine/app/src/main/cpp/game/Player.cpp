@@ -562,8 +562,8 @@ void EntitySystem::Update(const VoxelWorld& world, const Player& player, float d
                 {-1.0f,0.0f},{-0.7071f,-0.7071f},{0.0f,-1.0f},{0.7071f,-0.7071f}
             };
             for (const auto& direction : directions) {
-                const float nextX = entity.position.x + direction[0] * step * sign;
-                const float nextZ = entity.position.z + direction[1] * step * sign;
+                const float nextX = entity.position.x + direction[0] * step;
+                const float nextZ = entity.position.z + direction[1] * step;
                 if (world.IsSolid(FloorToInt(nextX), FloorToInt(entity.position.y + 0.25f),
                                   FloorToInt(nextZ))) continue;
                 const float alignment = direction[0] * desiredX + direction[1] * desiredZ;
