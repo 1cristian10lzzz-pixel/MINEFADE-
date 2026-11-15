@@ -1450,6 +1450,15 @@ void Engine::HandleUiAction(const std::string& action) {
         } catch (...) {
             ui_.SetChatMessage("No se pudo seleccionar ese bloque.");
         }
+    } else if (action.rfind("inventory-slot-", 0) == 0) {
+        try {
+            const std::size_t slot = static_cast<std::size_t>(std::stoul(action.substr(15)));
+            if (slot < inventory_.counts.size()) {
+                if (slot < Inventory::kHotbarSlotCount) inventory_.selectedSlot = static_cast<std::uint16_t>(slot);
+                else std::swap(inventory_.counts[slot], inventory_.counts[inventory_.selectedSlot]);
+                RefreshInventoryUi();
+            }
+        } catch (...) { ui_.SetChatMessage("No se pudo mover ese objeto."); }
     } else if (action.rfind("slot-", 0) == 0 && action.size() == 6) {
         const char digit = action[5];
         if (digit >= '0' && digit <= '8') {
@@ -1898,10 +1907,10 @@ void Engine::RefreshInventoryUi() {
         } else {
             icon="<span class='inventory-icon empty-icon'>—</span>";
         }
-        markup+="<div class='inventory-row'>"+icon+"<span>";
-        markup+=std::to_string(i+1u)+". "+name;
+        markup+="<button class='inventory-row' id='inventory-slot-"+std::to_string(i)+"'>"+icon+"<span>";
+        markup+=name;
         if(quantity>0u)markup+=" × "+std::to_string(quantity);
-        markup+="</span></div>";
+        markup+="</span></button>";
 
         std::string slotMarkup="·";
         if(quantity>0u&&itemId>0u) {
@@ -1923,6 +1932,21 @@ void Engine::RefreshInventoryUi() {
                 + "</span><button id='creative-select-" + std::to_string(id)
                 + "' class='creative-add'>USAR</button></div>";
         }
+    }
+    ui_.SetInventoryContents(markup);
+    std::string materialMarkup;
+    materialMarkup.reserve(1200u);
+    materialMarkup += "<div class='recipe-category'>RECURSOS GUARDADOS</div>";
+    for (std::size_t i = 0; i < inventory_.counts.size(); ++i) {
+        const std::uint32_t encoded = inventory_.counts[i];
+        const std::uint16_t id = static_cast<std::uint16_t>(encoded / 1000u);
+        const std::uint32_t quantity = encoded % 1000u;
+        if (id == 0u || quantity == 0u) continue;
+        const BlockDefinition* item = GetBlockDefinition(static_cast<BlockId>(id));
+        if (item == nullptr) continue;
+        materialMarkup += "<div class='inventory-row'><img class='inventory-icon' src='minefade://block/" +
+            std::to_string(id) + "'/><span>" + std::string(item->nameEs) + " × " +
+            std::to_string(quantity) + "</span></div>";
     }
     ui_.SetInventoryContents(markup);
     const std::uint16_t selectedId = inventory_.SelectedItemId();
