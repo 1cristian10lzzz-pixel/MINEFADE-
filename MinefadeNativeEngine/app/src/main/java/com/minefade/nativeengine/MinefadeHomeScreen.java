@@ -42,6 +42,7 @@ import android.widget.TextView;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Native Android front-end for Minefade.
@@ -794,24 +795,21 @@ public final class MinefadeHomeScreen extends FrameLayout {
         removeAllViews();
         addView(new Backdrop(getContext()), new LayoutParams(-1, -1));
         LinearLayout root = column();
-        root.setPadding(dp(16), dp(10), dp(16), dp(12));
+        root.setPadding(dp(12), dp(7), dp(12), dp(9));
         addView(root, new LayoutParams(-1, -1));
 
+        // Compact, transparent first row: only a back icon and the section name.
         LinearLayout header = row();
-        TextView back = text("‹", 29, white, true);
+        TextView back = text("‹", 27, white, true);
         back.setGravity(Gravity.CENTER);
-        back.setBackground(shape(new int[]{0x55364f62, 0x33202d3b}, 13, 0x886b879b));
+        back.setBackgroundColor(Color.TRANSPARENT);
         back.setOnClickListener(v -> showHome());
-        header.addView(back, new LinearLayout.LayoutParams(dp(42), dp(40)));
-        LinearLayout titleBox = column();
-        titleBox.setPadding(dp(10), 0, 0, 0);
-        titleBox.addView(text(title, 16, white, true));
-        TextView desc = text(subtitle, 8, muted, false);
-        LinearLayout.LayoutParams descParams = new LinearLayout.LayoutParams(-1, -2);
-        descParams.topMargin = dp(3);
-        titleBox.addView(desc, descParams);
-        header.addView(titleBox, new LinearLayout.LayoutParams(0, -2, 1f));
-        root.addView(header, new LinearLayout.LayoutParams(-1, dp(44)));
+        header.addView(back, new LinearLayout.LayoutParams(dp(34), dp(34)));
+        TextView heading = text(title, 12, white, true);
+        LinearLayout.LayoutParams headingParams = new LinearLayout.LayoutParams(0, dp(34), 1f);
+        headingParams.leftMargin = dp(5);
+        header.addView(heading, headingParams);
+        root.addView(header, new LinearLayout.LayoutParams(-1, dp(35)));
         return root;
     }
 
