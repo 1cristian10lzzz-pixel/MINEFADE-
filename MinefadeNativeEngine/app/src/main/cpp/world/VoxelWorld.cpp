@@ -985,13 +985,13 @@ std::size_t VoxelWorld::CountNonAirBlocks() const {
 }
 
 bool VoxelWorld::Save(const std::string& filePath,const Vec3& playerPosition,
-                      const std::array<std::uint32_t,9>& inventory) const {
+                      const std::array<std::uint32_t,36>& inventory) const {
     if(chunks_.size()>kMaxSavedChunks||!std::isfinite(playerPosition.x)||!std::isfinite(playerPosition.y)||!std::isfinite(playerPosition.z))return false;
     try {
         const std::filesystem::path path(filePath);if(path.has_parent_path())std::filesystem::create_directories(path.parent_path());
         const std::filesystem::path temp=path.string()+".tmp";
         std::ofstream file(temp,std::ios::binary|std::ios::trunc);if(!file)return false;
-        constexpr char magic[8]={'M','F','V','O','X','0','0','2'};
+        constexpr char magic[8]={'M','F','V','O','X','0','0','3'};
         const std::uint32_t count=static_cast<std::uint32_t>(chunks_.size());
         file.write(magic,sizeof(magic));file.write(reinterpret_cast<const char*>(&seed_),sizeof(seed_));
         file.write(reinterpret_cast<const char*>(&playerPosition),sizeof(playerPosition));
@@ -1011,20 +1011,27 @@ bool VoxelWorld::Save(const std::string& filePath,const Vec3& playerPosition,
 }
 
 bool VoxelWorld::Load(const std::string& filePath,Vec3& playerPosition,
-                      std::array<std::uint32_t,9>& inventory) {
+                      std::array<std::uint32_t,36>& inventory) {
     WaitForChunkGeneration();
     generationQueue_.clear();
     queuedChunks_.clear();
     std::ifstream file(filePath,std::ios::binary);if(!file)return false;
     char magic[8]{};file.read(magic,sizeof(magic));if(!file)return false;
     const bool legacy=std::memcmp(magic,"MFVOX001",8)==0;
-    if(!legacy&&std::memcmp(magic,"MFVOX002",8)!=0)return false;
-    std::uint32_t loadedSeed=0,count=0;Vec3 loadedPlayer{};std::array<std::uint32_t,9> loadedInventory{};
+    const bool version2=std::memcmp(magic,"MFVOX002",8)==0;
+    const bool version3=std::memcmp(magic,"MFVOX003",8)==0;
+    if(!legacy&&!version2&&!version3)return false;
+    std::uint32_t loadedSeed=0,count=0;Vec3 loadedPlayer{};std::array<std::uint32_t,36> loadedInventory{};
     file.read(reinterpret_cast<char*>(&loadedSeed),sizeof(loadedSeed));file.read(reinterpret_cast<char*>(&loadedPlayer),sizeof(loadedPlayer));
     if(legacy) {
         std::array<std::uint16_t,9> old{};file.read(reinterpret_cast<char*>(old.data()),static_cast<std::streamsize>(sizeof(old)));
         for(std::size_t i=0;i<old.size();++i){const std::uint16_t oldId=old[i]/1000u,amount=old[i]%1000u;loadedInventory[i]=static_cast<std::uint32_t>(RemapLegacyInventoryId(oldId))*1000u+amount;}
-    } else file.read(reinterpret_cast<char*>(loadedInventory.data()),static_cast<std::streamsize>(sizeof(loadedInventory)));
+    } else if(version2) {
+        std::array<std::uint32_t,9> old{};file.read(reinterpret_cast<char*>(old.data()),static_cast<std::streamsize>(sizeof(old)));
+        std::copy(old.begin(),old.end(),loadedInventory.begin());
+    } else {
+        file.read(reinterpret_cast<char*>(loadedInventory.data()),static_cast<std::streamsize>(sizeof(loadedInventory)));
+    }
     file.read(reinterpret_cast<char*>(&count),sizeof(count));
     if(!file||count>kMaxSavedChunks||!std::isfinite(loadedPlayer.x)||!std::isfinite(loadedPlayer.y)||!std::isfinite(loadedPlayer.z))return false;
     std::map<std::pair<int,int>,Chunk> loadedChunks;
