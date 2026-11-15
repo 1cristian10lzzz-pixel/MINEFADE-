@@ -941,7 +941,7 @@ void Engine::Render() {
         const float safeDelta = std::clamp(delta, 0.0f, 0.05f);
         environment_.Update(safeDelta * modDaySpeed_);
         player_.Update(world_, safeDelta);
-        entities_.Update(world_, safeDelta);
+        entities_.Update(world_, player_, safeDelta);
         minimapAccumulator_ += safeDelta;
         if (minimapAccumulator_ >= 0.75f) {
             minimapAccumulator_ = std::fmod(minimapAccumulator_, 0.75f);
