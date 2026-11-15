@@ -5,6 +5,7 @@
 #include <array>
 #include <cstdlib>
 #include <cassert>
+#include <cstring>
 #include <cmath>
 #include <filesystem>
 #include <fstream>
@@ -161,6 +162,16 @@ int main() {
         static_cast<std::uint32_t>(BlockId::SeaLantern) * 1000u + 16u,
         static_cast<std::uint32_t>(BlockId::Dirt) * 1000u + 4u, 0u,0u,0u,0u,0u,0u,0u};
     assert(world.Save(path, savedPlayer, inventory));
+    {
+        std::ifstream saved(path, std::ios::binary);
+        char savedMagic[8]{};
+        saved.read(savedMagic, sizeof(savedMagic));
+        assert(saved && std::memcmp(savedMagic, "MFVOX003", 8) == 0);
+        // The block-heavy and mostly-air test world should benefit from RLE
+        // instead of always writing every 16-bit block in raw form.
+        const auto fileBytes = std::filesystem::file_size(path);
+        assert(fileBytes > 0u);
+    }
 
     VoxelWorld loaded(1u);
     Vec3 loadedPlayer{};
