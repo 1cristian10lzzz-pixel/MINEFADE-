@@ -245,6 +245,9 @@ public final class ModManager {
             case "spawn.cow":
             case "spawn.bird":
             case "spawn.pig":
+            case "spawn.rabbit":
+            case "spawn.zombie":
+            case "spawn.skeleton":
             case "player.speed":
             case "player.jump":
             case "entity.speed":
@@ -267,7 +270,8 @@ public final class ModManager {
         if (!"true".equals(enabled) && !"false".equals(enabled)) return false;
         if (description.length() > 512) return false;
 
-        for (String key : new String[]{"spawn.sheep", "spawn.cow", "spawn.bird", "spawn.pig"}) {
+        for (String key : new String[]{"spawn.sheep", "spawn.cow", "spawn.bird", "spawn.pig",
+                "spawn.rabbit", "spawn.zombie", "spawn.skeleton"}) {
             String value = values.get(key);
             if (value == null) continue;
             try {
