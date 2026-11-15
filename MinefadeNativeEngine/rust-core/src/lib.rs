@@ -809,6 +809,28 @@ mod tests {
     }
 
     #[test]
+    fn eating_pose_holds_legs_and_animates_head_bites() {
+        let mut pose = MfEntityPose::default();
+        unsafe { minefade_entity_compute_pose(0, 2.4, 3.1, 2, 2, 1, &mut pose) };
+        assert_eq!(pose.front_left_leg_pitch, 0.0);
+        assert_eq!(pose.front_right_leg_pitch, 0.0);
+        assert_eq!(pose.rear_left_leg_pitch, 0.0);
+        assert_eq!(pose.rear_right_leg_pitch, 0.0);
+        assert!(pose.head_pitch > 0.28);
+    }
+
+    #[test]
+    fn fleeing_and_pursuing_poses_keep_finite_motion() {
+        let mut flee = MfEntityPose::default();
+        let mut pursuit = MfEntityPose::default();
+        unsafe { minefade_entity_compute_pose(0, 1.1, 2.0, 1, 2, 1, &mut flee) };
+        unsafe { minefade_entity_compute_pose(4, 1.1, 2.0, 3, 2, 1, &mut pursuit) };
+        assert!(flee.front_left_leg_pitch.is_finite());
+        assert!(pursuit.front_right_leg_pitch.is_finite());
+        assert!(flee.body_bob.is_finite() && pursuit.body_bob.is_finite());
+    }
+
+    #[test]
     fn entities_and_environment_remain_deterministic() {
         let mut entity = MfEntityState { x: 2.0, y: 1.0, z: 2.0, phase: 0.0, speed: 0.5, kind: 2 };
         unsafe { minefade_entity_update(&mut entity, 0.016, Some(flat_ground), Some(flat_surface), core::ptr::null_mut()) };
