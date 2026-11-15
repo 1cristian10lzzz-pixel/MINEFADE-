@@ -245,7 +245,12 @@ int main() {
     assert(stoneDropWasPickedUp);
 
     assert(GetBlockDefinitionCount() == static_cast<std::size_t>(BlockId::Count));
-    assert(GetBlockDefinitionCount() == 342u);
+    assert(GetBlockDefinitionCount() == 347u);
+    assert(FindBlockDefinition("minefade_stick") != nullptr);
+    assert(FindBlockDefinition("minefade_wooden_pickaxe") != nullptr);
+    assert(FindBlockDefinition("minefade_wooden_axe") != nullptr);
+    assert(FindBlockDefinition("minefade_wooden_shovel") != nullptr);
+    assert(FindBlockDefinition("minefade_wooden_sword") != nullptr);
     assert(FindBlockDefinition("seaLantern") != nullptr);
     assert(FindBlockDefinition("copper_ore") != nullptr);
     assert(FindBlockDefinition("deepslate_diamond_ore") != nullptr);
