@@ -1,7 +1,9 @@
 #include "../app/src/main/cpp/world/VoxelWorld.h"
 #include "../app/src/main/cpp/game/Player.h"
 
+#include <algorithm>
 #include <array>
+#include <cstdlib>
 #include <cassert>
 #include <cmath>
 #include <filesystem>
