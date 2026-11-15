@@ -2,7 +2,7 @@ name: Minefade Native Source Review
 
 on:
   push:
-    branches: [minefade-deep-renewal, minefade-render-optimization, minefade-worlds-mods-commands, minefade-render-overhaul-review12, minefade-ultimate-overhaul-phase1]
+    branches: [minefade-deep-renewal, minefade-render-optimization, minefade-worlds-mods-commands, minefade-render-overhaul-review12, minefade-ultimate-overhaul-phase1, minefade-1.0-complete-overhaul]
   workflow_dispatch:
 
 concurrency:
@@ -27,7 +27,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if [[ "${GITHUB_REF_NAME:-}" == "minefade-ultimate-overhaul-phase1" ]]; then
+          if [[ "${GITHUB_REF_NAME:-}" == "minefade-ultimate-overhaul-phase1" || "${GITHUB_REF_NAME:-}" == "minefade-1.0-complete-overhaul" ]]; then
             echo "Phase 1 validates the committed source snapshot without replaying the temporary Review12 overlay."
           else
             cat review12-render/part-*.b64 | base64 --decode | xz -dc > /tmp/review12-render.patch
@@ -104,7 +104,7 @@ jobs:
       - name: Upload review APK
         uses: actions/upload-artifact@v4
         with:
-          name: Minefade-0.8.0-Review12-Render-Overhaul-APK
+          name: Minefade-1.0-Complete-Overhaul-APK
           path: MinefadeNativeEngine/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 14
@@ -115,12 +115,12 @@ jobs:
           set -euo pipefail
           # Include generated catalogue/atlas files produced by the preceding step.
           # git archive omits worktree changes, so package the checked-out tree itself.
-          zip -r -q Minefade-0.8.0-Review12-source.zip . \
+          zip -r -q Minefade-1.0-Complete-Overhaul-source.zip . \
             -x ".git/*" "*/.git/*" \
                "*/build/*" "*/.gradle/*" "*/.cxx/*" \
                "*/.externalNativeBuild/*" "*/intermediates/*" \
                "*/outputs/*" "*/tmp/*" "*/target/*" "*/rust-target/*" \
-               "Minefade-0.8.0-Review12-source.zip"
+               "Minefade-1.0-Complete-Overhaul-source.zip"
           test -s Minefade-0.8.0-Review12-source.zip
 
       - name: Upload complete source
