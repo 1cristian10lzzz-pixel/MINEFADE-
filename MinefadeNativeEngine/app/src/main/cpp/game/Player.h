@@ -47,8 +47,9 @@ public:
 
 class Inventory {
 public:
-    static constexpr std::size_t kSlotCount = 9;
-    std::array<std::uint32_t, kSlotCount> counts{2016u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u};
+    static constexpr std::size_t kSlotCount = 36;
+    static constexpr std::size_t kHotbarSlotCount = 9;
+    std::array<std::uint32_t, kSlotCount> counts{{2016u}};
     std::uint16_t selectedSlot{0};
 
     bool CanAdd(std::uint16_t itemId, std::uint16_t amount = 1) const;
