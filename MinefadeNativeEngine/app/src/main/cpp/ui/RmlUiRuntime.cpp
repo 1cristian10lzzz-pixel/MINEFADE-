@@ -80,6 +80,8 @@ button:active { background: #47789b; }
 .inventory-grid { display: flex; flex-direction: row; flex-wrap: wrap; gap: 3dp; padding-top: 5dp; }
 .inventory-row { width: 44dp; height: 43dp; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2dp; background: #34475d; border: 1dp #c4d6e255; border-radius: 5dp; color: #e0e8ed; font-size: 8dp; padding: 2dp; }
 .inventory-icon { width: 23dp; height: 23dp; }
+.material-row { display: flex; flex-direction: row; align-items: center; gap: 7dp; color: #e3edf4; font-size: 10dp; padding: 5dp 3dp; border-bottom: 1dp #aabed044; }
+.material-row .inventory-icon { width: 20dp; height: 20dp; }
 .inventory-row span { max-width: 42dp; overflow: hidden; }
 .inventory-actions { display: flex; flex-direction: row; justify-content: flex-end; gap: 5dp; padding-top: 5dp; }
 #crafting-panel { z-index: 10; left: 50%; top: 50%; width: 92%; height: 84%; margin-left: -46%; margin-top: -42%; padding: 9dp; background: #1b2638f5; border: 2dp #a9c1d4aa; border-radius: 13dp; overflow: hidden; }
