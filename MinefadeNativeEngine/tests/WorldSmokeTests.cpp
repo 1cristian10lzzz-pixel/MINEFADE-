@@ -355,7 +355,9 @@ int main() {
     EntitySystem entities;
     entities.SpawnInitial(world);
     assert(entities.Count() == 3u);
-    entities.Update(world, 0.016f);
+    Player testPlayer;
+    testPlayer.position = {8.0f, 14.0f, 8.0f};
+    entities.Update(world, testPlayer, 0.016f);
     std::vector<WorldVertex> entityMesh;
     entities.AppendMesh(entityMesh);
     assert(!entityMesh.empty());
