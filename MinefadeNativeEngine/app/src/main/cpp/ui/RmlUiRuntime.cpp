@@ -94,7 +94,6 @@ button:active { background: #47789b; }
     <button id="starter-chest-open">COFRE</button>
     <button id="inventory">⋯</button>
     <button id="perspective">◉</button>
-    <button id="chat-open">CHAT</button>
     <button id="pause">Ⅱ</button>
   </div>
 </div>
@@ -215,10 +214,13 @@ bool RmlUiRuntime::Initialise(int width, int height, float displayDensity, Actio
     if (controlMode_ == 1) {
         const std::string padCross = "#movement-pad-cross { display: none;";
         const std::string arrows = ".pad-arrow { display: none;";
+        const std::string padInner = "#movement-pad-inner { position: absolute;";
         if (std::size_t position = hudMarkup.find(padCross); position != std::string::npos)
             hudMarkup.replace(position, padCross.size(), "#movement-pad-cross { display: block;");
         if (std::size_t position = hudMarkup.find(arrows); position != std::string::npos)
             hudMarkup.replace(position, arrows.size(), ".pad-arrow { display: block;");
+        if (std::size_t position = hudMarkup.find(padInner); position != std::string::npos)
+            hudMarkup.replace(position, padInner.size(), "#movement-pad-inner { display: none; position: absolute;");
     } else if (controlMode_ == 2) {
         const std::string crosshair = "#crosshair { display: none;";
         if (std::size_t position = hudMarkup.find(crosshair); position != std::string::npos)
@@ -256,7 +258,6 @@ bool RmlUiRuntime::Initialise(int width, int height, float displayDensity, Actio
         AttachAction(id.c_str(), id.c_str());
     }
     AttachAction("pause", "pause");
-    AttachAction("chat-open", "chat-open");
     AttachAction("perspective", "perspective");
     AttachAction("resume", "resume");
     AttachAction("save", "save");
