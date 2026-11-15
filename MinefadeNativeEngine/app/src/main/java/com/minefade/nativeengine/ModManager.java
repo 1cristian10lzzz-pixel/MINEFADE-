@@ -140,25 +140,86 @@ public final class ModManager {
     }
 
     private ModInfo read(File file) {
+        if (file == null || !file.isFile() || file.length() <= 0L || file.length() > 32768L) return null;
         Map<String,String> values = new LinkedHashMap<>();
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(
                 new java.io.FileInputStream(file), StandardCharsets.UTF_8))) {
             String line;
             int lines = 0;
-            while ((line = reader.readLine()) != null && lines++ < 128) {
+            while ((line = reader.readLine()) != null) {
+                if (++lines > 128) return null;
                 String value = line.trim();
                 if (value.isEmpty() || value.startsWith("#")) continue;
                 int split = value.indexOf('=');
-                if (split <= 0) continue;
+                if (split <= 0) return null;
                 String key = value.substring(0, split).trim();
                 String content = value.substring(split + 1).trim();
-                if (key.matches("[a-zA-Z0-9_.-]{1,64}") && content.length() <= 512)
-                    values.put(key, content);
+                if (!key.matches("[a-zA-Z0-9_.-]{1,64}") || content.length() > 512) return null;
+                if (!isSupportedKey(key) || values.containsKey(key)) return null;
+                values.put(key, content);
             }
-            if (!"1".equals(values.get("version")) && !"1.0".equals(values.get("version"))) return null;
+            if (!isValidPack(values)) return null;
             return new ModInfo(file, values);
         } catch (Exception ignored) {
             return null;
+        }
+    }
+
+    /** Keep the Java importer and the native Engine::LoadEnabledMods contract in sync. */
+    private static boolean isSupportedKey(String key) {
+        switch (key) {
+            case "id":
+            case "name":
+            case "version":
+            case "description":
+            case "enabled":
+            case "spawn.sheep":
+            case "spawn.cow":
+            case "spawn.bird":
+            case "spawn.pig":
+            case "player.speed":
+            case "world.day_speed":
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    private static boolean isValidPack(Map<String,String> values) {
+        String id = values.get("id");
+        String name = values.get("name");
+        String format = values.get("version");
+        String enabled = values.get("enabled");
+        String description = values.getOrDefault("description", "");
+        if (id == null || !id.matches("[a-z0-9][a-z0-9_.-]{1,63}")) return false;
+        if (name == null || name.trim().isEmpty() || name.length() > 96) return false;
+        if (!"1".equals(format) && !"1.0".equals(format)) return false;
+        if (!"true".equals(enabled) && !"false".equals(enabled)) return false;
+        if (description.length() > 512) return false;
+
+        for (String key : new String[]{"spawn.sheep", "spawn.cow", "spawn.bird", "spawn.pig"}) {
+            String value = values.get(key);
+            if (value == null) continue;
+            try {
+                int count = Integer.parseInt(value);
+                if (count < 0 || count > 24) return false;
+            } catch (NumberFormatException invalid) {
+                return false;
+            }
+        }
+        if (!isFiniteInRange(values.get("player.speed"), 0.5f, 2.0f)) return false;
+        if (!isFiniteInRange(values.get("world.day_speed"), 0.25f, 4.0f)) return false;
+        return true;
+    }
+
+    private static boolean isFiniteInRange(String value, float minimum, float maximum) {
+        if (value == null) return true;
+        try {
+            float number = Float.parseFloat(value);
+            return !Float.isNaN(number) && !Float.isInfinite(number)
+                    && number >= minimum && number <= maximum;
+        } catch (NumberFormatException invalid) {
+            return false;
         }
     }
 }
