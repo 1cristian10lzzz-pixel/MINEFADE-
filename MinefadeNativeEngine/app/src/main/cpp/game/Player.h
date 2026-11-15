@@ -19,6 +19,7 @@ public:
     bool grounded{false};
     bool crouching{false};
     float speedMultiplier{1.0f};
+    float jumpMultiplier{1.0f};
     float walkPhase{0.0f};
     float animationTime{0.0f};
     std::uint8_t animationQuality{2};
@@ -33,6 +34,7 @@ public:
     void Jump();
     void SetCrouching(bool enabled) { crouching = enabled; }
     void SetSpeedMultiplier(float multiplier) { speedMultiplier = multiplier; }
+    void SetJumpMultiplier(float multiplier);
     void SetAppearance(const std::array<int, 6>& appearance);
     void SetAnimationOptions(std::uint8_t quality, bool enabled);
     void SetContactShadows(bool enabled) { contactShadows = enabled; }
@@ -89,6 +91,7 @@ public:
     void Update(const VoxelWorld& world, float deltaSeconds);
     void AppendMesh(std::vector<WorldVertex>& output, const CameraFrustum* frustum = nullptr) const;
     void SetContactShadows(bool enabled) { contactShadows_ = enabled; }
+    void SetSpeedMultiplier(float multiplier);
     void SetAnimationOptions(std::uint8_t quality, bool enabled) { animationQuality_ = quality > 2 ? 2 : quality; animationsEnabled_ = enabled; }
     std::size_t Count() const { return entities_.size(); }
     bool SpawnEntity(const Vec3& nearPosition, int kind, const VoxelWorld& world);
@@ -98,6 +101,7 @@ private:
     bool contactShadows_{true};
     std::uint8_t animationQuality_{2};
     bool animationsEnabled_{true};
+    float speedMultiplier_{1.0f};
     float animationTime_{0.0f};
 };
 
