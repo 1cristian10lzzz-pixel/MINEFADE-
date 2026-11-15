@@ -164,6 +164,8 @@ private:
     int modPigSpawns_{0};
     float modPlayerSpeed_{1.0f};
     float modDaySpeed_{1.0f};
+    float modEntitySpeed_{1.0f};
+    float modPlayerJump_{1.0f};
     std::array<std::uint32_t, 9> starterChestContents_{{
         1064u, 5064u, 64016u, 6004u, 3064u, 0u, 0u, 0u, 0u
     }};
