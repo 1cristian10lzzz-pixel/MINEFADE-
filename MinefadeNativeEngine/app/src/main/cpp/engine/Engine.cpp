@@ -1473,63 +1473,79 @@ bool Engine::HasNearbyCraftingTable() const {
 
 bool Engine::CraftRecipe(const std::string& recipe) {
     struct Ingredient { std::uint16_t id; std::uint16_t amount; };
-    std::array<Ingredient, 2> ingredients{};
+    std::array<Ingredient, 3> ingredients{};
     std::size_t ingredientCount = 0u;
     std::uint16_t outputId = 0u;
     std::uint16_t outputAmount = 1u;
     bool needsTable = false;
-    const auto addIngredient = [&ingredients, &ingredientCount](BlockId id, std::uint16_t amount) {
-        ingredients[ingredientCount++] = {static_cast<std::uint16_t>(id), amount};
+    const auto addIngredient = [&ingredients, &ingredientCount](std::uint16_t id, std::uint16_t amount) {
+        if (id == 0u || amount == 0u || ingredientCount >= ingredients.size()) return false;
+        ingredients[ingredientCount++] = {id, amount};
+        return true;
+    };
+    const auto findId = [](const std::string& key) -> std::uint16_t {
+        const BlockDefinition* d = FindBlockDefinition(key);
+        return d == nullptr ? 0u : static_cast<std::uint16_t>(d->id);
     };
 
     if (recipe == "planks") {
-        // One oak log produces four planks; the secondary log family is also accepted.
-        const std::uint16_t logId = static_cast<std::uint16_t>(BlockId::Log);
-        const std::uint16_t log2Id = static_cast<std::uint16_t>(BlockId::Log2);
-        if (inventory_.CountItem(logId) > 0u) addIngredient(BlockId::Log, 1u);
-        else if (inventory_.CountItem(log2Id) > 0u) addIngredient(BlockId::Log2, 1u);
-        else {
-            ui_.SetChatMessage("Necesitas un tronco para fabricar tablones.");
-            return false;
-        }
-        outputId = static_cast<std::uint16_t>(BlockId::Planks);
-        outputAmount = 4u;
+        const std::uint16_t log = findId("log");
+        const std::uint16_t log2 = findId("log2");
+        if (inventory_.CountItem(log) > 0u) addIngredient(log, 1u);
+        else if (inventory_.CountItem(log2) > 0u) addIngredient(log2, 1u);
+        else { ui_.SetChatMessage("Necesitas un tronco para fabricar tablones."); return false; }
+        outputId = findId("planks"); outputAmount = 4u;
     } else if (recipe == "sticks") {
-        addIngredient(BlockId::Planks, 2u);
-        outputId = static_cast<std::uint16_t>(BlockId::MinefadeStick);
-        outputAmount = 4u;
+        addIngredient(findId("planks"), 2u);
+        outputId = findId("minefade_stick"); outputAmount = 4u;
     } else if (recipe == "table") {
-        addIngredient(BlockId::Planks, 4u);
-        outputId = static_cast<std::uint16_t>(BlockId::CraftingTable);
+        addIngredient(findId("planks"), 4u);
+        outputId = findId("crafting_table");
     } else {
-        addIngredient(BlockId::Planks,
-            recipe == "wooden_shovel" ? 1u : (recipe == "wooden_sword" ? 2u : 3u));
-        addIngredient(BlockId::MinefadeStick,
-            recipe == "wooden_sword" ? 1u : 2u);
+        const std::size_t split = recipe.find('_');
+        if (split == std::string::npos) return false;
+        const std::string tier = recipe.substr(0, split);
+        const std::string kind = recipe.substr(split + 1u);
+        const bool isTool = kind == "pickaxe" || kind == "axe" || kind == "shovel" ||
+                            kind == "sword" || kind == "hoe";
+        const bool isArmor = kind == "helmet" || kind == "chestplate" ||
+                             kind == "leggings" || kind == "boots";
+        if (!isTool && !isArmor) return false;
+        std::string materialKey;
+        std::uint16_t materialAmount = 1u;
+        if (tier == "wooden") materialKey = "planks";
+        else if (tier == "stone") materialKey = "cobblestone";
+        else if (tier == "copper" || tier == "iron" || tier == "gold")
+            materialKey = "minefade_" + tier + "_ingot";
+        else if (tier == "diamond" || tier == "emerald")
+            materialKey = "minefade_" + tier;
+        else return false;
+        if (isTool) {
+            const std::uint16_t headCount = kind == "shovel" ? 1u :
+                (kind == "sword" ? 2u : (kind == "hoe" ? 2u : 3u));
+            const std::uint16_t stickCount = kind == "sword" ? 1u : 2u;
+            if (!addIngredient(findId(materialKey), headCount) ||
+                !addIngredient(findId("minefade_stick"), stickCount)) return false;
+        } else {
+            materialAmount = kind == "helmet" ? 5u : kind == "chestplate" ? 8u :
+                             kind == "leggings" ? 7u : 4u;
+            if (!addIngredient(findId(materialKey), materialAmount)) return false;
+        }
+        outputId = findId("minefade_" + tier + "_" + kind);
         needsTable = true;
-        if (recipe == "wooden_pickaxe")
-            outputId = static_cast<std::uint16_t>(BlockId::MinefadeWoodenPickaxe);
-        else if (recipe == "wooden_axe")
-            outputId = static_cast<std::uint16_t>(BlockId::MinefadeWoodenAxe);
-        else if (recipe == "wooden_shovel")
-            outputId = static_cast<std::uint16_t>(BlockId::MinefadeWoodenShovel);
-        else if (recipe == "wooden_sword")
-            outputId = static_cast<std::uint16_t>(BlockId::MinefadeWoodenSword);
-        else
-            return false;
     }
 
-    if (needsTable && !HasNearbyCraftingTable()) {
-        ui_.SetChatMessage("Necesitas una mesa de trabajo cerca para fabricar herramientas.");
+    if (outputId == 0u || !inventory_.CanAdd(outputId, outputAmount)) {
+        ui_.SetChatMessage("No hay espacio suficiente o la receta no está disponible.");
         return false;
     }
-    if (outputId == 0u || !inventory_.CanAdd(outputId, outputAmount)) {
-        ui_.SetChatMessage("No hay espacio suficiente en el inventario.");
+    if (needsTable && !HasNearbyCraftingTable()) {
+        ui_.SetChatMessage("Necesitas una mesa de trabajo cerca para fabricar este objeto.");
         return false;
     }
     for (std::size_t i = 0; i < ingredientCount; ++i) {
         if (inventory_.CountItem(ingredients[i].id) < ingredients[i].amount) {
-            ui_.SetChatMessage("No tienes los materiales necesarios para esta receta.");
+            ui_.SetChatMessage("Faltan materiales para esta receta.");
             return false;
         }
     }
@@ -1546,9 +1562,8 @@ bool Engine::CraftRecipe(const std::string& recipe) {
         return false;
     }
     const BlockDefinition* output = GetBlockDefinition(static_cast<BlockId>(outputId));
-    ui_.SetChatMessage(output != nullptr
-        ? std::string("Fabricado: ") + output->nameEs + (outputAmount > 1u ? " ×4" : "")
-        : "Objeto fabricado.");
+    ui_.SetChatMessage(output != nullptr ? std::string("Fabricado: ") + output->nameEs :
+                       "Objeto fabricado.");
     RefreshInventoryUi();
     return true;
 }
