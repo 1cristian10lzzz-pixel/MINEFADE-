@@ -403,6 +403,29 @@ bool Inventory::ConsumeSelected(std::uint16_t amount) {
         static_cast<std::uint32_t>(selectedSlot), amount) != 0;
 }
 
+std::uint16_t Inventory::CountItem(std::uint16_t itemId) const {
+    std::uint32_t total = 0u;
+    for (const std::uint32_t encoded : counts) {
+        if (encoded / 1000u == itemId) total += encoded % 1000u;
+    }
+    return static_cast<std::uint16_t>(std::min<std::uint32_t>(total, 65535u));
+}
+
+bool Inventory::ConsumeItem(std::uint16_t itemId, std::uint16_t amount) {
+    if (itemId == 0u || amount == 0u || CountItem(itemId) < amount) return false;
+    std::uint16_t remaining = amount;
+    for (std::uint32_t& encoded : counts) {
+        if (encoded / 1000u != itemId) continue;
+        const std::uint16_t current = static_cast<std::uint16_t>(encoded % 1000u);
+        const std::uint16_t take = std::min(current, remaining);
+        const std::uint16_t after = static_cast<std::uint16_t>(current - take);
+        encoded = after == 0u ? 0u : static_cast<std::uint32_t>(itemId) * 1000u + after;
+        remaining = static_cast<std::uint16_t>(remaining - take);
+        if (remaining == 0u) return true;
+    }
+    return remaining == 0u;
+}
+
 void DroppedItemSystem::Spawn(const Vec3& position, std::uint16_t itemId, std::uint16_t amount) {
     if (itemId == 0u || amount == 0u || GetBlockDefinition(static_cast<BlockId>(itemId)) == nullptr) return;
     const float angle = static_cast<float>(++spawnSequence_) * 2.39996323f;
