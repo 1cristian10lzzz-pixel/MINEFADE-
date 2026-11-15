@@ -1039,6 +1039,7 @@ public final class MinefadeHomeScreen extends FrameLayout {
                 pair.addView(spacer, new LinearLayout.LayoutParams(0, 1, 1f));
             }
             parent.addView(pair, pairParams);
+            animateIn(pair, index / 2 + 1);
         }
     }
 
