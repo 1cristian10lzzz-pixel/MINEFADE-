@@ -77,6 +77,8 @@ private:
     void OpenStarterChest();
     void TakeStarterChestContents();
     void RefreshInventoryUi();
+    bool HasNearbyCraftingTable() const;
+    bool CraftRecipe(const std::string& recipe);
     void UpdateMining(float deltaSeconds);
     Vec3 ViewPosition() const;
     Vec3 ViewTarget() const;
