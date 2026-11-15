@@ -207,7 +207,8 @@ def display_name(key: str) -> str:
 def classify(key: str, block: dict) -> tuple[str,int,float,str,int,int]:
     k = key.lower()
     if block.get('minefade_item') is True:
-        return 'None', 0, -1.0, 'None', 0, 64, 0, '', '', '', ''
+        stack = 64 if key == 'minefade_stick' else 1
+        return 'None', 0, -1.0, 'None', 0, stack, 0, '', '', '', ''
     tex = block.get('textures', '')
     sound = str(block.get('sound',''))
     if 'textures' in block and isinstance(tex, dict):
