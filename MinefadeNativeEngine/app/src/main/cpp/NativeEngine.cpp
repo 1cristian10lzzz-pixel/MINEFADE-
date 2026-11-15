@@ -174,10 +174,10 @@ Java_com_minefade_nativeengine_NativeBridge_nativeSetGraphicsOptions(
 extern "C" JNIEXPORT void JNICALL
 Java_com_minefade_nativeengine_NativeBridge_nativeSetInputOptions(
         JNIEnv*, jclass, jfloat sensitivityX, jfloat sensitivityY, jfloat joystickDeadzone,
-        jboolean invertLookY, jboolean leftHanded) {
+        jboolean invertLookY, jboolean leftHanded, jint controlMode) {
     minefade::GetEngine().SetInputOptions(static_cast<float>(sensitivityX),
         static_cast<float>(sensitivityY), static_cast<float>(joystickDeadzone),
-        invertLookY == JNI_TRUE, leftHanded == JNI_TRUE);
+        invertLookY == JNI_TRUE, leftHanded == JNI_TRUE, static_cast<int>(controlMode));
 }
 
 extern "C" JNIEXPORT void JNICALL
