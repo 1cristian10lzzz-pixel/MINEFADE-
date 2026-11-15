@@ -2,7 +2,7 @@ name: Minefade Native Source Review
 
 on:
   push:
-    branches: [minefade-deep-renewal, minefade-render-optimization, minefade-worlds-mods-commands, minefade-render-overhaul-review12]
+    branches: [minefade-deep-renewal, minefade-render-optimization, minefade-worlds-mods-commands, minefade-render-overhaul-review12, minefade-ultimate-overhaul-phase1]
   workflow_dispatch:
 
 concurrency:
@@ -85,6 +85,8 @@ jobs:
           bash tests/run-world-tests.sh
           python3 tests/test_block_catalog.py
           python3 tests/test_audio_assets.py
+          python3 tools/validate_mfmod.py mods/Minefade_Ultimate_Core_0.1.mfmod
+          python3 tests/test_mfmod_pack.py
 
       - name: Build Android debug APK
         working-directory: MinefadeNativeEngine
