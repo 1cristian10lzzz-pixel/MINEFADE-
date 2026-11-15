@@ -23,7 +23,7 @@ body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; font-
 #topbar { position: absolute; z-index: 8; top: 8dp; left: 8dp; right: 8dp; height: 40dp; display: flex; align-items: center; justify-content: flex-end; pointer-events: none; }
 #topbar button { pointer-events: auto; }
 #brand { display: none; }
-#stats { color: #edf5f8; font-size: 9dp; background: #101c2b88; padding: 7dp 10dp; border: 1dp #d7e8ef33; border-radius: 10dp; text-shadow: none; }
+#stats { color: #f4fbff; font-size: 9dp; background: #101c2b22; padding: 4dp 6dp; border: 0dp #d7e8ef00; border-radius: 8dp; text-shadow: 0dp 1dp 2dp #071321; }
 #minimap { position: absolute; z-index: 5; top: 54dp; left: 10dp; width: 88dp; padding: 5dp; background: #0b1726dd; border: 1dp #d7e8ef88; border-radius: 10dp; }
 #minimap-grid { width: 78dp; height: 78dp; display: flex; flex-direction: row; flex-wrap: wrap; gap: 1dp; }
 .map-tile { width: 10dp; height: 10dp; border-radius: 1dp; }
@@ -34,7 +34,7 @@ body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; font-
 .map-player { background: #d9ed94; border: 1dp #f8ffe8; border-radius: 5dp; }
 #minimap-coords { margin-top: 3dp; text-align: center; color: #d4e4e9; font-size: 7dp; }
 .actions { display: flex; flex-direction: row; align-items: center; gap: 6dp; }
-button { color: #f7fbff; background: #142638bb; border: 1dp #d7e8ef66; border-radius: 9dp; padding: 6dp 9dp; font-size: 11dp; }
+button { color: #f7fbff; background: #b7d2df22; border: 1dp #e6f4f888; border-radius: 10dp; padding: 5dp 8dp; font-size: 11dp; text-shadow: 0dp 1dp 2dp #071321; }
 button, .slot, #minimap, .panel, #chat-message { transition: background-color 0.14s linear, border-color 0.14s linear, opacity 0.18s linear; }
 .slot { transition: background-color 0.14s linear, border-color 0.14s linear; }
 #target-progress-fill { transition: width 0.10s linear; }
@@ -51,8 +51,8 @@ button:active { background: #47789b; }
 .panel .actions { flex-wrap: wrap; }
 #selected-item { position: absolute; z-index: 7; left: 50%; bottom: 62dp; display: none; flex-direction: row; align-items: center; gap: 5dp; margin-left: -72dp; min-width: 144dp; justify-content: center; color: #ffffff; font-size: 10dp; text-shadow: 0dp 1dp 3dp #000000; background: #10192333; border: 1dp #ffffff22; border-radius: 8dp; padding: 4dp 7dp; pointer-events: none; }
 #selected-item img { width: 18dp; height: 18dp; }
-#quickbar { position: absolute; z-index: 7; bottom: 10dp; left: 50%; margin-left: -184dp; display: flex; flex-direction: row; gap: 4dp; padding: 5dp; background: #081522ee; border: 2dp #dcebf0aa; border-radius: 13dp; }
-.slot { position: relative; width: 36dp; min-width: 36dp; height: 41dp; text-align: center; padding: 2dp; display: flex; align-items: center; justify-content: center; background: #1b344beF; border: 1dp #d8e6eeaa; border-radius: 8dp; color: #ffffff; font-size: 9dp; }
+#quickbar { position: absolute; z-index: 7; bottom: 10dp; left: 50%; margin-left: -184dp; display: flex; flex-direction: row; gap: 4dp; padding: 3dp; background: #08152244; border: 1dp #dcebf055; border-radius: 13dp; }
+.slot { position: relative; width: 36dp; min-width: 36dp; height: 41dp; text-align: center; padding: 2dp; display: flex; align-items: center; justify-content: center; background: #b7d2df22; border: 1dp #e7f5f699; border-radius: 8dp; color: #ffffff; font-size: 9dp; }
 .slot:active { background: #486b78; }
 .slot img { width: 26dp; height: 26dp; display: block; margin: auto; }
 .slot .slot-count { position: absolute; right: 1dp; bottom: 0dp; color: #ffffff; font-size: 8dp; text-shadow: 0dp 1dp 2dp #000000; }
@@ -60,17 +60,17 @@ button:active { background: #47789b; }
 .slot .slot-count { position: absolute; right: 1dp; bottom: 0dp; color: #ffffff; font-size: 7dp; text-shadow: 0dp 1dp 2dp #000000; }
 .inventory-row { display: flex; align-items: center; gap: 7dp; color: #e0e8ed; font-size: 12dp; padding: 5dp 2dp; border-bottom: 1dp #43576a; }
 .inventory-icon { width: 19dp; height: 19dp; }
-#inventory, #pause, #perspective { width: 38dp; min-width: 38dp; height: 38dp; padding: 0dp; text-align: center; background: #142638cc; border: 1dp #d8e6ee77; border-radius: 11dp; }
-#movement-pad { position: absolute; z-index: 6; left: 14dp; bottom: 54dp; width: 108dp; height: 108dp; border-radius: 54dp; border: 2dp #d9e9a4dd; background: #102438e8; pointer-events: none; }
-#movement-pad-inner { position: absolute; left: 35dp; top: 35dp; width: 36dp; height: 36dp; border-radius: 18dp; border: 2dp #e7f4c4ee; background: #739d88dd; }
+#topbar button { width: 36dp; min-width: 36dp; height: 36dp; padding: 0dp; text-align: center; background: #b7d2df22; border: 1dp #e5f2f888; border-radius: 10dp; font-size: 16dp; }
+#movement-pad { position: absolute; z-index: 6; left: 14dp; bottom: 54dp; width: 108dp; height: 108dp; border-radius: 54dp; border: 2dp #e8f7d8dd; background: #7698a733; pointer-events: none; }
+#movement-pad-inner { position: absolute; left: 35dp; top: 35dp; width: 36dp; height: 36dp; border-radius: 18dp; border: 2dp #f0f8e6ee; background: #c7e2d277; }
 #movement-pad-cross { display: none; position: absolute; left: 52dp; top: 15dp; width: 2dp; height: 78dp; background: #ffffff44; }
 .pad-arrow { display: none; position: absolute; width: 24dp; height: 22dp; text-align: center; color: #f2f8f5; font-size: 14dp; font-weight: bold; text-shadow: 0dp 1dp 2dp #071321; }
 #move-up { left: 42dp; top: 3dp; }
 #move-down { left: 42dp; bottom: 3dp; }
 #move-left { left: 3dp; top: 42dp; }
 #move-right { right: 3dp; top: 42dp; }
-#jump { position: absolute; z-index: 7; right: 22dp; bottom: 60dp; width: 56dp; height: 56dp; padding: 2dp; text-align: center; border-radius: 18dp; background: #2f6479f2; border: 2dp #d9e9a4ee; color: #ffffff; font-size: 20dp; }
-#crouch { position: absolute; z-index: 7; right: 82dp; bottom: 65dp; width: 44dp; height: 44dp; padding: 1dp; text-align: center; border-radius: 14dp; background: #20394ce8; border: 1dp #c3d8e888; color: #f5fbff; font-size: 17dp; }
+#jump { position: absolute; z-index: 7; right: 22dp; bottom: 60dp; width: 56dp; height: 56dp; padding: 2dp; text-align: center; border-radius: 18dp; background: #4f899b99; border: 2dp #efffe0ee; color: #ffffff; font-size: 20dp; }
+#crouch { position: absolute; z-index: 7; right: 82dp; bottom: 65dp; width: 44dp; height: 44dp; padding: 1dp; text-align: center; border-radius: 14dp; background: #92b6c255; border: 1dp #e6f5fcbb; color: #ffffff; font-size: 17dp; }
 #inventory-panel { left: auto; right: 10dp; top: 52dp; bottom: 54dp; width: 220dp; margin: 0dp; overflow-y: auto; }
 .inventory-row { color: #e0e8ed; font-size: 12dp; padding: 5dp 2dp; border-bottom: 1dp #43576a; }
 #pause-panel { z-index: 10; width: 270dp; margin-left: -135dp; }
@@ -93,8 +93,8 @@ button:active { background: #47789b; }
 <div id="topbar">
   <div class="actions">
     <div id="stats">FPS -- · Chunks --</div>
-    <button id="starter-chest-open">COFRE</button>
-    <button id="inventory">⋯</button>
+    <button id="starter-chest-open">▣</button>
+    <button id="inventory">▦</button>
     <button id="perspective">◉</button>
     <button id="pause">Ⅱ</button>
   </div>
