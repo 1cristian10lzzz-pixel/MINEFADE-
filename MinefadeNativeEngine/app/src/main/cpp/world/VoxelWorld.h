@@ -106,6 +106,12 @@ private:
         std::array<BlockId, kChunkVolume> blocks{};
     };
 
+    struct ChunkMeshCache {
+        std::vector<WorldVertex> opaque;
+        std::vector<WorldVertex> transparent;
+        int lod{0};
+    };
+
     enum class Biome : std::uint8_t { Plains, Forest, Desert, Snow, Ocean, Mountains, Swamp, Savanna, River };
 
     static int FloorDiv(int value, int divisor);
@@ -119,9 +125,13 @@ private:
     void StartNextChunkJob();
     const Chunk* FindChunk(int chunkX, int chunkZ) const;
     Chunk* FindChunk(int chunkX, int chunkZ);
+    void InvalidateChunkMesh(int chunkX, int chunkZ);
+    void InvalidateChunkAndNeighbors(int chunkX, int chunkZ);
 
     std::uint32_t seed_;
     std::map<std::pair<int, int>, Chunk> chunks_;
+    mutable std::map<std::pair<int, int>, ChunkMeshCache> chunkMeshCache_;
+    mutable std::set<std::pair<int, int>> dirtyChunkMeshes_;
     std::deque<std::pair<int, int>> generationQueue_;
     std::set<std::pair<int, int>> queuedChunks_;
     struct ChunkJob {
