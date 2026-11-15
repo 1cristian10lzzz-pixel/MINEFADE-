@@ -210,8 +210,8 @@ public final class MainActivity extends Activity {
                 });
         gameContainer = new FrameLayout(this);
         gameContainer.addView(surfaceView, new FrameLayout.LayoutParams(-1, -1));
-        TextView commandButton = statusButton("⌘  COMANDOS", false);
-        FrameLayout.LayoutParams commandParams = new FrameLayout.LayoutParams(dp(126), dp(34),
+        TextView commandButton = statusButton("✉  CHAT", false);
+        FrameLayout.LayoutParams commandParams = new FrameLayout.LayoutParams(dp(104), dp(34),
                 Gravity.TOP | Gravity.LEFT);
         commandParams.leftMargin = dp(10);
         commandParams.topMargin = dp(10);
