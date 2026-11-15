@@ -609,6 +609,8 @@ bool Engine::Initialise(float displayDensity, const std::uint8_t* atlasPixels,
     lastChunkZ_ = static_cast<int>(std::floor(player_.position.z / 16.0f));
     LoadEnabledMods();
     player_.SetSpeedMultiplier(modPlayerSpeed_);
+    player_.SetJumpMultiplier(modPlayerJump_);
+    entities_.SetSpeedMultiplier(modEntitySpeed_);
     entities_.SpawnInitial(world_);
     const Vec3 modSpawn = player_.position;
     for (int i = 0; i < modSheepSpawns_; ++i) entities_.SpawnEntity(modSpawn, 0, world_);
@@ -1788,6 +1790,8 @@ void Engine::LoadEnabledMods() {
     modSheepSpawns_ = modCowSpawns_ = modBirdSpawns_ = modPigSpawns_ = 0;
     modPlayerSpeed_ = 1.0f;
     modDaySpeed_ = 1.0f;
+    modEntitySpeed_ = 1.0f;
+    modPlayerJump_ = 1.0f;
     if (modsDirectory_.empty()) return;
 
     std::error_code error;
@@ -1805,7 +1809,7 @@ void Engine::LoadEnabledMods() {
         static const std::unordered_set<std::string> allowed{
             "id", "name", "version", "description", "enabled",
             "spawn.sheep", "spawn.cow", "spawn.bird", "spawn.pig",
-            "player.speed", "world.day_speed"
+            "player.speed", "player.jump", "entity.speed", "world.day_speed"
         };
         return allowed.find(key) != allowed.end();
     };
@@ -1915,9 +1919,12 @@ void Engine::LoadEnabledMods() {
 
         int sheep = 0, cows = 0, birds = 0, pigs = 0;
         float playerSpeed = 1.0f, daySpeed = 1.0f;
+        float playerJump = 1.0f, entitySpeed = 1.0f;
         if (!readSpawn("spawn.sheep", sheep) || !readSpawn("spawn.cow", cows) ||
             !readSpawn("spawn.bird", birds) || !readSpawn("spawn.pig", pigs) ||
             !readMultiplier("player.speed", 0.5f, 2.0f, playerSpeed) ||
+            !readMultiplier("player.jump", 0.75f, 1.5f, playerJump) ||
+            !readMultiplier("entity.speed", 0.5f, 2.0f, entitySpeed) ||
             !readMultiplier("world.day_speed", 0.25f, 4.0f, daySpeed)) continue;
 
         modSheepSpawns_ = std::clamp(modSheepSpawns_ + sheep, 0, 24);
@@ -1925,6 +1932,8 @@ void Engine::LoadEnabledMods() {
         modBirdSpawns_ = std::clamp(modBirdSpawns_ + birds, 0, 24);
         modPigSpawns_ = std::clamp(modPigSpawns_ + pigs, 0, 24);
         modPlayerSpeed_ = std::clamp(modPlayerSpeed_ * playerSpeed, 0.5f, 2.0f);
+        modPlayerJump_ = std::clamp(modPlayerJump_ * playerJump, 0.75f, 1.5f);
+        modEntitySpeed_ = std::clamp(modEntitySpeed_ * entitySpeed, 0.5f, 2.0f);
         modDaySpeed_ = std::clamp(modDaySpeed_ * daySpeed, 0.25f, 4.0f);
     }
 }
