@@ -705,7 +705,10 @@ void VoxelWorld::BuildMesh(std::vector<WorldVertex>& output,int centerWorldX,int
         const int baseX=chunk.x*kChunkSize, baseZ=chunk.z*kChunkSize;
         const int chunkDistance=std::max(std::abs(chunk.x-centerChunkX),
                                          std::abs(chunk.z-centerChunkZ));
-        result.lod = chunkDistance<=1 ? 0 : (chunkDistance==2 ? 1 : 2);
+        // Keep visible near-field edges at high detail. Only the outer visible
+        // ring is allowed the lighter LOD1 silhouette; LOD2 remains for chunks
+        // beyond the normal mobile render radius.
+        result.lod = chunkDistance<=2 ? 0 : (chunkDistance==3 ? 1 : 2);
 
         struct FaceCell { std::uint16_t tile{0}; bool visible{false}; };
         const auto coordinates = [&](int face,int slice,int u,int v) {
