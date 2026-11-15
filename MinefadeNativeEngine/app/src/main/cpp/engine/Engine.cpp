@@ -454,6 +454,7 @@ bool Engine::Initialise(float displayDensity, const std::uint8_t* atlasPixels,
     pickupToastText_.clear();
     entityMeshAccumulator_ = 0.0f;
     itemMeshAccumulator_ = 0.0f;
+    minimapAccumulator_ = 0.0f;
     exitRequested_.store(false, std::memory_order_release);
     soundEvents_.store(0u, std::memory_order_release);
 
@@ -638,6 +639,8 @@ bool Engine::Initialise(float displayDensity, const std::uint8_t* atlasPixels,
     // are cropped from the exact same block textures used by the 3D renderer.
     ui_.SetBlockAtlas(atlasPixels,atlasBytes,atlasWidth,atlasHeight);
     ui_.SetStatusVisible(showHudStats_);
+    ui_.SetLeftHanded(leftHandedControls_);
+    ui_.SetControlMode(controlMode_);
     if (!ui_.Initialise(width_, height_, displayDensity,
                         [this](const std::string& action) { HandleUiAction(action); })) {
         ENGINE_LOGE("RmlUi failed to initialise; game rendering remains available without the HUD");
@@ -937,6 +940,32 @@ void Engine::Render() {
         environment_.Update(safeDelta * modDaySpeed_);
         player_.Update(world_, safeDelta);
         entities_.Update(world_, safeDelta);
+        minimapAccumulator_ += safeDelta;
+        if (minimapAccumulator_ >= 0.75f) {
+            minimapAccumulator_ = std::fmod(minimapAccumulator_, 0.75f);
+            const int centerX = static_cast<int>(std::floor(player_.position.x));
+            const int centerZ = static_cast<int>(std::floor(player_.position.z));
+            const int centerHeight = world_.GetSurfaceHeight(centerX, centerZ);
+            std::string mapMarkup;
+            mapMarkup.reserve(7u * 7u * 40u);
+            for (int dz = -3; dz <= 3; ++dz) {
+                for (int dx = -3; dx <= 3; ++dx) {
+                    if (dx == 0 && dz == 0) {
+                        mapMarkup += "<div class=\"map-tile map-player\">▲</div>";
+                        continue;
+                    }
+                    const int height = world_.GetSurfaceHeight(centerX + dx * 3, centerZ + dz * 3);
+                    const char* terrainClass = height <= VoxelWorld::kSeaLevel ? "map-water"
+                        : (height >= centerHeight + 4 ? "map-high"
+                        : (height <= centerHeight - 4 ? "map-low" : "map-mid"));
+                    mapMarkup += "<div class=\"map-tile ";
+                    mapMarkup += terrainClass;
+                    mapMarkup += "\"></div>";
+                }
+            }
+            ui_.SetMinimap(mapMarkup, "X " + std::to_string(centerX) +
+                " · Z " + std::to_string(centerZ));
+        }
 
         const bool walking = player_.grounded &&
             (std::abs(player_.movementX) + std::abs(player_.movementY) > 0.12f);
@@ -1182,9 +1211,17 @@ void Engine::Touch(int action, int pointerId, float x, float y) {
             state.moved = true;
             if (magnitude <= joystickDeadzone_) {
                 player_.SetMovement(0.0f, 0.0f);
+            } else if (controlMode_ == 1) {
+                // D-pad mode quantises movement to four directions (including clean diagonals).
+                const float nx = dx / std::max(magnitude, 0.0001f);
+                const float ny = dy / std::max(magnitude, 0.0001f);
+                float moveX = std::abs(nx) > 0.34f ? (nx > 0.0f ? 1.0f : -1.0f) : 0.0f;
+                float moveY = std::abs(ny) > 0.34f ? (ny > 0.0f ? 1.0f : -1.0f) : 0.0f;
+                if (std::abs(nx) > std::abs(ny) * 1.65f) moveY = 0.0f;
+                else if (std::abs(ny) > std::abs(nx) * 1.65f) moveX = 0.0f;
+                player_.SetMovement(moveX, moveY);
             } else {
-                // Remap the range outside the dead zone to [0, 1] so small
-                // accidental finger drift does not move the player.
+                // Analogue joystick: ease the usable range beyond the dead zone to [0, 1].
                 const float intensity = std::clamp(
                     (magnitude - joystickDeadzone_) / (1.0f - joystickDeadzone_), 0.0f, 1.0f);
                 const float factor = intensity / std::max(magnitude, 0.0001f);
@@ -1253,7 +1290,9 @@ void Engine::Touch(int action, int pointerId, float x, float y) {
 
 void Engine::HandleUiAction(const std::string& action) {
     soundEvents_.fetch_or(4u, std::memory_order_release);
-    if (action == "perspective") {
+    if (action == "chat-open") {
+        ui_.SetChatMessage("Para escribir, pulsa CHAT en la esquina superior izquierda.");
+    } else if (action == "perspective") {
         thirdPerson_ = !thirdPerson_;
         ui_.SetPerspectiveEnabled(thirdPerson_);
         RebuildEntityMesh();
@@ -1931,7 +1970,7 @@ void Engine::SetGraphicsOptions(int quality,int renderDistanceChunks,bool waterW
     }
 }
 
-void Engine::SetInputOptions(float sensitivityX, float sensitivityY, float joystickDeadzone, bool invertLookY, bool leftHanded) {
+void Engine::SetInputOptions(float sensitivityX, float sensitivityY, float joystickDeadzone, bool invertLookY, bool leftHanded, int controlMode) {
     pendingLookSensitivityX_ = std::clamp(sensitivityX, 0.35f, 1.50f);
     pendingLookSensitivityY_ = std::clamp(sensitivityY, 0.35f, 1.50f);
     pendingJoystickDeadzone_ = std::clamp(joystickDeadzone, 0.05f, 0.30f);
@@ -1941,7 +1980,9 @@ void Engine::SetInputOptions(float sensitivityX, float sensitivityY, float joyst
     lookSensitivityY_ = pendingLookSensitivityY_;
     invertLookY_ = pendingInvertLookY_;
     leftHandedControls_ = pendingLeftHandedControls_;
+    controlMode_ = std::clamp(controlMode, 0, 2);
     ui_.SetLeftHanded(leftHandedControls_);
+    ui_.SetControlMode(controlMode_);
 }
 
 void Engine::SetHudOptions(bool showStats) {
