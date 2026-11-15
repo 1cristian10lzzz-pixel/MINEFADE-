@@ -799,29 +799,53 @@ void Engine::RebuildEntityMesh() {
     if (thirdPerson_) {
         player_.AppendMesh(entityMesh_);
     } else {
-        // First-person held item: render the selected block with its own atlas
-        // texture and place it in the lower-right camera space, not as a generic cube.
-        const std::uint16_t selected=inventory_.SelectedItemId();
-        const BlockDefinition* definition=GetBlockDefinition(static_cast<BlockId>(selected));
-        if(definition!=nullptr&&definition->shape!=BlockShape::None&&selected!=static_cast<std::uint16_t>(BlockId::Air)) {
-            const Vec3 eye=player_.CameraPosition();
-            const Vec3 forward=player_.Forward();
-            const Vec3 right{-forward.z,0.0f,forward.x};
+        const std::uint16_t selected = inventory_.SelectedItemId();
+        const BlockDefinition* definition = GetBlockDefinition(static_cast<BlockId>(selected));
+        if (definition != nullptr && selected != static_cast<std::uint16_t>(BlockId::Air)) {
+            const Vec3 eye = player_.CameraPosition();
+            const Vec3 forward = player_.Forward();
+            const Vec3 right{-forward.z, 0.0f, forward.x};
             const Vec3 held{
-                eye.x+forward.x*0.66f+right.x*0.30f,
-                eye.y+forward.y*0.66f-0.28f,
-                eye.z+forward.z*0.66f+right.z*0.30f
+                eye.x + forward.x * 0.66f + right.x * 0.30f,
+                eye.y + forward.y * 0.66f - 0.28f,
+                eye.z + forward.z * 0.66f + right.z * 0.30f
             };
-            const float movementAmount=std::clamp(
-                std::abs(player_.movementX)+std::abs(player_.movementY),0.0f,1.0f);
-            const float handBob=std::sin(player_.animationTime*1.6f)*0.012f
-                +std::cos(player_.walkPhase*2.0f)*0.022f*movementAmount;
-            const float handYaw=player_.yaw+std::sin(player_.walkPhase)*0.055f*movementAmount;
-            AppendAnimatedTexturedBlockCube(itemMesh_,static_cast<BlockId>(selected),
-                held,{0.105f,0.105f,0.105f},handYaw,handBob);
-            const std::array<float,3> sleeve{0.28f,0.43f,0.38f};
-            AppendCube(entityMesh_,{held.x-right.x*0.19f,held.y-0.12f,held.z-right.z*0.19f},
-                       {0.085f,0.16f,0.085f},sleeve);
+            const float movementAmount = std::clamp(
+                std::abs(player_.movementX) + std::abs(player_.movementY), 0.0f, 1.0f);
+            const float handBob = std::sin(player_.animationTime * 1.6f) * 0.012f
+                + std::cos(player_.walkPhase * 2.0f) * 0.022f * movementAmount;
+            const float handYaw = player_.yaw + std::sin(player_.walkPhase) * 0.055f * movementAmount;
+
+            if (definition->shape != BlockShape::None) {
+                AppendAnimatedTexturedBlockCube(itemMesh_, static_cast<BlockId>(selected),
+                    held, {0.105f, 0.105f, 0.105f}, handYaw, handBob);
+            } else {
+                // The wooden progression tools are inventory items, not placeable cubes.
+                // Draw a simple voxel hand-held silhouette in the entity colour pass.
+                const std::array<float, 3> wood{0.48f, 0.29f, 0.13f};
+                const std::array<float, 3> head{0.72f, 0.52f, 0.29f};
+                const Vec3 grip{held.x, held.y + handBob, held.z};
+                AppendCube(entityMesh_, grip, {0.035f, 0.22f, 0.035f}, wood);
+                const std::string_view key(definition->key);
+                if (key == "minefade_stick") {
+                    // Narrow stick only.
+                } else if (key == "minefade_wooden_pickaxe") {
+                    AppendCube(entityMesh_, {grip.x, grip.y + 0.22f, grip.z},
+                               {0.19f, 0.045f, 0.045f}, head);
+                } else if (key == "minefade_wooden_axe") {
+                    AppendCube(entityMesh_, {grip.x - 0.09f, grip.y + 0.18f, grip.z},
+                               {0.09f, 0.12f, 0.07f}, head);
+                } else if (key == "minefade_wooden_shovel") {
+                    AppendCube(entityMesh_, {grip.x, grip.y + 0.23f, grip.z},
+                               {0.075f, 0.105f, 0.055f}, head);
+                } else if (key == "minefade_wooden_sword") {
+                    AppendCube(entityMesh_, {grip.x, grip.y + 0.28f, grip.z},
+                               {0.045f, 0.17f, 0.035f}, head);
+                }
+            }
+            const std::array<float, 3> sleeve{0.28f, 0.43f, 0.38f};
+            AppendCube(entityMesh_, {held.x - right.x * 0.19f, held.y - 0.12f, held.z - right.z * 0.19f},
+                       {0.085f, 0.16f, 0.085f}, sleeve);
         }
     }
     // Remote players use the same articulated voxel model as the local avatar.
