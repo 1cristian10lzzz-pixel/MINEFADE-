@@ -206,6 +206,8 @@ def display_name(key: str) -> str:
 
 def classify(key: str, block: dict) -> tuple[str,int,float,str,int,int]:
     k = key.lower()
+    if block.get('minefade_item') is True:
+        return 'None', 0, -1.0, 'None', 0, 64, 0, '', '', '', ''
     tex = block.get('textures', '')
     sound = str(block.get('sound',''))
     if 'textures' in block and isinstance(tex, dict):
@@ -485,6 +487,28 @@ def make_mineral_tile(key: str, face: int, block_idx: int) -> bytes:
 
 
 def make_tile(key: str, face: int, block_idx: int) -> bytes:
+    if key in SYNTHETIC_ITEMS:
+        # Original transparent pixel-art sprites for Minefade inventory objects.
+        pixels = []
+        for y in range(TILE):
+            for x in range(TILE):
+                rgba = (0, 0, 0, 0)
+                if key.endswith('_stick'):
+                    if abs((x + y) - 15) <= 1:
+                        rgba = (127, 83, 45, 255) if (x + y) % 4 else (177, 130, 78, 255)
+                else:
+                    if abs((x + y) - 21) <= 1 and 2 <= x <= 13:
+                        rgba = (126, 82, 44, 255)
+                    if key.endswith('_pickaxe') and 2 <= y <= 5 and 2 <= x <= 14 and abs((y - 3) - (x - 8) * 0.16) <= 1.2:
+                        rgba = (175, 119, 65, 255)
+                    elif key.endswith('_axe') and 3 <= y <= 8 and 2 <= x <= 7 and 5 <= x + y <= 14:
+                        rgba = (179, 124, 69, 255)
+                    elif key.endswith('_shovel') and 1 <= y <= 5 and 7 <= x <= 12 and (x + y) % 4 != 0:
+                        rgba = (177, 121, 67, 255)
+                    elif key.endswith('_sword') and abs(x - (13 - y * 0.55)) <= 1.1 and y <= 10:
+                        rgba = (187, 139, 83, 255)
+                pixels.append(bytes(rgba))
+        return b''.join(pixels)
     mineral_keys = ('_ore', 'ancient_debris', 'amethyst', 'copper_ore')
     if any(token in key.lower() for token in mineral_keys):
         return make_mineral_tile(key, face, block_idx)
