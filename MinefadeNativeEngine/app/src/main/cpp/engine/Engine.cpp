@@ -1504,6 +1504,17 @@ bool Engine::CraftRecipe(const std::string& recipe) {
     } else if (recipe == "table") {
         addIngredient(findId("planks"), 4u);
         outputId = findId("crafting_table");
+    } else if (recipe == "copper_ingot" || recipe == "iron_ingot" || recipe == "gold_ingot") {
+        const std::string metal = recipe.substr(0, recipe.find('_'));
+        addIngredient(findId(metal + "_ore"), 1u);
+        addIngredient(findId("coal_ore"), 1u);
+        outputId = findId("minefade_" + recipe);
+        needsTable = true;
+    } else if (recipe == "diamond_gem" || recipe == "emerald_gem") {
+        const std::string gem = recipe.substr(0, recipe.find('_'));
+        addIngredient(findId(gem + "_ore"), 1u);
+        outputId = findId("minefade_" + gem);
+        needsTable = true;
     } else {
         const std::size_t split = recipe.find('_');
         if (split == std::string::npos) return false;
@@ -1807,15 +1818,23 @@ void Engine::UpdateMining(float deltaSeconds) {
     if (heldDefinition != nullptr) {
         const std::string_view heldKey(heldDefinition->key);
         const bool matchingPickaxe = definition->preferredTool == BlockTool::Pickaxe &&
-            heldKey == "minefade_wooden_pickaxe";
+            heldKey.find("_pickaxe") != std::string_view::npos;
         const bool matchingAxe = definition->preferredTool == BlockTool::Axe &&
-            heldKey == "minefade_wooden_axe";
+            heldKey.find("_axe") != std::string_view::npos;
         const bool matchingShovel = definition->preferredTool == BlockTool::Shovel &&
-            heldKey == "minefade_wooden_shovel";
-        if (matchingPickaxe || matchingAxe || matchingShovel) toolMultiplier = 0.55f;
-        else if (definition->preferredTool != BlockTool::None &&
-                 (heldKey == "minefade_wooden_sword" || heldKey == "minefade_stick"))
-            toolMultiplier = 1.20f;
+            heldKey.find("_shovel") != std::string_view::npos;
+        if (matchingPickaxe || matchingAxe || matchingShovel) {
+            if (heldKey.find("_diamond_") != std::string_view::npos) toolMultiplier = 0.30f;
+            else if (heldKey.find("_emerald_") != std::string_view::npos) toolMultiplier = 0.34f;
+            else if (heldKey.find("_gold_") != std::string_view::npos) toolMultiplier = 0.38f;
+            else if (heldKey.find("_iron_") != std::string_view::npos) toolMultiplier = 0.45f;
+            else if (heldKey.find("_copper_") != std::string_view::npos) toolMultiplier = 0.52f;
+            else if (heldKey.find("_stone_") != std::string_view::npos) toolMultiplier = 0.62f;
+            else toolMultiplier = 0.78f;
+        } else if (definition->preferredTool != BlockTool::None &&
+                   (heldKey.find("_sword") != std::string_view::npos ||
+                    heldKey.find("_hoe") != std::string_view::npos ||
+                    heldKey == "minefade_stick")) toolMultiplier = 1.15f;
     }
     // Creative mode breaks ordinary blocks almost instantly; survival keeps the hardness curve.
     miningRequired_ = gameMode_ == 1 ? 0.07f
