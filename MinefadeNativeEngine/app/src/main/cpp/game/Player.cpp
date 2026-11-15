@@ -374,6 +374,34 @@ void Player::Update(const VoxelWorld& world, float deltaSeconds) {
     movementY = inputY;
 }
 
+bool Inventory::EquipArmorFromSlot(std::size_t slot) {
+    if (slot >= counts.size() || counts[slot] == 0u) return false;
+    const std::uint16_t itemId = static_cast<std::uint16_t>(counts[slot] / 1000u);
+    const BlockDefinition* definition = GetBlockDefinition(static_cast<BlockId>(itemId));
+    if (definition == nullptr) return false;
+    const std::string_view key(definition->key);
+    std::size_t armorSlot = 4u;
+    if (key.find("_helmet") != std::string_view::npos) armorSlot = 0u;
+    else if (key.find("_chestplate") != std::string_view::npos) armorSlot = 1u;
+    else if (key.find("_leggings") != std::string_view::npos) armorSlot = 2u;
+    else if (key.find("_boots") != std::string_view::npos) armorSlot = 3u;
+    if (armorSlot >= equippedArmor.size()) return false;
+    const std::uint16_t previous = equippedArmor[armorSlot];
+    if (previous != 0u && !CanAdd(previous, 1u)) return false;
+    counts[slot] = 0u;
+    if (previous != 0u && !Add(previous, 1u)) return false;
+    equippedArmor[armorSlot] = itemId;
+    return true;
+}
+
+bool Inventory::UnequipArmor(std::size_t armorSlot) {
+    if (armorSlot >= equippedArmor.size()) return false;
+    const std::uint16_t itemId = equippedArmor[armorSlot];
+    if (itemId == 0u || !CanAdd(itemId, 1u) || !Add(itemId, 1u)) return false;
+    equippedArmor[armorSlot] = 0u;
+    return true;
+}
+
 bool Inventory::CanAdd(std::uint16_t itemId, std::uint16_t amount) const {
     const BlockDefinition* definition = GetBlockDefinition(static_cast<BlockId>(itemId));
     if (definition == nullptr) return false;
