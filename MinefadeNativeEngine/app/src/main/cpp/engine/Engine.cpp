@@ -476,6 +476,8 @@ bool Engine::Initialise(float displayDensity, const std::uint8_t* atlasPixels,
     invertLookY_ = pendingInvertLookY_;
     leftHandedControls_ = pendingLeftHandedControls_;
     joystickDeadzone_ = pendingJoystickDeadzone_;
+    autoJump_ = pendingAutoJump_;
+    autoJumpCooldown_ = 0.0f;
     showHudStats_ = pendingShowHudStats_;
     ENGINE_LOGI("Starting Minefade Native Engine C++20 / OpenGL ES 3");
     const auto* glVersion = reinterpret_cast<const char*>(glGetString(GL_VERSION));
@@ -944,6 +946,32 @@ void Engine::Render() {
         const float safeDelta = std::clamp(delta, 0.0f, 0.05f);
         environment_.Update(safeDelta * modDaySpeed_);
         player_.Update(world_, safeDelta);
+        autoJumpCooldown_ = std::max(0.0f, autoJumpCooldown_ - safeDelta);
+        if (autoJump_ && autoJumpCooldown_ <= 0.0f && player_.grounded &&
+            player_.movementY > 0.28f) {
+            // Bedrock-style auto-jump: jump only when forward movement meets a
+            // one-block obstacle and the destination column has enough headroom.
+            const Vec3 forward = player_.Forward();
+            const Vec3 right{-forward.z, 0.0f, forward.x};
+            const float moveX = std::clamp(player_.movementX, -1.0f, 1.0f);
+            const float moveY = std::clamp(player_.movementY, 0.0f, 1.0f);
+            const float dirX = forward.x * moveY + right.x * moveX;
+            const float dirZ = forward.z * moveY + right.z * moveX;
+            const float length = std::sqrt(dirX * dirX + dirZ * dirZ);
+            if (length > 0.20f) {
+                const int obstacleX = static_cast<int>(std::floor(player_.position.x + dirX / length * 0.58f));
+                const int obstacleZ = static_cast<int>(std::floor(player_.position.z + dirZ / length * 0.58f));
+                const int feetY = static_cast<int>(std::floor(player_.position.y + 0.12f));
+                const bool obstacle = world_.IsSolid(obstacleX, feetY, obstacleZ);
+                const bool clearAbove = !world_.IsSolid(obstacleX, feetY + 1, obstacleZ) &&
+                                        !world_.IsSolid(obstacleX, feetY + 2, obstacleZ);
+                if (obstacle && clearAbove) {
+                    player_.Jump();
+                    autoJumpCooldown_ = 0.42f;
+                    soundEvents_.fetch_or(16u, std::memory_order_release);
+                }
+            }
+        }
         entities_.Update(world_, player_, safeDelta);
         minimapAccumulator_ += safeDelta;
         if (minimapAccumulator_ >= 0.75f) {
@@ -1988,7 +2016,7 @@ void Engine::SetGraphicsOptions(int quality,int renderDistanceChunks,bool waterW
     }
 }
 
-void Engine::SetInputOptions(float sensitivityX, float sensitivityY, float joystickDeadzone, bool invertLookY, bool leftHanded, int controlMode) {
+void Engine::SetInputOptions(float sensitivityX, float sensitivityY, float joystickDeadzone, bool invertLookY, bool leftHanded, int controlMode, bool autoJump) {
     pendingLookSensitivityX_ = std::clamp(sensitivityX, 0.35f, 1.50f);
     pendingLookSensitivityY_ = std::clamp(sensitivityY, 0.35f, 1.50f);
     pendingJoystickDeadzone_ = std::clamp(joystickDeadzone, 0.05f, 0.30f);
@@ -1999,6 +2027,9 @@ void Engine::SetInputOptions(float sensitivityX, float sensitivityY, float joyst
     invertLookY_ = pendingInvertLookY_;
     leftHandedControls_ = pendingLeftHandedControls_;
     controlMode_ = std::clamp(controlMode, 0, 2);
+    pendingAutoJump_ = autoJump;
+    autoJump_ = autoJump;
+    if (!autoJump_) autoJumpCooldown_ = 0.0f;
     ui_.SetLeftHanded(leftHandedControls_);
     ui_.SetControlMode(controlMode_);
 }
