@@ -205,10 +205,10 @@ Java_com_minefade_nativeengine_NativeBridge_nativeSetAvatarAppearance(
 
 extern "C" JNIEXPORT jfloatArray JNICALL
 Java_com_minefade_nativeengine_NativeBridge_nativeGetPlayerState(JNIEnv* env, jclass) {
-    float state[4]{};
+    float state[6]{};
     minefade::GetEngine().GetPlayerState(state);
-    jfloatArray result = env->NewFloatArray(4);
-    if (result != nullptr) env->SetFloatArrayRegion(result, 0, 4, state);
+    jfloatArray result = env->NewFloatArray(6);
+    if (result != nullptr) env->SetFloatArrayRegion(result, 0, 6, state);
     return result;
 }
 
@@ -216,7 +216,7 @@ extern "C" JNIEXPORT void JNICALL
 Java_com_minefade_nativeengine_NativeBridge_nativeSetRemotePlayers(JNIEnv* env, jclass, jfloatArray values) {
     if (values == nullptr) return;
     const jsize length = env->GetArrayLength(values);
-    if (length < 4) return;
+    if (length < 6) return;
     std::vector<jfloat> data(static_cast<std::size_t>(length));
     env->GetFloatArrayRegion(values, 0, length, data.data());
     if (env->ExceptionCheck()) { env->ExceptionClear(); return; }
