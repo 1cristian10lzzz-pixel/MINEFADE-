@@ -436,6 +436,18 @@ const VoxelWorld::Chunk* VoxelWorld::FindChunk(int chunkX,int chunkZ) const {
 VoxelWorld::Chunk* VoxelWorld::FindChunk(int chunkX,int chunkZ) {
     const auto it=chunks_.find({chunkX,chunkZ});return it==chunks_.end()?nullptr:&it->second;
 }
+
+void VoxelWorld::InvalidateChunkMesh(int chunkX, int chunkZ) {
+    dirtyChunkMeshes_.insert({chunkX, chunkZ});
+}
+
+void VoxelWorld::InvalidateChunkAndNeighbors(int chunkX, int chunkZ) {
+    InvalidateChunkMesh(chunkX, chunkZ);
+    InvalidateChunkMesh(chunkX - 1, chunkZ);
+    InvalidateChunkMesh(chunkX + 1, chunkZ);
+    InvalidateChunkMesh(chunkX, chunkZ - 1);
+    InvalidateChunkMesh(chunkX, chunkZ + 1);
+}
 void VoxelWorld::StartNextChunkJob() {
     // Thread creation is optional: on devices that temporarily cannot allocate
     // another worker, keep the world playable and let PumpChunkGeneration build
@@ -596,7 +608,14 @@ BlockId VoxelWorld::GetBlock(int x,int y,int z) const {
 bool VoxelWorld::SetBlock(int x,int y,int z,BlockId block) {
     if(y<0||y>=kWorldHeight||!IsValidBlock(block))return false;
     Chunk* chunk=FindChunk(FloorDiv(x,kChunkSize),FloorDiv(z,kChunkSize));if(chunk==nullptr)return false;
-    chunk->blocks[Index(PositiveMod(x,kChunkSize),y,PositiveMod(z,kChunkSize))]=block;
+    const int localX = PositiveMod(x, kChunkSize);
+    const int localZ = PositiveMod(z, kChunkSize);
+    chunk->blocks[Index(localX, y, localZ)] = block;
+    InvalidateChunkMesh(chunk->x, chunk->z);
+    if (localX == 0) InvalidateChunkMesh(chunk->x - 1, chunk->z);
+    if (localX == kChunkSize - 1) InvalidateChunkMesh(chunk->x + 1, chunk->z);
+    if (localZ == 0) InvalidateChunkMesh(chunk->x, chunk->z - 1);
+    if (localZ == kChunkSize - 1) InvalidateChunkMesh(chunk->x, chunk->z + 1);
     return true;
 }
 bool VoxelWorld::IsSolid(int x,int y,int z) const {
