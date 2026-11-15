@@ -311,7 +311,7 @@ public final class MinefadeSurfaceView extends GLSurfaceView {
                 NativeBridge.nativeSetWorldOptions(gameMode, allowCheats, starterChest, worldSeed);
                 NativeBridge.nativeSetModsDirectory(modsDirectory);
                 int quality = Math.max(0, Math.min(2, preferences.getInt("graphics_quality", 1)));
-                int renderDistance = Math.max(1, Math.min(3,
+                int renderDistance = Math.max(1, Math.min(5,
                         preferences.getInt("render_distance", 1) + 1));
                 boolean waterWaves = preferences.getBoolean("water_waves", true);
                 float fieldOfView = preferences.getInt("field_of_view", 68);
