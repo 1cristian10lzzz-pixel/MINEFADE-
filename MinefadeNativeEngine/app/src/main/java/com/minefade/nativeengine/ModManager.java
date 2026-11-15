@@ -2,6 +2,7 @@ package com.minefade.nativeengine;
 
 import android.content.Context;
 import android.net.Uri;
+import android.system.Os;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -70,29 +71,41 @@ public final class ModManager {
         if (!lowerName.endsWith(".mfmod")) safe += ".mfmod";
         else if (!safe.endsWith(".mfmod"))
             safe = safe.substring(0, safe.length() - ".mfmod".length()) + ".mfmod";
-        File destination = new File(modsDirectory, System.currentTimeMillis() + "-" + safe);
+
+        String prefix = System.currentTimeMillis() + "-";
+        File destination = new File(modsDirectory, prefix + safe);
+        int suffix = 1;
+        while (destination.exists()) destination = new File(modsDirectory,
+                prefix + suffix++ + "-" + safe);
+        File temporary = new File(modsDirectory, destination.getName() + ".part");
+
         try (InputStream input = context.getContentResolver().openInputStream(uri);
-             FileOutputStream output = new FileOutputStream(destination, false)) {
-            if (input == null) {
-                destination.delete();
-                return null;
-            }
+             FileOutputStream output = new FileOutputStream(temporary, false)) {
+            if (input == null) return null;
             byte[] buffer = new byte[4096];
-            int total = 0, read;
-            while ((read = input.read(buffer)) != -1) {
-                total += read;
+            int total = 0, count;
+            while ((count = input.read(buffer)) != -1) {
+                total += count;
                 if (total > 32768) throw new IllegalArgumentException("El paquete supera 32 KB.");
-                output.write(buffer, 0, read);
+                output.write(buffer, 0, count);
             }
             output.flush();
-            ModInfo info = read(destination);
-            if (info == null || info.id.trim().isEmpty() || info.name.trim().isEmpty()) {
-                destination.delete();
-                return null;
-            }
-            return info;
+            output.getFD().sync();
         } catch (Exception error) {
-            destination.delete();
+            temporary.delete();
+            return null;
+        }
+
+        ModInfo validated = read(temporary);
+        if (validated == null) {
+            temporary.delete();
+            return null;
+        }
+        try {
+            Os.rename(temporary.getAbsolutePath(), destination.getAbsolutePath());
+            return new ModInfo(destination, validated.settings);
+        } catch (Exception error) {
+            temporary.delete();
             return null;
         }
     }
@@ -109,12 +122,7 @@ public final class ModManager {
                 if (key.matches("[a-zA-Z0-9_.-]{1,64}") && value.indexOf('\n') < 0 && value.indexOf('\r') < 0)
                     data.append(key).append('=').append(value).append('\n');
             }
-            try (FileOutputStream output = new FileOutputStream(info.file, false)) {
-                output.write(data.toString().getBytes(StandardCharsets.UTF_8));
-                output.flush();
-                output.getFD().sync();
-            }
-            return true;
+            return writeAtomically(info.file, data.toString().getBytes(StandardCharsets.UTF_8));
         } catch (Exception ignored) {
             return false;
         }
@@ -134,14 +142,27 @@ public final class ModManager {
                 + "spawn.bird=2\n"
                 + "player.speed=1.0\n"
                 + "world.day_speed=1.15\n";
-        try (FileOutputStream output = new FileOutputStream(file, false)) {
-            output.write(data.getBytes(StandardCharsets.UTF_8));
+        if (writeAtomically(file, data.getBytes(StandardCharsets.UTF_8))) return file;
+        return null;
+    }
+
+    private static boolean writeAtomically(File target, byte[] bytes) {
+        if (target == null || target.getParentFile() == null || bytes == null) return false;
+        File temporary = new File(target.getParentFile(), target.getName() + ".tmp");
+        try (FileOutputStream output = new FileOutputStream(temporary, false)) {
+            output.write(bytes);
             output.flush();
             output.getFD().sync();
-            return file;
-        } catch (Exception ignored) {
-            file.delete();
-            return null;
+        } catch (Exception error) {
+            temporary.delete();
+            return false;
+        }
+        try {
+            Os.rename(temporary.getAbsolutePath(), target.getAbsolutePath());
+            return target.isFile() && target.length() == bytes.length;
+        } catch (Exception error) {
+            temporary.delete();
+            return false;
         }
     }
 
