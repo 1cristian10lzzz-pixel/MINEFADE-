@@ -30,9 +30,8 @@ jobs:
           cat review12-render/part-*.b64 | base64 --decode | xz -dc > /tmp/review12-render.patch
           git apply --check /tmp/review12-render.patch
           git apply /tmp/review12-render.patch
-          # WorldSmokeTests now exercises std::any_of in a regression assertion.
-          TEST_SOURCE=MinefadeNativeEngine/tests/WorldSmokeTests.cpp
-          grep -q '^#include <algorithm>' "$TEST_SOURCE" || sed -i '1i#include <algorithm>' "$TEST_SOURCE"
+          git apply --check review12-render/fix-atlas-uv-and-tests.patch
+          git apply review12-render/fix-atlas-uv-and-tests.patch
 
       - name: Set up stable Rust toolchain for host and Android
         uses: dtolnay/rust-toolchain@stable
