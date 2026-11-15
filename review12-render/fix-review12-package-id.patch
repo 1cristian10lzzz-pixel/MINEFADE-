@@ -1,7 +1,7 @@
 diff --git a/MinefadeNativeEngine/app/build.gradle.kts b/MinefadeNativeEngine/app/build.gradle.kts
 --- a/MinefadeNativeEngine/app/build.gradle.kts
 +++ b/MinefadeNativeEngine/app/build.gradle.kts
-@@ -11,7 +11,7 @@
+@@ -11,5 +11,5 @@
          applicationId = "com.minefade.nativeengine"
          minSdk = 24
          targetSdk = 36
