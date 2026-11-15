@@ -2,7 +2,7 @@ name: Minefade Native Source Review
 
 on:
   push:
-    branches: [minefade-deep-renewal, minefade-render-optimization, minefade-worlds-mods-commands]
+    branches: [minefade-deep-renewal, minefade-render-optimization, minefade-worlds-mods-commands, minefade-render-overhaul-review12]
   workflow_dispatch:
 
 concurrency:
@@ -18,6 +18,14 @@ jobs:
     steps:
       - name: Checkout source review branch
         uses: actions/checkout@v4
+
+      - name: Apply Review12 renderer, touch controls and world settings patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat review12-render/part-*.b64 | base64 --decode | xz -dc > /tmp/review12-render.patch
+          git apply --check /tmp/review12-render.patch
+          git apply /tmp/review12-render.patch
 
       - name: Set up stable Rust toolchain for host and Android
         uses: dtolnay/rust-toolchain@stable
@@ -83,7 +91,7 @@ jobs:
       - name: Upload review APK
         uses: actions/upload-artifact@v4
         with:
-          name: Minefade-0.8.0-Review11-APK
+          name: Minefade-0.8.0-Review12-Render-Overhaul-APK
           path: MinefadeNativeEngine/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 14
@@ -94,18 +102,18 @@ jobs:
           set -euo pipefail
           # Include generated catalogue/atlas files produced by the preceding step.
           # git archive omits worktree changes, so package the checked-out tree itself.
-          zip -r -q Minefade-0.8.0-source.zip . \
+          zip -r -q Minefade-0.8.0-Review12-source.zip . \
             -x ".git/*" "*/.git/*" \
                "*/build/*" "*/.gradle/*" "*/.cxx/*" \
                "*/.externalNativeBuild/*" "*/intermediates/*" \
                "*/outputs/*" "*/tmp/*" "*/target/*" "*/rust-target/*" \
-               "Minefade-0.8.0-source.zip"
-          test -s Minefade-0.8.0-source.zip
+               "Minefade-0.8.0-Review12-source.zip"
+          test -s Minefade-0.8.0-Review12-source.zip
 
       - name: Upload complete source
         uses: actions/upload-artifact@v4
         with:
-          name: Minefade-0.8.0-source
-          path: Minefade-0.8.0-source.zip
+          name: Minefade-0.8.0-Review12-source
+          path: Minefade-0.8.0-Review12-source.zip
           if-no-files-found: error
           retention-days: 14
