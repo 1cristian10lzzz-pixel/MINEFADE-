@@ -24,6 +24,7 @@ public final class ModManager {
         public final String name;
         public final String version;
         public final String description;
+        public final String icon;
         public final boolean enabled;
         public final Map<String, String> settings;
 
@@ -33,6 +34,7 @@ public final class ModManager {
             this.name = values.getOrDefault("name", id);
             this.version = values.getOrDefault("version", "1");
             this.description = values.getOrDefault("description", "Paquete de datos");
+            this.icon = values.getOrDefault("icon", "cube");
             this.enabled = Boolean.parseBoolean(values.getOrDefault("enabled", "false"));
             this.settings = values;
         }
@@ -167,6 +169,45 @@ public final class ModManager {
         }
     }
 
+    public synchronized ModInfo createMod(String requestedName, String description, String icon) {
+        String name = requestedName == null ? "" : requestedName.trim();
+        if (name.isEmpty() || name.length() > 96) return null;
+        String safeIcon = isValidIcon(icon) ? icon : "cube";
+        String safeDescription = description == null ? "" : description.trim();
+        if (safeDescription.length() > 512) safeDescription = safeDescription.substring(0, 512);
+        String id = name.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]+", "_")
+                .replaceAll("^_+|_+$", "");
+        if (id.length() < 2) id = "mod_" + System.currentTimeMillis();
+        if (id.length() > 56) id = id.substring(0, 56).replaceAll("_+$", "");
+        String baseId = id;
+        int suffix = 2;
+        while (new File(modsDirectory, id + ".mfmod").exists()
+                || findId(listMods(), id) != null) {
+            String tail = "_" + suffix++;
+            id = baseId.substring(0, Math.min(baseId.length(), 64 - tail.length())) + tail;
+        }
+        String data = "# Minefade data mod v1\\n"
+                + "id=" + id + "\\n"
+                + "name=" + name.replace("\\n", " ").replace("\\r", " ") + "\\n"
+                + "version=1.0\\n"
+                + "description=" + safeDescription.replace("\\n", " ").replace("\\r", " ") + "\\n"
+                + "icon=" + safeIcon + "\\n"
+                + "enabled=false\\n";
+        File file = new File(modsDirectory, id + ".mfmod");
+        if (!writeAtomically(file, data.getBytes(StandardCharsets.UTF_8))) return null;
+        return read(file);
+    }
+
+    private static ModInfo findId(List<ModInfo> mods, String id) {
+        for (ModInfo mod : mods) if (mod.id.equalsIgnoreCase(id)) return mod;
+        return null;
+    }
+
+    private static boolean isValidIcon(String icon) {
+        return "cube".equals(icon) || "tool".equals(icon) || "creature".equals(icon)
+                || "world".equals(icon) || "magic".equals(icon) || "decor".equals(icon);
+    }
+
     public synchronized File createExamplePack() {
         File file = new File(modsDirectory, "example_fauna.mfmod");
         if (file.exists()) return file;
@@ -240,6 +281,7 @@ public final class ModManager {
             case "name":
             case "version":
             case "description":
+            case "icon":
             case "enabled":
             case "spawn.sheep":
             case "spawn.cow":
@@ -269,6 +311,7 @@ public final class ModManager {
         if (!"1".equals(format) && !"1.0".equals(format)) return false;
         if (!"true".equals(enabled) && !"false".equals(enabled)) return false;
         if (description.length() > 512) return false;
+        if (!isValidIcon(values.getOrDefault("icon", "cube"))) return false;
 
         for (String key : new String[]{"spawn.sheep", "spawn.cow", "spawn.bird", "spawn.pig",
                 "spawn.rabbit", "spawn.zombie", "spawn.skeleton"}) {
