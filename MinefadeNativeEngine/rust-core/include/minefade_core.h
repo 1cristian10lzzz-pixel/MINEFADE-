@@ -7,7 +7,7 @@
 extern "C" {
 #endif
 
-#define MINEFADE_CORE_ABI_VERSION 1u
+#define MINEFADE_CORE_ABI_VERSION 2u
 
 typedef struct MfPlayerState {
     float x, y, z;
@@ -114,6 +114,7 @@ void minefade_entity_compute_pose(
     int32_t kind,
     float phase,
     float animation_time,
+    uint8_t behavior,
     uint8_t animation_quality,
     uint8_t animations_enabled,
     MfEntityPose* output);
