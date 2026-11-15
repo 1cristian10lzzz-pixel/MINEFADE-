@@ -1,0 +1,19 @@
+diff --git a/MinefadeNativeEngine/app/build.gradle.kts b/MinefadeNativeEngine/app/build.gradle.kts
+--- a/MinefadeNativeEngine/app/build.gradle.kts
++++ b/MinefadeNativeEngine/app/build.gradle.kts
+@@ -11,7 +11,7 @@
+         applicationId = "com.minefade.nativeengine"
+         minSdk = 24
+         targetSdk = 36
+-        versionCode = 15
++        versionCode = 16
+         versionName = "0.8.0-worlds-mods"
+@@ -46,6 +46,6 @@
+             // A distinct package avoids signature conflicts with older review APKs and preserves their private world data.
+             // Existing installations and their private world data remain untouched.
+-            applicationIdSuffix = ".review11"
+-            versionNameSuffix = "-review11"
++            applicationIdSuffix = ".review12"
++            versionNameSuffix = "-review12"
+             isMinifyEnabled = false
+             isDebuggable = true
