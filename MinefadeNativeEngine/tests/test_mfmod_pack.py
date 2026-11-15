@@ -47,8 +47,8 @@ class ModPackTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "creatures.mfmod"
             path.write_text(
-                "id=creature_mod\\nname=Creatures\\nversion=1.0\\nenabled=true\\n"
-                "spawn.rabbit=2\\nspawn.zombie=1\\nspawn.skeleton=1\\n",
+                "id=creature_mod\nname=Creatures\nversion=1.0\nenabled=true\n"
+                "spawn.rabbit=2\nspawn.zombie=1\nspawn.skeleton=1\n",
                 encoding="utf-8",
             )
             values = parse_mod(path)
@@ -60,8 +60,8 @@ class ModPackTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "advanced.mfmod"
             path.write_text(
-                "id=advanced_mod\\nname=Advanced\\nversion=1.0\\nenabled=true\\n"
-                "player.jump=1.2\\nentity.speed=1.4\\n",
+                "id=advanced_mod\nname=Advanced\nversion=1.0\nenabled=true\n"
+                "player.jump=1.2\nentity.speed=1.4\n",
                 encoding="utf-8",
             )
             values = parse_mod(path)
@@ -70,13 +70,13 @@ class ModPackTests(unittest.TestCase):
 
     def test_entity_speed_out_of_range_is_rejected(self):
         self.assert_invalid(
-            "id=test_mod\\nname=Test\\nversion=1.0\\nenabled=true\\nentity.speed=4.0\\n",
+            "id=test_mod\nname=Test\nversion=1.0\nenabled=true\nentity.speed=4.0\n",
             "fuera de rango",
         )
 
     def test_jump_out_of_range_is_rejected(self):
         self.assert_invalid(
-            "id=test_mod\\nname=Test\\nversion=1.0\\nenabled=true\\nplayer.jump=0.1\\n",
+            "id=test_mod\nname=Test\nversion=1.0\nenabled=true\nplayer.jump=0.1\n",
             "fuera de rango",
         )
 
