@@ -10,9 +10,11 @@ Archivo de texto UTF-8, una propiedad `clave=valor` por línea. Las líneas que 
 |---|---|---:|
 | `spawn.sheep`, `spawn.cow`, `spawn.bird`, `spawn.pig` | entero | 0–24 |
 | `player.speed` | decimal | 0.5–2.0 |
+| `player.jump` | decimal | 0.75–1.5 |
+| `entity.speed` | decimal | 0.5–2.0 |
 | `world.day_speed` | decimal | 0.25–4.0 |
 
-**Restricciones:** 32 KB, 128 líneas, claves únicas, solo propiedades conocidas; los valores deben estar dentro de rango. El paquete importado queda apagado hasta que el usuario lo active en MODS. La API ampliada para bloques, ítems, texturas, recetas, biomas, estructuras y entidades se implementará en fases posteriores, no debe simularse con claves no reconocidas.
+**Restricciones:** 32 KB, 128 líneas, claves únicas, solo propiedades conocidas; los valores deben estar dentro de rango. El paquete importado queda apagado hasta que el usuario lo active en MODS. Los paquetes siguen siendo datos seguros: no ejecutan scripts, bibliotecas ni código nativo. `player.speed` ajusta el desplazamiento, `player.jump` la fuerza de salto, `entity.speed` la velocidad de las criaturas y `world.day_speed` el ciclo diurno. Los valores de distintos paquetes habilitados se combinan multiplicativamente y el motor limita el resultado para evitar cifras extremas. El registro de bloques, las texturas, las recetas, los biomas y las estructuras aún no forman parte de esta API.
 
 ```ini
 # Minefade data mod v1
@@ -22,5 +24,7 @@ version=1.0
 description=Mejora ligera del movimiento y del ritmo diurno.
 enabled=false
 player.speed=1.08
+player.jump=1.08
+entity.speed=1.12
 world.day_speed=1.05
 ```
