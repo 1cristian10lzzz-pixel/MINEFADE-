@@ -1722,6 +1722,15 @@ void Engine::RefreshInventoryUi() {
         }
     }
     ui_.SetInventoryContents(markup);
+    const std::uint16_t selectedId = inventory_.SelectedItemId();
+    const BlockDefinition* selectedDefinition =
+        GetBlockDefinition(static_cast<BlockId>(selectedId));
+    if (selectedDefinition != nullptr && selectedId > 0u) {
+        ui_.SetSelectedItem("<img src='minefade://block/" + std::to_string(selectedId) +
+            "'/><span>" + selectedDefinition->nameEs + "</span>");
+    } else {
+        ui_.SetSelectedItem({});
+    }
 }
 
 void Engine::SaveWorld() {
