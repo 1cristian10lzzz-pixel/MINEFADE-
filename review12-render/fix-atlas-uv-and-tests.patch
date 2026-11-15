@@ -11,7 +11,7 @@ diff --git a/MinefadeNativeEngine/app/src/main/cpp/blocks/BlockRegistry.cpp b/Mi
 diff --git a/MinefadeNativeEngine/tools/generate_block_catalog.py b/MinefadeNativeEngine/tools/generate_block_catalog.py
 --- a/MinefadeNativeEngine/tools/generate_block_catalog.py
 +++ b/MinefadeNativeEngine/tools/generate_block_catalog.py
-@@ -752,7 +752,7 @@
+@@ -752,5 +752,5 @@
            'const BlockDefinition* FindBlockDefinition(std::string_view key) noexcept { for (const auto& block:kBlocks) if (key==block.key) return &block; return nullptr; }',
            'std::size_t GetBlockDefinitionCount() noexcept { return kBlocks.size(); }',
            'bool HasBlockFlag(BlockId id, BlockFlags flag) noexcept { const auto* block=GetBlockDefinition(id); return block && (block->flags & static_cast<std::uint16_t>(flag))!=0; }',
