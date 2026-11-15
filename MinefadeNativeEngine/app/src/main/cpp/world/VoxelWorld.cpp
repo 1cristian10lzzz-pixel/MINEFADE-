@@ -918,7 +918,10 @@ bool VoxelWorld::Save(const std::string& filePath,const Vec3& playerPosition,
         const std::filesystem::path path(filePath);if(path.has_parent_path())std::filesystem::create_directories(path.parent_path());
         const std::filesystem::path temp=path.string()+".tmp";
         std::ofstream file(temp,std::ios::binary|std::ios::trunc);if(!file)return false;
-        constexpr char magic[8]={'M','F','V','O','X','0','0','2'};
+        // MFVOX003 stores each chunk independently. Run-length encoding is used
+        // only when it is smaller than the raw 16-bit block array; complex chunks
+        // remain raw. MFVOX001/002 readers are retained below for old worlds.
+        constexpr char magic[8]={'M','F','V','O','X','0','0','3'};
         const std::uint32_t count=static_cast<std::uint32_t>(chunks_.size());
         file.write(magic,sizeof(magic));file.write(reinterpret_cast<const char*>(&seed_),sizeof(seed_));
         file.write(reinterpret_cast<const char*>(&playerPosition),sizeof(playerPosition));
@@ -926,8 +929,40 @@ bool VoxelWorld::Save(const std::string& filePath,const Vec3& playerPosition,
         file.write(reinterpret_cast<const char*>(&count),sizeof(count));
         for(const auto& pair:chunks_) {
             const Chunk& chunk=pair.second;
-            file.write(reinterpret_cast<const char*>(&chunk.x),sizeof(chunk.x));file.write(reinterpret_cast<const char*>(&chunk.z),sizeof(chunk.z));
-            file.write(reinterpret_cast<const char*>(chunk.blocks.data()),static_cast<std::streamsize>(chunk.blocks.size()*sizeof(BlockId)));
+            file.write(reinterpret_cast<const char*>(&chunk.x),sizeof(chunk.x));
+            file.write(reinterpret_cast<const char*>(&chunk.z),sizeof(chunk.z));
+
+            std::vector<std::uint8_t> encoded;
+            encoded.reserve(chunk.blocks.size());
+            for(std::size_t index=0;index<chunk.blocks.size();) {
+                const BlockId value=chunk.blocks[index];
+                std::size_t run=1u;
+                while(index+run<chunk.blocks.size() && chunk.blocks[index+run]==value &&
+                      run<std::numeric_limits<std::uint16_t>::max()) ++run;
+                const auto length=static_cast<std::uint16_t>(run);
+                const auto block=static_cast<std::uint16_t>(value);
+                const auto append16=[&encoded](std::uint16_t v) {
+                    encoded.push_back(static_cast<std::uint8_t>(v&0xffu));
+                    encoded.push_back(static_cast<std::uint8_t>((v>>8u)&0xffu));
+                };
+                append16(length);
+                append16(block);
+                index+=run;
+            }
+            const std::uint8_t codec=encoded.size()<chunk.blocks.size()*sizeof(BlockId)?1u:0u;
+            const std::uint32_t payloadSize=codec!=0u
+                ? static_cast<std::uint32_t>(encoded.size())
+                : static_cast<std::uint32_t>(chunk.blocks.size()*sizeof(BlockId));
+            file.write(reinterpret_cast<const char*>(&codec),sizeof(codec));
+            file.write(reinterpret_cast<const char*>(&payloadSize),sizeof(payloadSize));
+            if(codec!=0u) {
+                file.write(reinterpret_cast<const char*>(encoded.data()),
+                           static_cast<std::streamsize>(encoded.size()));
+            } else {
+                file.write(reinterpret_cast<const char*>(chunk.blocks.data()),
+                           static_cast<std::streamsize>(chunk.blocks.size()*sizeof(BlockId)));
+            }
+            if(!file)return false;
         }
         file.flush();if(!file){file.close();std::filesystem::remove(temp);return false;}file.close();
         std::error_code ec;std::filesystem::rename(temp,path,ec);
@@ -945,7 +980,9 @@ bool VoxelWorld::Load(const std::string& filePath,Vec3& playerPosition,
     std::ifstream file(filePath,std::ios::binary);if(!file)return false;
     char magic[8]{};file.read(magic,sizeof(magic));if(!file)return false;
     const bool legacy=std::memcmp(magic,"MFVOX001",8)==0;
-    if(!legacy&&std::memcmp(magic,"MFVOX002",8)!=0)return false;
+    const bool rawV2=std::memcmp(magic,"MFVOX002",8)==0;
+    const bool packedV3=std::memcmp(magic,"MFVOX003",8)==0;
+    if(!legacy&&!rawV2&&!packedV3)return false;
     std::uint32_t loadedSeed=0,count=0;Vec3 loadedPlayer{};std::array<std::uint32_t,9> loadedInventory{};
     file.read(reinterpret_cast<char*>(&loadedSeed),sizeof(loadedSeed));file.read(reinterpret_cast<char*>(&loadedPlayer),sizeof(loadedPlayer));
     if(legacy) {
@@ -958,11 +995,49 @@ bool VoxelWorld::Load(const std::string& filePath,Vec3& playerPosition,
     for(std::uint32_t i=0;i<count;++i) {
         Chunk chunk;file.read(reinterpret_cast<char*>(&chunk.x),sizeof(chunk.x));file.read(reinterpret_cast<char*>(&chunk.z),sizeof(chunk.z));if(!file)return false;
         if(legacy) {
-            std::array<std::uint8_t,kChunkVolume> oldBlocks{};file.read(reinterpret_cast<char*>(oldBlocks.data()),static_cast<std::streamsize>(oldBlocks.size()));if(!file)return false;
-            for(std::size_t n=0;n<oldBlocks.size();++n)chunk.blocks[n]=static_cast<BlockId>(RemapLegacyBlock(oldBlocks[n]));
-        } else {
-            file.read(reinterpret_cast<char*>(chunk.blocks.data()),static_cast<std::streamsize>(chunk.blocks.size()*sizeof(BlockId)));if(!file)return false;
+            std::array<std::uint8_t,kChunkVolume> oldBlocks{};
+            file.read(reinterpret_cast<char*>(oldBlocks.data()),static_cast<std::streamsize>(oldBlocks.size()));
+            if(!file)return false;
+            for(std::size_t n=0;n<oldBlocks.size();++n)
+                chunk.blocks[n]=static_cast<BlockId>(RemapLegacyBlock(oldBlocks[n]));
+        } else if(rawV2) {
+            file.read(reinterpret_cast<char*>(chunk.blocks.data()),
+                      static_cast<std::streamsize>(chunk.blocks.size()*sizeof(BlockId)));
+            if(!file)return false;
             for(BlockId& block:chunk.blocks)if(!IsValidBlock(block))block=BlockId::Air;
+        } else {
+            std::uint8_t codec=0u;
+            std::uint32_t payloadSize=0u;
+            file.read(reinterpret_cast<char*>(&codec),sizeof(codec));
+            file.read(reinterpret_cast<char*>(&payloadSize),sizeof(payloadSize));
+            if(!file || payloadSize>chunk.blocks.size()*sizeof(BlockId)*2u)return false;
+            if(codec==0u) {
+                if(payloadSize!=chunk.blocks.size()*sizeof(BlockId))return false;
+                file.read(reinterpret_cast<char*>(chunk.blocks.data()),
+                          static_cast<std::streamsize>(payloadSize));
+                if(!file)return false;
+                for(BlockId& block:chunk.blocks)if(!IsValidBlock(block))block=BlockId::Air;
+            } else if(codec==1u) {
+                if(payloadSize==0u || (payloadSize%4u)!=0u)return false;
+                std::vector<std::uint8_t> encoded(payloadSize);
+                file.read(reinterpret_cast<char*>(encoded.data()),static_cast<std::streamsize>(encoded.size()));
+                if(!file)return false;
+                std::size_t output=0u;
+                for(std::size_t offset=0;offset<encoded.size();offset+=4u) {
+                    const std::uint16_t run=static_cast<std::uint16_t>(encoded[offset]) |
+                        static_cast<std::uint16_t>(static_cast<std::uint16_t>(encoded[offset+1u])<<8u);
+                    const std::uint16_t rawBlock=static_cast<std::uint16_t>(encoded[offset+2u]) |
+                        static_cast<std::uint16_t>(static_cast<std::uint16_t>(encoded[offset+3u])<<8u);
+                    if(run==0u || output+run>chunk.blocks.size())return false;
+                    const BlockId value=static_cast<BlockId>(rawBlock);
+                    std::fill_n(chunk.blocks.begin()+static_cast<std::ptrdiff_t>(output),
+                                run,IsValidBlock(value)?value:BlockId::Air);
+                    output+=run;
+                }
+                if(output!=chunk.blocks.size())return false;
+            } else {
+                return false;
+            }
         }
         if(!loadedChunks.emplace(std::make_pair(chunk.x,chunk.z),std::move(chunk)).second)return false;
     }
