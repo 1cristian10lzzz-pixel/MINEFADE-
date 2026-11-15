@@ -975,6 +975,8 @@ public final class MinefadeHomeScreen extends FrameLayout {
                         "joystick_deadzone", 5, 30, 12, "%"));
                 settingsCards.add(settingChoice("Tipo de controles", "Elige el esquema táctil inspirado en Bedrock.",
                         "control_mode", new String[]{"Joystick clásico", "D-pad direccional", "Joystick + mira"}, 0));
+                settingsCards.add(settingSwitch("Salto automático", "Salta al avanzar contra obstáculos bajos si hay espacio libre.",
+                        "auto_jump", true));
                 settingsCards.add(settingSwitch("Invertir eje vertical", "Invierte el movimiento arriba y abajo.",
                         "invert_look_y", false));
                 settingsCards.add(settingSwitch("Controles para mano izquierda", "Mueve el joystick al lado derecho y refleja el salto.",
