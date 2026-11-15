@@ -1819,7 +1819,7 @@ void Engine::LoadEnabledMods() {
 
     const auto isAllowedKey = [](const std::string& key) {
         static const std::unordered_set<std::string> allowed{
-            "id", "name", "version", "description", "enabled",
+            "id", "name", "version", "description", "icon", "enabled",
             "spawn.sheep", "spawn.cow", "spawn.bird", "spawn.pig",
             "spawn.rabbit", "spawn.zombie", "spawn.skeleton",
             "player.speed", "player.jump", "entity.speed", "world.day_speed"
@@ -1906,6 +1906,10 @@ void Engine::LoadEnabledMods() {
             (enabled->second != "true" && enabled->second != "false")) continue;
         const auto description = values.find("description");
         if (description != values.end() && description->second.size() > 512u) continue;
+        const auto icon = values.find("icon");
+        if (icon != values.end() && icon->second != "cube" && icon->second != "tool" &&
+            icon->second != "creature" && icon->second != "world" &&
+            icon->second != "magic" && icon->second != "decor") continue;
         if (enabled->second != "true") continue;
 
         const auto readSpawn = [&values, &parseFiniteNumber](const char* key, int& output) {
