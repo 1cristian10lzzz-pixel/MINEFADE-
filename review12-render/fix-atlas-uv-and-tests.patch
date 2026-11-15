@@ -21,7 +21,7 @@ diff --git a/MinefadeNativeEngine/tools/generate_block_catalog.py b/MinefadeNati
 diff --git a/MinefadeNativeEngine/tests/test_block_catalog.py b/MinefadeNativeEngine/tests/test_block_catalog.py
 --- a/MinefadeNativeEngine/tests/test_block_catalog.py
 +++ b/MinefadeNativeEngine/tests/test_block_catalog.py
-@@ -66,7 +66,7 @@
+@@ -66,6 +66,6 @@
  engine_source = (ROOT / "app/src/main/cpp/engine/Engine.cpp").read_text(encoding="utf-8")
  assert engine_source.count("int y = topY;") == 2
  registry_source = (ROOT / "app/src/main/cpp/blocks/BlockRegistry.cpp").read_text(encoding="utf-8")
