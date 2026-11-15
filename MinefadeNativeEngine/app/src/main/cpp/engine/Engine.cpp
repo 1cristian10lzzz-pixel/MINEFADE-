@@ -1292,9 +1292,7 @@ void Engine::Touch(int action, int pointerId, float x, float y) {
 
 void Engine::HandleUiAction(const std::string& action) {
     soundEvents_.fetch_or(4u, std::memory_order_release);
-    if (action == "chat-open") {
-        ui_.SetChatMessage("Para escribir, pulsa CHAT en la esquina superior izquierda.");
-    } else if (action == "perspective") {
+    if (action == "perspective") {
         thirdPerson_ = !thirdPerson_;
         ui_.SetPerspectiveEnabled(thirdPerson_);
         RebuildEntityMesh();
