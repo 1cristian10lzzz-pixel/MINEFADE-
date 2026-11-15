@@ -90,20 +90,20 @@ public final class LanMultiplayerService implements Closeable {
         }
 
         synchronized void update(RemotePlayer next) {
+            final Snapshot incoming = next.snapshots.peekLast();
+            if (incoming == null) return;
             final long now = System.nanoTime();
             final Snapshot latest = snapshots.peekLast();
             if (latest == null || now - latest.timeNs > 1_000_000_000L) {
                 snapshots.clear();
             } else {
-                final float dx = next.toX - latest.x;
-                final float dy = next.toY - latest.y;
-                final float dz = next.toZ - latest.z;
+                final float dx = incoming.x - latest.x;
+                final float dy = incoming.y - latest.y;
+                final float dz = incoming.z - latest.z;
                 // A respawn, teleport or world correction should snap cleanly rather
                 // than interpolate an avatar through the whole map.
                 if ((dx * dx + dy * dy + dz * dz) > 144.0f) snapshots.clear();
             }
-            final Snapshot incoming = next.snapshots.peekLast();
-            if (incoming == null) return;
             snapshots.addLast(new Snapshot(incoming.x, incoming.y, incoming.z, incoming.yaw, now));
             while (snapshots.size() > 4) snapshots.removeFirst();
         }
