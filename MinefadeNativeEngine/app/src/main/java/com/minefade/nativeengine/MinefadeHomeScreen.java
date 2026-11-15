@@ -630,8 +630,8 @@ public final class MinefadeHomeScreen extends FrameLayout {
         scroll.setClipChildren(true);
         scroll.setClipToPadding(true);
         scroll.setVerticalScrollBarEnabled(false);
-        LinearLayout.LayoutParams scrollParams = new LinearLayout.LayoutParams(-1, 0, 1f);
-        root.addView(scroll, scrollParams);
+        LinearLayout.LayoutParams scrollParams = new LinearLayout.LayoutParams(0, -1, 1f);
+        settingsBody.addView(scroll, scrollParams);
         LinearLayout list = column();
         list.setPadding(0, 0, 0, dp(4));
         scroll.addView(list, new ScrollView.LayoutParams(-1, -2));
@@ -1032,35 +1032,34 @@ public final class MinefadeHomeScreen extends FrameLayout {
                 {"animation", "ANIMACIÓN", "✧"},
                 {"accessibility", "ACCESO", "◉"}
         };
-        HorizontalScrollView moduleScroller = new HorizontalScrollView(getContext());
-        moduleScroller.setHorizontalScrollBarEnabled(false);
-        moduleScroller.setClipChildren(true);
-        moduleScroller.setClipToPadding(true);
-        LinearLayout.LayoutParams tabsParams = new LinearLayout.LayoutParams(-1, dp(42));
-        tabsParams.topMargin = dp(8);
-        tabsParams.bottomMargin = dp(7);
-        root.addView(moduleScroller, tabsParams);
-        LinearLayout tabs = row();
-        tabs.setPadding(dp(1), 0, dp(1), 0);
-        moduleScroller.addView(tabs, new HorizontalScrollView.LayoutParams(-2, -1));
+        // Settings navigation is a compact left rail; controls occupy the
+        // remaining area instead of being pushed below a wide tab strip.
+        LinearLayout settingsBody = row();
+        LinearLayout.LayoutParams bodyParams = new LinearLayout.LayoutParams(-1, 0, 1f);
+        bodyParams.topMargin = dp(5);
+        root.addView(settingsBody, bodyParams);
+
+        LinearLayout tabs = column();
+        tabs.setPadding(0, dp(2), dp(6), dp(2));
+        settingsBody.addView(tabs, new LinearLayout.LayoutParams(dp(92), -1));
         for (String[] module : modules) {
             boolean active = settingsModule.equals(module[0]);
-            TextView tab = text(module[2] + "  " + module[1], 9,
+            TextView tab = text(module[2] + "\\n" + module[1], 8,
                     active ? 0xffe4ffd6 : 0xffb8cbd5, true);
             tab.setGravity(Gravity.CENTER);
-            tab.setPadding(dp(12), 0, dp(12), 0);
+            tab.setPadding(dp(2), dp(5), dp(2), dp(5));
             tab.setBackground(shape(active
                     ? new int[]{0xff355b48, 0xff1d403a}
-                    : new int[]{0xff20374a, 0xff142638},
-                    11, active ? 0xff91d77a : 0x55496379));
+                    : new int[]{0x8820374a, 0x55142638},
+                    9, active ? 0xff91d77a : 0x55496379));
             tab.setOnClickListener(v -> {
                 haptic(v);
                 settingsModule = module[0];
                 preferences.edit().putString("settings_module", settingsModule).apply();
                 showSettingsPage();
             });
-            LinearLayout.LayoutParams itemParams = new LinearLayout.LayoutParams(-2, -1);
-            if (tabs.getChildCount() > 0) itemParams.leftMargin = dp(6);
+            LinearLayout.LayoutParams itemParams = new LinearLayout.LayoutParams(-1, dp(43));
+            itemParams.bottomMargin = dp(5);
             tabs.addView(tab, itemParams);
         }
 
