@@ -877,6 +877,7 @@ public final class MinefadeHomeScreen extends FrameLayout {
 
     private void showSettingsPage() {
         LinearLayout root = pageRoot("AJUSTES", "Ajusta gráficos, controles y comportamiento.");
+        List<View> settingsCards = new ArrayList<>();
 
         String[][] modules = {
                 {"video", "VÍDEO", "◈"},
@@ -922,8 +923,9 @@ public final class MinefadeHomeScreen extends FrameLayout {
         scroll.setFillViewport(true);
         scroll.setClipChildren(true);
         scroll.setClipToPadding(true);
-        scroll.setVerticalScrollBarEnabled(true);
-        scroll.setOverScrollMode(View.OVER_SCROLL_IF_CONTENT_SCROLLS);
+        scroll.setVerticalScrollBarEnabled(false);
+        scroll.setSmoothScrollingEnabled(true);
+        scroll.setOverScrollMode(View.OVER_SCROLL_NEVER);
         LinearLayout.LayoutParams scrollParams = new LinearLayout.LayoutParams(-1, 0, 1f);
         root.addView(scroll, scrollParams);
         LinearLayout content = column();
@@ -936,28 +938,30 @@ public final class MinefadeHomeScreen extends FrameLayout {
         switch (settingsModule) {
             case "audio":
                 settingsHeading(content, "SONIDO DEL JUEGO", "Ajusta la mezcla que reproduce el dispositivo.");
-                content.addView(soundVolumeControl());
-                content.addView(settingSwitch("Efectos de juego", "Rotura, colocación, pasos, salto y recogida.",
+                settingsCards.add(soundVolumeControl());
+                settingsCards.add(settingSwitch("Efectos de juego", "Rotura, colocación, pasos, salto y recogida.",
                         "sound_effects_enabled", true));
-                content.addView(settingSwitch("Sonidos de interfaz", "Confirmaciones y pulsaciones del menú.",
+                settingsCards.add(settingSwitch("Sonidos de interfaz", "Confirmaciones y pulsaciones del menú.",
                         "ui_sounds_enabled", true));
                 break;
             case "controls":
                 settingsHeading(content, "CONTROLES TÁCTILES", "Ajusta cada eje y la disposición de movimiento.");
                 int legacyTouch = preferences.getInt("touch_sensitivity", 100);
-                content.addView(settingSlider("Sensibilidad horizontal", "Velocidad de giro de izquierda a derecha.",
+                settingsCards.add(settingSlider("Sensibilidad horizontal", "Velocidad de giro de izquierda a derecha.",
                         "touch_sensitivity_x", 35, 150, legacyTouch, "%"));
-                content.addView(settingSlider("Sensibilidad vertical", "Velocidad de giro de arriba abajo.",
+                settingsCards.add(settingSlider("Sensibilidad vertical", "Velocidad de giro de arriba abajo.",
                         "touch_sensitivity_y", 35, 150, legacyTouch, "%"));
-                content.addView(settingSlider("Zona muerta del joystick", "Filtra movimientos accidentales cerca del centro.",
+                settingsCards.add(settingSlider("Zona muerta del joystick", "Filtra movimientos accidentales cerca del centro.",
                         "joystick_deadzone", 5, 30, 12, "%"));
-                content.addView(settingSwitch("Invertir eje vertical", "Invierte el movimiento arriba y abajo.",
+                settingsCards.add(settingChoice("Tipo de controles", "Elige el esquema táctil inspirado en Bedrock.",
+                        "control_mode", new String[]{"Joystick clásico", "D-pad direccional", "Joystick + mira"}, 0));
+                settingsCards.add(settingSwitch("Invertir eje vertical", "Invierte el movimiento arriba y abajo.",
                         "invert_look_y", false));
-                content.addView(settingSwitch("Controles para mano izquierda", "Mueve el joystick al lado derecho y refleja el salto.",
+                settingsCards.add(settingSwitch("Controles para mano izquierda", "Mueve el joystick al lado derecho y refleja el salto.",
                         "left_handed_controls", false));
-                content.addView(settingSwitch("Respuesta háptica", "Vibración breve al tocar elementos del menú.",
+                settingsCards.add(settingSwitch("Respuesta háptica", "Vibración breve al tocar elementos del menú.",
                         "menu_haptics", true));
-                content.addView(menuButton("↺", "RESTABLECER CONTROLES", "Recupera los valores predeterminados.",
+                settingsCards.add(menuButton("↺", "RESTABLECER CONTROLES", "Recupera los valores predeterminados.",
                         new int[]{0xff3a4b5d, 0xff263648}, 0xffa9c6d8, 38, () -> {
                             preferences.edit().putInt("touch_sensitivity", 100)
                                     .putInt("touch_sensitivity_x", 100).putInt("touch_sensitivity_y", 100)
@@ -969,48 +973,73 @@ public final class MinefadeHomeScreen extends FrameLayout {
                 break;
             case "interface":
                 settingsHeading(content, "INTERFAZ Y HUD", "Preferencias visuales de menús y pantalla de juego.");
-                content.addView(settingSwitch("Animaciones de interfaz", "Entradas y transiciones suaves.",
+                settingsCards.add(settingSwitch("Animaciones de interfaz", "Entradas y transiciones suaves.",
                         "menu_animations", true));
-                content.addView(settingSwitch("Mostrar información superior", "FPS, chunks y datos de estado en el HUD.",
+                settingsCards.add(settingSwitch("Mostrar información superior", "FPS, chunks y datos de estado en el HUD.",
                         "show_hud_stats", true));
-                content.addView(settingSlider("Escala del HUD", "Tamaño de elementos durante la partida.",
+                settingsCards.add(settingSlider("Escala del HUD", "Tamaño de elementos durante la partida.",
                         "hud_scale", 80, 120, 100, "%"));
-                content.addView(settingSwitch("Animar el fondo de menús", "Partículas ambientales y movimiento sutil.",
+                settingsCards.add(settingSwitch("Animar el fondo de menús", "Partículas ambientales y movimiento sutil.",
                         "menu_background_animations", true));
                 break;
             case "animation":
                 settingsHeading(content, "ANIMACIÓN DEL JUEGO", "Controla las poses que calcula el núcleo Rust.");
-                content.addView(settingSwitch("Animaciones del mundo", "Movimiento de jugador, criaturas, alas, cabeza y reposo.",
+                settingsCards.add(settingSwitch("Animaciones del mundo", "Movimiento de jugador, criaturas, alas, cabeza y reposo.",
                         "world_animations", true));
-                content.addView(settingChoice("Calidad de animación", "Más detalle de pose; menor carga en ahorro.",
+                settingsCards.add(settingChoice("Calidad de animación", "Más detalle de pose; menor carga en ahorro.",
                         "animation_quality", new String[]{"Ahorro", "Equilibrada", "Completa"}, 2));
-                content.addView(settingSwitch("Movimiento de reposo del avatar", "Respiración, parpadeo y giro automático de la vista previa.",
+                settingsCards.add(settingSwitch("Movimiento de reposo del avatar", "Respiración, parpadeo y giro automático de la vista previa.",
                         "avatar_idle_animation", true));
-                content.addView(settingSwitch("Suavizar transiciones de apariencia", "Intercambios visuales al seleccionar estilos.",
+                settingsCards.add(settingSwitch("Suavizar transiciones de apariencia", "Intercambios visuales al seleccionar estilos.",
                         "avatar_transition_animations", true));
                 break;
             case "accessibility":
                 settingsHeading(content, "ACCESIBILIDAD", "Adapta movimiento, contraste y lectura.");
-                content.addView(settingSwitch("Reducir movimiento", "Desactiva movimiento decorativo y transiciones.",
+                settingsCards.add(settingSwitch("Reducir movimiento", "Desactiva movimiento decorativo y transiciones.",
                         "reduce_motion", false));
-                content.addView(settingSwitch("Animaciones de avatar", "Permite movimiento de reposo en el editor.",
+                settingsCards.add(settingSwitch("Animaciones de avatar", "Permite movimiento de reposo en el editor.",
                         "avatar_idle_animation", true));
                 break;
             default:
                 settingsHeading(content, "VÍDEO Y RENDIMIENTO", "Ajustes gráficos que se aplican al entrar al mundo.");
-                content.addView(settingChoice("Calidad gráfica", "Iluminación y coste de renderizado.",
+                settingsCards.add(settingChoice("Calidad gráfica", "Iluminación y coste de renderizado.",
                         "graphics_quality", new String[]{"Ahorro", "Equilibrado", "Alta"}, 1));
-                content.addView(settingChoice("Distancia de visión", "Más chunks consumen memoria y GPU.",
+                settingsCards.add(settingChoice("Distancia de visión", "Más chunks consumen memoria y GPU.",
                         "render_distance", new String[]{"Cercana · 3×3", "Normal · 5×5", "Amplia · 7×7"}, 1));
-                content.addView(settingSlider("Campo de visión", "Ángulo de cámara en primera y tercera persona.",
+                settingsCards.add(settingSlider("Campo de visión", "Ángulo de cámara en primera y tercera persona.",
                         "field_of_view", 60, 100, 68, "°"));
-                content.addView(settingSwitch("Ondulación del agua", "Movimiento suave de la superficie.",
+                settingsCards.add(settingSwitch("Ondulación del agua", "Movimiento suave de la superficie.",
                         "water_waves", true));
-                content.addView(settingSwitch("Sombras de contacto", "Oscurecimiento suave bajo jugador y criaturas.",
+                settingsCards.add(settingSwitch("Sombras de contacto", "Oscurecimiento suave bajo jugador y criaturas.",
                         "contact_shadows", true));
                 break;
         }
+        addSettingsGrid(content, settingsCards);
         animateIn(content, 0);
+    }
+
+    private void addSettingsGrid(LinearLayout parent, List<View> cards) {
+        for (int index = 0; index < cards.size(); index += 2) {
+            LinearLayout pair = row();
+            pair.setGravity(Gravity.TOP);
+            pair.setBaselineAligned(false);
+            LinearLayout.LayoutParams pairParams = new LinearLayout.LayoutParams(-1, -2);
+            pairParams.bottomMargin = dp(2);
+            View first = cards.get(index);
+            LinearLayout.LayoutParams firstParams = new LinearLayout.LayoutParams(0, -2, 1f);
+            firstParams.rightMargin = dp(4);
+            pair.addView(first, firstParams);
+            if (index + 1 < cards.size()) {
+                View second = cards.get(index + 1);
+                LinearLayout.LayoutParams secondParams = new LinearLayout.LayoutParams(0, -2, 1f);
+                secondParams.leftMargin = dp(4);
+                pair.addView(second, secondParams);
+            } else {
+                View spacer = new View(getContext());
+                pair.addView(spacer, new LinearLayout.LayoutParams(0, 1, 1f));
+            }
+            parent.addView(pair, pairParams);
+        }
     }
 
     private void settingsHeading(LinearLayout parent, String title, String subtitle) {
