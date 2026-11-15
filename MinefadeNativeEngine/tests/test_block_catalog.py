@@ -23,10 +23,20 @@ else:
 
 catalog = json.loads((ROOT / "app/src/main/assets/data/minefade_block_catalog.json").read_text(encoding="utf-8"))
 blocks = catalog["blocks"]
-block_count = len(source_keys)
+synthetic_item_keys = [
+    "minefade_stick", "minefade_wooden_pickaxe", "minefade_wooden_axe",
+    "minefade_wooden_shovel", "minefade_wooden_sword"
+]
+all_catalog_keys = source_keys + synthetic_item_keys
+block_count = len(all_catalog_keys)
 assert len(blocks) == block_count == catalog["count"]
 assert block_count >= 306
-assert [block["key"] for block in blocks] == source_keys
+assert [block["key"] for block in blocks] == all_catalog_keys
+assert [block["key"] for block in blocks[:len(source_keys)]] == source_keys
+for item in blocks[len(source_keys):]:
+    assert item["kind"] == "item"
+    assert item["shape"] == "None"
+    assert item["flags"] == 0
 assert [block["id"] for block in blocks] == list(range(block_count))
 
 all_tiles: set[int] = set()
