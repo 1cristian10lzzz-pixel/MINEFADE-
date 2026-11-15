@@ -186,13 +186,13 @@ public final class ModManager {
             String tail = "_" + suffix++;
             id = baseId.substring(0, Math.min(baseId.length(), 64 - tail.length())) + tail;
         }
-        String data = "# Minefade data mod v1\\n"
-                + "id=" + id + "\\n"
-                + "name=" + name.replace("\\n", " ").replace("\\r", " ") + "\\n"
-                + "version=1.0\\n"
-                + "description=" + safeDescription.replace("\\n", " ").replace("\\r", " ") + "\\n"
-                + "icon=" + safeIcon + "\\n"
-                + "enabled=false\\n";
+        String data = "# Minefade data mod v1\n"
+                + "id=" + id + "\n"
+                + "name=" + name.replace("\n", " ").replace("\r", " ") + "\n"
+                + "version=1.0\n"
+                + "description=" + safeDescription.replace("\n", " ").replace("\r", " ") + "\n"
+                + "icon=" + safeIcon + "\n"
+                + "enabled=false\n";
         File file = new File(modsDirectory, id + ".mfmod");
         if (!writeAtomically(file, data.getBytes(StandardCharsets.UTF_8))) return null;
         return read(file);
