@@ -3,7 +3,7 @@ name: Minefade Android APK
 on:
   workflow_dispatch:
   push:
-    branches: [ main, master ]
+    branches: [ main, master, minefade-1.0-complete-overhaul ]
 
 permissions:
   contents: read
