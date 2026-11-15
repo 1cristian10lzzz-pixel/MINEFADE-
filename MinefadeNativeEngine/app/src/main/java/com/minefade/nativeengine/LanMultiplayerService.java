@@ -69,15 +69,44 @@ public final class LanMultiplayerService implements Closeable {
     private static final class RemotePlayer {
         final int id;
         final String name;
-        final float x, y, z, yaw;
+        private float fromX, fromY, fromZ, fromYaw;
+        private float toX, toY, toZ, toYaw;
+        private long receivedAtNs;
 
         RemotePlayer(int id, String name, float x, float y, float z, float yaw) {
             this.id = id;
             this.name = name;
-            this.x = x;
-            this.y = y;
-            this.z = z;
-            this.yaw = yaw;
+            fromX = toX = x;
+            fromY = toY = y;
+            fromZ = toZ = z;
+            fromYaw = toYaw = yaw;
+            receivedAtNs = System.nanoTime();
+        }
+
+        synchronized void update(RemotePlayer next) {
+            float[] current = sample(System.nanoTime());
+            fromX = current[0];
+            fromY = current[1];
+            fromZ = current[2];
+            fromYaw = current[3];
+            toX = next.toX;
+            toY = next.toY;
+            toZ = next.toZ;
+            toYaw = next.toYaw;
+            receivedAtNs = System.nanoTime();
+        }
+
+        synchronized float[] sample(long nowNs) {
+            // Keep a one-packet interpolation window. The previous transform is
+            // blended into the newest snapshot instead of teleporting every 100 ms.
+            float alpha = Math.max(0f, Math.min(1f,
+                    (nowNs - receivedAtNs) / (float) STATE_INTERVAL_NS));
+            return new float[] {
+                    fromX + (toX - fromX) * alpha,
+                    fromY + (toY - fromY) * alpha,
+                    fromZ + (toZ - fromZ) * alpha,
+                    fromYaw + (toYaw - fromYaw) * alpha
+            };
         }
     }
 
@@ -390,7 +419,11 @@ public final class LanMultiplayerService implements Closeable {
                 if (line.startsWith("STATE|")) {
                     RemotePlayer state = parseState(line);
                     if (state != null && state.id == id) {
-                        remotePlayers.put(id, state);
+                        remotePlayers.compute(id, (key, previous) -> {
+                            if (previous == null) return state;
+                            previous.update(state);
+                            return previous;
+                        });
                         broadcast(line, null);
                     }
                 } else if (line.startsWith("BLOCK|")) {
@@ -424,7 +457,11 @@ public final class LanMultiplayerService implements Closeable {
         } else if (line.startsWith("STATE|")) {
             RemotePlayer state = parseState(line);
             if (state != null && state.id != localPlayerId) {
-                remotePlayers.put(state.id, state);
+                remotePlayers.compute(state.id, (key, previous) -> {
+                    if (previous == null) return state;
+                    previous.update(state);
+                    return previous;
+                });
                 playerNames.put(state.id, state.name);
             }
         } else if (line.startsWith("LEAVE|")) {
@@ -510,12 +547,14 @@ public final class LanMultiplayerService implements Closeable {
         int count = Math.min(snapshot.size(), MAX_PLAYERS - 1);
         float[] result = new float[count * 4];
         int index = 0;
+        final long nowNs = System.nanoTime();
         for (RemotePlayer player : snapshot) {
             if (index >= result.length) break;
-            result[index++] = player.x;
-            result[index++] = player.y;
-            result[index++] = player.z;
-            result[index++] = player.yaw;
+            float[] pose = player.sample(nowNs);
+            result[index++] = pose[0];
+            result[index++] = pose[1];
+            result[index++] = pose[2];
+            result[index++] = pose[3];
         }
         return result;
     }
