@@ -1,0 +1,39 @@
+--- a/MinefadeNativeEngine/app/src/main/cpp/blocks/BlockRegistry.cpp
++++ b/MinefadeNativeEngine/app/src/main/cpp/blocks/BlockRegistry.cpp
+@@ -353,5 +353,5 @@
+ const BlockDefinition* FindBlockDefinition(std::string_view key) noexcept { for (const auto& block:kBlocks) if (key==block.key) return &block; return nullptr; }
+ std::size_t GetBlockDefinitionCount() noexcept { return kBlocks.size(); }
+ bool HasBlockFlag(BlockId id, BlockFlags flag) noexcept { const auto* block=GetBlockDefinition(id); return block && (block->flags & static_cast<std::uint16_t>(flag))!=0; }
+-void GetAtlasUv(std::uint16_t tile,float& u0,float& v0,float& u1,float& v1) noexcept { const unsigned col=tile%32u,row=tile/32u; const float x=static_cast<float>(col*18u+1u), y=static_cast<float>(row*18u+1u); u0=(x+0.5f)/576.0f; u1=(x+15.5f)/576.0f; v0=(y+15.5f)/594.0f; v1=(y+0.5f)/594.0f; }
++void GetAtlasUv(std::uint16_t tile,float& u0,float& v0,float& u1,float& v1) noexcept { const unsigned col=tile%32u,row=tile/32u; const float x=static_cast<float>(col*18u+1u), y=static_cast<float>(row*18u+1u); u0=(x+0.5f)/576.0f; u1=(x+15.5f)/576.0f; v0=(y+0.5f)/594.0f; v1=(y+15.5f)/594.0f; }
+ } // namespace minefade
+--- a/MinefadeNativeEngine/tools/generate_block_catalog.py
++++ b/MinefadeNativeEngine/tools/generate_block_catalog.py
+@@ -752,7 +752,7 @@
+           'const BlockDefinition* FindBlockDefinition(std::string_view key) noexcept { for (const auto& block:kBlocks) if (key==block.key) return &block; return nullptr; }',
+           'std::size_t GetBlockDefinitionCount() noexcept { return kBlocks.size(); }',
+           'bool HasBlockFlag(BlockId id, BlockFlags flag) noexcept { const auto* block=GetBlockDefinition(id); return block && (block->flags & static_cast<std::uint16_t>(flag))!=0; }',
+-          f'void GetAtlasUv(std::uint16_t tile,float& u0,float& v0,float& u1,float& v1) noexcept {{ const unsigned col=tile%{COLS}u,row=tile/{COLS}u; const float x=static_cast<float>(col*{CELL}u+1u), y=static_cast<float>(row*{CELL}u+1u); u0=(x+0.5f)/{WIDTH}.0f; u1=(x+15.5f)/{WIDTH}.0f; v0=(y+15.5f)/{HEIGHT}.0f; v1=(y+0.5f)/{HEIGHT}.0f; }}',
++          f'void GetAtlasUv(std::uint16_t tile,float& u0,float& v0,float& u1,float& v1) noexcept {{ const unsigned col=tile%{COLS}u,row=tile/{COLS}u; const float x=static_cast<float>(col*{CELL}u+1u), y=static_cast<float>(row*{CELL}u+1u); u0=(x+0.5f)/{WIDTH}.0f; u1=(x+15.5f)/{WIDTH}.0f; v0=(y+0.5f)/{HEIGHT}.0f; v1=(y+15.5f)/{HEIGHT}.0f; }}',
+           '} // namespace minefade']
+--- a/MinefadeNativeEngine/tests/test_block_catalog.py
++++ b/MinefadeNativeEngine/tests/test_block_catalog.py
+@@ -66,7 +66,7 @@
+ engine_source = (ROOT / "app/src/main/cpp/engine/Engine.cpp").read_text(encoding="utf-8")
+ assert engine_source.count("int y = topY;") == 2
+ registry_source = (ROOT / "app/src/main/cpp/blocks/BlockRegistry.cpp").read_text(encoding="utf-8")
+-assert "v0=(y+15.5f)/594.0f; v1=(y+0.5f)/594.0f;" in registry_source
++assert "v0=(y+0.5f)/594.0f; v1=(y+15.5f)/594.0f;" in registry_source
+
+ by_key = {block["key"]: block for block in blocks}
+--- a/MinefadeNativeEngine/tests/WorldSmokeTests.cpp
++++ b/MinefadeNativeEngine/tests/WorldSmokeTests.cpp
+@@ -1,6 +1,8 @@
+ #include "../app/src/main/cpp/world/VoxelWorld.h"
+ #include "../app/src/main/cpp/game/Player.h"
+ 
++#include <algorithm>
++
+ #include <array>
+ #include <cassert>
+ #include <cmath>
