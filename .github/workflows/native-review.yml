@@ -118,7 +118,7 @@ jobs:
           unzip -Z1 "$APK" | grep -Fx 'lib/arm64-v8a/libminefade_native.so'
           unzip -Z1 "$APK" | grep -Fx 'lib/armeabi-v7a/libminefade_native.so'
           ATLAS_BYTES="$(unzip -p "$APK" assets/textures/block_atlas.rgba | wc -c | tr -d ' ')"
-          test "$ATLAS_BYTES" = "1368576"
+          test "$ATLAS_BYTES" = "1617408"
           sha256sum "$APK"
 
       - name: Upload Minefade 2.0 APK
