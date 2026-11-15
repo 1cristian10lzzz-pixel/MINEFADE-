@@ -2,9 +2,11 @@
 from pathlib import Path
 import tempfile
 import unittest
-from tools.validate_mfmod import parse_mod
+import sys
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
+from tools.validate_mfmod import parse_mod
 SAMPLE = ROOT / "mods" / "Minefade_Ultimate_Core_0.1.mfmod"
 
 
