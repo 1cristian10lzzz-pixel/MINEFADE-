@@ -69,12 +69,25 @@ button:active { background: #47789b; }
 #move-right { right: 3dp; top: 42dp; }
 #jump { position: absolute; z-index: 7; right: 22dp; bottom: 60dp; width: 56dp; height: 56dp; padding: 2dp; text-align: center; border-radius: 18dp; background: #2f6479f2; border: 2dp #d9e9a4ee; color: #ffffff; font-size: 20dp; }
 #crouch { position: absolute; z-index: 7; right: 82dp; bottom: 65dp; width: 44dp; height: 44dp; padding: 1dp; text-align: center; border-radius: 14dp; background: #20394ce8; border: 1dp #c3d8e888; color: #f5fbff; font-size: 17dp; }
-#inventory-panel { left: auto; right: 10dp; top: 52dp; bottom: 54dp; width: 220dp; margin: 0dp; overflow-y: auto; }
-#crafting-panel { z-index: 10; width: 300dp; margin-left: -150dp; max-height: 78%; overflow-y: auto; }
-#crafting-panel .recipe-title { font-size: 14dp; color: #e8ffd5; margin-bottom: 8dp; }
-#crafting-panel .recipe-grid { display: flex; flex-direction: row; flex-wrap: wrap; gap: 6dp; }
-#crafting-panel button { min-width: 130dp; flex-grow: 1; }
-.inventory-row { color: #e0e8ed; font-size: 12dp; padding: 5dp 2dp; border-bottom: 1dp #43576a; }
+#inventory-panel { z-index: 9; left: 50%; top: 50%; width: 92%; height: 84%; margin-left: -46%; margin-top: -42%; padding: 8dp; background: #1b2638f2; border: 2dp #a9c1d4aa; border-radius: 13dp; overflow: hidden; }
+.inventory-layout { width: 100%; height: 100%; display: flex; flex-direction: row; gap: 8dp; }
+.inventory-left, .inventory-right { width: 50%; height: 100%; overflow-y: auto; background: #263449ee; border: 1dp #a8bdce66; border-radius: 9dp; padding: 7dp; }
+.inventory-left { display: flex; flex-direction: column; }
+.inventory-right { display: flex; flex-direction: column; }
+.inventory-heading { font-size: 12dp; color: #f2f7fb; padding: 3dp 4dp 7dp 4dp; border-bottom: 1dp #d9e9f044; }
+.inventory-equipment { display: flex; flex-direction: row; flex-wrap: wrap; gap: 4dp; padding: 5dp 0dp; }
+.equipment-slot { width: 43dp; height: 36dp; background: #33465e; border: 1dp #c4d6e255; border-radius: 5dp; text-align: center; padding: 5dp 1dp; font-size: 8dp; color: #dbe8f0; }
+.inventory-grid { display: flex; flex-direction: row; flex-wrap: wrap; gap: 3dp; padding-top: 5dp; }
+.inventory-row { width: 44dp; height: 43dp; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2dp; background: #34475d; border: 1dp #c4d6e255; border-radius: 5dp; color: #e0e8ed; font-size: 8dp; padding: 2dp; }
+.inventory-icon { width: 23dp; height: 23dp; }
+.inventory-row span { max-width: 42dp; overflow: hidden; }
+.inventory-actions { display: flex; flex-direction: row; justify-content: flex-end; gap: 5dp; padding-top: 5dp; }
+#crafting-panel { z-index: 10; left: 50%; top: 50%; width: 92%; height: 84%; margin-left: -46%; margin-top: -42%; padding: 9dp; background: #1b2638f5; border: 2dp #a9c1d4aa; border-radius: 13dp; overflow: hidden; }
+#crafting-panel .recipe-title { font-size: 13dp; color: #f2f7fb; margin-bottom: 6dp; }
+#crafting-recipes { height: 90%; overflow-y: auto; display: flex; flex-direction: row; flex-wrap: wrap; align-content: flex-start; gap: 5dp; }
+#crafting-panel button { width: 48%; min-height: 37dp; background: #334a62; border: 1dp #a8c1d488; border-radius: 6dp; font-size: 9dp; padding: 4dp; }
+.recipe-category { width: 100%; color: #d8f0a4; font-size: 11dp; padding: 5dp 2dp 2dp 2dp; border-bottom: 1dp #d8f0a455; }
+#pause-panel { z-index: 10; width: 270dp; margin-left: -135dp; }
 #pause-panel { z-index: 10; width: 270dp; margin-left: -135dp; }
 #pause-panel .actions { justify-content: center; gap: 8dp; }
 #pause-panel button { min-width: 104dp; }
@@ -121,21 +134,27 @@ button:active { background: #47789b; }
 <div id="selected-item"></div>
 <div id="pickup"></div>
 <div id="inventory-panel" class="panel">
-  <div id="inventory-items"></div>
-  <div class="actions"><button id="crafting-open">FABRICAR</button><button id="inventory-close">Cerrar</button></div>
+  <div class="inventory-layout">
+    <div class="inventory-left">
+      <div class="inventory-heading">PERSONAJE · EQUIPO</div>
+      <div class="inventory-equipment">
+        <div class="equipment-slot">Casco</div><div class="equipment-slot">Pechera</div>
+        <div class="equipment-slot">Grebas</div><div class="equipment-slot">Botas</div>
+      </div>
+      <div class="inventory-heading">INVENTARIO · 9 ESPACIOS</div>
+      <div id="inventory-items" class="inventory-grid"></div>
+      <div class="inventory-actions"><button id="crafting-open">Fabricar</button><button id="inventory-close">Cerrar</button></div>
+    </div>
+    <div class="inventory-right">
+      <div class="inventory-heading">CATÁLOGO · OBJETOS</div>
+      <div id="inventory-catalog" class="inventory-grid"></div>
+    </div>
+  </div>
 </div>
 <div id="crafting-panel" class="panel">
-  <div class="recipe-title">PROGRESIÓN · MADERA</div>
-  <div class="recipe-grid">
-    <button id="craft-planks">Tronco → 4 tablones</button>
-    <button id="craft-sticks">2 tablones → 4 palos</button>
-    <button id="craft-table">4 tablones → mesa</button>
-    <button id="craft-wooden-pickaxe">Pico de madera</button>
-    <button id="craft-wooden-axe">Hacha de madera</button>
-    <button id="craft-wooden-shovel">Pala de madera</button>
-    <button id="craft-wooden-sword">Espada de madera</button>
-  </div>
-  <div class="actions"><button id="crafting-close">Volver al inventario</button></div>
+  <div class="recipe-title">MESA DE TRABAJO · RECETAS</div>
+  <div id="crafting-recipes"></div>
+  <div class="inventory-actions"><button id="crafting-close">Volver al inventario</button></div>
 </div>
 <div id="pause-panel" class="panel">
   <div class="actions">
@@ -316,6 +335,7 @@ void RmlUiRuntime::Shutdown() {
     }
     listeners_.clear();
     inventoryListeners_.clear();
+    craftingListeners_.clear();
     // RmlUi requires its contexts to be destroyed before Shutdown and the render interface to outlive it.
     if (rmlInitialised_) Rml::Shutdown();
     rmlInitialised_ = false;
@@ -487,6 +507,7 @@ void RmlUiRuntime::SetInventoryContents(const std::string& markup) {
     if (container == nullptr) return;
     container->SetInnerRML(markup);
     inventoryListeners_.clear();
+    craftingListeners_.clear();
     // Creative mode creates one native select action for each placeable block.
     for (int id = 1; id < 512; ++id) {
         const std::string elementId = "creative-select-" + std::to_string(id);
@@ -495,6 +516,23 @@ void RmlUiRuntime::SetInventoryContents(const std::string& markup) {
         const std::string action = elementId;
         inventoryListeners_.push_back(std::make_unique<ActionListener>(callback_, action));
         element->AddEventListener("click", inventoryListeners_.back().get());
+    }
+}
+
+void RmlUiRuntime::SetCraftingContents(const std::string& markup) {
+    if (document_ == nullptr) return;
+    Rml::Element* container = document_->GetElementById("crafting-recipes");
+    if (container == nullptr) return;
+    container->SetInnerRML(markup);
+    craftingListeners_.clear();
+    for (int index = 0; index < 128; ++index) {
+        const std::string elementId = "crafting-recipe-" + std::to_string(index);
+        Rml::Element* element = document_->GetElementById(elementId);
+        if (element == nullptr) continue;
+        const std::string action = element->GetAttribute<Rml::String>("data-action", "");
+        if (action.empty()) continue;
+        craftingListeners_.push_back(std::make_unique<ActionListener>(callback_, action));
+        element->AddEventListener("click", craftingListeners_.back().get());
     }
 }
 
