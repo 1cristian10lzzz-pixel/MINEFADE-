@@ -5,4 +5,6 @@ version=1.0
 description=Paquete inicial incluido: mejora ligera del movimiento y del ciclo diurno.
 enabled=true
 player.speed=1.08
+player.jump=1.0
+entity.speed=1.0
 world.day_speed=1.05
