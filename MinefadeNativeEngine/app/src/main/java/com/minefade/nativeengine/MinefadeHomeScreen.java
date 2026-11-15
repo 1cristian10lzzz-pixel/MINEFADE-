@@ -150,6 +150,24 @@ public final class MinefadeHomeScreen extends FrameLayout {
                 .setInterpolator(new DecelerateInterpolator()).start();
     }
 
+    private void installPressAnimation(View view) {
+        view.setOnTouchListener((target, event) -> {
+            if (!preferences.getBoolean("menu_animations", true)
+                    || preferences.getBoolean("reduce_motion", false)) return false;
+            int action = event.getActionMasked();
+            if (action == android.view.MotionEvent.ACTION_DOWN) {
+                target.animate().cancel();
+                target.animate().scaleX(0.975f).scaleY(0.975f).setDuration(75L)
+                        .setInterpolator(new DecelerateInterpolator()).start();
+            } else if (action == android.view.MotionEvent.ACTION_UP
+                    || action == android.view.MotionEvent.ACTION_CANCEL) {
+                target.animate().scaleX(1f).scaleY(1f).setDuration(145L)
+                        .setInterpolator(new DecelerateInterpolator()).start();
+            }
+            return false;
+        });
+    }
+
     private void animateAvatarIn(View view, int index) {
         if (!preferences.getBoolean("avatar_transition_animations", true)) {
             view.setAlpha(1f);
@@ -215,6 +233,7 @@ public final class MinefadeHomeScreen extends FrameLayout {
         arrow.setGravity(Gravity.CENTER);
         content.addView(arrow, new LinearLayout.LayoutParams(dp(22), -1));
 
+        installPressAnimation(outer);
         outer.setOnClickListener(v -> {
             haptic(v);
             if (click != null) click.run();
@@ -705,6 +724,7 @@ public final class MinefadeHomeScreen extends FrameLayout {
         button.setPadding(dp(18), 0, dp(18), 0);
         button.setBackground(shape(new int[]{0xffb9f27c, 0xff82d75d}, 12, 0xffd6ffad));
         button.setElevation(dp(3));
+        installPressAnimation(button);
         button.setOnClickListener(v -> {
             haptic(v);
             if (action != null) action.run();
@@ -1075,6 +1095,7 @@ public final class MinefadeHomeScreen extends FrameLayout {
         TextView arrow = text("⌄", 18, 0xffb9f27c, true);
         arrow.setGravity(Gravity.CENTER);
         selector.addView(arrow, new LinearLayout.LayoutParams(dp(28), dp(38)));
+        installPressAnimation(selector);
         selector.setOnClickListener(v -> {
             haptic(v);
             PopupMenu menu = new PopupMenu(getContext(), selector);
