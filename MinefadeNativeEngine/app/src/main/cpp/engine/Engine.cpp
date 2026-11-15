@@ -13,6 +13,7 @@
 #include <cctype>
 #include <limits>
 #include <string>
+#include <unordered_set>
 #include <utility>
 
 namespace minefade {
@@ -1745,8 +1746,10 @@ void Engine::LoadEnabledMods() {
     modPlayerSpeed_ = 1.0f;
     modDaySpeed_ = 1.0f;
     if (modsDirectory_.empty()) return;
+
     std::error_code error;
     if (!std::filesystem::is_directory(modsDirectory_, error) || error) return;
+
     std::vector<std::filesystem::path> packs;
     for (const auto& entry : std::filesystem::directory_iterator(modsDirectory_, error)) {
         if (error) break;
@@ -1754,39 +1757,132 @@ void Engine::LoadEnabledMods() {
         if (entry.path().extension() == ".mfmod") packs.push_back(entry.path());
     }
     std::sort(packs.begin(), packs.end());
+
+    const auto isAllowedKey = [](const std::string& key) {
+        static const std::unordered_set<std::string> allowed{
+            "id", "name", "version", "description", "enabled",
+            "spawn.sheep", "spawn.cow", "spawn.bird", "spawn.pig",
+            "player.speed", "world.day_speed"
+        };
+        return allowed.find(key) != allowed.end();
+    };
+    const auto parseFiniteNumber = [](const std::string& text, float& output) {
+        try {
+            std::size_t consumed = 0;
+            const float value = std::stof(text, &consumed);
+            if (consumed != text.size() || !std::isfinite(value)) return false;
+            output = value;
+            return true;
+        } catch (...) {
+            return false;
+        }
+    };
+    const auto validIdentifier = [](const std::string& id) {
+        if (id.size() < 2u || id.size() > 64u) return false;
+        const auto isAlphaNumeric = [](unsigned char c) {
+            return (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9');
+        };
+        if (!isAlphaNumeric(static_cast<unsigned char>(id.front()))) return false;
+        for (const unsigned char c : id) {
+            if (!isAlphaNumeric(c) && c != '_' && c != '.' && c != '-') return false;
+        }
+        return true;
+    };
+
     for (const auto& pack : packs) {
-        std::ifstream file(pack);
+        const std::uintmax_t size = std::filesystem::file_size(pack, error);
+        if (error || size == 0u || size > 32768u) {
+            error.clear();
+            continue;
+        }
+
+        std::ifstream file(pack, std::ios::binary);
         if (!file) continue;
         std::unordered_map<std::string, std::string> values;
         std::string line;
         std::size_t bytes = 0;
-        while (std::getline(file, line) && bytes < 32768u) {
-            bytes += line.size();
+        std::size_t lineCount = 0;
+        bool valid = true;
+
+        while (std::getline(file, line)) {
+            bytes += line.size() + 1u;
+            if (bytes > 32768u || ++lineCount > 128u) {
+                valid = false;
+                break;
+            }
             const std::size_t first = line.find_first_not_of(" \t\r");
             if (first == std::string::npos || line[first] == '#') continue;
             const std::size_t split = line.find('=', first);
-            if (split == std::string::npos) continue;
+            if (split == std::string::npos) {
+                valid = false;
+                break;
+            }
             const std::string key = line.substr(first, split - first);
             const std::size_t valueStart = line.find_first_not_of(" \t", split + 1);
-            if (valueStart == std::string::npos) continue;
+            if (valueStart == std::string::npos) {
+                valid = false;
+                break;
+            }
             std::string value = line.substr(valueStart);
             const std::size_t valueEnd = value.find_last_not_of(" \t\r");
-            if (valueEnd != std::string::npos) value.resize(valueEnd + 1);
-            if (key.size() <= 64u && value.size() <= 512u) values[key] = value;
+            if (valueEnd != std::string::npos) value.resize(valueEnd + 1u);
+            if (key.empty() || key.size() > 64u || value.size() > 512u ||
+                !isAllowedKey(key) || values.find(key) != values.end()) {
+                valid = false;
+                break;
+            }
+            values.emplace(key, std::move(value));
         }
+        if (!valid || file.bad()) continue;
+
+        const auto id = values.find("id");
+        const auto name = values.find("name");
+        const auto version = values.find("version");
         const auto enabled = values.find("enabled");
-        if (enabled == values.end() || enabled->second != "true") continue;
-        const auto number = [&values](const char* key, float fallback) {
+        if (id == values.end() || name == values.end() || version == values.end() ||
+            enabled == values.end() || !validIdentifier(id->second) ||
+            name->second.empty() || name->second.size() > 96u ||
+            (version->second != "1" && version->second != "1.0") ||
+            (enabled->second != "true" && enabled->second != "false")) continue;
+        const auto description = values.find("description");
+        if (description != values.end() && description->second.size() > 512u) continue;
+        if (enabled->second != "true") continue;
+
+        const auto readSpawn = [&values, &parseFiniteNumber](const char* key, int& output) {
             const auto found = values.find(key);
-            if (found == values.end()) return fallback;
-            try { return std::stof(found->second); } catch (...) { return fallback; }
+            if (found == values.end()) { output = 0; return true; }
+            float number = 0.0f;
+            if (!parseFiniteNumber(found->second, number) || std::floor(number) != number ||
+                number < 0.0f || number > 24.0f) return false;
+            output = static_cast<int>(number);
+            return true;
         };
-        modSheepSpawns_ = std::clamp(modSheepSpawns_ + static_cast<int>(number("spawn.sheep", 0.0f)), 0, 24);
-        modCowSpawns_ = std::clamp(modCowSpawns_ + static_cast<int>(number("spawn.cow", 0.0f)), 0, 24);
-        modBirdSpawns_ = std::clamp(modBirdSpawns_ + static_cast<int>(number("spawn.bird", 0.0f)), 0, 24);
-        modPigSpawns_ = std::clamp(modPigSpawns_ + static_cast<int>(number("spawn.pig", 0.0f)), 0, 24);
-        modPlayerSpeed_ = std::clamp(modPlayerSpeed_ * number("player.speed", 1.0f), 0.5f, 2.0f);
-        modDaySpeed_ = std::clamp(modDaySpeed_ * number("world.day_speed", 1.0f), 0.25f, 4.0f);
+        const auto readMultiplier = [&values, &parseFiniteNumber](const char* key,
+                                                                  float minimum,
+                                                                  float maximum,
+                                                                  float& output) {
+            const auto found = values.find(key);
+            if (found == values.end()) { output = 1.0f; return true; }
+            float number = 0.0f;
+            if (!parseFiniteNumber(found->second, number) ||
+                number < minimum || number > maximum) return false;
+            output = number;
+            return true;
+        };
+
+        int sheep = 0, cows = 0, birds = 0, pigs = 0;
+        float playerSpeed = 1.0f, daySpeed = 1.0f;
+        if (!readSpawn("spawn.sheep", sheep) || !readSpawn("spawn.cow", cows) ||
+            !readSpawn("spawn.bird", birds) || !readSpawn("spawn.pig", pigs) ||
+            !readMultiplier("player.speed", 0.5f, 2.0f, playerSpeed) ||
+            !readMultiplier("world.day_speed", 0.25f, 4.0f, daySpeed)) continue;
+
+        modSheepSpawns_ = std::clamp(modSheepSpawns_ + sheep, 0, 24);
+        modCowSpawns_ = std::clamp(modCowSpawns_ + cows, 0, 24);
+        modBirdSpawns_ = std::clamp(modBirdSpawns_ + birds, 0, 24);
+        modPigSpawns_ = std::clamp(modPigSpawns_ + pigs, 0, 24);
+        modPlayerSpeed_ = std::clamp(modPlayerSpeed_ * playerSpeed, 0.5f, 2.0f);
+        modDaySpeed_ = std::clamp(modDaySpeed_ * daySpeed, 0.25f, 4.0f);
     }
 }
 
