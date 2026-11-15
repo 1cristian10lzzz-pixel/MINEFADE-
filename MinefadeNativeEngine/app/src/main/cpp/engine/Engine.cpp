@@ -574,6 +574,26 @@ bool Engine::Initialise(float displayDensity, const std::uint8_t* atlasPixels,
         world_.GenerateAround(8, 8, 0);
         player_.position = {8.0f, static_cast<float>(world_.GetSurfaceHeight(8, 8)) + 1.05f, 8.0f};
     }
+    if (loadedExistingWorld && !storagePath_.empty()) {
+        std::ifstream gearFile(storagePath_ + ".armor", std::ios::binary);
+        if (gearFile) {
+            std::array<std::uint16_t,4> savedGear{};
+            gearFile.read(reinterpret_cast<char*>(savedGear.data()),
+                          static_cast<std::streamsize>(sizeof(savedGear)));
+            if (gearFile && gearFile.peek() == std::char_traits<char>::eof()) {
+                for (std::size_t slot = 0; slot < savedGear.size(); ++slot) {
+                    const BlockDefinition* item = GetBlockDefinition(static_cast<BlockId>(savedGear[slot]));
+                    if (item == nullptr) continue;
+                    const std::string_view key(item->key);
+                    const bool valid = slot == 0 ? key.find("_helmet") != std::string_view::npos :
+                        slot == 1 ? key.find("_chestplate") != std::string_view::npos :
+                        slot == 2 ? key.find("_leggings") != std::string_view::npos :
+                                    key.find("_boots") != std::string_view::npos;
+                    if (valid) inventory_.equippedArmor[slot] = savedGear[slot];
+                }
+            }
+        }
+    }
     if (starterChestEnabled_ && !loadedExistingWorld && !multiplayerMode_) {
         const int chestX = 8;
         const int chestZ = 6;
@@ -2034,6 +2054,25 @@ void Engine::SaveWorld() {
             ENGINE_LOGE("Failed to save world to %s", storagePath_.c_str());
         } else {
             ENGINE_LOGI("World saved to private app storage");
+            {
+                const std::string gearPath = storagePath_ + ".armor";
+                const std::string gearTemp = gearPath + ".tmp";
+                std::ofstream gearFile(gearTemp, std::ios::binary | std::ios::trunc);
+                if (gearFile) {
+                    gearFile.write(reinterpret_cast<const char*>(inventory_.equippedArmor.data()),
+                                   static_cast<std::streamsize>(sizeof(inventory_.equippedArmor)));
+                    gearFile.flush();
+                    gearFile.close();
+                    std::error_code gearError;
+                    std::filesystem::rename(gearTemp, gearPath, gearError);
+                    if (gearError) {
+                        std::filesystem::remove(gearPath, gearError);
+                        gearError.clear();
+                        std::filesystem::rename(gearTemp, gearPath, gearError);
+                    }
+                    if (gearError) std::filesystem::remove(gearTemp);
+                }
+            }
             {
                 const std::string modePath = storagePath_ + ".mode";
                 const std::string modeTemp = modePath + ".tmp";
