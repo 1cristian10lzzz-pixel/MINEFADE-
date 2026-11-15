@@ -139,10 +139,7 @@ button:active { background: #47789b; }
   <div class="inventory-layout">
     <div class="inventory-left">
       <div class="inventory-heading">PERSONAJE · EQUIPO</div>
-      <div class="inventory-equipment">
-        <div class="equipment-slot">Casco</div><div class="equipment-slot">Pechera</div>
-        <div class="equipment-slot">Grebas</div><div class="equipment-slot">Botas</div>
-      </div>
+      <div class="inventory-equipment" id="equipment-items"></div>
       <div class="inventory-heading">INVENTARIO · 9 ESPACIOS</div>
       <div id="inventory-items" class="inventory-grid"></div>
       <div class="inventory-actions"><button id="crafting-open">Fabricar</button><button id="inventory-close">Cerrar</button></div>
@@ -526,6 +523,13 @@ void RmlUiRuntime::SetInventoryContents(const std::string& markup) {
         inventoryListeners_.push_back(std::make_unique<ActionListener>(callback_, elementId));
         element->AddEventListener("click", inventoryListeners_.back().get());
     }
+    for (int slot = 0; slot < 4; ++slot) {
+        const std::string elementId = "gear-slot-" + std::to_string(slot);
+        Rml::Element* element = document_->GetElementById(elementId);
+        if (element == nullptr) continue;
+        inventoryListeners_.push_back(std::make_unique<ActionListener>(callback_, elementId));
+        element->AddEventListener("click", inventoryListeners_.back().get());
+    }
 }
 
 void RmlUiRuntime::SetCraftingContents(const std::string& markup) {
@@ -543,6 +547,12 @@ void RmlUiRuntime::SetCraftingContents(const std::string& markup) {
         craftingListeners_.push_back(std::make_unique<ActionListener>(callback_, action));
         element->AddEventListener("click", craftingListeners_.back().get());
     }
+}
+
+void RmlUiRuntime::SetEquipmentContents(const std::string& markup) {
+    if (document_ == nullptr) return;
+    if (Rml::Element* element = document_->GetElementById("equipment-items"))
+        element->SetInnerRML(markup);
 }
 
 void RmlUiRuntime::SetInventoryCatalogContents(const std::string& markup) {
