@@ -517,6 +517,7 @@ bool VoxelWorld::PumpChunkGeneration() {
                 const auto completedKey = std::make_pair(chunk.x, chunk.z);
                 if (chunks_.find(completedKey) == chunks_.end()) {
                     chunks_.emplace(completedKey, std::move(chunk));
+                    InvalidateChunkAndNeighbors(completedKey.first, completedKey.second);
                     addedChunk = true;
                 }
             } catch (...) {
@@ -526,6 +527,7 @@ bool VoxelWorld::PumpChunkGeneration() {
                 if (chunks_.find(key) == chunks_.end()) {
                     Chunk chunk = MakeChunk(key.first, key.second);
                     chunks_.emplace(key, std::move(chunk));
+                    InvalidateChunkAndNeighbors(key.first, key.second);
                     addedChunk = true;
                 }
             }
@@ -594,7 +596,10 @@ void VoxelWorld::GenerateAround(int worldX,int worldZ,int radiusInChunks) {
     radiusInChunks=std::clamp(radiusInChunks,0,8);
     for(int z=centerZ-radiusInChunks;z<=centerZ+radiusInChunks;++z)
         for(int x=centerX-radiusInChunks;x<=centerX+radiusInChunks;++x)
-            if(chunks_.find({x,z})==chunks_.end())chunks_.emplace(std::make_pair(x,z),MakeChunk(x,z));
+            if(chunks_.find({x,z})==chunks_.end()) {
+                chunks_.emplace(std::make_pair(x,z),MakeChunk(x,z));
+                InvalidateChunkAndNeighbors(x,z);
+            }
 }
 
 BlockId VoxelWorld::GetBlock(int x,int y,int z) const {
@@ -996,7 +1001,7 @@ bool VoxelWorld::Load(const std::string& filePath,Vec3& playerPosition,
             encoded = 0u;
         }
     }
-    seed_=loadedSeed;chunks_=std::move(loadedChunks);playerPosition=loadedPlayer;inventory=loadedInventory;return true;
+    seed_=loadedSeed;chunks_=std::move(loadedChunks);chunkMeshCache_.clear();dirtyChunkMeshes_.clear();playerPosition=loadedPlayer;inventory=loadedInventory;return true;
 }
 
 void AppendCube(std::vector<WorldVertex>& output,const Vec3& center,const Vec3& half,const std::array<float,3>& color) {
