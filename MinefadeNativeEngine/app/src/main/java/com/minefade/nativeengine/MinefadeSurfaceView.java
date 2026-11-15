@@ -322,11 +322,12 @@ public final class MinefadeSurfaceView extends GLSurfaceView {
                 float joystickDeadzone = preferences.getInt("joystick_deadzone", 12) / 100.0f;
                 boolean invertLookY = preferences.getBoolean("invert_look_y", false);
                 boolean leftHanded = preferences.getBoolean("left_handed_controls", false);
+                int controlMode = Math.max(0, Math.min(2, preferences.getInt("control_mode", 0)));
                 boolean showHudStats = preferences.getBoolean("show_hud_stats", true);
                 float hudScale = preferences.getInt("hud_scale", 100) / 100.0f;
                 NativeBridge.nativeSetGraphicsOptions(quality, renderDistance, waterWaves,
                         fieldOfView, contactShadows);
-                NativeBridge.nativeSetInputOptions(sensitivityX, sensitivityY, joystickDeadzone, invertLookY, leftHanded);
+                NativeBridge.nativeSetInputOptions(sensitivityX, sensitivityY, joystickDeadzone, invertLookY, leftHanded, controlMode);
                 NativeBridge.nativeSetHudOptions(showHudStats);
                 int animationQuality = Math.max(0, Math.min(2, preferences.getInt("animation_quality", 2)));
                 boolean worldAnimations = preferences.getBoolean("world_animations", true);
