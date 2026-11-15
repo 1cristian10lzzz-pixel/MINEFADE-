@@ -162,6 +162,9 @@ private:
     int modCowSpawns_{0};
     int modBirdSpawns_{0};
     int modPigSpawns_{0};
+    int modRabbitSpawns_{0};
+    int modZombieSpawns_{0};
+    int modSkeletonSpawns_{0};
     float modPlayerSpeed_{1.0f};
     float modDaySpeed_{1.0f};
     float modEntitySpeed_{1.0f};
