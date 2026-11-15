@@ -687,7 +687,7 @@ public final class MinefadeHomeScreen extends FrameLayout {
         }
         for (int index = 0; index < filtered.size(); index += 2) {
             LinearLayout line = row();
-            LinearLayout.LayoutParams lineParams = new LinearLayout.LayoutParams(-1, dp(112));
+            LinearLayout.LayoutParams lineParams = new LinearLayout.LayoutParams(-1, dp(100));
             if (index > 0) lineParams.topMargin = dp(7);
             parent.addView(line, lineParams);
             addModCard(line, filtered.get(index), normalized, true);
@@ -1482,14 +1482,20 @@ public final class MinefadeHomeScreen extends FrameLayout {
         int jumps = preferences.getInt("achievement_jumps", 0);
         boolean entered = preferences.getBoolean("achievement_world_entered", false);
 
-        String[] titles = {"Primera aventura", "Primer minero", "Minero experto", "Constructor",
-                "Arquitecto", "Recolector", "Primer salto", "Explorador del cielo"};
-        String[] details = {"Entra en tu primer mundo.", "Rompe tu primer bloque.",
-                "Rompe 100 bloques.", "Coloca tu primer bloque.", "Coloca 100 bloques.",
-                "Recoge un objeto del suelo.", "Salta por primera vez.", "Realiza 25 saltos."};
-        String[] icons = {"◈", "⚒", "◆", "▦", "⌂", "◇", "↑", "✦"};
-        int[] progress = {entered ? 1 : 0, mined, mined, placed, placed, collected, jumps, jumps};
-        int[] targets = {1, 1, 100, 1, 100, 1, 1, 25};
+        // Milestones are derived only from counters already recorded by the game.
+        String[] titles = {"Primera aventura", "Primer minero", "Minero experto", "Minero veterano",
+                "Constructor", "Arquitecto", "Gran constructor", "Recolector", "Coleccionista",
+                "Acumulador", "Primer salto", "Explorador", "Saltador experto", "Maestro minero",
+                "Maestro constructor"};
+        String[] details = {"Entra en un mundo.", "Rompe 1 bloque.", "Rompe 100 bloques.",
+                "Rompe 500 bloques.", "Coloca 1 bloque.", "Coloca 100 bloques.",
+                "Coloca 500 bloques.", "Recoge 1 objeto.", "Recoge 25 objetos.",
+                "Recoge 100 objetos.", "Salta una vez.", "Salta 25 veces.",
+                "Salta 100 veces.", "Rompe 1.000 bloques.", "Coloca 1.000 bloques."};
+        String[] icons = {"◈", "⚒", "◆", "✦", "▦", "⌂", "⬡", "◇", "✧", "❖", "↑", "✦", "⇧", "★", "▣"};
+        int[] progress = {entered ? 1 : 0, mined, mined, mined, placed, placed, placed,
+                collected, collected, collected, jumps, jumps, jumps, mined, placed};
+        int[] targets = {1, 1, 100, 500, 1, 100, 500, 1, 25, 100, 1, 25, 100, 1000, 1000};
 
         ScrollView scroll = new ScrollView(getContext());
         scroll.setFillViewport(true);
@@ -1505,19 +1511,19 @@ public final class MinefadeHomeScreen extends FrameLayout {
         grid.setClipChildren(true);
         grid.setClipToPadding(true);
         scroll.addView(grid, new ScrollView.LayoutParams(-1, -2));
-        for (int rowIndex = 0; rowIndex < 2; rowIndex++) {
+        for (int rowIndex = 0; rowIndex < 3; rowIndex++) {
             LinearLayout line = row();
             LinearLayout.LayoutParams lineParams = new LinearLayout.LayoutParams(-1, dp(112));
             if (rowIndex > 0) lineParams.topMargin = dp(7);
             grid.addView(line, lineParams);
-            for (int col = 0; col < 4; col++) {
-                final int index = rowIndex * 4 + col;
+            for (int col = 0; col < 5; col++) {
+                final int index = rowIndex * 5 + col;
                 final int current = Math.max(0, progress[index]);
                 final int target = Math.max(1, targets[index]);
                 final boolean unlocked = current >= target;
                 LinearLayout tile = column();
                 tile.setGravity(Gravity.CENTER_VERTICAL);
-                tile.setPadding(dp(8), dp(6), dp(8), dp(6));
+                tile.setPadding(dp(4), dp(5), dp(4), dp(5));
                 tile.setBackground(shape(unlocked
                         ? new int[]{0xff274d3e, 0xff17382f}
                         : new int[]{0xff203449, 0xff142438},
@@ -1526,13 +1532,13 @@ public final class MinefadeHomeScreen extends FrameLayout {
                 LinearLayout top = row();
                 top.setGravity(Gravity.CENTER_VERTICAL);
                 top.addView(new AchievementGlyph(getContext(), index, unlocked ? 0xffb9f27c : 0xff8caabd),
-                        new LinearLayout.LayoutParams(dp(28), dp(28)));
+                        new LinearLayout.LayoutParams(dp(21), dp(21)));
                 LinearLayout labels = column();
-                labels.setPadding(dp(6), 0, 0, 0);
-                TextView title = text(titles[index], 9, white, true);
+                labels.setPadding(dp(3), 0, 0, 0);
+                TextView title = text(titles[index], 7, white, true);
                 title.setMaxLines(1);
                 labels.addView(title);
-                TextView description = text(details[index], 7, muted, false);
+                TextView description = text(details[index], 6, muted, false);
                 description.setMaxLines(2);
                 LinearLayout.LayoutParams detailParams = new LinearLayout.LayoutParams(-1, -2);
                 detailParams.topMargin = dp(2);
@@ -1542,8 +1548,8 @@ public final class MinefadeHomeScreen extends FrameLayout {
 
                 LinearLayout footer = row();
                 footer.setGravity(Gravity.CENTER_VERTICAL);
-                TextView status = text(unlocked ? "COMPLETADO" : current + " / " + target,
-                        7, unlocked ? 0xffb9f27c : 0xffc2d2dc, true);
+                TextView status = text(unlocked ? "HECHO" : current + "/" + target,
+                        6, unlocked ? 0xffb9f27c : 0xffc2d2dc, true);
                 footer.addView(status, new LinearLayout.LayoutParams(0, dp(16), 1f));
                 if (unlocked) footer.addView(text("✓", 12, 0xffb9f27c, true));
                 LinearLayout.LayoutParams footerParams = new LinearLayout.LayoutParams(-1, dp(16));
