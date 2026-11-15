@@ -1196,15 +1196,28 @@ public final class MinefadeHomeScreen extends FrameLayout {
         }
     }
 
+    private TextView settingInfoIcon(String title, String explanation) {
+        TextView info = text("i", 9, 0xffd9e9ef, true);
+        info.setGravity(Gravity.CENTER);
+        info.setBackground(shape(new int[]{0x443d566b, 0x22253545}, 20, 0x887b98ab));
+        info.setOnClickListener(v -> new AlertDialog.Builder(getContext())
+                .setTitle(title)
+                .setMessage(explanation)
+                .setPositiveButton("Aceptar", null)
+                .show());
+        return info;
+    }
+
     private void settingsHeading(LinearLayout parent, String title, String subtitle) {
-        TextView heading = text(title, 11, 0xffd8edf6, true);
-        parent.addView(heading);
-        TextView detail = text(subtitle, 9, muted, false);
-        detail.setGravity(Gravity.TOP);
-        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(-1, -2);
-        params.topMargin = dp(4);
-        params.bottomMargin = dp(9);
-        parent.addView(detail, params);
+        LinearLayout heading = row();
+        heading.setGravity(Gravity.CENTER_VERTICAL);
+        heading.addView(text(title, 10, 0xffd8edf6, true),
+                new LinearLayout.LayoutParams(0, dp(22), 1f));
+        heading.addView(settingInfoIcon(title, subtitle),
+                new LinearLayout.LayoutParams(dp(20), dp(20)));
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(-1, dp(26));
+        params.bottomMargin = dp(5);
+        parent.addView(heading, params);
     }
 
     private View settingChoice(String title, String subtitle, String key,
@@ -1212,11 +1225,13 @@ public final class MinefadeHomeScreen extends FrameLayout {
         LinearLayout card = column();
         card.setPadding(dp(12), dp(9), dp(12), dp(9));
         card.setBackground(shape(new int[]{0xff20394d, 0xff142638}, 14, 0x665b788d));
-        card.addView(text(title, 11, white, true));
-        TextView detail = text(subtitle, 8, muted, false);
-        LinearLayout.LayoutParams detailParams = new LinearLayout.LayoutParams(-1, -2);
-        detailParams.topMargin = dp(3);
-        card.addView(detail, detailParams);
+        LinearLayout heading = row();
+        heading.setGravity(Gravity.CENTER_VERTICAL);
+        heading.addView(text(title, 10, white, true),
+                new LinearLayout.LayoutParams(0, dp(22), 1f));
+        heading.addView(settingInfoIcon(title, subtitle),
+                new LinearLayout.LayoutParams(dp(20), dp(20)));
+        card.addView(heading);
 
         int initial = Math.max(0, Math.min(entries.length - 1, preferences.getInt(key, defaultValue)));
         LinearLayout selector = row();
@@ -1261,11 +1276,11 @@ public final class MinefadeHomeScreen extends FrameLayout {
         TextView amount = text("", 9, 0xffb9f27c, true);
         amount.setGravity(Gravity.CENTER);
         heading.addView(amount, new LinearLayout.LayoutParams(dp(45), dp(19)));
+        TextView info = settingInfoIcon(title, subtitle);
+        LinearLayout.LayoutParams infoParams = new LinearLayout.LayoutParams(dp(20), dp(20));
+        infoParams.leftMargin = dp(4);
+        heading.addView(info, infoParams);
         card.addView(heading);
-        TextView detail = text(subtitle, 8, muted, false);
-        LinearLayout.LayoutParams detailParams = new LinearLayout.LayoutParams(-1, -2);
-        detailParams.topMargin = dp(2);
-        card.addView(detail, detailParams);
         SeekBar seek = new SeekBar(getContext());
         seek.setMax(max - min);
         int initial = Math.max(min, Math.min(max, preferences.getInt(key, defaultValue)));
@@ -1331,20 +1346,20 @@ public final class MinefadeHomeScreen extends FrameLayout {
         LinearLayout card = row();
         card.setPadding(dp(12), dp(8), dp(11), dp(8));
         card.setBackground(shape(new int[]{0xff1c3043, 0xff142334}, 13, 0x554b6478));
-        LinearLayout labels = column();
-        labels.addView(text(title, 12, white, true));
-        TextView detail = text(subtitle, 9, muted, false);
-        LinearLayout.LayoutParams detailParams = new LinearLayout.LayoutParams(-1, -2);
-        detailParams.topMargin = dp(3);
-        labels.addView(detail, detailParams);
-        card.addView(labels, new LinearLayout.LayoutParams(0, -2, 1f));
+        TextView label = text(title, 10, white, true);
+        label.setGravity(Gravity.CENTER_VERTICAL);
+        card.addView(label, new LinearLayout.LayoutParams(0, -1, 1f));
+        TextView info = settingInfoIcon(title, subtitle);
+        LinearLayout.LayoutParams infoParams = new LinearLayout.LayoutParams(dp(20), dp(20));
+        infoParams.rightMargin = dp(7);
+        card.addView(info, infoParams);
         Switch toggle = new Switch(getContext());
         toggle.setButtonTintList(ColorStateList.valueOf(0xffa9ee70));
         toggle.setChecked(preferences.getBoolean(key, defaultValue));
         toggle.setOnCheckedChangeListener((button, checked) ->
                 preferences.edit().putBoolean(key, checked).apply());
         card.addView(toggle);
-        LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(-1, dp(58));
+        LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(-1, dp(46));
         p.bottomMargin = dp(7);
         card.setOnClickListener(v -> toggle.setChecked(!toggle.isChecked()));
         return wrapWithParams(card, p);
