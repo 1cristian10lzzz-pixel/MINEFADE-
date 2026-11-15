@@ -825,19 +825,19 @@ void Engine::RebuildEntityMesh() {
         }
     }
     // Remote players use the same articulated voxel model as the local avatar.
-    for (std::size_t i = 0; i + 3u < remotePlayers_.size(); i += 4u) {
+    for (std::size_t i = 0; i + 5u < remotePlayers_.size(); i += 6u) {
         Player remote;
         remote.position = {remotePlayers_[i], remotePlayers_[i + 1u], remotePlayers_[i + 2u]};
         remote.yaw = remotePlayers_[i + 3u];
+        remote.movementX = std::clamp(remotePlayers_[i + 4u], -1.0f, 1.0f);
+        remote.movementY = std::clamp(remotePlayers_[i + 5u], -1.0f, 1.0f);
         if (!frustum.IntersectsAabb(
                 remote.position.x-0.62f,remote.position.y-0.08f,remote.position.z-0.62f,
                 remote.position.x+0.62f,remote.position.y+1.95f,remote.position.z+0.62f)) continue;
-        // Network snapshots currently carry position/yaw only. Render a
-        // natural idle pose until movement deltas are available in the protocol,
-        // rather than making every connected player look permanently in motion.
-        remote.movementX = 0.0f;
-        remote.movementY = 0.0f;
-        remote.walkPhase = 0.0f;
+        // Network v2 also carries local movement intent, so remote avatars
+        // animate their stride instead of remaining in a permanent idle pose.
+        remote.walkPhase = static_cast<float>(ElapsedSeconds()) * 8.5f *
+            std::clamp(std::abs(remote.movementX) + std::abs(remote.movementY), 0.0f, 1.0f);
         remote.animationTime = static_cast<float>(ElapsedSeconds());
         remote.SetAnimationOptions(static_cast<std::uint8_t>(animationQuality_), animationsEnabled_);
         remote.AppendMesh(entityMesh_);
@@ -2073,20 +2073,22 @@ void Engine::SetAvatarAppearance(const int* values,std::size_t count) {
     }
 }
 
-void Engine::GetPlayerState(float output[4]) const {
+void Engine::GetPlayerState(float output[6]) const {
     if (output == nullptr) return;
     output[0] = player_.position.x;
     output[1] = player_.position.y;
     output[2] = player_.position.z;
     output[3] = player_.yaw;
+    output[4] = player_.movementX;
+    output[5] = player_.movementY;
 }
 
 void Engine::SetRemotePlayers(const float* values, std::size_t floatCount) {
-    if (values == nullptr || floatCount < 4u) {
+    if (values == nullptr || floatCount < 6u) {
         remotePlayers_.clear();
         return;
     }
-    const std::size_t count = std::min<std::size_t>(floatCount - (floatCount % 4u), static_cast<std::size_t>(32u));
+    const std::size_t count = std::min<std::size_t>(floatCount - (floatCount % 6u), static_cast<std::size_t>(42u));
     remotePlayers_.assign(values, values + count);
 }
 
