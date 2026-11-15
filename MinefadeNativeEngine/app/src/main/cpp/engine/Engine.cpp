@@ -617,6 +617,9 @@ bool Engine::Initialise(float displayDensity, const std::uint8_t* atlasPixels,
     for (int i = 0; i < modCowSpawns_; ++i) entities_.SpawnEntity(modSpawn, 1, world_);
     for (int i = 0; i < modBirdSpawns_; ++i) entities_.SpawnEntity(modSpawn, 2, world_);
     for (int i = 0; i < modPigSpawns_; ++i) entities_.SpawnEntity(modSpawn, 3, world_);
+    for (int i = 0; i < modRabbitSpawns_; ++i) entities_.SpawnEntity(modSpawn, 6, world_);
+    for (int i = 0; i < modZombieSpawns_; ++i) entities_.SpawnEntity(modSpawn, 4, world_);
+    for (int i = 0; i < modSkeletonSpawns_; ++i) entities_.SpawnEntity(modSpawn, 5, world_);
     RebuildWorldMesh();
     UploadWorldMesh();
     UploadTransparentWorldMesh();
@@ -1786,6 +1789,7 @@ void Engine::SetModsDirectory(std::string path) {
 
 void Engine::LoadEnabledMods() {
     modSheepSpawns_ = modCowSpawns_ = modBirdSpawns_ = modPigSpawns_ = 0;
+    modRabbitSpawns_ = modZombieSpawns_ = modSkeletonSpawns_ = 0;
     modPlayerSpeed_ = 1.0f;
     modDaySpeed_ = 1.0f;
     modEntitySpeed_ = 1.0f;
@@ -1807,6 +1811,7 @@ void Engine::LoadEnabledMods() {
         static const std::unordered_set<std::string> allowed{
             "id", "name", "version", "description", "enabled",
             "spawn.sheep", "spawn.cow", "spawn.bird", "spawn.pig",
+            "spawn.rabbit", "spawn.zombie", "spawn.skeleton",
             "player.speed", "player.jump", "entity.speed", "world.day_speed"
         };
         return allowed.find(key) != allowed.end();
@@ -1916,10 +1921,13 @@ void Engine::LoadEnabledMods() {
         };
 
         int sheep = 0, cows = 0, birds = 0, pigs = 0;
+        int rabbits = 0, zombies = 0, skeletons = 0;
         float playerSpeed = 1.0f, daySpeed = 1.0f;
         float playerJump = 1.0f, entitySpeed = 1.0f;
         if (!readSpawn("spawn.sheep", sheep) || !readSpawn("spawn.cow", cows) ||
             !readSpawn("spawn.bird", birds) || !readSpawn("spawn.pig", pigs) ||
+            !readSpawn("spawn.rabbit", rabbits) || !readSpawn("spawn.zombie", zombies) ||
+            !readSpawn("spawn.skeleton", skeletons) ||
             !readMultiplier("player.speed", 0.5f, 2.0f, playerSpeed) ||
             !readMultiplier("player.jump", 0.75f, 1.5f, playerJump) ||
             !readMultiplier("entity.speed", 0.5f, 2.0f, entitySpeed) ||
@@ -1929,6 +1937,9 @@ void Engine::LoadEnabledMods() {
         modCowSpawns_ = std::clamp(modCowSpawns_ + cows, 0, 24);
         modBirdSpawns_ = std::clamp(modBirdSpawns_ + birds, 0, 24);
         modPigSpawns_ = std::clamp(modPigSpawns_ + pigs, 0, 24);
+        modRabbitSpawns_ = std::clamp(modRabbitSpawns_ + rabbits, 0, 16);
+        modZombieSpawns_ = std::clamp(modZombieSpawns_ + zombies, 0, 8);
+        modSkeletonSpawns_ = std::clamp(modSkeletonSpawns_ + skeletons, 0, 8);
         modPlayerSpeed_ = std::clamp(modPlayerSpeed_ * playerSpeed, 0.5f, 2.0f);
         modPlayerJump_ = std::clamp(modPlayerJump_ * playerJump, 0.75f, 1.5f);
         modEntitySpeed_ = std::clamp(modEntitySpeed_ * entitySpeed, 0.5f, 2.0f);
