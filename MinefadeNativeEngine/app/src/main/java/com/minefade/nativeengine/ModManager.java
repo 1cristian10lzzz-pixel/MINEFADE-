@@ -180,6 +180,8 @@ public final class ModManager {
                 + "spawn.cow=1\n"
                 + "spawn.bird=2\n"
                 + "player.speed=1.0\n"
+                + "player.jump=1.08\n"
+                + "entity.speed=1.12\n"
                 + "world.day_speed=1.15\n";
         if (writeAtomically(file, data.getBytes(StandardCharsets.UTF_8))) return file;
         return null;
@@ -244,6 +246,8 @@ public final class ModManager {
             case "spawn.bird":
             case "spawn.pig":
             case "player.speed":
+            case "player.jump":
+            case "entity.speed":
             case "world.day_speed":
                 return true;
             default:
@@ -274,6 +278,8 @@ public final class ModManager {
             }
         }
         if (!isFiniteInRange(values.get("player.speed"), 0.5f, 2.0f)) return false;
+        if (!isFiniteInRange(values.get("player.jump"), 0.75f, 1.5f)) return false;
+        if (!isFiniteInRange(values.get("entity.speed"), 0.5f, 2.0f)) return false;
         if (!isFiniteInRange(values.get("world.day_speed"), 0.25f, 4.0f)) return false;
         return true;
     }
