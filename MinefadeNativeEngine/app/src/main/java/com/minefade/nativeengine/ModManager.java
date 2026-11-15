@@ -43,8 +43,41 @@ public final class ModManager {
 
     public ModManager(Context context) {
         this.context = context.getApplicationContext();
-        modsDirectory = new File(context.getFilesDir(), "mods");
+        modsDirectory = new File(this.context.getFilesDir(), "mods");
         if (!modsDirectory.exists()) modsDirectory.mkdirs();
+        installBundledMods();
+    }
+
+    /** Install the included first-party pack once, without overwriting user data. */
+    private void installBundledMods() {
+        File destination = new File(modsDirectory, "minefade_ultimate_core.mfmod");
+        if (destination.isFile()) return;
+        File temporary = new File(modsDirectory, "minefade_ultimate_core.mfmod.part");
+        try (InputStream input = context.getAssets().open("mods/minefade_ultimate_core.mfmod");
+             FileOutputStream output = new FileOutputStream(temporary, false)) {
+            byte[] buffer = new byte[4096];
+            int total = 0;
+            int count;
+            while ((count = input.read(buffer)) != -1) {
+                total += count;
+                if (total > 32768) throw new IllegalArgumentException("El mod incluido supera 32 KB.");
+                output.write(buffer, 0, count);
+            }
+            output.flush();
+            output.getFD().sync();
+        } catch (Exception error) {
+            temporary.delete();
+            return;
+        }
+        if (read(temporary) == null) {
+            temporary.delete();
+            return;
+        }
+        try {
+            Os.rename(temporary.getAbsolutePath(), destination.getAbsolutePath());
+        } catch (Exception error) {
+            temporary.delete();
+        }
     }
 
     public File getDirectory() { return modsDirectory; }
