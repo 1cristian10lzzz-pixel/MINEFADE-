@@ -62,6 +62,8 @@ struct Entity {
     float phase{0.0f};
     float speed{0.5f};
     int kind{0};
+    int behavior{0}; // 0 wander, 1 flee, 2 graze/eat, 3 pursue
+    float behaviorTimer{0.0f};
 };
 
 struct DroppedItem {
@@ -88,7 +90,7 @@ private:
 class EntitySystem {
 public:
     void SpawnInitial(const VoxelWorld& world);
-    void Update(const VoxelWorld& world, float deltaSeconds);
+    void Update(const VoxelWorld& world, const Player& player, float deltaSeconds);
     void AppendMesh(std::vector<WorldVertex>& output, const CameraFrustum* frustum = nullptr) const;
     void SetContactShadows(bool enabled) { contactShadows_ = enabled; }
     void SetSpeedMultiplier(float multiplier);
