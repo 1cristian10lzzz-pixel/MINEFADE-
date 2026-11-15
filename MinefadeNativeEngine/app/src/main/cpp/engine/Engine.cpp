@@ -1979,7 +1979,7 @@ void Engine::SetMultiplayerMode(bool enabled, int playerSlot) {
 void Engine::SetGraphicsOptions(int quality,int renderDistanceChunks,bool waterWaves,
                                  float fieldOfView,bool contactShadows) {
     pendingGraphicsQuality_=std::clamp(quality,0,2);
-    pendingRenderDistanceChunks_=std::clamp(renderDistanceChunks,1,3);
+    pendingRenderDistanceChunks_=std::clamp(renderDistanceChunks,1,5);
     pendingWaterWaves_=waterWaves;
     pendingFieldOfView_=std::clamp(fieldOfView,60.0f,100.0f);
     pendingContactShadows_=contactShadows;
