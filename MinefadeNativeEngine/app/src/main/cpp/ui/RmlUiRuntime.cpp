@@ -35,6 +35,10 @@ body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; font-
 #minimap-coords { margin-top: 3dp; text-align: center; color: #d4e4e9; font-size: 7dp; }
 .actions { display: flex; flex-direction: row; align-items: center; gap: 6dp; }
 button { color: #f7fbff; background: #142638bb; border: 1dp #d7e8ef66; border-radius: 9dp; padding: 6dp 9dp; font-size: 11dp; }
+button, .slot, #minimap, .panel, #chat-message { transition: background-color 0.14s linear, border-color 0.14s linear, opacity 0.18s linear; }
+.slot { transition: background-color 0.14s linear, border-color 0.14s linear; }
+#target-progress-fill { transition: width 0.10s linear; }
+#pickup { transition: opacity 0.16s linear; }
 button:hover { background: #365a77; }
 button:active { background: #47789b; }
 #crosshair { display: none; position: absolute; left: 50%; top: 50%; width: 12dp; height: 12dp; margin-left: -6dp; margin-top: -6dp; pointer-events: none; }
