@@ -210,12 +210,15 @@ public final class MainActivity extends Activity {
                 });
         gameContainer = new FrameLayout(this);
         gameContainer.addView(surfaceView, new FrameLayout.LayoutParams(-1, -1));
-        TextView commandButton = statusButton("✉  CHAT", false);
-        FrameLayout.LayoutParams commandParams = new FrameLayout.LayoutParams(dp(104), dp(34),
-                Gravity.TOP | Gravity.LEFT);
-        commandParams.leftMargin = dp(10);
-        commandParams.topMargin = dp(10);
+        // Compact icon-only chat entry: keep the real command dialog available
+        // without the oversized text banner covering the world view.
+        TextView commandButton = statusButton("✉", false);
+        commandButton.setTextSize(17);
+        FrameLayout.LayoutParams commandParams = new FrameLayout.LayoutParams(dp(38), dp(38),
+                Gravity.TOP | Gravity.CENTER_HORIZONTAL);
+        commandParams.topMargin = dp(8);
         gameContainer.addView(commandButton, commandParams);
+        commandButton.setContentDescription("Abrir chat y comandos");
         commandButton.setOnClickListener(v -> showCommandDialog());
         root.addView(gameContainer, new FrameLayout.LayoutParams(-1, -1));
         // The GL view is created lazily after Activity.onResume(). Activate it now:
