@@ -24,11 +24,20 @@ body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; font-
 #topbar button { pointer-events: auto; }
 #brand { display: none; }
 #stats { color: #edf5f8; font-size: 9dp; background: #101c2b88; padding: 7dp 10dp; border: 1dp #d7e8ef33; border-radius: 10dp; text-shadow: none; }
+#minimap { position: absolute; z-index: 5; top: 54dp; left: 10dp; width: 88dp; padding: 5dp; background: #0b1726dd; border: 1dp #d7e8ef88; border-radius: 10dp; }
+#minimap-grid { width: 78dp; height: 78dp; display: flex; flex-direction: row; flex-wrap: wrap; gap: 1dp; }
+.map-tile { width: 10dp; height: 10dp; border-radius: 1dp; }
+.map-low { background: #6c8064; }
+.map-mid { background: #52805b; }
+.map-high { background: #8b9185; }
+.map-water { background: #326f9a; }
+.map-player { background: #d9ed94; border: 1dp #f8ffe8; border-radius: 5dp; }
+#minimap-coords { margin-top: 3dp; text-align: center; color: #d4e4e9; font-size: 7dp; }
 .actions { display: flex; flex-direction: row; align-items: center; gap: 6dp; }
 button { color: #f7fbff; background: #142638bb; border: 1dp #d7e8ef66; border-radius: 9dp; padding: 6dp 9dp; font-size: 11dp; }
 button:hover { background: #365a77; }
 button:active { background: #47789b; }
-#crosshair { position: absolute; left: 50%; top: 50%; width: 12dp; height: 12dp; margin-left: -6dp; margin-top: -6dp; pointer-events: none; }
+#crosshair { display: none; position: absolute; left: 50%; top: 50%; width: 12dp; height: 12dp; margin-left: -6dp; margin-top: -6dp; pointer-events: none; }
 #crosshair-v { position: absolute; left: 5dp; top: 0dp; width: 2dp; height: 12dp; background: #ffffffcc; }
 #crosshair-h { position: absolute; left: 0dp; top: 5dp; width: 12dp; height: 2dp; background: #ffffffcc; }
 #hint { display: none; }
@@ -48,8 +57,8 @@ button:active { background: #47789b; }
 #inventory, #pause, #perspective { width: 38dp; min-width: 38dp; height: 38dp; padding: 0dp; text-align: center; background: #142638cc; border: 1dp #d8e6ee77; border-radius: 11dp; }
 #movement-pad { position: absolute; z-index: 6; left: 14dp; bottom: 54dp; width: 108dp; height: 108dp; border-radius: 54dp; border: 2dp #d9e9a4dd; background: #102438e8; pointer-events: none; }
 #movement-pad-inner { position: absolute; left: 35dp; top: 35dp; width: 36dp; height: 36dp; border-radius: 18dp; border: 2dp #e7f4c4ee; background: #739d88dd; }
-#movement-pad-cross { position: absolute; left: 52dp; top: 15dp; width: 2dp; height: 78dp; background: #ffffff44; }
-.pad-arrow { position: absolute; width: 24dp; height: 22dp; text-align: center; color: #f2f8f5; font-size: 14dp; font-weight: bold; text-shadow: 0dp 1dp 2dp #071321; }
+#movement-pad-cross { display: none; position: absolute; left: 52dp; top: 15dp; width: 2dp; height: 78dp; background: #ffffff44; }
+.pad-arrow { display: none; position: absolute; width: 24dp; height: 22dp; text-align: center; color: #f2f8f5; font-size: 14dp; font-weight: bold; text-shadow: 0dp 1dp 2dp #071321; }
 #move-up { left: 42dp; top: 3dp; }
 #move-down { left: 42dp; bottom: 3dp; }
 #move-left { left: 3dp; top: 42dp; }
@@ -81,9 +90,11 @@ button:active { background: #47789b; }
     <button id="starter-chest-open">COFRE</button>
     <button id="inventory">⋯</button>
     <button id="perspective">◉</button>
+    <button id="chat-open">CHAT</button>
     <button id="pause">Ⅱ</button>
   </div>
 </div>
+<div id="minimap"><div id="minimap-grid"></div><div id="minimap-coords">X 0 · Z 0</div></div>
 <div id="crosshair"><div id="crosshair-v"></div><div id="crosshair-h"></div></div>
 <div id="movement-pad">
   <div id="movement-pad-cross"></div><div id="movement-pad-inner"></div>
@@ -197,6 +208,18 @@ bool RmlUiRuntime::Initialise(int width, int height, float displayDensity, Actio
         if (statsPosition != std::string::npos)
             hudMarkup.replace(statsPosition, statsRule.size(), "#stats { display: none; color:");
     }
+    if (controlMode_ == 1) {
+        const std::string padCross = "#movement-pad-cross { display: none;";
+        const std::string arrows = ".pad-arrow { display: none;";
+        if (std::size_t position = hudMarkup.find(padCross); position != std::string::npos)
+            hudMarkup.replace(position, padCross.size(), "#movement-pad-cross { display: block;");
+        if (std::size_t position = hudMarkup.find(arrows); position != std::string::npos)
+            hudMarkup.replace(position, arrows.size(), ".pad-arrow { display: block;");
+    } else if (controlMode_ == 2) {
+        const std::string crosshair = "#crosshair { display: none;";
+        if (std::size_t position = hudMarkup.find(crosshair); position != std::string::npos)
+            hudMarkup.replace(position, crosshair.size(), "#crosshair { display: block;");
+    }
     if (leftHanded_) {
         const auto replaceStyle = [&hudMarkup](const std::string& from, const std::string& to) {
             const std::size_t position = hudMarkup.find(from);
@@ -229,6 +252,7 @@ bool RmlUiRuntime::Initialise(int width, int height, float displayDensity, Actio
         AttachAction(id.c_str(), id.c_str());
     }
     AttachAction("pause", "pause");
+    AttachAction("chat-open", "chat-open");
     AttachAction("perspective", "perspective");
     AttachAction("resume", "resume");
     AttachAction("save", "save");
@@ -327,6 +351,10 @@ void RmlUiRuntime::UpdateAndRender() {
     context_->Render();
 }
 
+void RmlUiRuntime::SetControlMode(int mode) {
+    controlMode_ = std::clamp(mode, 0, 2);
+}
+
 void RmlUiRuntime::SetStatus(const std::string& status) {
     if (document_ == nullptr) return;
     if (Rml::Element* element = document_->GetElementById("stats")) element->SetInnerRML(status);
@@ -377,6 +405,14 @@ void RmlUiRuntime::SetChestContents(const std::string& markup) {
     if (document_ == nullptr) return;
     if (Rml::Element* element = document_->GetElementById("starter-chest-items"))
         element->SetInnerRML(markup);
+}
+
+void RmlUiRuntime::SetMinimap(const std::string& gridMarkup, const std::string& coordinates) {
+    if (document_ == nullptr) return;
+    if (Rml::Element* grid = document_->GetElementById("minimap-grid"))
+        grid->SetInnerRML(gridMarkup);
+    if (Rml::Element* label = document_->GetElementById("minimap-coords"))
+        label->SetInnerRML(coordinates);
 }
 
 void RmlUiRuntime::SetChatMessage(const std::string& message) {
