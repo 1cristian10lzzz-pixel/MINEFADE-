@@ -10,9 +10,11 @@ MAX_BYTES, MAX_LINES = 32768, 128
 ALLOWED = {
     "id", "name", "version", "description", "enabled",
     "spawn.sheep", "spawn.cow", "spawn.bird", "spawn.pig",
+    "spawn.rabbit", "spawn.zombie", "spawn.skeleton",
     "player.speed", "player.jump", "entity.speed", "world.day_speed",
 }
-SPAWN = {"spawn.sheep", "spawn.cow", "spawn.bird", "spawn.pig"}
+SPAWN = {"spawn.sheep", "spawn.cow", "spawn.bird", "spawn.pig",
+         "spawn.rabbit", "spawn.zombie", "spawn.skeleton"}
 
 
 def parse_mod(path: Path) -> dict[str, str]:
