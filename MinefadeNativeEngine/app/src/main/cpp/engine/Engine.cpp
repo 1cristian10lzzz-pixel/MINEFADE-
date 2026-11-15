@@ -1944,11 +1944,11 @@ void Engine::RefreshInventoryUi() {
         if (id == 0u || quantity == 0u) continue;
         const BlockDefinition* item = GetBlockDefinition(static_cast<BlockId>(id));
         if (item == nullptr) continue;
-        materialMarkup += "<div class='inventory-row'><img class='inventory-icon' src='minefade://block/" +
+        materialMarkup += "<div class='material-row'><img class='inventory-icon' src='minefade://block/" +
             std::to_string(id) + "'/><span>" + std::string(item->nameEs) + " × " +
             std::to_string(quantity) + "</span></div>";
     }
-    ui_.SetInventoryContents(markup);
+    ui_.SetInventoryCatalogContents(materialMarkup);
     const std::uint16_t selectedId = inventory_.SelectedItemId();
     const BlockDefinition* selectedDefinition =
         GetBlockDefinition(static_cast<BlockId>(selectedId));
