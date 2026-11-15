@@ -121,12 +121,12 @@ jobs:
                "*/.externalNativeBuild/*" "*/intermediates/*" \
                "*/outputs/*" "*/tmp/*" "*/target/*" "*/rust-target/*" \
                "Minefade-1.0-Complete-Overhaul-source.zip"
-          test -s Minefade-0.8.0-Review12-source.zip
+          test -s Minefade-1.0-Complete-Overhaul-source.zip
 
       - name: Upload complete source
         uses: actions/upload-artifact@v4
         with:
-          name: Minefade-0.8.0-Review12-source
-          path: Minefade-0.8.0-Review12-source.zip
+          name: Minefade-1.0-Complete-Overhaul-source
+          path: Minefade-1.0-Complete-Overhaul-source.zip
           if-no-files-found: error
           retention-days: 14
