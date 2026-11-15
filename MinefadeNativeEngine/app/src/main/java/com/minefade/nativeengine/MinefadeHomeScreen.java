@@ -1154,7 +1154,7 @@ public final class MinefadeHomeScreen extends FrameLayout {
                 settingsCards.add(settingChoice("Calidad gráfica", "Iluminación y coste de renderizado.",
                         "graphics_quality", new String[]{"Ahorro", "Equilibrado", "Alta"}, 1));
                 settingsCards.add(settingChoice("Distancia de visión", "Más chunks consumen memoria y GPU.",
-                        "render_distance", new String[]{"Cercana · 3×3", "Normal · 5×5", "Amplia · 7×7"}, 1));
+                        "render_distance", new String[]{"Cercana · 3×3", "Normal · 5×5", "Amplia · 7×7", "Lejana · 9×9", "Ultra · 11×11"}, 1));
                 settingsCards.add(settingSlider("Campo de visión", "Ángulo de cámara en primera y tercera persona.",
                         "field_of_view", 60, 100, 68, "°"));
                 settingsCards.add(settingSwitch("Ondulación del agua", "Movimiento suave de la superficie.",
