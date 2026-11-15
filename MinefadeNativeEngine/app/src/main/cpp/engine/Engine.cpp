@@ -1055,15 +1055,20 @@ void Engine::Render() {
         const auto chunkVisible = [&](const ChunkMeshRange& range) {
             const float minX = static_cast<float>(range.chunkX * VoxelWorld::kChunkSize);
             const float minZ = static_cast<float>(range.chunkZ * VoxelWorld::kChunkSize);
-            return frustum.IntersectsAabb(minX, 0.0f, minZ,
-                minX + static_cast<float>(VoxelWorld::kChunkSize),
-                static_cast<float>(VoxelWorld::kWorldHeight),
-                minZ + static_cast<float>(VoxelWorld::kChunkSize));
+            // A small conservative border avoids numerical clipping at chunk
+            // seams while the camera rotates or the player crosses a boundary.
+            return frustum.IntersectsAabb(minX - 0.5f, -1.0f, minZ - 0.5f,
+                minX + static_cast<float>(VoxelWorld::kChunkSize) + 0.5f,
+                static_cast<float>(VoxelWorld::kWorldHeight) + 1.0f,
+                minZ + static_cast<float>(VoxelWorld::kChunkSize) + 0.5f);
         };
         const auto sun = environment_.SunDirection();
 
         glEnable(GL_DEPTH_TEST);
-        glEnable(GL_CULL_FACE);
+        // Keep the conservative per-chunk frustum test, but don't discard a
+        // voxel face solely because a generated/modded mesh has reversed winding.
+        // The depth buffer still rejects covered opaque surfaces.
+        glDisable(GL_CULL_FACE);
         glDisable(GL_BLEND);
         glUseProgram(worldProgram_);
         glUniformMatrix4fv(mvpLocation_, 1, GL_FALSE, mvp.v.data());
@@ -1680,6 +1685,11 @@ void Engine::RefreshInventoryUi() {
         }
         ui_.SetQuickbarSlot(static_cast<int>(i),slotMarkup,i==inventory_.selectedSlot);
     }
+    const std::uint16_t selectedId = inventory_.SelectedItemId();
+    const BlockDefinition* selectedDefinition =
+        GetBlockDefinition(static_cast<BlockId>(selectedId));
+    ui_.SetSelectedItem(selectedId,
+        selectedDefinition != nullptr ? selectedDefinition->nameEs : "");
     if (gameMode_ == 1) {
         markup.clear();
         markup += "<div class='creative-heading'>CATÁLOGO CREATIVO · SELECCIONA UN BLOQUE</div>";
