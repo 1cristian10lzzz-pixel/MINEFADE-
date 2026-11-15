@@ -26,11 +26,294 @@ WIDTH, HEIGHT = COLS * CELL, ROWS * CELL
 FACE_TOP, FACE_SIDE, FACE_BOTTOM = 0, 1, 2
 # Non-placeable Minefade progression items, appended after all stable block IDs.
 SYNTHETIC_ITEMS = {
-    'minefade_stick': {'minefade_item': True, 'name_es': 'Palo'},
-    'minefade_wooden_pickaxe': {'minefade_item': True, 'name_es': 'Pico de madera'},
-    'minefade_wooden_axe': {'minefade_item': True, 'name_es': 'Hacha de madera'},
-    'minefade_wooden_shovel': {'minefade_item': True, 'name_es': 'Pala de madera'},
-    'minefade_wooden_sword': {'minefade_item': True, 'name_es': 'Espada de madera'},
+    'minefade_stick': {
+        'minefade_item': True,
+        'name_es': "Palo"
+    },
+    'minefade_wooden_pickaxe': {
+        'minefade_item': True,
+        'name_es': "Pico de madera"
+    },
+    'minefade_wooden_axe': {
+        'minefade_item': True,
+        'name_es': "Hacha de madera"
+    },
+    'minefade_wooden_shovel': {
+        'minefade_item': True,
+        'name_es': "Pala de madera"
+    },
+    'minefade_wooden_sword': {
+        'minefade_item': True,
+        'name_es': "Espada de madera"
+    },
+    'minefade_wooden_hoe': {
+        'minefade_item': True,
+        'name_es': "Azada de madera"
+    },
+    'minefade_wooden_helmet': {
+        'minefade_item': True,
+        'name_es': "Casco de madera"
+    },
+    'minefade_wooden_chestplate': {
+        'minefade_item': True,
+        'name_es': "Pechera de madera"
+    },
+    'minefade_wooden_leggings': {
+        'minefade_item': True,
+        'name_es': "Grebas de madera"
+    },
+    'minefade_wooden_boots': {
+        'minefade_item': True,
+        'name_es': "Botas de madera"
+    },
+    'minefade_stone_pickaxe': {
+        'minefade_item': True,
+        'name_es': "Pico de piedra"
+    },
+    'minefade_stone_axe': {
+        'minefade_item': True,
+        'name_es': "Hacha de piedra"
+    },
+    'minefade_stone_shovel': {
+        'minefade_item': True,
+        'name_es': "Pala de piedra"
+    },
+    'minefade_stone_sword': {
+        'minefade_item': True,
+        'name_es': "Espada de piedra"
+    },
+    'minefade_stone_hoe': {
+        'minefade_item': True,
+        'name_es': "Azada de piedra"
+    },
+    'minefade_stone_helmet': {
+        'minefade_item': True,
+        'name_es': "Casco de piedra"
+    },
+    'minefade_stone_chestplate': {
+        'minefade_item': True,
+        'name_es': "Pechera de piedra"
+    },
+    'minefade_stone_leggings': {
+        'minefade_item': True,
+        'name_es': "Grebas de piedra"
+    },
+    'minefade_stone_boots': {
+        'minefade_item': True,
+        'name_es': "Botas de piedra"
+    },
+    'minefade_copper_pickaxe': {
+        'minefade_item': True,
+        'name_es': "Pico de cobre"
+    },
+    'minefade_copper_axe': {
+        'minefade_item': True,
+        'name_es': "Hacha de cobre"
+    },
+    'minefade_copper_shovel': {
+        'minefade_item': True,
+        'name_es': "Pala de cobre"
+    },
+    'minefade_copper_sword': {
+        'minefade_item': True,
+        'name_es': "Espada de cobre"
+    },
+    'minefade_copper_hoe': {
+        'minefade_item': True,
+        'name_es': "Azada de cobre"
+    },
+    'minefade_copper_helmet': {
+        'minefade_item': True,
+        'name_es': "Casco de cobre"
+    },
+    'minefade_copper_chestplate': {
+        'minefade_item': True,
+        'name_es': "Pechera de cobre"
+    },
+    'minefade_copper_leggings': {
+        'minefade_item': True,
+        'name_es': "Grebas de cobre"
+    },
+    'minefade_copper_boots': {
+        'minefade_item': True,
+        'name_es': "Botas de cobre"
+    },
+    'minefade_iron_pickaxe': {
+        'minefade_item': True,
+        'name_es': "Pico de hierro"
+    },
+    'minefade_iron_axe': {
+        'minefade_item': True,
+        'name_es': "Hacha de hierro"
+    },
+    'minefade_iron_shovel': {
+        'minefade_item': True,
+        'name_es': "Pala de hierro"
+    },
+    'minefade_iron_sword': {
+        'minefade_item': True,
+        'name_es': "Espada de hierro"
+    },
+    'minefade_iron_hoe': {
+        'minefade_item': True,
+        'name_es': "Azada de hierro"
+    },
+    'minefade_iron_helmet': {
+        'minefade_item': True,
+        'name_es': "Casco de hierro"
+    },
+    'minefade_iron_chestplate': {
+        'minefade_item': True,
+        'name_es': "Pechera de hierro"
+    },
+    'minefade_iron_leggings': {
+        'minefade_item': True,
+        'name_es': "Grebas de hierro"
+    },
+    'minefade_iron_boots': {
+        'minefade_item': True,
+        'name_es': "Botas de hierro"
+    },
+    'minefade_gold_pickaxe': {
+        'minefade_item': True,
+        'name_es': "Pico de oro"
+    },
+    'minefade_gold_axe': {
+        'minefade_item': True,
+        'name_es': "Hacha de oro"
+    },
+    'minefade_gold_shovel': {
+        'minefade_item': True,
+        'name_es': "Pala de oro"
+    },
+    'minefade_gold_sword': {
+        'minefade_item': True,
+        'name_es': "Espada de oro"
+    },
+    'minefade_gold_hoe': {
+        'minefade_item': True,
+        'name_es': "Azada de oro"
+    },
+    'minefade_gold_helmet': {
+        'minefade_item': True,
+        'name_es': "Casco de oro"
+    },
+    'minefade_gold_chestplate': {
+        'minefade_item': True,
+        'name_es': "Pechera de oro"
+    },
+    'minefade_gold_leggings': {
+        'minefade_item': True,
+        'name_es': "Grebas de oro"
+    },
+    'minefade_gold_boots': {
+        'minefade_item': True,
+        'name_es': "Botas de oro"
+    },
+    'minefade_diamond_pickaxe': {
+        'minefade_item': True,
+        'name_es': "Pico de diamante"
+    },
+    'minefade_diamond_axe': {
+        'minefade_item': True,
+        'name_es': "Hacha de diamante"
+    },
+    'minefade_diamond_shovel': {
+        'minefade_item': True,
+        'name_es': "Pala de diamante"
+    },
+    'minefade_diamond_sword': {
+        'minefade_item': True,
+        'name_es': "Espada de diamante"
+    },
+    'minefade_diamond_hoe': {
+        'minefade_item': True,
+        'name_es': "Azada de diamante"
+    },
+    'minefade_diamond_helmet': {
+        'minefade_item': True,
+        'name_es': "Casco de diamante"
+    },
+    'minefade_diamond_chestplate': {
+        'minefade_item': True,
+        'name_es': "Pechera de diamante"
+    },
+    'minefade_diamond_leggings': {
+        'minefade_item': True,
+        'name_es': "Grebas de diamante"
+    },
+    'minefade_diamond_boots': {
+        'minefade_item': True,
+        'name_es': "Botas de diamante"
+    },
+    'minefade_emerald_pickaxe': {
+        'minefade_item': True,
+        'name_es': "Pico de esmeralda"
+    },
+    'minefade_emerald_axe': {
+        'minefade_item': True,
+        'name_es': "Hacha de esmeralda"
+    },
+    'minefade_emerald_shovel': {
+        'minefade_item': True,
+        'name_es': "Pala de esmeralda"
+    },
+    'minefade_emerald_sword': {
+        'minefade_item': True,
+        'name_es': "Espada de esmeralda"
+    },
+    'minefade_emerald_hoe': {
+        'minefade_item': True,
+        'name_es': "Azada de esmeralda"
+    },
+    'minefade_emerald_helmet': {
+        'minefade_item': True,
+        'name_es': "Casco de esmeralda"
+    },
+    'minefade_emerald_chestplate': {
+        'minefade_item': True,
+        'name_es': "Pechera de esmeralda"
+    },
+    'minefade_emerald_leggings': {
+        'minefade_item': True,
+        'name_es': "Grebas de esmeralda"
+    },
+    'minefade_emerald_boots': {
+        'minefade_item': True,
+        'name_es': "Botas de esmeralda"
+    },
+    'minefade_copper_ingot': {
+        'minefade_item': True,
+        'name_es': "Lingote de cobre"
+    },
+    'minefade_iron_ingot': {
+        'minefade_item': True,
+        'name_es': "Lingote de hierro"
+    },
+    'minefade_gold_ingot': {
+        'minefade_item': True,
+        'name_es': "Lingote de oro"
+    },
+    'minefade_raw_copper': {
+        'minefade_item': True,
+        'name_es': "Cobre en bruto"
+    },
+    'minefade_raw_iron': {
+        'minefade_item': True,
+        'name_es': "Hierro en bruto"
+    },
+    'minefade_raw_gold': {
+        'minefade_item': True,
+        'name_es': "Oro en bruto"
+    },
+    'minefade_emerald': {
+        'minefade_item': True,
+        'name_es': "Esmeralda"
+    },
+    'minefade_diamond': {
+        'minefade_item': True,
+        'name_es': "Diamante"
+    }
 }
 
 ES = {
@@ -207,7 +490,9 @@ def display_name(key: str) -> str:
 def classify(key: str, block: dict) -> tuple[str,int,float,str,int,int]:
     k = key.lower()
     if block.get('minefade_item') is True:
-        stack = 64 if key == 'minefade_stick' else 1
+        stack = 64 if key in {'minefade_stick','minefade_copper_ingot','minefade_iron_ingot',
+            'minefade_gold_ingot','minefade_raw_copper','minefade_raw_iron','minefade_raw_gold',
+            'minefade_emerald','minefade_diamond'} else 1
         return 'None', 0, -1.0, 'None', 0, stack, 0, '', '', '', ''
     tex = block.get('textures', '')
     sound = str(block.get('sound',''))
@@ -489,25 +774,43 @@ def make_mineral_tile(key: str, face: int, block_idx: int) -> bytes:
 
 def make_tile(key: str, face: int, block_idx: int) -> bytes:
     if key in SYNTHETIC_ITEMS:
-        # Original transparent pixel-art sprites for Minefade inventory objects.
+        # Original pixel-art icons for tools, ores, ingots and armor pieces.
+        material_colors = {
+            'wooden': (154, 103, 55), 'stone': (132, 137, 142),
+            'copper': (190, 112, 72), 'iron': (190, 198, 204),
+            'gold': (245, 194, 55), 'diamond': (75, 218, 226),
+            'emerald': (54, 190, 105), '': (177, 130, 78),
+        }
+        material = next((m for m in ('wooden','stone','copper','iron','gold','diamond','emerald') if key.startswith('minefade_'+m+'_')), '')
+        base = material_colors[material]
+        light = tuple(min(255,c+35) for c in base)
         pixels = []
         for y in range(TILE):
             for x in range(TILE):
-                rgba = (0, 0, 0, 0)
-                if key.endswith('_stick'):
-                    if abs((x + y) - 15) <= 1:
-                        rgba = (127, 83, 45, 255) if (x + y) % 4 else (177, 130, 78, 255)
+                rgba = (0,0,0,0)
+                if key.endswith(('_ingot','_emerald','_diamond','_raw_copper','_raw_iron','_raw_gold')):
+                    if 3 <= y <= 11 and 2 <= x <= 13 and abs(y-7)+abs(x-8)<=9:
+                        rgba = (*(light if (x+y)%4==0 else base),255)
+                elif key.endswith('_helmet'):
+                    if (3<=y<=8 and 3<=x<=12) or (8<=y<=10 and 2<=x<=13): rgba=(*base,255)
+                    if 4<=y<=6 and x in (4,11): rgba=(*light,255)
+                elif key.endswith('_chestplate'):
+                    if 3<=y<=12 and 3<=x<=12: rgba=(*base,255)
+                    if 4<=y<=11 and x in (4,11): rgba=(*light,255)
+                elif key.endswith('_leggings'):
+                    if 2<=y<=7 and 3<=x<=12: rgba=(*base,255)
+                    if 7<=y<=13 and (3<=x<=6 or 9<=x<=12): rgba=(*base,255)
+                elif key.endswith('_boots'):
+                    if 5<=y<=12 and (2<=x<=6 or 9<=x<=13): rgba=(*base,255)
+                elif key.endswith('_stick'):
+                    if abs((x+y)-15)<=1: rgba=(127,83,45,255) if (x+y)%4 else (177,130,78,255)
                 else:
-                    if abs((x + y) - 21) <= 1 and 2 <= x <= 13:
-                        rgba = (126, 82, 44, 255)
-                    if key.endswith('_pickaxe') and 2 <= y <= 5 and 2 <= x <= 14 and abs((y - 3) - (x - 8) * 0.16) <= 1.2:
-                        rgba = (175, 119, 65, 255)
-                    elif key.endswith('_axe') and 3 <= y <= 8 and 2 <= x <= 7 and 5 <= x + y <= 14:
-                        rgba = (179, 124, 69, 255)
-                    elif key.endswith('_shovel') and 1 <= y <= 5 and 7 <= x <= 12 and (x + y) % 4 != 0:
-                        rgba = (177, 121, 67, 255)
-                    elif key.endswith('_sword') and abs(x - (13 - y * 0.55)) <= 1.1 and y <= 10:
-                        rgba = (187, 139, 83, 255)
+                    if abs((x+y)-21)<=1 and 2<=x<=13: rgba=(126,82,44,255)
+                    if key.endswith('_pickaxe') and 2<=y<=5 and 2<=x<=14 and abs((y-3)-(x-8)*0.16)<=1.2: rgba=(*base,255)
+                    elif key.endswith('_axe') and 3<=y<=8 and 2<=x<=7 and 5<=x+y<=14: rgba=(*base,255)
+                    elif key.endswith('_shovel') and 1<=y<=5 and 7<=x<=12 and (x+y)%4!=0: rgba=(*base,255)
+                    elif key.endswith('_sword') and abs(x-(13-y*0.55))<=1.1 and y<=10: rgba=(*base,255)
+                    elif key.endswith('_hoe') and 2<=y<=5 and 8<=x<=14 and abs((y-3)-(x-10)*0.15)<=1.3: rgba=(*base,255)
                 pixels.append(bytes(rgba))
         return b''.join(pixels)
     mineral_keys = ('_ore', 'ancient_debris', 'amethyst', 'copper_ore')
