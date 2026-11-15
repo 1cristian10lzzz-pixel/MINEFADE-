@@ -77,6 +77,7 @@ private:
     void OpenStarterChest();
     void TakeStarterChestContents();
     void RefreshInventoryUi();
+    void RefreshCraftingUi();
     bool HasNearbyCraftingTable() const;
     bool CraftRecipe(const std::string& recipe);
     void UpdateMining(float deltaSeconds);
