@@ -20,6 +20,7 @@ public:
     bool crouching{false};
     float speedMultiplier{1.0f};
     float jumpMultiplier{1.0f};
+    float autoJumpCooldown{0.0f};
     float walkPhase{0.0f};
     float animationTime{0.0f};
     std::uint8_t animationQuality{2};
