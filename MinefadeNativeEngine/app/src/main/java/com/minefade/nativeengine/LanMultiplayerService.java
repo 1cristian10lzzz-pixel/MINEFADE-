@@ -20,6 +20,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.ArrayDeque;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -41,7 +42,9 @@ public final class LanMultiplayerService implements Closeable {
     private static final String SERVICE_TYPE = "_minefade._tcp.";
     private static final int PROTOCOL_VERSION = 1;
     private static final int MAX_PLAYERS = 8;
-    private static final long STATE_INTERVAL_NS = 100_000_000L;
+    private static final long STATE_INTERVAL_NS = 50_000_000L;
+    private static final long INTERPOLATION_DELAY_NS = 120_000_000L;
+    private static final long MAX_EXTRAPOLATION_NS = 60_000_000L;
 
     public interface Listener {
         void onStatus(String status);
@@ -69,44 +72,106 @@ public final class LanMultiplayerService implements Closeable {
     private static final class RemotePlayer {
         final int id;
         final String name;
-        private float fromX, fromY, fromZ, fromYaw;
-        private float toX, toY, toZ, toYaw;
-        private long receivedAtNs;
+
+        private static final class Snapshot {
+            final float x, y, z, yaw;
+            final long timeNs;
+            Snapshot(float x, float y, float z, float yaw, long timeNs) {
+                this.x = x; this.y = y; this.z = z; this.yaw = yaw; this.timeNs = timeNs;
+            }
+        }
+
+        private final ArrayDeque<Snapshot> snapshots = new ArrayDeque<>(4);
 
         RemotePlayer(int id, String name, float x, float y, float z, float yaw) {
             this.id = id;
             this.name = name;
-            fromX = toX = x;
-            fromY = toY = y;
-            fromZ = toZ = z;
-            fromYaw = toYaw = yaw;
-            receivedAtNs = System.nanoTime();
+            snapshots.addLast(new Snapshot(x, y, z, yaw, System.nanoTime()));
         }
 
         synchronized void update(RemotePlayer next) {
-            float[] current = sample(System.nanoTime());
-            fromX = current[0];
-            fromY = current[1];
-            fromZ = current[2];
-            fromYaw = current[3];
-            toX = next.toX;
-            toY = next.toY;
-            toZ = next.toZ;
-            toYaw = next.toYaw;
-            receivedAtNs = System.nanoTime();
+            final long now = System.nanoTime();
+            final Snapshot latest = snapshots.peekLast();
+            if (latest == null || now - latest.timeNs > 1_000_000_000L) {
+                snapshots.clear();
+            } else {
+                final float dx = next.toX - latest.x;
+                final float dy = next.toY - latest.y;
+                final float dz = next.toZ - latest.z;
+                // A respawn, teleport or world correction should snap cleanly rather
+                // than interpolate an avatar through the whole map.
+                if ((dx * dx + dy * dy + dz * dz) > 144.0f) snapshots.clear();
+            }
+            snapshots.addLast(new Snapshot(next.toX, next.toY, next.toZ, next.toYaw, now));
+            while (snapshots.size() > 4) snapshots.removeFirst();
+        }
+
+        private static float angleLerp(float from, float to, float alpha) {
+            float delta = (to - from) % (float) (Math.PI * 2.0);
+            if (delta > Math.PI) delta -= (float) (Math.PI * 2.0);
+            if (delta < -Math.PI) delta += (float) (Math.PI * 2.0);
+            return from + delta * alpha;
         }
 
         synchronized float[] sample(long nowNs) {
-            // Keep a one-packet interpolation window. The previous transform is
-            // blended into the newest snapshot instead of teleporting every 100 ms.
-            float alpha = Math.max(0f, Math.min(1f,
-                    (nowNs - receivedAtNs) / (float) STATE_INTERVAL_NS));
+            if (snapshots.isEmpty()) return new float[] {0f, 0f, 0f, 0f};
+            final long targetNs = nowNs - INTERPOLATION_DELAY_NS;
+            Snapshot previous = null;
+            Snapshot next = null;
+            for (Snapshot snapshot : snapshots) {
+                if (snapshot.timeNs >= targetNs) { next = snapshot; break; }
+                previous = snapshot;
+            }
+            if (previous == null) {
+                Snapshot first = snapshots.peekFirst();
+                return new float[] {first.x, first.y, first.z, first.yaw};
+            }
+            if (next != null) {
+                final long span = Math.max(1L, next.timeNs - previous.timeNs);
+                final float alpha = Math.max(0f, Math.min(1f,
+                        (targetNs - previous.timeNs) / (float) span));
+                return new float[] {
+                        previous.x + (next.x - previous.x) * alpha,
+                        previous.y + (next.y - previous.y) * alpha,
+                        previous.z + (next.z - previous.z) * alpha,
+                        angleLerp(previous.yaw, next.yaw, alpha)
+                };
+            }
+
+            // Short, bounded extrapolation smooths a late packet without allowing
+            // network stalls to send a remote avatar drifting across the map.
+            Snapshot last = snapshots.peekLast();
+            Snapshot beforeLast = snapshots.size() > 1 ? null : last;
+            if (snapshots.size() > 1) {
+                for (Snapshot snapshot : snapshots) beforeLast = snapshot;
+                if (beforeLast == last) {
+                    beforeLast = null;
+                    for (Snapshot snapshot : snapshots) {
+                        if (snapshot == last) break;
+                        beforeLast = snapshot;
+                    }
+                }
+            }
+            long extraNs = Math.max(0L, Math.min(MAX_EXTRAPOLATION_NS, targetNs - last.timeNs));
+            if (beforeLast == null || extraNs == 0L) {
+                return new float[] {last.x, last.y, last.z, last.yaw};
+            }
+            float seconds = extraNs / 1_000_000_000.0f;
+            float interval = Math.max(0.001f, (last.timeNs - beforeLast.timeNs) / 1_000_000_000.0f);
+            float factor = seconds / interval;
             return new float[] {
-                    fromX + (toX - fromX) * alpha,
-                    fromY + (toY - fromY) * alpha,
-                    fromZ + (toZ - fromZ) * alpha,
-                    fromYaw + (toYaw - fromYaw) * alpha
+                    last.x + (last.x - beforeLast.x) * factor,
+                    last.y + (last.y - beforeLast.y) * factor,
+                    last.z + (last.z - beforeLast.z) * factor,
+                    angleLerp(last.yaw, last.yaw + shortestAngle(last.yaw - beforeLast.yaw) * factor, 1f)
             };
+        }
+
+        private static float shortestAngle(float angle) {
+            float value = angle % (float) (Math.PI * 2.0);
+            if (value > Math.PI) value -= (float) (Math.PI * 2.0);
+            if (value < -Math.PI) value += (float) (Math.PI * 2.0);
+            return value;
         }
     }
 
@@ -138,6 +203,7 @@ public final class LanMultiplayerService implements Closeable {
     private final NsdManager nsdManager;
     private final Handler main = new Handler(Looper.getMainLooper());
     private final ExecutorService io = Executors.newCachedThreadPool();
+    private final ExecutorService sendQueue = Executors.newSingleThreadExecutor();
     private final Map<String, GameInfo> discoveredGames = new ConcurrentHashMap<>();
     private final Map<Integer, Peer> peers = new ConcurrentHashMap<>();
     private final Map<Integer, RemotePlayer> remotePlayers = new ConcurrentHashMap<>();
@@ -493,32 +559,10 @@ public final class LanMultiplayerService implements Closeable {
         String line = "STATE|" + localPlayerId + "|" + playerName + "|"
                 + finite(state[0]) + "|" + finite(state[1]) + "|"
                 + finite(state[2]) + "|" + finite(state[3]);
-        if (hosting) {
-            broadcast(line, null);
-        } else {
-            synchronized (clientWriteLock) {
-                BufferedWriter writer = clientWriter;
-                if (writer == null) return;
-                try {
-                    writer.write(line);
-                    writer.newLine();
-                    writer.flush();
-                } catch (IOException error) {
-                    Log.w(TAG, "Could not send player state", error);
-                    connected = false;
-                    postDisconnected("Se perdió la conexión con el servidor.");
-                }
-            }
-        }
-    }
-
-    /** Block edits are four integers per event: world X, Y, Z and block ID. */
-    public void publishBlockEdits(int[] edits) {
-        if (!isConnected() || edits == null || edits.length < 4) return;
-        int count = edits.length - (edits.length % 4);
-        for (int i = 0; i < count; i += 4) {
-            String line = "BLOCK|" + edits[i] + "|" + edits[i + 1] + "|"
-                    + edits[i + 2] + "|" + edits[i + 3];
+        // Never flush a socket on the GL/render thread. A slow Wi-Fi peer must
+        // not freeze camera input, chunk streaming or animation updates.
+        sendQueue.execute(() -> {
+            if (closed || !connected) return;
             if (hosting) {
                 broadcast(line, null);
             } else {
@@ -530,13 +574,42 @@ public final class LanMultiplayerService implements Closeable {
                         writer.newLine();
                         writer.flush();
                     } catch (IOException error) {
-                        Log.w(TAG, "Could not send block edit", error);
+                        Log.w(TAG, "Could not send player state", error);
                         connected = false;
-                        postDisconnected("Se perdió la conexión al sincronizar el mundo.");
-                        return;
+                        postDisconnected("Se perdió la conexión con el servidor.");
                     }
                 }
             }
+        });
+    }
+
+    /** Block edits are four integers per event: world X, Y, Z and block ID. */
+    public void publishBlockEdits(int[] edits) {
+        if (!isConnected() || edits == null || edits.length < 4) return;
+        int count = edits.length - (edits.length % 4);
+        for (int i = 0; i < count; i += 4) {
+            String line = "BLOCK|" + edits[i] + "|" + edits[i + 1] + "|"
+                    + edits[i + 2] + "|" + edits[i + 3];
+            sendQueue.execute(() -> {
+                if (closed || !connected) return;
+                if (hosting) {
+                    broadcast(line, null);
+                } else {
+                    synchronized (clientWriteLock) {
+                        BufferedWriter writer = clientWriter;
+                        if (writer == null) return;
+                        try {
+                            writer.write(line);
+                            writer.newLine();
+                            writer.flush();
+                        } catch (IOException error) {
+                            Log.w(TAG, "Could not send block edit", error);
+                            connected = false;
+                            postDisconnected("Se perdió la conexión al sincronizar el mundo.");
+                        }
+                    }
+                }
+            });
         }
     }
 
@@ -722,6 +795,7 @@ public final class LanMultiplayerService implements Closeable {
         closed = true;
         stopDiscovery();
         stopSession();
+        sendQueue.shutdownNow();
         io.shutdownNow();
     }
 }
