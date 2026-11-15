@@ -29,6 +29,7 @@ public:
     void SetStatusVisible(bool visible) { showStats_ = visible; }
     void SetTargetBlock(const std::string& name, float progress);
     void SetPickupToast(const std::string& text);
+    void SetSelectedItem(const std::string& markup);
     void SetPerspectiveEnabled(bool enabled);
     void SetCrouchEnabled(bool enabled);
     void SetChestContents(const std::string& markup);
