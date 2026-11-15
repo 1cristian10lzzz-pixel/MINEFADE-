@@ -68,6 +68,7 @@ private:
     ActionCallback callback_;
     std::vector<std::unique_ptr<ActionListener>> listeners_;
     std::vector<std::unique_ptr<ActionListener>> inventoryListeners_;
+    std::vector<std::unique_ptr<ActionListener>> craftingListeners_;
     std::vector<Rml::byte> fontData_;
     std::vector<std::uint8_t> blockAtlasPixels_;
     int blockAtlasWidth_{0};
