@@ -1344,6 +1344,33 @@ void Engine::HandleUiAction(const std::string& action) {
         inventoryVisible_ = false;
         ui_.SetPanelVisible("inventory-panel", false);
         paused_ = pauseVisible_;
+    } else if (action == "crafting-open") {
+        inventoryVisible_ = false;
+        ui_.SetPanelVisible("inventory-panel", false);
+        ui_.SetPanelVisible("pause-panel", false);
+        pauseVisible_ = false;
+        paused_ = true;
+        ui_.SetPanelVisible("crafting-panel", true);
+    } else if (action == "crafting-close") {
+        ui_.SetPanelVisible("crafting-panel", false);
+        inventoryVisible_ = true;
+        paused_ = true;
+        RefreshInventoryUi();
+        ui_.SetPanelVisible("inventory-panel", true);
+    } else if (action == "craft-planks") {
+        CraftRecipe("planks");
+    } else if (action == "craft-sticks") {
+        CraftRecipe("sticks");
+    } else if (action == "craft-table") {
+        CraftRecipe("table");
+    } else if (action == "craft-wooden-pickaxe") {
+        CraftRecipe("wooden_pickaxe");
+    } else if (action == "craft-wooden-axe") {
+        CraftRecipe("wooden_axe");
+    } else if (action == "craft-wooden-shovel") {
+        CraftRecipe("wooden_shovel");
+    } else if (action == "craft-wooden-sword") {
+        CraftRecipe("wooden_sword");
     } else if (action == "pause") {
         pauseVisible_ = !pauseVisible_;
         paused_ = pauseVisible_;
@@ -1402,6 +1429,103 @@ void Engine::HandleUiAction(const std::string& action) {
             RefreshInventoryUi();
         }
     }
+}
+
+
+bool Engine::HasNearbyCraftingTable() const {
+    const int centerX = static_cast<int>(std::floor(player_.position.x));
+    const int centerY = static_cast<int>(std::floor(player_.position.y));
+    const int centerZ = static_cast<int>(std::floor(player_.position.z));
+    for (int y = std::max(0, centerY - 1); y <= std::min(VoxelWorld::kWorldHeight - 1, centerY + 2); ++y) {
+        for (int z = centerZ - 2; z <= centerZ + 2; ++z) {
+            for (int x = centerX - 2; x <= centerX + 2; ++x) {
+                if (world_.GetBlock(x, y, z) == BlockId::CraftingTable) return true;
+            }
+        }
+    }
+    return false;
+}
+
+bool Engine::CraftRecipe(const std::string& recipe) {
+    struct Ingredient { std::uint16_t id; std::uint16_t amount; };
+    std::array<Ingredient, 2> ingredients{};
+    std::size_t ingredientCount = 0u;
+    std::uint16_t outputId = 0u;
+    std::uint16_t outputAmount = 1u;
+    bool needsTable = false;
+    const auto addIngredient = [&ingredients, &ingredientCount](BlockId id, std::uint16_t amount) {
+        ingredients[ingredientCount++] = {static_cast<std::uint16_t>(id), amount};
+    };
+
+    if (recipe == "planks") {
+        // One oak log produces four planks; the secondary log family is also accepted.
+        const std::uint16_t logId = static_cast<std::uint16_t>(BlockId::Log);
+        const std::uint16_t log2Id = static_cast<std::uint16_t>(BlockId::Log2);
+        if (inventory_.CountItem(logId) > 0u) addIngredient(BlockId::Log, 1u);
+        else if (inventory_.CountItem(log2Id) > 0u) addIngredient(BlockId::Log2, 1u);
+        else {
+            ui_.SetChatMessage("Necesitas un tronco para fabricar tablones.");
+            return false;
+        }
+        outputId = static_cast<std::uint16_t>(BlockId::Planks);
+        outputAmount = 4u;
+    } else if (recipe == "sticks") {
+        addIngredient(BlockId::Planks, 2u);
+        outputId = static_cast<std::uint16_t>(BlockId::MinefadeStick);
+        outputAmount = 4u;
+    } else if (recipe == "table") {
+        addIngredient(BlockId::Planks, 4u);
+        outputId = static_cast<std::uint16_t>(BlockId::CraftingTable);
+    } else {
+        addIngredient(BlockId::Planks,
+            recipe == "wooden_shovel" ? 1u : (recipe == "wooden_sword" ? 2u : 3u));
+        addIngredient(BlockId::MinefadeStick,
+            recipe == "wooden_sword" ? 1u : 2u);
+        needsTable = true;
+        if (recipe == "wooden_pickaxe")
+            outputId = static_cast<std::uint16_t>(BlockId::MinefadeWoodenPickaxe);
+        else if (recipe == "wooden_axe")
+            outputId = static_cast<std::uint16_t>(BlockId::MinefadeWoodenAxe);
+        else if (recipe == "wooden_shovel")
+            outputId = static_cast<std::uint16_t>(BlockId::MinefadeWoodenShovel);
+        else if (recipe == "wooden_sword")
+            outputId = static_cast<std::uint16_t>(BlockId::MinefadeWoodenSword);
+        else
+            return false;
+    }
+
+    if (needsTable && !HasNearbyCraftingTable()) {
+        ui_.SetChatMessage("Necesitas una mesa de trabajo cerca para fabricar herramientas.");
+        return false;
+    }
+    if (outputId == 0u || !inventory_.CanAdd(outputId, outputAmount)) {
+        ui_.SetChatMessage("No hay espacio suficiente en el inventario.");
+        return false;
+    }
+    for (std::size_t i = 0; i < ingredientCount; ++i) {
+        if (inventory_.CountItem(ingredients[i].id) < ingredients[i].amount) {
+            ui_.SetChatMessage("No tienes los materiales necesarios para esta receta.");
+            return false;
+        }
+    }
+    for (std::size_t i = 0; i < ingredientCount; ++i) {
+        if (!inventory_.ConsumeItem(ingredients[i].id, ingredients[i].amount)) {
+            ui_.SetChatMessage("No se pudo completar la receta; revisa el inventario.");
+            RefreshInventoryUi();
+            return false;
+        }
+    }
+    if (!inventory_.Add(outputId, outputAmount)) {
+        ui_.SetChatMessage("No se pudo guardar el objeto fabricado.");
+        RefreshInventoryUi();
+        return false;
+    }
+    const BlockDefinition* output = GetBlockDefinition(static_cast<BlockId>(outputId));
+    ui_.SetChatMessage(output != nullptr
+        ? std::string("Fabricado: ") + output->nameEs + (outputAmount > 1u ? " ×4" : "")
+        : "Objeto fabricado.");
+    RefreshInventoryUi();
+    return true;
 }
 
 std::string Engine::ExecuteCommand(const std::string& rawCommand) {
