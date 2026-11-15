@@ -70,6 +70,10 @@ button:active { background: #47789b; }
 #jump { position: absolute; z-index: 7; right: 22dp; bottom: 60dp; width: 56dp; height: 56dp; padding: 2dp; text-align: center; border-radius: 18dp; background: #2f6479f2; border: 2dp #d9e9a4ee; color: #ffffff; font-size: 20dp; }
 #crouch { position: absolute; z-index: 7; right: 82dp; bottom: 65dp; width: 44dp; height: 44dp; padding: 1dp; text-align: center; border-radius: 14dp; background: #20394ce8; border: 1dp #c3d8e888; color: #f5fbff; font-size: 17dp; }
 #inventory-panel { left: auto; right: 10dp; top: 52dp; bottom: 54dp; width: 220dp; margin: 0dp; overflow-y: auto; }
+#crafting-panel { z-index: 10; width: 300dp; margin-left: -150dp; max-height: 78%; overflow-y: auto; }
+#crafting-panel .recipe-title { font-size: 14dp; color: #e8ffd5; margin-bottom: 8dp; }
+#crafting-panel .recipe-grid { display: flex; flex-direction: row; flex-wrap: wrap; gap: 6dp; }
+#crafting-panel button { min-width: 130dp; flex-grow: 1; }
 .inventory-row { color: #e0e8ed; font-size: 12dp; padding: 5dp 2dp; border-bottom: 1dp #43576a; }
 #pause-panel { z-index: 10; width: 270dp; margin-left: -135dp; }
 #pause-panel .actions { justify-content: center; gap: 8dp; }
@@ -118,7 +122,20 @@ button:active { background: #47789b; }
 <div id="pickup"></div>
 <div id="inventory-panel" class="panel">
   <div id="inventory-items"></div>
-  <div class="actions"><button id="inventory-close">Cerrar</button></div>
+  <div class="actions"><button id="crafting-open">FABRICAR</button><button id="inventory-close">Cerrar</button></div>
+</div>
+<div id="crafting-panel" class="panel">
+  <div class="recipe-title">PROGRESIÓN · MADERA</div>
+  <div class="recipe-grid">
+    <button id="craft-planks">Tronco → 4 tablones</button>
+    <button id="craft-sticks">2 tablones → 4 palos</button>
+    <button id="craft-table">4 tablones → mesa</button>
+    <button id="craft-wooden-pickaxe">Pico de madera</button>
+    <button id="craft-wooden-axe">Hacha de madera</button>
+    <button id="craft-wooden-shovel">Pala de madera</button>
+    <button id="craft-wooden-sword">Espada de madera</button>
+  </div>
+  <div class="actions"><button id="crafting-close">Volver al inventario</button></div>
 </div>
 <div id="pause-panel" class="panel">
   <div class="actions">
@@ -251,6 +268,15 @@ bool RmlUiRuntime::Initialise(int width, int height, float displayDensity, Actio
 
     AttachAction("inventory", "inventory");
     AttachAction("inventory-close", "inventory-close");
+    AttachAction("crafting-open", "crafting-open");
+    AttachAction("crafting-close", "crafting-close");
+    AttachAction("craft-planks", "craft-planks");
+    AttachAction("craft-sticks", "craft-sticks");
+    AttachAction("craft-table", "craft-table");
+    AttachAction("craft-wooden-pickaxe", "craft-wooden-pickaxe");
+    AttachAction("craft-wooden-axe", "craft-wooden-axe");
+    AttachAction("craft-wooden-shovel", "craft-wooden-shovel");
+    AttachAction("craft-wooden-sword", "craft-wooden-sword");
     AttachAction("jump", "jump");
     AttachAction("crouch", "crouch");
     AttachAction("starter-chest-open", "starter-chest-open");
