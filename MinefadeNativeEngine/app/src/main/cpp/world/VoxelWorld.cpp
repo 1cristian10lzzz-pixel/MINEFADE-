@@ -561,6 +561,7 @@ void VoxelWorld::WaitForChunkGeneration() {
             if (chunks_.find(key) == chunks_.end()) {
                 Chunk chunk = MakeChunk(key.first, key.second);
                 chunks_.emplace(key, std::move(chunk));
+                InvalidateChunkAndNeighbors(key.first, key.second);
             }
             continue;
         }
@@ -957,6 +958,25 @@ void VoxelWorld::BuildMesh(std::vector<WorldVertex>& output,int centerWorldX,int
             range.opaqueCount=output.size()-range.opaqueFirst;
         }
         if (chunkRanges!=nullptr) chunkRanges->push_back(range);
+    }
+    // Keep cached geometry bounded to the currently resident render radius.
+    if (radiusInChunks >= 0) {
+        for (auto it = chunkMeshCache_.begin(); it != chunkMeshCache_.end();) {
+            if (std::abs(it->first.first - centerChunkX) > radiusInChunks ||
+                std::abs(it->first.second - centerChunkZ) > radiusInChunks) {
+                it = chunkMeshCache_.erase(it);
+            } else {
+                ++it;
+            }
+        }
+        for (auto it = dirtyChunkMeshes_.begin(); it != dirtyChunkMeshes_.end();) {
+            if (std::abs(it->first - centerChunkX) > radiusInChunks ||
+                std::abs(it->second - centerChunkZ) > radiusInChunks) {
+                it = dirtyChunkMeshes_.erase(it);
+            } else {
+                ++it;
+            }
+        }
     }
 }
 
