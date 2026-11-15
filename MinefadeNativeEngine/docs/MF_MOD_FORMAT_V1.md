@@ -9,6 +9,8 @@ Archivo de texto UTF-8, una propiedad `clave=valor` por línea. Las líneas que 
 | Clave | Tipo | Límite |
 |---|---|---:|
 | `spawn.sheep`, `spawn.cow`, `spawn.bird`, `spawn.pig` | entero | 0–24 |
+| `spawn.rabbit` | entero | 0–24 (máximo combinado 16) |
+| `spawn.zombie`, `spawn.skeleton` | entero | 0–24 (máximo combinado 8 por tipo) |
 | `player.speed` | decimal | 0.5–2.0 |
 | `player.jump` | decimal | 0.75–1.5 |
 | `entity.speed` | decimal | 0.5–2.0 |
