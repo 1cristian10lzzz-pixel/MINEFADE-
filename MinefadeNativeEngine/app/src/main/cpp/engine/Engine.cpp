@@ -43,7 +43,7 @@ uniform vec3 uCameraPosition;
 out mediump vec3 vColor;
 out mediump vec2 vTexCoord;
 flat out highp int vAtlasTile;
-out mediump float vFogDistance;
+out mediump float vFogDistanceSquared;
 void main() {
     vec3 position = aPosition;
     float fluidCode = aColor.r;
@@ -54,7 +54,9 @@ void main() {
         position.y += wave * (uQuality > 1.5 ? 0.018 : 0.009);
     }
     gl_Position = uMvp * vec4(position, 1.0);
-    vFogDistance = distance(position, uCameraPosition);
+    // Keep squared distance for fog interpolation; avoids a per-vertex square root.
+    vec3 fogDelta = position - uCameraPosition;
+    vFogDistanceSquared = dot(fogDelta, fogDelta);
     float diffuse = max(dot(normalize(aNormal), normalize(-uLightDirection)), 0.0);
     float qualityFactor = clamp(uQuality * 0.5, 0.0, 1.0);
     float ambient = mix(0.17, 0.34, qualityFactor);
@@ -73,7 +75,7 @@ precision mediump float;
 in mediump vec3 vColor;
 in mediump vec2 vTexCoord;
 flat in highp int vAtlasTile;
-in mediump float vFogDistance;
+in mediump float vFogDistanceSquared;
 uniform sampler2D uBlockAtlas;
 uniform int uUseAtlas;
 uniform vec3 uFogColor;
@@ -91,7 +93,9 @@ vec2 AtlasUv(vec2 localUv, int tile) {
 void main() {
     vec4 texel = (uUseAtlas == 1) ? texture(uBlockAtlas, AtlasUv(vTexCoord, vAtlasTile)) : vec4(1.0);
     vec3 litColor = texel.rgb * vColor;
-    float fog = smoothstep(uFogNear, uFogFar, vFogDistance);
+    float fogNearSquared = uFogNear * uFogNear;
+    float fogFarSquared = uFogFar * uFogFar;
+    float fog = smoothstep(fogNearSquared, fogFarSquared, max(vFogDistanceSquared, 0.0));
     outColor = vec4(mix(litColor, uFogColor, fog), texel.a);
 }
 )";
