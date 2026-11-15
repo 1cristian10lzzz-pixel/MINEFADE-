@@ -680,11 +680,7 @@ void VoxelWorld::BuildMesh(std::vector<WorldVertex>& output,int centerWorldX,int
 
     const int centerChunkX=FloorDiv(centerWorldX,kChunkSize);
     const int centerChunkZ=FloorDiv(centerWorldZ,kChunkSize);
-    struct ChunkMeshData {
-        std::vector<WorldVertex> opaque;
-        std::vector<WorldVertex> transparent;
-        int lod{0};
-    };
+    using ChunkMeshData = ChunkMeshCache;
 
     std::vector<const Chunk*> selected;
     selected.reserve(chunks_.size());
@@ -711,6 +707,20 @@ void VoxelWorld::BuildMesh(std::vector<WorldVertex>& output,int centerWorldX,int
     };
 
     std::vector<ChunkMeshData> built(selected.size());
+    std::vector<bool> needsBuild(selected.size(), false);
+    for (std::size_t i = 0; i < selected.size(); ++i) {
+        const Chunk& chunk = *selected[i];
+        const int distance = std::max(std::abs(chunk.x - centerChunkX),
+                                      std::abs(chunk.z - centerChunkZ));
+        const int expectedLod = distance <= 2 ? 0 : (distance == 3 ? 1 : 2);
+        const bool outerBorder = radiusInChunks >= 0 && distance >= radiusInChunks;
+        const auto key = std::make_pair(chunk.x, chunk.z);
+        const auto cached = chunkMeshCache_.find(key);
+        needsBuild[i] = cached == chunkMeshCache_.end() ||
+            dirtyChunkMeshes_.find(key) != dirtyChunkMeshes_.end() ||
+            cached->second.lod != expectedLod ||
+            cached->second.outerBorder != outerBorder || outerBorder;
+    }
     static constexpr int neighborOffsets[6][3] = {
         {1,0,0},{-1,0,0},{0,1,0},{0,-1,0},{0,0,1},{0,0,-1}
     };
@@ -724,6 +734,7 @@ void VoxelWorld::BuildMesh(std::vector<WorldVertex>& output,int centerWorldX,int
     }};
 
     const auto buildOneChunk = [&](std::size_t index) {
+        if (!needsBuild[index]) return;
         const Chunk& chunk=*selected[index];
         ChunkMeshData& result=built[index];
         const int baseX=chunk.x*kChunkSize, baseZ=chunk.z*kChunkSize;
@@ -733,6 +744,7 @@ void VoxelWorld::BuildMesh(std::vector<WorldVertex>& output,int centerWorldX,int
         // ring is allowed the lighter LOD1 silhouette; LOD2 remains for chunks
         // beyond the normal mobile render radius.
         result.lod = chunkDistance<=2 ? 0 : (chunkDistance==3 ? 1 : 2);
+        result.outerBorder = radiusInChunks >= 0 && chunkDistance >= radiusInChunks;
 
         struct FaceCell { std::uint16_t tile{0}; bool visible{false}; };
         const auto coordinates = [&](int face,int slice,int u,int v) {
@@ -907,11 +919,23 @@ void VoxelWorld::BuildMesh(std::vector<WorldVertex>& output,int centerWorldX,int
         for (auto& job:jobs) job.get();
     }
 
+    // Commit only newly built or invalidated meshes to the persistent per-chunk cache.
+    for (std::size_t i = 0; i < selected.size(); ++i) {
+        const auto key = std::make_pair(selected[i]->x, selected[i]->z);
+        if (needsBuild[i]) {
+            chunkMeshCache_[key] = std::move(built[i]);
+            dirtyChunkMeshes_.erase(key);
+        }
+    }
+
     const std::size_t reserveChunks=selected.size();
     output.reserve(reserveChunks*7000u);
     if (transparentOutput!=nullptr) transparentOutput->reserve(reserveChunks*1200u);
     for (std::size_t i=0;i<selected.size();++i) {
-        const ChunkMeshData& data=built[i];
+        const auto cacheIt = chunkMeshCache_.find(
+            std::make_pair(selected[i]->x, selected[i]->z));
+        if (cacheIt == chunkMeshCache_.end()) continue;
+        const ChunkMeshData& data = cacheIt->second;
         ChunkMeshRange range;
         range.chunkX=selected[i]->x;
         range.chunkZ=selected[i]->z;
