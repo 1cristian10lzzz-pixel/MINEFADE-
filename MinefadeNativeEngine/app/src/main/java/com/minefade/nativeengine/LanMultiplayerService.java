@@ -20,6 +20,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.ArrayDeque;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -39,9 +40,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 public final class LanMultiplayerService implements Closeable {
     private static final String TAG = "MinefadeLAN";
     private static final String SERVICE_TYPE = "_minefade._tcp.";
-    private static final int PROTOCOL_VERSION = 1;
+    private static final int PROTOCOL_VERSION = 2;
     private static final int MAX_PLAYERS = 8;
-    private static final long STATE_INTERVAL_NS = 100_000_000L;
+    private static final long STATE_INTERVAL_NS = 50_000_000L;
+    private static final long INTERPOLATION_DELAY_NS = 110_000_000L;
 
     public interface Listener {
         void onStatus(String status);
@@ -67,46 +69,78 @@ public final class LanMultiplayerService implements Closeable {
     }
 
     private static final class RemotePlayer {
+        private static final class Snapshot {
+            final long timeNs;
+            final float x, y, z, yaw, moveX, moveY;
+            Snapshot(long timeNs, float x, float y, float z, float yaw, float moveX, float moveY) {
+                this.timeNs = timeNs;
+                this.x = x; this.y = y; this.z = z; this.yaw = yaw;
+                this.moveX = moveX; this.moveY = moveY;
+            }
+        }
+
         final int id;
         final String name;
-        private float fromX, fromY, fromZ, fromYaw;
-        private float toX, toY, toZ, toYaw;
-        private long receivedAtNs;
+        private final ArrayDeque<Snapshot> snapshots = new ArrayDeque<>();
 
-        RemotePlayer(int id, String name, float x, float y, float z, float yaw) {
+        RemotePlayer(int id, String name, float x, float y, float z, float yaw,
+                     float moveX, float moveY) {
             this.id = id;
             this.name = name;
-            fromX = toX = x;
-            fromY = toY = y;
-            fromZ = toZ = z;
-            fromYaw = toYaw = yaw;
-            receivedAtNs = System.nanoTime();
+            snapshots.addLast(new Snapshot(System.nanoTime(), x, y, z, yaw, moveX, moveY));
         }
 
         synchronized void update(RemotePlayer next) {
-            float[] current = sample(System.nanoTime());
-            fromX = current[0];
-            fromY = current[1];
-            fromZ = current[2];
-            fromYaw = current[3];
-            toX = next.toX;
-            toY = next.toY;
-            toZ = next.toZ;
-            toYaw = next.toYaw;
-            receivedAtNs = System.nanoTime();
+            Snapshot value = next.latest();
+            snapshots.addLast(new Snapshot(System.nanoTime(), value.x, value.y, value.z,
+                    value.yaw, value.moveX, value.moveY));
+            while (snapshots.size() > 6) snapshots.removeFirst();
+        }
+
+        private Snapshot latest() {
+            Snapshot value = snapshots.peekLast();
+            return value == null ? new Snapshot(System.nanoTime(), 0, 0, 0, 0, 0, 0) : value;
         }
 
         synchronized float[] sample(long nowNs) {
-            // Keep a one-packet interpolation window. The previous transform is
-            // blended into the newest snapshot instead of teleporting every 100 ms.
-            float alpha = Math.max(0f, Math.min(1f,
-                    (nowNs - receivedAtNs) / (float) STATE_INTERVAL_NS));
+            if (snapshots.isEmpty()) return new float[6];
+            final long renderTime = nowNs - INTERPOLATION_DELAY_NS;
+            while (snapshots.size() > 2) {
+                Snapshot second = null;
+                int index = 0;
+                for (Snapshot item : snapshots) {
+                    if (index++ == 1) { second = item; break; }
+                }
+                if (second == null || second.timeNs > renderTime) break;
+                snapshots.removeFirst();
+            }
+            Snapshot a = snapshots.peekFirst();
+            Snapshot b = null;
+            int index = 0;
+            for (Snapshot item : snapshots) {
+                if (index++ == 1) { b = item; break; }
+            }
+            if (a == null) return new float[6];
+            if (b == null || renderTime <= a.timeNs) return values(a);
+            if (renderTime >= b.timeNs) return values(b);
+            final float alpha = Math.max(0.0f, Math.min(1.0f,
+                    (renderTime - a.timeNs) / (float) Math.max(1L, b.timeNs - a.timeNs)));
+            float yawDelta = b.yaw - a.yaw;
+            while (yawDelta > Math.PI) yawDelta -= (float) (Math.PI * 2.0);
+            while (yawDelta < -Math.PI) yawDelta += (float) (Math.PI * 2.0);
             return new float[] {
-                    fromX + (toX - fromX) * alpha,
-                    fromY + (toY - fromY) * alpha,
-                    fromZ + (toZ - fromZ) * alpha,
-                    fromYaw + (toYaw - fromYaw) * alpha
+                    lerp(a.x, b.x, alpha), lerp(a.y, b.y, alpha), lerp(a.z, b.z, alpha),
+                    a.yaw + yawDelta * alpha, lerp(a.moveX, b.moveX, alpha),
+                    lerp(a.moveY, b.moveY, alpha)
             };
+        }
+
+        private static float[] values(Snapshot s) {
+            return new float[] {s.x, s.y, s.z, s.yaw, s.moveX, s.moveY};
+        }
+
+        private static float lerp(float a, float b, float t) {
+            return a + (b - a) * t;
         }
     }
 
@@ -260,6 +294,13 @@ public final class LanMultiplayerService implements Closeable {
                             Log.w(TAG, "Could not resolve " + info.getServiceName() + ": " + errorCode);
                         }
                         @Override public void onServiceResolved(NsdServiceInfo info) {
+                            byte[] advertisedProtocol = info.getAttributes().get("protocol");
+                            String protocol = advertisedProtocol == null ? "" :
+                                    new String(advertisedProtocol, StandardCharsets.UTF_8);
+                            if (!String.valueOf(PROTOCOL_VERSION).equals(protocol)) {
+                                Log.i(TAG, "Ignoring incompatible LAN protocol " + protocol);
+                                return;
+                            }
                             InetAddress address = info.getHost();
                             if (address == null || info.getPort() <= 0) return;
                             GameInfo game = new GameInfo(info.getServiceName(),
@@ -320,7 +361,7 @@ public final class LanMultiplayerService implements Closeable {
                         new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
                 clientWriter = writer;
                 synchronized (clientWriteLock) {
-                    writer.write("HELLO|" + playerName);
+                    writer.write("HELLO|" + PROTOCOL_VERSION + "|" + playerName);
                     writer.newLine();
                     writer.flush();
                 }
@@ -329,9 +370,9 @@ public final class LanMultiplayerService implements Closeable {
                 while (!closed && (line = reader.readLine()) != null) {
                     if (line.startsWith("WELCOME|")) {
                         String[] fields = line.split("\\|", -1);
-                        if (fields.length >= 3) {
-                            localPlayerId = parseInt(fields[1], -1);
-                            playerNames.put(0, fields[2]);
+                        if (fields.length >= 4 && parseInt(fields[1], -1) == PROTOCOL_VERSION) {
+                            localPlayerId = parseInt(fields[2], -1);
+                            playerNames.put(0, fields[3]);
                             connected = localPlayerId > 0;
                             welcomed = connected;
                             if (welcomed) {
@@ -396,16 +437,25 @@ public final class LanMultiplayerService implements Closeable {
             BufferedWriter writer = new BufferedWriter(
                     new OutputStreamWriter(socket.getOutputStream(), StandardCharsets.UTF_8));
             String hello = reader.readLine();
-            if (hello == null || !hello.startsWith("HELLO|")) {
+            if (hello == null) {
+                socket.close();
+                return;
+            }
+            String[] helloFields = hello.split("\\|", -1);
+            if (helloFields.length != 3 || !"HELLO".equals(helloFields[0]) ||
+                    parseInt(helloFields[1], -1) != PROTOCOL_VERSION) {
+                writer.write("ERROR|VERSION");
+                writer.newLine();
+                writer.flush();
                 socket.close();
                 return;
             }
             id = nextPlayerId.getAndIncrement();
-            String name = safeField(hello.substring("HELLO|".length()), "Jugador");
+            String name = safeField(helloFields[2], "Jugador");
             peer = new Peer(id, name, socket, writer);
             peers.put(id, peer);
             playerNames.put(id, name);
-            peer.send("WELCOME|" + id + "|" + playerName);
+            peer.send("WELCOME|" + PROTOCOL_VERSION + "|" + id + "|" + playerName);
             peer.send("PLAYER|0|" + playerName);
             for (Map.Entry<Integer, String> entry : playerNames.entrySet()) {
                 if (entry.getKey() != 0 && entry.getKey() != id)
@@ -484,15 +534,16 @@ public final class LanMultiplayerService implements Closeable {
         }
     }
 
-    /** Called from the GL thread. Sends at most ten movement packets per second. */
+    /** Called from the GL thread. Sends twenty movement snapshots per second. */
     public void publishLocalState(float[] state) {
-        if (!isConnected() || state == null || state.length < 4) return;
+        if (!isConnected() || state == null || state.length < 6) return;
         final long now = System.nanoTime();
         if (now - lastStateSentNs < STATE_INTERVAL_NS) return;
         lastStateSentNs = now;
         String line = "STATE|" + localPlayerId + "|" + playerName + "|"
                 + finite(state[0]) + "|" + finite(state[1]) + "|"
-                + finite(state[2]) + "|" + finite(state[3]);
+                + finite(state[2]) + "|" + finite(state[3]) + "|"
+                + finite(state[4]) + "|" + finite(state[5]);
         if (hosting) {
             broadcast(line, null);
         } else {
@@ -545,7 +596,7 @@ public final class LanMultiplayerService implements Closeable {
         List<RemotePlayer> snapshot = new ArrayList<>(remotePlayers.values());
         if (snapshot.isEmpty()) return new float[0];
         int count = Math.min(snapshot.size(), MAX_PLAYERS - 1);
-        float[] result = new float[count * 4];
+        float[] result = new float[count * 6];
         int index = 0;
         final long nowNs = System.nanoTime();
         for (RemotePlayer player : snapshot) {
@@ -555,6 +606,8 @@ public final class LanMultiplayerService implements Closeable {
             result[index++] = pose[1];
             result[index++] = pose[2];
             result[index++] = pose[3];
+            result[index++] = pose[4];
+            result[index++] = pose[5];
         }
         return result;
     }
@@ -576,7 +629,7 @@ public final class LanMultiplayerService implements Closeable {
 
     private RemotePlayer parseState(String line) {
         String[] fields = line.split("\\|", -1);
-        if (fields.length != 7) return null;
+        if (fields.length != 9) return null;
         try {
             int id = Integer.parseInt(fields[1]);
             String name = safeField(fields[2], "Jugador");
@@ -584,11 +637,15 @@ public final class LanMultiplayerService implements Closeable {
             float y = Float.parseFloat(fields[4]);
             float z = Float.parseFloat(fields[5]);
             float yaw = Float.parseFloat(fields[6]);
-            if (!Float.isFinite(x) || !Float.isFinite(y) || !Float.isFinite(z) || !Float.isFinite(yaw)
-                    || Math.abs(x) > 1_000_000f || y < -128f || y > 1024f || Math.abs(z) > 1_000_000f) {
+            float moveX = Float.parseFloat(fields[7]);
+            float moveY = Float.parseFloat(fields[8]);
+            if (!Float.isFinite(x) || !Float.isFinite(y) || !Float.isFinite(z) || !Float.isFinite(yaw) ||
+                    !Float.isFinite(moveX) || !Float.isFinite(moveY) ||
+                    Math.abs(x) > 1_000_000f || y < -128f || y > 1024f || Math.abs(z) > 1_000_000f ||
+                    Math.abs(moveX) > 1.5f || Math.abs(moveY) > 1.5f) {
                 return null;
             }
-            return new RemotePlayer(id, name, x, y, z, yaw);
+            return new RemotePlayer(id, name, x, y, z, yaw, moveX, moveY);
         } catch (NumberFormatException error) {
             return null;
         }
