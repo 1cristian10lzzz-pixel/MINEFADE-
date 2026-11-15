@@ -477,6 +477,7 @@ void EntitySystem::SpawnInitial(const VoxelWorld& world) {
         entity.phase = static_cast<float>(i) * 2.0f;
         entity.speed = 0.18f + static_cast<float>(i) * 0.07f;
         entity.kind = static_cast<int>(i % 3u);
+        entity.behaviorTimer = 2.0f + static_cast<float>(i) * 1.7f;
         entities_.push_back(entity);
     }
     initialized_ = true;
@@ -495,6 +496,7 @@ bool EntitySystem::SpawnEntity(const Vec3& nearPosition, int kind, const VoxelWo
     entity.phase = animationTime_ + index * 0.73f;
     entity.speed = 0.12f + std::fmod(index, 4.0f) * 0.025f;
     entity.kind = kind;
+    entity.behaviorTimer = 2.5f + std::fmod(index * 0.87f, 4.0f);
     entities_.push_back(entity);
     return true;
 }
@@ -503,16 +505,92 @@ void EntitySystem::SetSpeedMultiplier(float multiplier) {
     speedMultiplier_ = std::clamp(multiplier, 0.5f, 2.0f);
 }
 
-void EntitySystem::Update(const VoxelWorld& world, float deltaSeconds) {
+void EntitySystem::Update(const VoxelWorld& world, const Player& player, float deltaSeconds) {
     const float dt = std::clamp(deltaSeconds, 0.0f, 0.05f);
     animationTime_ = std::fmod(animationTime_ + dt, 4096.0f);
     for (Entity& entity : entities_) {
-        MfEntityState state{entity.position.x, entity.position.y, entity.position.z,
-                            entity.phase, std::clamp(entity.speed * speedMultiplier_, 0.0f, 3.0f), entity.kind};
-        minefade_entity_update(&state, dt, WorldSolidForRust, WorldSurfaceForRust,
-                               const_cast<VoxelWorld*>(&world));
-        entity.position = {state.x, state.y, state.z};
-        entity.phase = state.phase;
+        const float towardX = player.position.x - entity.position.x;
+        const float towardZ = player.position.z - entity.position.z;
+        const float distanceSquared = towardX * towardX + towardZ * towardZ;
+        const bool passive = entity.kind != 4 && entity.kind != 5;
+        const bool closeForFlee = passive && distanceSquared < 36.0f;
+        const bool closeForPursuit = !passive && distanceSquared < 225.0f && distanceSquared > 2.0f;
+
+        if (closeForFlee) {
+            entity.behavior = 1;
+            entity.behaviorTimer = 0.9f;
+        } else if (closeForPursuit) {
+            entity.behavior = 3;
+            entity.behaviorTimer = 0.4f;
+        } else if (entity.behavior == 1 || entity.behavior == 3) {
+            entity.behaviorTimer -= dt;
+            if (entity.behaviorTimer <= 0.0f) {
+                entity.behavior = 0;
+                entity.behaviorTimer = passive ? 3.2f : 0.5f;
+            }
+        }
+
+        if (entity.behavior == 2) {
+            entity.behaviorTimer -= dt;
+            if (entity.behaviorTimer <= 0.0f) {
+                entity.behavior = 0;
+                entity.behaviorTimer = 3.5f + std::fmod(std::abs(std::sin(entity.phase)) * 3.0f, 2.5f);
+            }
+        } else if (entity.behavior == 0 && passive) {
+            entity.behaviorTimer -= dt;
+            if (entity.behaviorTimer <= 0.0f) {
+                entity.behavior = 2;
+                entity.behaviorTimer = 1.15f + std::fmod(std::abs(std::sin(entity.phase * 0.73f)), 0.55f);
+            }
+        }
+
+        if (entity.behavior == 1 || entity.behavior == 3) {
+            // Local steering: flee from the player or pursue it, preferring the
+            // clearest of eight neighbouring directions when a block obstructs the direct path.
+            const float sign = entity.behavior == 1 ? -1.0f : 1.0f;
+            const float length = std::sqrt(std::max(distanceSquared, 0.0001f));
+            const float desiredX = towardX / length * sign;
+            const float desiredZ = towardZ / length * sign;
+            const float speed = entity.speed * speedMultiplier_ *
+                (entity.behavior == 1 ? 2.8f : 1.65f);
+            const float step = std::min(speed * dt, 0.12f);
+            float bestX = entity.position.x;
+            float bestZ = entity.position.z;
+            float bestAlignment = -2.0f;
+            static constexpr float directions[8][2] = {
+                {1.0f,0.0f},{0.7071f,0.7071f},{0.0f,1.0f},{-0.7071f,0.7071f},
+                {-1.0f,0.0f},{-0.7071f,-0.7071f},{0.0f,-1.0f},{0.7071f,-0.7071f}
+            };
+            for (const auto& direction : directions) {
+                const float nextX = entity.position.x + direction[0] * step * sign;
+                const float nextZ = entity.position.z + direction[1] * step * sign;
+                if (world.IsSolid(FloorToInt(nextX), FloorToInt(entity.position.y + 0.25f),
+                                  FloorToInt(nextZ))) continue;
+                const float alignment = direction[0] * desiredX + direction[1] * desiredZ;
+                if (alignment > bestAlignment) {
+                    bestAlignment = alignment;
+                    bestX = nextX;
+                    bestZ = nextZ;
+                }
+            }
+            if (bestAlignment > -1.0f) {
+                entity.position.x = bestX;
+                entity.position.z = bestZ;
+                entity.position.y = static_cast<float>(world.GetSurfaceHeight(
+                    FloorToInt(bestX), FloorToInt(bestZ))) + 1.0f;
+            }
+            entity.phase = std::fmod(entity.phase + dt * speed * 7.0f, 4096.0f);
+        } else if (entity.behavior == 2) {
+            // Eating animals hold position and keep a slow animation clock.
+            entity.phase = std::fmod(entity.phase + dt * 0.55f, 4096.0f);
+        } else {
+            MfEntityState state{entity.position.x, entity.position.y, entity.position.z,
+                                entity.phase, std::clamp(entity.speed * speedMultiplier_, 0.0f, 3.0f), entity.kind};
+            minefade_entity_update(&state, dt, WorldSolidForRust, WorldSurfaceForRust,
+                                   const_cast<VoxelWorld*>(&world));
+            entity.position = {state.x, state.y, state.z};
+            entity.phase = state.phase;
+        }
     }
 }
 
@@ -523,7 +601,8 @@ void EntitySystem::AppendMesh(std::vector<WorldVertex>& output, const CameraFrus
                 entity.position.x+0.85f,entity.position.y+2.15f,entity.position.z+0.85f)) continue;
         MfEntityPose pose{};
         minefade_entity_compute_pose(entity.kind, entity.phase, animationTime_,
-                                     animationQuality_, animationsEnabled_ ? 1u : 0u, &pose);
+                                     static_cast<std::uint8_t>(entity.behavior), animationQuality_,
+                                     animationsEnabled_ ? 1u : 0u, &pose);
         if (contactShadows_)
             AppendContactShadow(output,
                 {entity.position.x, entity.position.y - 0.98f, entity.position.z},
