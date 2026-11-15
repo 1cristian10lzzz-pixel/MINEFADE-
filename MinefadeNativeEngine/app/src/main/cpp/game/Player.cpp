@@ -172,7 +172,12 @@ void Player::Rotate(float deltaX, float deltaY) {
 void Player::Jump() {
     MfPlayerState state = ToRustPlayerState(*this);
     minefade_player_jump(&state);
+    state.vertical_velocity *= std::clamp(jumpMultiplier, 0.75f, 1.5f);
     ApplyRustPlayerState(*this, state);
+}
+
+void Player::SetJumpMultiplier(float multiplier) {
+    jumpMultiplier = std::clamp(multiplier, 0.75f, 1.5f);
 }
 
 void Player::SetAnimationOptions(std::uint8_t quality, bool enabled) {
@@ -494,12 +499,16 @@ bool EntitySystem::SpawnEntity(const Vec3& nearPosition, int kind, const VoxelWo
     return true;
 }
 
+void EntitySystem::SetSpeedMultiplier(float multiplier) {
+    speedMultiplier_ = std::clamp(multiplier, 0.5f, 2.0f);
+}
+
 void EntitySystem::Update(const VoxelWorld& world, float deltaSeconds) {
     const float dt = std::clamp(deltaSeconds, 0.0f, 0.05f);
     animationTime_ = std::fmod(animationTime_ + dt, 4096.0f);
     for (Entity& entity : entities_) {
         MfEntityState state{entity.position.x, entity.position.y, entity.position.z,
-                            entity.phase, entity.speed, entity.kind};
+                            entity.phase, std::clamp(entity.speed * speedMultiplier_, 0.0f, 3.0f), entity.kind};
         minefade_entity_update(&state, dt, WorldSolidForRust, WorldSurfaceForRust,
                                const_cast<VoxelWorld*>(&world));
         entity.position = {state.x, state.y, state.z};
