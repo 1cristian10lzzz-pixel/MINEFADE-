@@ -520,6 +520,12 @@ pub unsafe extern "C" fn minefade_entity_compute_pose(
     let time = finite_or(animation_time, 0.0);
     let mut gait = (phase * 8.0).sin() * 0.24 * quality;
     let idle = (time * 1.2 + phase).sin();
+    let blink_cycle = (time + phase * 0.12).rem_euclid(6.0);
+    let eyelid = if blink_cycle > 5.72 {
+        ((blink_cycle - 5.72) / 0.28 * PI).sin().abs()
+    } else {
+        0.0
+    };
     if behavior == 2 {
         // Grazing/eating: feet remain planted while the head dips in short,
         // repeated bites with a gentle body settle.
@@ -541,13 +547,6 @@ pub unsafe extern "C" fn minefade_entity_compute_pose(
     }
     if behavior == 1 { gait *= 1.38; } // passive creature fleeing
     if behavior == 3 { gait *= 1.22; } // hostile creature pursuing
-    let blink_cycle = (time + phase * 0.12).rem_euclid(6.0);
-    let eyelid = if blink_cycle > 5.72 {
-        ((blink_cycle - 5.72) / 0.28 * PI).sin().abs()
-    } else {
-        0.0
-    };
-
     if kind == 2 {
         let flap = (phase * 13.0).sin() * 0.72 * quality;
         *output = MfEntityPose {
