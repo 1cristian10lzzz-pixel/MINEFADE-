@@ -1781,9 +1781,26 @@ void Engine::UpdateMining(float deltaSeconds) {
         ui_.SetTargetBlock(definition->nameEs, 0.0f);
         return;
     }
+    // Wooden tools accelerate the material they are designed to harvest.
+    float toolMultiplier = 1.0f;
+    const BlockDefinition* heldDefinition =
+        GetBlockDefinition(static_cast<BlockId>(inventory_.SelectedItemId()));
+    if (heldDefinition != nullptr) {
+        const std::string_view heldKey(heldDefinition->key);
+        const bool matchingPickaxe = definition->preferredTool == BlockTool::Pickaxe &&
+            heldKey == "minefade_wooden_pickaxe";
+        const bool matchingAxe = definition->preferredTool == BlockTool::Axe &&
+            heldKey == "minefade_wooden_axe";
+        const bool matchingShovel = definition->preferredTool == BlockTool::Shovel &&
+            heldKey == "minefade_wooden_shovel";
+        if (matchingPickaxe || matchingAxe || matchingShovel) toolMultiplier = 0.55f;
+        else if (definition->preferredTool != BlockTool::None &&
+                 (heldKey == "minefade_wooden_sword" || heldKey == "minefade_stick"))
+            toolMultiplier = 1.20f;
+    }
     // Creative mode breaks ordinary blocks almost instantly; survival keeps the hardness curve.
     miningRequired_ = gameMode_ == 1 ? 0.07f
-        : std::clamp(definition->hardness * 1.5f, 0.18f, 10.0f);
+        : std::clamp(definition->hardness * 1.5f * toolMultiplier, 0.12f, 10.0f);
     miningElapsed_ += std::clamp(deltaSeconds, 0.0f, 0.05f);
     const float progress = std::clamp(miningElapsed_ / miningRequired_, 0.0f, 1.0f);
     ui_.SetTargetBlock(definition->nameEs, progress);
