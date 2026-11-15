@@ -91,7 +91,7 @@ public:
                    std::vector<WorldVertex>* transparentOutput = nullptr,
                    std::vector<ChunkMeshRange>* chunkRanges = nullptr) const;
     bool Save(const std::string& filePath, const Vec3& playerPosition,
-              const std::array<std::uint32_t, 9>& inventory) const;
+              const std::array<std::uint32_t, 36>& inventory) const;
     bool Load(const std::string& filePath, Vec3& playerPosition,
               std::array<std::uint32_t, 9>& inventory);
 
