@@ -36,6 +36,7 @@ public:
     void SetMinimap(const std::string& gridMarkup, const std::string& coordinates);
     void SetChestButtonVisible(bool visible);
     void SetQuickbarSlot(int slot, const std::string& label, bool selected);
+    void SetSelectedItem(std::uint16_t itemId, const std::string& name);
     void SetInventoryContents(const std::string& markup);
     void SetPanelVisible(const char* elementId, bool visible);
     bool IsReady() const { return ready_; }
