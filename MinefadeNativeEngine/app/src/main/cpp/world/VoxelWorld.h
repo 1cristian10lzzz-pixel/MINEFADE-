@@ -93,7 +93,7 @@ public:
     bool Save(const std::string& filePath, const Vec3& playerPosition,
               const std::array<std::uint32_t, 36>& inventory) const;
     bool Load(const std::string& filePath, Vec3& playerPosition,
-              std::array<std::uint32_t, 9>& inventory);
+              std::array<std::uint32_t, 36>& inventory);
 
     std::uint32_t Seed() const { return seed_; }
     std::size_t ChunkCount() const { return chunks_.size(); }
