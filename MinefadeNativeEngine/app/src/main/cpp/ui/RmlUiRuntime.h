@@ -25,6 +25,7 @@ public:
     void UpdateAndRender();
     void SetStatus(const std::string& status);
     void SetLeftHanded(bool enabled) { leftHanded_ = enabled; }
+    void SetControlMode(int mode);
     void SetStatusVisible(bool visible) { showStats_ = visible; }
     void SetTargetBlock(const std::string& name, float progress);
     void SetPickupToast(const std::string& text);
@@ -32,6 +33,7 @@ public:
     void SetCrouchEnabled(bool enabled);
     void SetChestContents(const std::string& markup);
     void SetChatMessage(const std::string& message);
+    void SetMinimap(const std::string& gridMarkup, const std::string& coordinates);
     void SetChestButtonVisible(bool visible);
     void SetQuickbarSlot(int slot, const std::string& label, bool selected);
     void SetInventoryContents(const std::string& markup);
@@ -75,6 +77,7 @@ private:
     bool rmlInitialised_{false};
     bool mouseCaptured_{false};
     bool leftHanded_{false};
+    int controlMode_{0};
     bool showStats_{true};
 };
 
