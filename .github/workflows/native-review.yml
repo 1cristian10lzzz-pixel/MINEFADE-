@@ -89,7 +89,7 @@ jobs:
           bash tests/run-world-tests.sh
           python3 tests/test_block_catalog.py
           python3 tests/test_audio_assets.py
-          python3 tools/validate_mfmod.py mods/Minefade_Ultimate_Core_0.1.mfmod
+          python3 tools/validate_mfmod.py mods/Minefade_Ultimate_Core_0.1.mfmod app/src/main/assets/mods/minefade_ultimate_core.mfmod
           python3 tests/test_mfmod_pack.py
 
       - name: Build Android debug APK
