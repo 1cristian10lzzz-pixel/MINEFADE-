@@ -11,8 +11,8 @@ android {
         applicationId = "com.minefade.nativeengine"
         minSdk = 24
         targetSdk = 36
-        versionCode = 15
-        versionName = "0.8.0-worlds-mods"
+        versionCode = 16
+        versionName = "1.1.0-integral"
 
         ndk {
             abiFilters += listOf("arm64-v8a", "armeabi-v7a")
@@ -45,8 +45,8 @@ android {
         debug {
             // A distinct package avoids signature conflicts with older review APKs and preserves their private world data.
             // Existing installations and their private world data remain untouched.
-            applicationIdSuffix = ".review11"
-            versionNameSuffix = "-review11"
+            applicationIdSuffix = ".review13"
+            versionNameSuffix = "-review13"
             isMinifyEnabled = false
             isDebuggable = true
         }
