@@ -134,6 +134,12 @@ public final class ModManager {
             temporary.delete();
             return null;
         }
+        for (ModInfo existing : listMods()) {
+            if (existing.id.equalsIgnoreCase(validated.id)) {
+                temporary.delete();
+                return existing;
+            }
+        }
         try {
             Os.rename(temporary.getAbsolutePath(), destination.getAbsolutePath());
             return new ModInfo(destination, validated.settings);
