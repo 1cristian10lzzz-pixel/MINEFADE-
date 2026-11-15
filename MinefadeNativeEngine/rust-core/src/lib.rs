@@ -814,10 +814,10 @@ mod tests {
         unsafe { minefade_entity_update(&mut entity, 0.016, Some(flat_ground), Some(flat_surface), core::ptr::null_mut()) };
         assert!(entity.x.is_finite() && entity.y.is_finite() && entity.z.is_finite());
         let mut pose = MfEntityPose::default();
-        unsafe { minefade_entity_compute_pose(2, entity.phase, 1.0, 2, 1, &mut pose) };
+        unsafe { minefade_entity_compute_pose(2, entity.phase, 1.0, 0, 2, 1, &mut pose) };
         assert!(pose.left_wing_roll.abs() > 0.0);
         for kind in 0..=6 {
-            unsafe { minefade_entity_compute_pose(kind, 1.2, 1.8, 2, 1, &mut pose) };
+            unsafe { minefade_entity_compute_pose(kind, 1.2, 1.8, 0, 2, 1, &mut pose) };
             assert!(pose.front_left_leg_pitch.is_finite());
             assert!(pose.front_right_leg_pitch.is_finite());
             assert!(pose.rear_left_leg_pitch.is_finite());
