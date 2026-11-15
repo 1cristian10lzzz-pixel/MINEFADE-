@@ -1,6 +1,7 @@
 package com.minefade.nativeengine;
 
 import android.content.Context;
+import android.system.Os;
 import org.json.JSONObject;
 import java.io.File;
 import java.io.FileInputStream;
@@ -214,8 +215,8 @@ public final class WorldManager {
                 output.flush();
                 output.getFD().sync();
             }
-            if (target.exists() && !target.delete()) return false;
-            return temp.renameTo(target);
+            Os.rename(temp.getAbsolutePath(), target.getAbsolutePath());
+            return target.isFile();
         } catch (Exception ignored) {
             return false;
         }
