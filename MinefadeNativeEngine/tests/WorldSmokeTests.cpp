@@ -157,14 +157,14 @@ int main() {
 
     const std::string path = (std::filesystem::temp_directory_path() / "minefade-native-world-test.mfworld").string();
     const Vec3 savedPlayer{8.25f, static_cast<float>(height) + 1.1f, 8.5f};
-    const std::array<std::uint32_t, 9> inventory{
+    const std::array<std::uint32_t, 36> inventory{
         static_cast<std::uint32_t>(BlockId::SeaLantern) * 1000u + 16u,
         static_cast<std::uint32_t>(BlockId::Dirt) * 1000u + 4u, 0u,0u,0u,0u,0u,0u,0u};
     assert(world.Save(path, savedPlayer, inventory));
 
     VoxelWorld loaded(1u);
     Vec3 loadedPlayer{};
-    std::array<std::uint32_t, 9> loadedInventory{};
+    std::array<std::uint32_t, 36> loadedInventory{};
     assert(loaded.Load(path, loadedPlayer, loadedInventory));
     assert(loaded.ChunkCount() == 9u);
     assert(loaded.GetBlock(8, height + 1, 8) == BlockId::Dirt);
@@ -421,7 +421,7 @@ int main() {
     assert(world.Save(path, savedPlayer, inventory));
     VoxelWorld streamedLoaded;
     Vec3 streamedPlayer{};
-    std::array<std::uint32_t, 9> streamedInventory{};
+    std::array<std::uint32_t, 36> streamedInventory{};
     assert(streamedLoaded.Load(path, streamedPlayer, streamedInventory));
     assert(streamedLoaded.ChunkCount() == 17u);
     assert(streamedLoaded.GetBlock(8, height + 1, 8) == BlockId::Dirt);
