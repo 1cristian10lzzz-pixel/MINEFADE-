@@ -31,6 +31,22 @@ class ModPackTests(unittest.TestCase):
             "no soportada",
         )
 
+    def test_supported_thumbnail_icon_is_accepted(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "thumbnail.mfmod"
+            path.write_text(
+                "id=thumbnail_mod\\nname=Thumbnail\\nversion=1.0\\nenabled=false\\n"
+                "icon=creature\\n",
+                encoding="utf-8",
+            )
+            self.assertEqual(parse_mod(path)["icon"], "creature")
+
+    def test_unknown_thumbnail_icon_is_rejected(self):
+        self.assert_invalid(
+            "id=test_mod\\nname=Test\\nversion=1.0\\nenabled=false\\nicon=unknown\\n",
+            "icon no compatible",
+        )
+
     def test_duplicate_key_is_rejected(self):
         self.assert_invalid(
             "id=test_mod\nname=Test\nversion=1.0\nenabled=false\nenabled=true\n",
