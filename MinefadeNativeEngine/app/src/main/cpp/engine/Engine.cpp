@@ -1450,13 +1450,25 @@ void Engine::HandleUiAction(const std::string& action) {
         } catch (...) {
             ui_.SetChatMessage("No se pudo seleccionar ese bloque.");
         }
+    } else if (action.rfind("gear-slot-", 0) == 0) {
+        try {
+            const std::size_t slot = static_cast<std::size_t>(std::stoul(action.substr(10)));
+            if (inventory_.UnequipArmor(slot)) RefreshInventoryUi();
+            else ui_.SetChatMessage("No hay espacio para guardar la pieza de armadura.");
+        } catch (...) { ui_.SetChatMessage("No se pudo quitar la armadura."); }
     } else if (action.rfind("inventory-slot-", 0) == 0) {
         try {
             const std::size_t slot = static_cast<std::size_t>(std::stoul(action.substr(15)));
             if (slot < inventory_.counts.size()) {
-                if (slot < Inventory::kHotbarSlotCount) inventory_.selectedSlot = static_cast<std::uint16_t>(slot);
-                else std::swap(inventory_.counts[slot], inventory_.counts[inventory_.selectedSlot]);
-                RefreshInventoryUi();
+                if (inventory_.EquipArmorFromSlot(slot)) {
+                    RefreshInventoryUi();
+                } else if (slot < Inventory::kHotbarSlotCount) {
+                    inventory_.selectedSlot = static_cast<std::uint16_t>(slot);
+                    RefreshInventoryUi();
+                } else {
+                    std::swap(inventory_.counts[slot], inventory_.counts[inventory_.selectedSlot]);
+                    RefreshInventoryUi();
+                }
             }
         } catch (...) { ui_.SetChatMessage("No se pudo mover ese objeto."); }
     } else if (action.rfind("slot-", 0) == 0 && action.size() == 6) {
@@ -1949,6 +1961,18 @@ void Engine::RefreshInventoryUi() {
             std::to_string(quantity) + "</span></div>";
     }
     ui_.SetInventoryCatalogContents(materialMarkup);
+    std::string equipmentMarkup;
+    const std::array<const char*,4> equipmentNames{{"Casco","Pechera","Grebas","Botas"}};
+    for (std::size_t slot = 0; slot < inventory_.equippedArmor.size(); ++slot) {
+        const std::uint16_t id = inventory_.equippedArmor[slot];
+        equipmentMarkup += "<button class='equipment-slot' id='gear-slot-" +
+            std::to_string(slot) + "'>";
+        if (id > 0u) equipmentMarkup += "<img class='inventory-icon' src='minefade://block/" +
+            std::to_string(id) + "'/>";
+        else equipmentMarkup += equipmentNames[slot];
+        equipmentMarkup += "</button>";
+    }
+    ui_.SetEquipmentContents(equipmentMarkup);
     const std::uint16_t selectedId = inventory_.SelectedItemId();
     const BlockDefinition* selectedDefinition =
         GetBlockDefinition(static_cast<BlockId>(selectedId));
