@@ -43,6 +43,19 @@ class ModPackTests(unittest.TestCase):
             "fuera de rango",
         )
 
+    def test_new_entity_spawn_types_are_supported(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "creatures.mfmod"
+            path.write_text(
+                "id=creature_mod\\nname=Creatures\\nversion=1.0\\nenabled=true\\n"
+                "spawn.rabbit=2\\nspawn.zombie=1\\nspawn.skeleton=1\\n",
+                encoding="utf-8",
+            )
+            values = parse_mod(path)
+            self.assertEqual(values["spawn.rabbit"], "2")
+            self.assertEqual(values["spawn.zombie"], "1")
+            self.assertEqual(values["spawn.skeleton"], "1")
+
     def test_new_gameplay_tuning_settings_are_supported(self):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "advanced.mfmod"
