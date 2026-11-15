@@ -32,6 +32,8 @@ jobs:
           git apply /tmp/review12-render.patch
           git apply --check review12-render/fix-atlas-uv-and-tests.patch
           git apply review12-render/fix-atlas-uv-and-tests.patch
+          git apply --check review12-render/fix-review12-package-id.patch
+          git apply review12-render/fix-review12-package-id.patch
 
       - name: Set up stable Rust toolchain for host and Android
         uses: dtolnay/rust-toolchain@stable
