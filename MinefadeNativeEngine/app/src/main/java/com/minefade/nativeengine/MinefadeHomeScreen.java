@@ -965,7 +965,7 @@ public final class MinefadeHomeScreen extends FrameLayout {
                         new int[]{0xff3a4b5d, 0xff263648}, 0xffa9c6d8, 38, () -> {
                             preferences.edit().putInt("touch_sensitivity", 100)
                                     .putInt("touch_sensitivity_x", 100).putInt("touch_sensitivity_y", 100)
-                                    .putInt("joystick_deadzone", 12)
+                                    .putInt("joystick_deadzone", 12).putInt("control_mode", 0)
                                     .putBoolean("invert_look_y", false).putBoolean("left_handed_controls", false)
                                     .putBoolean("menu_haptics", true).apply();
                             showSettingsPage();
