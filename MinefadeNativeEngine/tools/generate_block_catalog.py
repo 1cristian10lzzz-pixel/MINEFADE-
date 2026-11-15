@@ -714,6 +714,7 @@ def main():
     global ROWS, HEIGHT
     raw=load_block_sources()
     entries=[(k,v) for k,v in raw.items() if k!='format_version']
+    entries.extend(SYNTHETIC_ITEMS.items())
     if not entries or entries[0][0]!='air': raise SystemExit('Expected air to be block ID 0')
     ROWS=(len(entries)*3 + COLS - 1)//COLS
     HEIGHT=ROWS*CELL
@@ -745,7 +746,9 @@ def main():
                 atlas[top_px-WIDTH*4:top_px-WIDTH*4+4]=atlas[top_px:top_px+4]
                 atlas[bot_px+WIDTH*4:bot_px+WIDTH*4+4]=atlas[bot_px:bot_px+4]
         catalogue.append({
-            'id':idx,'key':key,'enum':names[idx],'name_es':display_name(key),
+            'id':idx,'key':key,'enum':names[idx],
+            'name_es':block.get('name_es', display_name(key)),
+            'kind':'item' if block.get('minefade_item') is True else 'block',
             'shape':shape,'flags':flags,'hardness':hardness,'tool':tool,'light':light,
             'stack_limit':stack,'drop_id':idx if drop<0 else drop,
             'texture_aliases':{'top':top,'side':side,'bottom':bottom},
