@@ -39,7 +39,7 @@ public:
     void SetHudOptions(bool showStats);
     void SetAnimationOptions(int quality, bool enabled);
     void SetAvatarAppearance(const int* values, std::size_t count);
-    void GetPlayerState(float output[4]) const;
+    void GetPlayerState(float output[6]) const;
     void SetRemotePlayers(const float* values, std::size_t floatCount);
     void ApplyRemoteBlockEdits(const int* values, std::size_t valueCount);
     std::vector<int> ConsumeLocalBlockEdits();
