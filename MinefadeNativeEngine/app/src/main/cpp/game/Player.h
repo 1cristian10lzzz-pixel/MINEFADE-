@@ -51,7 +51,10 @@ public:
     static constexpr std::size_t kHotbarSlotCount = 9;
     std::array<std::uint32_t, kSlotCount> counts{{2016u}};
     std::uint16_t selectedSlot{0};
+    std::array<std::uint16_t, 4> equippedArmor{}; // helmet, chestplate, leggings, boots
 
+    bool EquipArmorFromSlot(std::size_t slot);
+    bool UnequipArmor(std::size_t armorSlot);
     bool CanAdd(std::uint16_t itemId, std::uint16_t amount = 1) const;
     bool Add(std::uint16_t itemId, std::uint16_t amount = 1);
     bool ConsumeSelected(std::uint16_t amount = 1);
