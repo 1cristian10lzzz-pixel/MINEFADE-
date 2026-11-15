@@ -372,6 +372,29 @@ void Player::Update(const VoxelWorld& world, float deltaSeconds) {
     // simulation step so toggling crouch on/off never leaves stale movement.
     movementX = inputX;
     movementY = inputY;
+
+    // Bedrock-like assisted step-up: jump only into a one-block obstacle with
+    // enough headroom. Flat ground, ceilings and idle players never trigger it.
+    autoJumpCooldown = std::max(0.0f, autoJumpCooldown - std::clamp(deltaSeconds, 0.0f, 0.05f));
+    const float inputMagnitude = std::sqrt(inputX * inputX + inputY * inputY);
+    if (grounded && !crouching && autoJumpCooldown <= 0.0f && inputMagnitude > 0.35f) {
+        const float moveX = std::cos(yaw) * inputY - std::sin(yaw) * inputX;
+        const float moveZ = std::sin(yaw) * inputY + std::cos(yaw) * inputX;
+        const float length = std::sqrt(moveX * moveX + moveZ * moveZ);
+        if (length > 0.001f) {
+            const int frontX = FloorToInt(position.x + (moveX / length) * 0.48f);
+            const int frontZ = FloorToInt(position.z + (moveZ / length) * 0.48f);
+            const int footY = FloorToInt(position.y + 0.12f);
+            const int torsoY = FloorToInt(position.y + 1.05f);
+            const int headY = FloorToInt(position.y + 1.72f);
+            if (world.IsSolid(frontX, footY, frontZ) &&
+                !world.IsSolid(frontX, torsoY, frontZ) &&
+                !world.IsSolid(frontX, headY, frontZ)) {
+                Jump();
+                autoJumpCooldown = 0.34f;
+            }
+        }
+    }
 }
 
 bool Inventory::CanAdd(std::uint16_t itemId, std::uint16_t amount) const {
