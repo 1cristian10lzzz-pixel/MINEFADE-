@@ -19,6 +19,10 @@ jobs:
       - name: Checkout source review branch
         uses: actions/checkout@v4
 
+      - name: Generate committed baseline block catalogue
+        working-directory: MinefadeNativeEngine
+        run: python3 tools/generate_block_catalog.py
+
       - name: Apply Review12 renderer, touch controls and world settings patch
         shell: bash
         run: |
