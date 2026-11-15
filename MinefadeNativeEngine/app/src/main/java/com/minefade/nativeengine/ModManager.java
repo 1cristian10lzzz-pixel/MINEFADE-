@@ -66,11 +66,17 @@ public final class ModManager {
         String raw = new File(uri.getLastPathSegment() == null ? "paquete.mfmod"
                 : uri.getLastPathSegment()).getName();
         String safe = raw.replaceAll("[^a-zA-Z0-9._-]", "_");
-        if (!safe.toLowerCase(Locale.ROOT).endsWith(".mfmod")) safe += ".mfmod";
+        String lowerName = safe.toLowerCase(Locale.ROOT);
+        if (!lowerName.endsWith(".mfmod")) safe += ".mfmod";
+        else if (!safe.endsWith(".mfmod"))
+            safe = safe.substring(0, safe.length() - ".mfmod".length()) + ".mfmod";
         File destination = new File(modsDirectory, System.currentTimeMillis() + "-" + safe);
         try (InputStream input = context.getContentResolver().openInputStream(uri);
              FileOutputStream output = new FileOutputStream(destination, false)) {
-            if (input == null) return null;
+            if (input == null) {
+                destination.delete();
+                return null;
+            }
             byte[] buffer = new byte[4096];
             int total = 0, read;
             while ((read = input.read(buffer)) != -1) {
