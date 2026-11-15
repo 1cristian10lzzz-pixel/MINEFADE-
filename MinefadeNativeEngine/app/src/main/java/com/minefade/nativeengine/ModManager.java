@@ -81,7 +81,7 @@ public final class ModManager {
 
         try (InputStream input = context.getContentResolver().openInputStream(uri);
              FileOutputStream output = new FileOutputStream(temporary, false)) {
-            if (input == null) return null;
+            if (input == null) { temporary.delete(); return null; }
             byte[] buffer = new byte[4096];
             int total = 0, count;
             while ((count = input.read(buffer)) != -1) {
