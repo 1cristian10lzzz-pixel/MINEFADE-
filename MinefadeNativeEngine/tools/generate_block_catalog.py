@@ -24,6 +24,14 @@ CELL = TILE + GUTTER
 ROWS = 27  # recalculated from the actual catalog in main()
 WIDTH, HEIGHT = COLS * CELL, ROWS * CELL
 FACE_TOP, FACE_SIDE, FACE_BOTTOM = 0, 1, 2
+# Non-placeable Minefade progression items, appended after all stable block IDs.
+SYNTHETIC_ITEMS = {
+    'minefade_stick': {'minefade_item': True, 'name_es': 'Palo'},
+    'minefade_wooden_pickaxe': {'minefade_item': True, 'name_es': 'Pico de madera'},
+    'minefade_wooden_axe': {'minefade_item': True, 'name_es': 'Hacha de madera'},
+    'minefade_wooden_shovel': {'minefade_item': True, 'name_es': 'Pala de madera'},
+    'minefade_wooden_sword': {'minefade_item': True, 'name_es': 'Espada de madera'},
+}
 
 ES = {
 'air':'Aire','stone':'Piedra','grass':'Hierba','dirt':'Tierra','cobblestone':'Roca','planks':'Tablones',
