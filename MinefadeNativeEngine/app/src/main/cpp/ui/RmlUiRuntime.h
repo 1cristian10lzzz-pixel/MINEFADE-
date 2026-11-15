@@ -38,6 +38,7 @@ public:
     void SetChestButtonVisible(bool visible);
     void SetQuickbarSlot(int slot, const std::string& label, bool selected);
     void SetInventoryContents(const std::string& markup);
+    void SetCraftingContents(const std::string& markup);
     void SetPanelVisible(const char* elementId, bool visible);
     bool IsReady() const { return ready_; }
 
