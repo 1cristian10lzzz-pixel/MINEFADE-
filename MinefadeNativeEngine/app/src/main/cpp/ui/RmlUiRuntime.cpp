@@ -78,6 +78,8 @@ button:active { background: #47789b; }
 #target { position: absolute; z-index: 4; left: 50%; top: 57%; margin-left: -75dp; min-width: 150dp; text-align: center; color: #ffffff; font-size: 11dp; text-shadow: 0dp 1dp 3dp #000000; display: none; pointer-events: none; }
 #target-progress { width: 100dp; height: 4dp; margin: 5dp auto 0dp auto; background: #ffffff33; border-radius: 4dp; overflow: hidden; }
 #target-progress-fill { height: 4dp; width: 0%; background: #b9f27c; border-radius: 4dp; }
+#selected-item { position: absolute; z-index: 6; left: 50%; bottom: 59dp; margin-left: -76dp; width: 152dp; display: none; flex-direction: row; align-items: center; justify-content: center; gap: 6dp; color: #ffffff; font-size: 10dp; text-shadow: 0dp 1dp 3dp #000000; pointer-events: none; }
+#selected-item img { width: 22dp; height: 22dp; }
 #pickup { position: absolute; z-index: 5; right: 12dp; bottom: 54dp; color: #ffffff; font-size: 11dp; text-shadow: 0dp 1dp 3dp #000000; background: #102131bb; border: 1dp #d9e9a455; border-radius: 9dp; padding: 6dp 9dp; pointer-events: none; }
 
 #inventory-panel { z-index: 9; }
@@ -112,6 +114,7 @@ button:active { background: #47789b; }
 </div>
 <button id="crouch">↓</button><button id="jump">↑</button>
 <div id="target"><div id="target-name"></div><div id="target-progress"><div id="target-progress-fill"></div></div></div>
+<div id="selected-item"></div>
 <div id="pickup"></div>
 <div id="inventory-panel" class="panel">
   <div id="inventory-items"></div>
@@ -379,6 +382,14 @@ void RmlUiRuntime::SetTargetBlock(const std::string& name, float progress) {
     target->SetProperty("display", "block");
     const float percent = std::clamp(progress, 0.0f, 1.0f) * 100.0f;
     fill->SetProperty("width", std::to_string(percent) + "%");
+}
+
+void RmlUiRuntime::SetSelectedItem(const std::string& markup) {
+    if (document_ == nullptr) return;
+    if (Rml::Element* element = document_->GetElementById("selected-item")) {
+        element->SetInnerRML(markup);
+        element->SetProperty("display", markup.empty() ? "none" : "flex");
+    }
 }
 
 void RmlUiRuntime::SetPickupToast(const std::string& text) {
