@@ -102,7 +102,9 @@ public final class LanMultiplayerService implements Closeable {
                 // than interpolate an avatar through the whole map.
                 if ((dx * dx + dy * dy + dz * dz) > 144.0f) snapshots.clear();
             }
-            snapshots.addLast(new Snapshot(next.toX, next.toY, next.toZ, next.toYaw, now));
+            final Snapshot incoming = next.snapshots.peekLast();
+            if (incoming == null) return;
+            snapshots.addLast(new Snapshot(incoming.x, incoming.y, incoming.z, incoming.yaw, now));
             while (snapshots.size() > 4) snapshots.removeFirst();
         }
 
