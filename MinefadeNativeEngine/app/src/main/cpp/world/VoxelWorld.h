@@ -110,6 +110,7 @@ private:
         std::vector<WorldVertex> opaque;
         std::vector<WorldVertex> transparent;
         int lod{0};
+        bool outerBorder{false};
     };
 
     enum class Biome : std::uint8_t { Plains, Forest, Desert, Snow, Ocean, Mountains, Swamp, Savanna, River };
