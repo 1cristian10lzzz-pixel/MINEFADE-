@@ -8,6 +8,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 from tools.validate_mfmod import parse_mod
 SAMPLE = ROOT / "mods" / "Minefade_Ultimate_Core_0.1.mfmod"
+BUNDLED = ROOT / "app/src/main/assets/mods/minefade_ultimate_core.mfmod"
 
 
 class ModPackTests(unittest.TestCase):
@@ -17,6 +18,12 @@ class ModPackTests(unittest.TestCase):
         self.assertEqual(values["enabled"], "false")
         self.assertEqual(values["player.speed"], "1.08")
         self.assertEqual(values["world.day_speed"], "1.05")
+
+    def test_bundled_pack_is_valid_and_enabled_by_default(self):
+        values = parse_mod(BUNDLED)
+        self.assertEqual(values["id"], "minefade_ultimate_core")
+        self.assertEqual(values["enabled"], "true")
+        self.assertEqual(values["player.speed"], "1.08")
 
     def test_unknown_setting_is_rejected(self):
         self.assert_invalid(
