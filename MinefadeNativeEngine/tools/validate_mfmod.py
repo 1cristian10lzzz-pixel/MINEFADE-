@@ -10,7 +10,7 @@ MAX_BYTES, MAX_LINES = 32768, 128
 ALLOWED = {
     "id", "name", "version", "description", "enabled",
     "spawn.sheep", "spawn.cow", "spawn.bird", "spawn.pig",
-    "player.speed", "world.day_speed",
+    "player.speed", "player.jump", "entity.speed", "world.day_speed",
 }
 SPAWN = {"spawn.sheep", "spawn.cow", "spawn.bird", "spawn.pig"}
 
@@ -63,7 +63,8 @@ def parse_mod(path: Path) -> dict[str, str]:
             raise ValueError(f"{key} debe ser entero") from exc
         if not 0 <= count <= 24:
             raise ValueError(f"{key} fuera de rango 0..24")
-    for key, low, high in (("player.speed", 0.5, 2.0), ("world.day_speed", 0.25, 4.0)):
+    for key, low, high in (("player.speed", 0.5, 2.0), ("player.jump", 0.75, 1.5),
+                            ("entity.speed", 0.5, 2.0), ("world.day_speed", 0.25, 4.0)):
         if key in values:
             try:
                 number = float(values[key])
