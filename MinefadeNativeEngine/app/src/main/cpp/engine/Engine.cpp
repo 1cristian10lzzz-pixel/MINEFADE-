@@ -1375,6 +1375,7 @@ void Engine::HandleUiAction(const std::string& action) {
         ui_.SetPanelVisible("pause-panel", false);
         pauseVisible_ = false;
         paused_ = true;
+        RefreshCraftingUi();
         ui_.SetPanelVisible("crafting-panel", true);
     } else if (action == "crafting-close") {
         ui_.SetPanelVisible("crafting-panel", false);
@@ -1396,6 +1397,8 @@ void Engine::HandleUiAction(const std::string& action) {
         CraftRecipe("wooden_shovel");
     } else if (action == "craft-wooden-sword") {
         CraftRecipe("wooden_sword");
+    } else if (action.rfind("craft-", 0) == 0) {
+        CraftRecipe(action.substr(6));
     } else if (action == "pause") {
         pauseVisible_ = !pauseVisible_;
         paused_ = pauseVisible_;
@@ -1912,6 +1915,42 @@ void Engine::RefreshInventoryUi() {
     } else {
         ui_.SetSelectedItem({});
     }
+}
+
+void Engine::RefreshCraftingUi() {
+    std::string markup;
+    markup.reserve(9000u);
+    int index = 0;
+    const auto addRecipe = [&markup, &index](const std::string& recipe, const std::string& label) {
+        markup += "<button id='crafting-recipe-" + std::to_string(index++) +
+            "' data-action='craft-" + recipe + "'>" + label + "</button>";
+    };
+    markup += "<div class='recipe-category'>BÁSICOS</div>";
+    addRecipe("planks", "Tronco → 4 tablones");
+    addRecipe("sticks", "2 tablones → 4 palos");
+    addRecipe("table", "4 tablones → mesa");
+    markup += "<div class='recipe-category'>PROCESAR MINERALES</div>";
+    addRecipe("copper_ingot", "Mena de cobre + carbón → lingote");
+    addRecipe("iron_ingot", "Mena de hierro + carbón → lingote");
+    addRecipe("gold_ingot", "Mena de oro + carbón → lingote");
+    addRecipe("diamond_gem", "Mena de diamante → diamante");
+    addRecipe("emerald_gem", "Mena de esmeralda → esmeralda");
+    const std::array<std::pair<const char*, const char*>, 7> tiers{{
+        {"wooden","MADERA"},{"stone","PIEDRA"},{"copper","COBRE"},
+        {"iron","HIERRO"},{"gold","ORO"},{"diamond","DIAMANTE"},{"emerald","ESMERALDA"}
+    }};
+    const std::array<std::pair<const char*, const char*>, 9> gear{{
+        {"pickaxe","Pico"},{"axe","Hacha"},{"shovel","Pala"},{"sword","Espada"},{"hoe","Azada"},
+        {"helmet","Casco"},{"chestplate","Pechera"},{"leggings","Grebas"},{"boots","Botas"}
+    }};
+    for (const auto& tier : tiers) {
+        markup += "<div class='recipe-category'>" + std::string(tier.second) + " · HERRAMIENTAS Y ARMADURA</div>";
+        for (const auto& item : gear) {
+            std::string label = std::string(item.second) + " de " + tier.second;
+            addRecipe(std::string(tier.first) + "_" + item.first, label);
+        }
+    }
+    ui_.SetCraftingContents(markup);
 }
 
 void Engine::SaveWorld() {
