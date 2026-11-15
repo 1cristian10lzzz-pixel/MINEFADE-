@@ -844,24 +844,26 @@ void Engine::RebuildEntityMesh() {
                 // The wooden progression tools are inventory items, not placeable cubes.
                 // Draw a simple voxel hand-held silhouette in the entity colour pass.
                 const std::array<float, 3> wood{0.48f, 0.29f, 0.13f};
-                const std::array<float, 3> head{0.72f, 0.52f, 0.29f};
                 const Vec3 grip{held.x, held.y + handBob, held.z};
                 AppendCube(entityMesh_, grip, {0.035f, 0.22f, 0.035f}, wood);
                 const std::string_view key(definition->key);
-                if (key == "minefade_stick") {
-                    // Narrow stick only.
-                } else if (key == "minefade_wooden_pickaxe") {
-                    AppendCube(entityMesh_, {grip.x, grip.y + 0.22f, grip.z},
-                               {0.19f, 0.045f, 0.045f}, head);
-                } else if (key == "minefade_wooden_axe") {
-                    AppendCube(entityMesh_, {grip.x - 0.09f, grip.y + 0.18f, grip.z},
-                               {0.09f, 0.12f, 0.07f}, head);
-                } else if (key == "minefade_wooden_shovel") {
-                    AppendCube(entityMesh_, {grip.x, grip.y + 0.23f, grip.z},
-                               {0.075f, 0.105f, 0.055f}, head);
-                } else if (key == "minefade_wooden_sword") {
-                    AppendCube(entityMesh_, {grip.x, grip.y + 0.28f, grip.z},
-                               {0.045f, 0.17f, 0.035f}, head);
+                std::array<float,3> head{0.72f,0.52f,0.29f};
+                if (key.find("_stone_") != std::string_view::npos) head={0.55f,0.58f,0.62f};
+                else if (key.find("_copper_") != std::string_view::npos) head={0.72f,0.35f,0.20f};
+                else if (key.find("_iron_") != std::string_view::npos) head={0.78f,0.82f,0.86f};
+                else if (key.find("_gold_") != std::string_view::npos) head={0.95f,0.72f,0.18f};
+                else if (key.find("_diamond_") != std::string_view::npos) head={0.18f,0.78f,0.83f};
+                else if (key.find("_emerald_") != std::string_view::npos) head={0.12f,0.72f,0.34f};
+                if (key.find("_pickaxe") != std::string_view::npos) {
+                    AppendCube(entityMesh_, {grip.x,grip.y+0.22f,grip.z},{0.19f,0.045f,0.045f},head);
+                } else if (key.find("_axe") != std::string_view::npos) {
+                    AppendCube(entityMesh_, {grip.x-0.09f,grip.y+0.18f,grip.z},{0.09f,0.12f,0.07f},head);
+                } else if (key.find("_shovel") != std::string_view::npos) {
+                    AppendCube(entityMesh_, {grip.x,grip.y+0.23f,grip.z},{0.075f,0.105f,0.055f},head);
+                } else if (key.find("_sword") != std::string_view::npos) {
+                    AppendCube(entityMesh_, {grip.x,grip.y+0.28f,grip.z},{0.045f,0.17f,0.035f},head);
+                } else if (key.find("_hoe") != std::string_view::npos) {
+                    AppendCube(entityMesh_, {grip.x+0.07f,grip.y+0.21f,grip.z},{0.12f,0.04f,0.045f},head);
                 }
             }
             const std::array<float, 3> sleeve{0.28f, 0.43f, 0.38f};
