@@ -43,6 +43,30 @@ class ModPackTests(unittest.TestCase):
             "fuera de rango",
         )
 
+    def test_new_gameplay_tuning_settings_are_supported(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "advanced.mfmod"
+            path.write_text(
+                "id=advanced_mod\\nname=Advanced\\nversion=1.0\\nenabled=true\\n"
+                "player.jump=1.2\\nentity.speed=1.4\\n",
+                encoding="utf-8",
+            )
+            values = parse_mod(path)
+            self.assertEqual(values["player.jump"], "1.2")
+            self.assertEqual(values["entity.speed"], "1.4")
+
+    def test_entity_speed_out_of_range_is_rejected(self):
+        self.assert_invalid(
+            "id=test_mod\\nname=Test\\nversion=1.0\\nenabled=true\\nentity.speed=4.0\\n",
+            "fuera de rango",
+        )
+
+    def test_jump_out_of_range_is_rejected(self):
+        self.assert_invalid(
+            "id=test_mod\\nname=Test\\nversion=1.0\\nenabled=true\\nplayer.jump=0.1\\n",
+            "fuera de rango",
+        )
+
     def assert_invalid(self, content, message):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "invalid.mfmod"
