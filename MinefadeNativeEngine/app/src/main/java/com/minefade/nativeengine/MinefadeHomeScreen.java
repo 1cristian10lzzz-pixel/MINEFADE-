@@ -3,6 +3,8 @@ package com.minefade.nativeengine;
 import android.content.Context;
 import android.app.AlertDialog;
 import android.text.InputType;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
 import android.graphics.Canvas;
@@ -579,72 +581,197 @@ public final class MinefadeHomeScreen extends FrameLayout {
     }
 
     private void showModsPage() {
-        LinearLayout root = pageRoot("MODS","Importa y activa paquetes de datos .mfmod.");
-        LinearLayout actions = row();
-        LinearLayout.LayoutParams actionParams = new LinearLayout.LayoutParams(-1,dp(40));
-        actionParams.topMargin = dp(8);
-        root.addView(actions,actionParams);
-        TextView importButton = actionButton("IMPORTAR MOD",() -> {
+        LinearLayout root = pageRoot("MODS", "");
+        // One compact toolbar replaces the large title/subtitle band. Search,
+        // create, import and exit remain reachable without scrolling.
+        root.removeViewAt(0);
+        LinearLayout toolbar = row();
+        LinearLayout.LayoutParams toolbarParams = new LinearLayout.LayoutParams(-1, dp(40));
+        toolbarParams.bottomMargin = dp(7);
+        root.addView(toolbar, toolbarParams);
+
+        TextView back = text("‹", 27, white, true);
+        back.setGravity(Gravity.CENTER);
+        back.setBackgroundColor(Color.TRANSPARENT);
+        back.setOnClickListener(v -> showHome());
+        toolbar.addView(back, new LinearLayout.LayoutParams(dp(32), dp(38)));
+
+        EditText search = new EditText(getContext());
+        search.setSingleLine(true);
+        search.setTextSize(10);
+        search.setTextColor(white);
+        search.setHintTextColor(muted);
+        search.setHint("Buscar mods");
+        search.setInputType(InputType.TYPE_CLASS_TEXT);
+        search.setPadding(dp(8), 0, dp(8), 0);
+        search.setBackground(shape(new int[]{0x33243c50, 0x22132130}, 9, 0x44567084));
+        toolbar.addView(search, new LinearLayout.LayoutParams(0, dp(34), 1f));
+
+        TextView create = text("+", 20, 0xffe5f7dc, true);
+        create.setGravity(Gravity.CENTER);
+        create.setBackground(shape(new int[]{0xff385b49, 0xff1d3c33}, 9, 0x887cc78d));
+        LinearLayout.LayoutParams createParams = new LinearLayout.LayoutParams(dp(34), dp(34));
+        createParams.leftMargin = dp(5);
+        toolbar.addView(create, createParams);
+        create.setOnClickListener(v -> showCreateModDialog());
+
+        TextView importButton = actionButton("IMPORTAR", () -> {
             if (listener != null) listener.onImportMod();
         });
-        importButton.setTextSize(9);
-        actions.addView(importButton,new LinearLayout.LayoutParams(0,dp(36),1f));
-        TextView example = actionButton("EJEMPLO",() -> {
-            modManager.createExamplePack();
-            showModsPage();
-        });
-        example.setTextSize(9);
-        LinearLayout.LayoutParams exampleParams = new LinearLayout.LayoutParams(0,dp(36),1f);
-        exampleParams.leftMargin = dp(7);
-        actions.addView(example,exampleParams);
+        importButton.setTextSize(8);
+        importButton.setPadding(dp(8), 0, dp(8), 0);
+        LinearLayout.LayoutParams importParams = new LinearLayout.LayoutParams(dp(76), dp(34));
+        importParams.leftMargin = dp(5);
+        toolbar.addView(importButton, importParams);
 
         ScrollView scroll = new ScrollView(getContext());
         scroll.setFillViewport(false);
         scroll.setClipChildren(true);
         scroll.setClipToPadding(true);
-        LinearLayout.LayoutParams scrollParams = new LinearLayout.LayoutParams(-1,0,1f);
-        scrollParams.topMargin = dp(8);
-        root.addView(scroll,scrollParams);
+        scroll.setVerticalScrollBarEnabled(false);
+        LinearLayout.LayoutParams scrollParams = new LinearLayout.LayoutParams(-1, 0, 1f);
+        root.addView(scroll, scrollParams);
         LinearLayout list = column();
-        list.setClipChildren(true);
-        list.setClipToPadding(true);
-        scroll.addView(list,new ScrollView.LayoutParams(-1,-2));
-        List<ModManager.ModInfo> mods = modManager.listMods();
-        if (mods.isEmpty()) {
-            TextView empty = text("No hay paquetes instalados. Importa un archivo .mfmod o crea el paquete de ejemplo.",10,muted,false);
+        list.setPadding(0, 0, 0, dp(4));
+        scroll.addView(list, new ScrollView.LayoutParams(-1, -2));
+
+        List<ModManager.ModInfo> installed = modManager.listMods();
+        renderModGrid(list, installed, "");
+        search.addTextChangedListener(new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence value, int start, int count, int after) { }
+            @Override public void onTextChanged(CharSequence value, int start, int before, int count) {
+                renderModGrid(list, installed, value == null ? "" : value.toString());
+            }
+            @Override public void afterTextChanged(Editable value) { }
+        });
+    }
+
+    private void renderModGrid(LinearLayout parent, List<ModManager.ModInfo> installed, String query) {
+        parent.removeAllViews();
+        String normalized = query == null ? "" : query.trim().toLowerCase(Locale.ROOT);
+        List<ModManager.ModInfo> filtered = new ArrayList<>();
+        for (ModManager.ModInfo mod : installed) {
+            if (normalized.isEmpty() || mod.name.toLowerCase(Locale.ROOT).contains(normalized)
+                    || mod.id.toLowerCase(Locale.ROOT).contains(normalized)
+                    || mod.description.toLowerCase(Locale.ROOT).contains(normalized)) {
+                filtered.add(mod);
+            }
+        }
+        if (filtered.isEmpty()) {
+            TextView empty = text(installed.isEmpty()
+                    ? "No hay mods instalados. Usa IMPORTAR o + para crear uno."
+                    : "No se encontraron mods con esa búsqueda.", 10, muted, false);
             empty.setGravity(Gravity.CENTER);
-            empty.setPadding(dp(16),dp(22),dp(16),dp(22));
-            list.addView(empty,new LinearLayout.LayoutParams(-1,-2));
+            empty.setPadding(dp(12), dp(28), dp(12), dp(28));
+            parent.addView(empty, new LinearLayout.LayoutParams(-1, -2));
+            return;
         }
-        for (ModManager.ModInfo mod : mods) {
-            LinearLayout card = row();
-            card.setPadding(dp(10),dp(8),dp(10),dp(8));
-            card.setBackground(shape(new int[]{0xff20384b,0xff142638},13,0x554d6b80));
-            LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(-1,dp(74));
-            cardParams.bottomMargin = dp(7);
-            list.addView(card,cardParams);
-            LinearLayout labels = column();
-            labels.setGravity(Gravity.CENTER_VERTICAL);
-            labels.addView(text(mod.name + "  ·  v" + mod.version,10,white,true));
-            TextView detail = text(mod.description,8,muted,false);
-            detail.setMaxLines(2);
-            LinearLayout.LayoutParams detailParams = new LinearLayout.LayoutParams(-1,-2);
-            detailParams.topMargin = dp(3);
-            labels.addView(detail,detailParams);
-            card.addView(labels,new LinearLayout.LayoutParams(0,-2,1f));
-            Switch enabled = new Switch(getContext());
-            enabled.setChecked(mod.enabled);
-            enabled.setButtonTintList(ColorStateList.valueOf(0xffa9ee70));
-            enabled.setOnCheckedChangeListener((button,checked) -> {
-                modManager.setEnabled(mod,checked);
-                showModsPage();
-            });
-            card.addView(enabled);
+        for (int index = 0; index < filtered.size(); index += 2) {
+            LinearLayout line = row();
+            LinearLayout.LayoutParams lineParams = new LinearLayout.LayoutParams(-1, dp(112));
+            if (index > 0) lineParams.topMargin = dp(7);
+            parent.addView(line, lineParams);
+            addModCard(line, filtered.get(index), normalized, true);
+            if (index + 1 < filtered.size()) addModCard(line, filtered.get(index + 1), normalized, false);
+            else line.addView(new View(getContext()), new LinearLayout.LayoutParams(0, 1, 1f));
         }
-        TextView footer = text("Los cambios se aplican al entrar en un mundo. Los paquetes son de datos y no ejecutan código nativo.",8,muted,false);
-        LinearLayout.LayoutParams footerParams = new LinearLayout.LayoutParams(-1,-2);
-        footerParams.topMargin = dp(6);
-        root.addView(footer,footerParams);
+    }
+
+    private void addModCard(LinearLayout row, ModManager.ModInfo mod, String query, boolean first) {
+        LinearLayout card = column();
+        card.setPadding(dp(8), dp(7), dp(8), dp(6));
+        card.setBackground(shape(new int[]{0xff21394d, 0xff122638}, 12, 0x66536f84));
+        LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(0, -1, 1f);
+        if (!first) cardParams.leftMargin = dp(6);
+        row.addView(card, cardParams);
+
+        LinearLayout top = row();
+        top.setGravity(Gravity.CENTER_VERTICAL);
+        card.addView(top, new LinearLayout.LayoutParams(-1, 0, 1f));
+        TextView thumbnail = text(modIconSymbol(mod.icon), 23, 0xffc7f59a, true);
+        thumbnail.setGravity(Gravity.CENTER);
+        thumbnail.setBackground(shape(new int[]{0xff355748, 0xff1d3e3a}, 10, 0x667fd49c));
+        top.addView(thumbnail, new LinearLayout.LayoutParams(dp(38), dp(38)));
+        LinearLayout labels = column();
+        labels.setGravity(Gravity.CENTER_VERTICAL);
+        labels.setPadding(dp(7), 0, 0, 0);
+        TextView name = text(mod.name, 9, white, true);
+        name.setMaxLines(1);
+        name.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        labels.addView(name);
+        TextView detail = text("v" + mod.version + " · " + mod.description, 7, muted, false);
+        detail.setMaxLines(2);
+        LinearLayout.LayoutParams detailParams = new LinearLayout.LayoutParams(-1, -2);
+        detailParams.topMargin = dp(3);
+        labels.addView(detail, detailParams);
+        top.addView(labels, new LinearLayout.LayoutParams(0, -2, 1f));
+
+        LinearLayout bottom = row();
+        bottom.setGravity(Gravity.CENTER_VERTICAL);
+        TextView state = text(mod.enabled ? "ACTIVO" : "DESACTIVADO", 7,
+                mod.enabled ? 0xffb9f27c : muted, true);
+        bottom.addView(state, new LinearLayout.LayoutParams(0, dp(20), 1f));
+        Switch enabled = new Switch(getContext());
+        enabled.setScaleX(0.84f);
+        enabled.setScaleY(0.84f);
+        enabled.setChecked(mod.enabled);
+        enabled.setButtonTintList(ColorStateList.valueOf(0xffa9ee70));
+        enabled.setOnCheckedChangeListener((button, checked) -> {
+            if (modManager.setEnabled(mod, checked)) {
+                renderModGrid((LinearLayout) row.getParent(), modManager.listMods(), query);
+            }
+        });
+        bottom.addView(enabled, new LinearLayout.LayoutParams(-2, dp(25)));
+        card.addView(bottom, new LinearLayout.LayoutParams(-1, dp(25)));
+    }
+
+    private String modIconSymbol(String icon) {
+        switch (icon) {
+            case "tool": return "⚒";
+            case "creature": return "♟";
+            case "world": return "◈";
+            case "magic": return "✧";
+            case "decor": return "❖";
+            default: return "⬡";
+        }
+    }
+
+    private void showCreateModDialog() {
+        LinearLayout form = column();
+        form.setPadding(dp(12), dp(6), dp(12), dp(2));
+        EditText name = new EditText(getContext());
+        name.setSingleLine(true);
+        name.setHint("Nombre del mod");
+        name.setTextSize(12);
+        name.setTextColor(white);
+        name.setHintTextColor(muted);
+        form.addView(name, new LinearLayout.LayoutParams(-1, dp(44)));
+        EditText description = new EditText(getContext());
+        description.setSingleLine(true);
+        description.setHint("Descripción");
+        description.setTextSize(11);
+        description.setTextColor(white);
+        description.setHintTextColor(muted);
+        form.addView(description, new LinearLayout.LayoutParams(-1, dp(42)));
+        Spinner icon = new Spinner(getContext());
+        String[] names = {"Bloques", "Herramientas", "Criaturas", "Mundo", "Magia", "Decoración"};
+        String[] icons = {"cube", "tool", "creature", "world", "magic", "decor"};
+        icon.setAdapter(new ArrayAdapter<>(getContext(), android.R.layout.simple_spinner_dropdown_item, names));
+        form.addView(icon, new LinearLayout.LayoutParams(-1, dp(42)));
+        new AlertDialog.Builder(getContext()).setTitle("Crear paquete de datos")
+                .setView(form).setNegativeButton("Cancelar", null)
+                .setPositiveButton("Crear", (dialog, which) -> {
+                    ModManager.ModInfo created = modManager.createMod(
+                            name.getText().toString(), description.getText().toString(),
+                            icons[Math.max(0, Math.min(icons.length - 1, icon.getSelectedItemPosition()))]);
+                    if (created == null) {
+                        new AlertDialog.Builder(getContext()).setMessage(
+                                "No se pudo crear el mod. Comprueba el nombre y el espacio disponible.")
+                                .setPositiveButton("Aceptar", null).show();
+                    } else {
+                        showModsPage();
+                    }
+                }).show();
     }
 
     public void refreshMods() { showModsPage(); }
