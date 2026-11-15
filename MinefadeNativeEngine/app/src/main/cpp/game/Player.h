@@ -54,6 +54,8 @@ public:
     bool CanAdd(std::uint16_t itemId, std::uint16_t amount = 1) const;
     bool Add(std::uint16_t itemId, std::uint16_t amount = 1);
     bool ConsumeSelected(std::uint16_t amount = 1);
+    std::uint16_t CountItem(std::uint16_t itemId) const;
+    bool ConsumeItem(std::uint16_t itemId, std::uint16_t amount);
     std::uint16_t SelectedItemId() const;
 };
 
