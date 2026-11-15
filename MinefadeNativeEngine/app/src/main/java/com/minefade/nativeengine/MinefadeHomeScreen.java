@@ -225,11 +225,7 @@ public final class MinefadeHomeScreen extends FrameLayout {
         labels.setGravity(Gravity.CENTER_VERTICAL);
         labels.setPadding(dp(10), 0, 0, 0);
         TextView name = text(title, 13, white, true);
-        TextView detail = text(subtitle, 9, 0xffb4c5d0, false);
         labels.addView(name);
-        LinearLayout.LayoutParams detailParams = new LinearLayout.LayoutParams(-1, -2);
-        detailParams.topMargin = dp(3);
-        labels.addView(detail, detailParams);
         content.addView(labels, new LinearLayout.LayoutParams(0, -1, 1f));
 
         TextView arrow = text("›", 24, accent, true);
@@ -295,7 +291,7 @@ public final class MinefadeHomeScreen extends FrameLayout {
                 () -> showSection("mods"), 4));
 
         for (int i = 0; i < buttons.size(); i++) {
-            LinearLayout.LayoutParams bp = new LinearLayout.LayoutParams(-1, dp(i == 0 ? 48 : 42));
+            LinearLayout.LayoutParams bp = new LinearLayout.LayoutParams(-1, dp(i == 0 ? 42 : 38));
             if (i > 0) bp.topMargin = dp(5);
             left.addView(buttons.get(i), bp);
         }
@@ -314,16 +310,7 @@ public final class MinefadeHomeScreen extends FrameLayout {
         overlay.setBackground(new GradientDrawable(GradientDrawable.Orientation.BOTTOM_TOP,
                 new int[]{0xee081321, 0x00081321}));
         showcase.addView(overlay, new FrameLayout.LayoutParams(-1, -1));
-        TextView feature = text("MINEFADE VOXEL", 15, white, true);
-        overlay.addView(feature);
-        TextView tagline = text("UN UNIVERSO HECHO DE BLOQUES", 8, 0xffc1d7e4, true);
-        LinearLayout.LayoutParams taglineParams = new LinearLayout.LayoutParams(-1, -2);
-        taglineParams.topMargin = dp(4);
-        overlay.addView(tagline, taglineParams);
-        TextView footer = text("Biomas · cuevas · montañas · mundo persistente", 9, 0xffa5bac8, false);
-        LinearLayout.LayoutParams footParams = new LinearLayout.LayoutParams(-1, -2);
-        footParams.topMargin = dp(9);
-        overlay.addView(footer, footParams);
+        // Keep the cover artwork clean: no slogan or redundant biome list.
 
         // No engine/version/debug banner on the start screen; build metadata stays
         // in the APK and release notes rather than consuming game-menu space.
@@ -531,7 +518,7 @@ public final class MinefadeHomeScreen extends FrameLayout {
         EditText seed = new EditText(getContext());
         seed.setSingleLine(true);
         seed.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_SIGNED);
-        seed.setText(Long.toString(System.currentTimeMillis() / 1000L));
+        seed.setText(Long.toString(System.nanoTime() ^ (System.currentTimeMillis() << 21)));
         seed.setTextSize(11);
         seed.setTextColor(white);
         seed.setPadding(dp(10),0,dp(10),0);
