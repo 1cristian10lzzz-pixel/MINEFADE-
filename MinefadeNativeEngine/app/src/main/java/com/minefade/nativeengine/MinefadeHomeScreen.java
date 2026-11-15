@@ -1046,12 +1046,16 @@ public final class MinefadeHomeScreen extends FrameLayout {
             LinearLayout.LayoutParams pairParams = new LinearLayout.LayoutParams(-1, -2);
             pairParams.bottomMargin = dp(2);
             View first = cards.get(index);
-            LinearLayout.LayoutParams firstParams = new LinearLayout.LayoutParams(0, -2, 1f);
+            int firstHeight = first.getLayoutParams() == null ? -2 : first.getLayoutParams().height;
+            if (firstHeight <= 0) firstHeight = -2;
+            LinearLayout.LayoutParams firstParams = new LinearLayout.LayoutParams(0, firstHeight, 1f);
             firstParams.rightMargin = dp(4);
             pair.addView(first, firstParams);
             if (index + 1 < cards.size()) {
                 View second = cards.get(index + 1);
-                LinearLayout.LayoutParams secondParams = new LinearLayout.LayoutParams(0, -2, 1f);
+                int secondHeight = second.getLayoutParams() == null ? -2 : second.getLayoutParams().height;
+                if (secondHeight <= 0) secondHeight = -2;
+                LinearLayout.LayoutParams secondParams = new LinearLayout.LayoutParams(0, secondHeight, 1f);
                 secondParams.leftMargin = dp(4);
                 pair.addView(second, secondParams);
             } else {
