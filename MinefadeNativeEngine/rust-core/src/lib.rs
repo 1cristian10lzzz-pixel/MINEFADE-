@@ -171,7 +171,7 @@ fn quality_scale(quality: u8) -> f32 {
 
 #[no_mangle]
 pub extern "C" fn minefade_core_abi_version() -> u32 {
-    1
+    2
 }
 
 /// Check that an encoded inventory can accept an item without mutating it.
@@ -505,6 +505,7 @@ pub unsafe extern "C" fn minefade_entity_compute_pose(
     kind: i32,
     phase: f32,
     animation_time: f32,
+    behavior: u8,
     animation_quality: u8,
     animations_enabled: u8,
     output: *mut MfEntityPose,
@@ -517,8 +518,29 @@ pub unsafe extern "C" fn minefade_entity_compute_pose(
     let quality = quality_scale(animation_quality.min(2));
     let phase = finite_or(phase, 0.0);
     let time = finite_or(animation_time, 0.0);
-    let gait = (phase * 8.0).sin() * 0.24 * quality;
+    let mut gait = (phase * 8.0).sin() * 0.24 * quality;
     let idle = (time * 1.2 + phase).sin();
+    if behavior == 2 {
+        // Grazing/eating: feet remain planted while the head dips in short,
+        // repeated bites with a gentle body settle.
+        let bite = (time * 4.2 + phase * 0.31).sin().abs();
+        *output = MfEntityPose {
+            front_left_leg_pitch: 0.0,
+            front_right_leg_pitch: 0.0,
+            rear_left_leg_pitch: 0.0,
+            rear_right_leg_pitch: 0.0,
+            body_bob: (time * 2.4 + phase).sin() * 0.012 * quality,
+            head_pitch: 0.28 + bite * 0.12,
+            head_yaw: (time * 0.8 + phase).sin() * 0.025 * quality,
+            tail_yaw: (time * 1.5 + phase).sin() * 0.08 * quality,
+            left_wing_roll: 0.0,
+            right_wing_roll: 0.0,
+            eyelid: eyelid.clamp(0.0, 1.0),
+        };
+        return;
+    }
+    if behavior == 1 { gait *= 1.38; } // passive creature fleeing
+    if behavior == 3 { gait *= 1.22; } // hostile creature pursuing
     let blink_cycle = (time + phase * 0.12).rem_euclid(6.0);
     let eyelid = if blink_cycle > 5.72 {
         ((blink_cycle - 5.72) / 0.28 * PI).sin().abs()
