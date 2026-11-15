@@ -544,6 +544,7 @@ bool VoxelWorld::PumpChunkGeneration() {
         if (chunks_.find(key) == chunks_.end()) {
             Chunk chunk = MakeChunk(key.first, key.second);
             chunks_.emplace(key, std::move(chunk));
+            InvalidateChunkAndNeighbors(key.first, key.second);
             addedChunk = true;
         }
     }
@@ -571,13 +572,17 @@ void VoxelWorld::WaitForChunkGeneration() {
                 Chunk chunk = job.future.get();
                 queuedChunks_.erase(job.key);
                 const auto key = std::make_pair(chunk.x, chunk.z);
-                if (chunks_.find(key) == chunks_.end()) chunks_.emplace(key, std::move(chunk));
+                if (chunks_.find(key) == chunks_.end()) {
+                    chunks_.emplace(key, std::move(chunk));
+                    InvalidateChunkAndNeighbors(key.first, key.second);
+                }
             } catch (...) {
                 asyncGenerationDisabled_ = true;
                 queuedChunks_.erase(job.key);
                 if (chunks_.find(job.key) == chunks_.end()) {
                     Chunk chunk = MakeChunk(job.key.first, job.key.second);
                     chunks_.emplace(job.key, std::move(chunk));
+                    InvalidateChunkAndNeighbors(job.key.first, job.key.second);
                 }
             }
         }
