@@ -97,9 +97,29 @@ jobs:
         run: gradle --no-daemon --stacktrace :app:assembleDebug
 
       - name: Verify APK
+        shell: bash
         run: |
           set -euo pipefail
-          test -s MinefadeNativeEngine/app/build/outputs/apk/debug/app-debug.apk
+          APK="MinefadeNativeEngine/app/build/outputs/apk/debug/app-debug.apk"
+          test -s "$APK"
+          unzip -t "$APK" >/dev/null
+
+          BUILD_TOOLS_DIR="$(find "${ANDROID_HOME}/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -n 1)"
+          APKSIGNER="${BUILD_TOOLS_DIR}/apksigner"
+          AAPT="${BUILD_TOOLS_DIR}/aapt"
+          test -x "$APKSIGNER"
+          test -x "$AAPT"
+          "$APKSIGNER" verify --verbose --print-certs "$APK"
+
+          "$AAPT" dump badging "$APK" > /tmp/minefade-apk-badging.txt
+          grep -F "package: name='com.minefade.nativeengine.review11'" /tmp/minefade-apk-badging.txt
+          grep -F "versionName='0.8.0-worlds-mods-review11'" /tmp/minefade-apk-badging.txt
+
+          unzip -Z1 "$APK" | grep -Fx 'lib/arm64-v8a/libminefade_native.so'
+          unzip -Z1 "$APK" | grep -Fx 'lib/armeabi-v7a/libminefade_native.so'
+          ATLAS_BYTES="$(unzip -p "$APK" assets/textures/block_atlas.rgba | wc -c | tr -d ' ')"
+          test "$ATLAS_BYTES" = "1368576"
+          sha256sum "$APK"
 
       - name: Upload review APK
         uses: actions/upload-artifact@v4
