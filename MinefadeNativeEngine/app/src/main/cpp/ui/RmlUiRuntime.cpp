@@ -49,6 +49,8 @@ button:active { background: #47789b; }
 .panel h1 { font-size: 20dp; margin: 0dp 0dp 10dp 0dp; color: #ffffff; }
 .panel p { font-size: 12dp; color: #c8d3db; margin: 3dp 0dp 12dp 0dp; }
 .panel .actions { flex-wrap: wrap; }
+#selected-item { position: absolute; z-index: 7; left: 50%; bottom: 62dp; display: none; flex-direction: row; align-items: center; gap: 5dp; margin-left: -72dp; min-width: 144dp; justify-content: center; color: #ffffff; font-size: 10dp; text-shadow: 0dp 1dp 3dp #000000; background: #10192333; border: 1dp #ffffff22; border-radius: 8dp; padding: 4dp 7dp; pointer-events: none; }
+#selected-item img { width: 18dp; height: 18dp; }
 #quickbar { position: absolute; z-index: 7; bottom: 10dp; left: 50%; margin-left: -184dp; display: flex; flex-direction: row; gap: 4dp; padding: 5dp; background: #081522ee; border: 2dp #dcebf0aa; border-radius: 13dp; }
 .slot { position: relative; width: 36dp; min-width: 36dp; height: 41dp; text-align: center; padding: 2dp; display: flex; align-items: center; justify-content: center; background: #1b344beF; border: 1dp #d8e6eeaa; border-radius: 8dp; color: #ffffff; font-size: 9dp; }
 .slot:active { background: #486b78; }
@@ -105,6 +107,7 @@ button:active { background: #47789b; }
   <div id="move-left" class="pad-arrow">◀</div><div id="move-right" class="pad-arrow">▶</div>
 </div>
 <div id="hint"></div>
+<div id="selected-item"></div>
 <div id="quickbar">
   <button class="slot" id="slot-0">1</button><button class="slot" id="slot-1">2</button><button class="slot" id="slot-2">3</button>
   <button class="slot" id="slot-3">4</button><button class="slot" id="slot-4">5</button><button class="slot" id="slot-5">6</button>
@@ -442,6 +445,19 @@ void RmlUiRuntime::SetQuickbarSlot(int slot,const std::string& label,bool select
         element->SetProperty("border",selected?"2dp #d9e9a4":"1dp #ffffff33");
         element->SetProperty("background-color",selected?"#d9e9a422":"#10192322");
     }
+}
+
+void RmlUiRuntime::SetSelectedItem(std::uint16_t itemId, const std::string& name) {
+    if (document_ == nullptr) return;
+    Rml::Element* element = document_->GetElementById("selected-item");
+    if (element == nullptr) return;
+    if (itemId == 0u || name.empty()) {
+        element->SetProperty("display", "none");
+        return;
+    }
+    element->SetInnerRML("<img src='minefade://block/" + std::to_string(itemId) +
+                         "'/><span>" + name + "</span>");
+    element->SetProperty("display", "flex");
 }
 
 void RmlUiRuntime::SetInventoryContents(const std::string& markup) {
