@@ -1049,7 +1049,7 @@ public final class MinefadeHomeScreen extends FrameLayout {
         settingsBody.addView(tabs, new LinearLayout.LayoutParams(dp(92), -1));
         for (String[] module : modules) {
             boolean active = settingsModule.equals(module[0]);
-            TextView tab = text(module[2] + "\\n" + module[1], 8,
+            TextView tab = text(module[2] + "\n" + module[1], 8,
                     active ? 0xffe4ffd6 : 0xffb8cbd5, true);
             tab.setGravity(Gravity.CENTER);
             tab.setPadding(dp(2), dp(5), dp(2), dp(5));
