@@ -1261,9 +1261,13 @@ void Engine::Render() {
         const auto chunkVisible = [&](const ChunkMeshRange& range) {
             const float minX = static_cast<float>(range.chunkX * VoxelWorld::kChunkSize);
             const float minZ = static_cast<float>(range.chunkZ * VoxelWorld::kChunkSize);
-            return frustum.IntersectsAabb(minX, 0.0f, minZ,
-                minX + static_cast<float>(VoxelWorld::kChunkSize),
-                static_cast<float>(VoxelWorld::kWorldHeight),
+            // Mesh bounds are tighter than the full 96-block column. Keep a small
+            // margin for animated foliage and water displacement.
+            const float minY = std::max(0.0f, range.minY - 1.0f);
+            const float maxY = std::min(static_cast<float>(VoxelWorld::kWorldHeight),
+                                        range.maxY + 1.0f);
+            return frustum.IntersectsAabb(minX, minY, minZ,
+                minX + static_cast<float>(VoxelWorld::kChunkSize), maxY,
                 minZ + static_cast<float>(VoxelWorld::kChunkSize));
         };
         const auto sun = environment_.SunDirection();
@@ -1289,36 +1293,17 @@ void Engine::Render() {
         glUniform1f(fogFarLocation_, fogEnd);
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, blockAtlasTexture_);
-        glBindVertexArray(worldVao_);
-        if (worldChunkRanges_.empty()) {
-            glDrawArrays(GL_TRIANGLES, 0, worldVertexCount_);
-        } else {
-            std::size_t batchFirst=0u, batchCount=0u;
-            const auto flushOpaqueBatch=[&]() {
-                if (batchCount>0u) {
-                    glDrawArrays(GL_TRIANGLES,static_cast<GLint>(batchFirst),
-                                 static_cast<GLsizei>(batchCount));
-                    batchCount=0u;
-                }
-            };
-            for (const ChunkMeshRange& range : worldChunkRanges_) {
-                if (range.opaqueCount==0u) continue;
-                if (!chunkVisible(range)) {
-                    flushOpaqueBatch();
-                    continue;
-                }
-                if (batchCount==0u) {
-                    batchFirst=range.opaqueFirst;
-                    batchCount=range.opaqueCount;
-                } else if (batchFirst+batchCount==range.opaqueFirst) {
-                    batchCount+=range.opaqueCount;
-                } else {
-                    flushOpaqueBatch();
-                    batchFirst=range.opaqueFirst;
-                    batchCount=range.opaqueCount;
-                }
-            }
-            flushOpaqueBatch();
+        // Each chunk owns a persistent VAO/VBO pair. Only changed revisions are
+        // uploaded by SyncChunkGpuMeshes; rendering no longer binds a single
+        // whole-world buffer that gets re-created on every generated chunk.
+        for (const ChunkMeshRange& range : worldChunkRanges_) {
+            if (range.opaqueCount == 0u || !chunkVisible(range)) continue;
+            const auto gpuIt = chunkGpuMeshes_.find({range.chunkX, range.chunkZ});
+            if (gpuIt == chunkGpuMeshes_.end()) continue;
+            const ChunkGpuMesh& gpu = gpuIt->second;
+            if (gpu.opaqueVao == 0 || gpu.opaqueCount <= 0) continue;
+            glBindVertexArray(gpu.opaqueVao);
+            glDrawArrays(GL_TRIANGLES, 0, gpu.opaqueCount);
         }
         glBindVertexArray(0);
         glBindTexture(GL_TEXTURE_2D, 0);
@@ -1346,24 +1331,32 @@ void Engine::Render() {
             glEnable(GL_BLEND);
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
             glDepthMask(GL_FALSE);
-            glBindVertexArray(transparentVao_);
+            // Transparent blocks retain two-sided surfaces. Their per-chunk
+            // meshes are sorted far-to-near before drawing.
+            glDisable(GL_CULL_FACE);
             std::vector<const ChunkMeshRange*> transparentVisible;
             transparentVisible.reserve(worldChunkRanges_.size());
             for (const ChunkMeshRange& range : worldChunkRanges_)
-                if (range.transparentCount>0u && chunkVisible(range))
+                if (range.transparentCount > 0u && chunkVisible(range))
                     transparentVisible.push_back(&range);
-            std::sort(transparentVisible.begin(),transparentVisible.end(),
-                [&](const ChunkMeshRange* a,const ChunkMeshRange* b) {
-                    const float ax=(static_cast<float>(a->chunkX)+0.5f)*VoxelWorld::kChunkSize-eye.x;
-                    const float az=(static_cast<float>(a->chunkZ)+0.5f)*VoxelWorld::kChunkSize-eye.z;
-                    const float bx=(static_cast<float>(b->chunkX)+0.5f)*VoxelWorld::kChunkSize-eye.x;
-                    const float bz=(static_cast<float>(b->chunkZ)+0.5f)*VoxelWorld::kChunkSize-eye.z;
-                    return ax*ax+az*az > bx*bx+bz*bz;
+            std::sort(transparentVisible.begin(), transparentVisible.end(),
+                [&](const ChunkMeshRange* a, const ChunkMeshRange* b) {
+                    const float ax = (static_cast<float>(a->chunkX) + 0.5f) * VoxelWorld::kChunkSize - eye.x;
+                    const float az = (static_cast<float>(a->chunkZ) + 0.5f) * VoxelWorld::kChunkSize - eye.z;
+                    const float bx = (static_cast<float>(b->chunkX) + 0.5f) * VoxelWorld::kChunkSize - eye.x;
+                    const float bz = (static_cast<float>(b->chunkZ) + 0.5f) * VoxelWorld::kChunkSize - eye.z;
+                    return ax * ax + az * az > bx * bx + bz * bz;
                 });
-            for (const ChunkMeshRange* range : transparentVisible)
-                glDrawArrays(GL_TRIANGLES,static_cast<GLint>(range->transparentFirst),
-                             static_cast<GLsizei>(range->transparentCount));
+            for (const ChunkMeshRange* range : transparentVisible) {
+                const auto gpuIt = chunkGpuMeshes_.find({range->chunkX, range->chunkZ});
+                if (gpuIt == chunkGpuMeshes_.end()) continue;
+                const ChunkGpuMesh& gpu = gpuIt->second;
+                if (gpu.transparentVao == 0 || gpu.transparentCount <= 0) continue;
+                glBindVertexArray(gpu.transparentVao);
+                glDrawArrays(GL_TRIANGLES, 0, gpu.transparentCount);
+            }
             glBindVertexArray(0);
+            glEnable(GL_CULL_FACE);
             glDepthMask(GL_TRUE);
             glDisable(GL_BLEND);
         }
