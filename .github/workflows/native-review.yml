@@ -10,7 +10,7 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   test-and-build:
@@ -142,6 +142,24 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
+      - name: Publish Minefade 2.0.4 GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: minefade-v2.0.4-phase6-7
+          name: Minefade 2.0.4 — Fases 6 y 7
+          draft: false
+          prerelease: true
+          files: MinefadeNativeEngine/app/build/outputs/apk/debug/app-debug.apk
+          body: |
+            Minefade 2.0.4 — actualización candidata para Android.
+
+            Incluye:
+            - LOD distante estratificado con hasta seis bandas verticales por columna.
+            - Siete pistas musicales originales y doce capas ambientales originales adaptadas a bioma, hora, profundidad y agua.
+            - Controles independientes de volumen de música y ambiente.
+            - Conservación de los efectos de juego, IDs de bloques y formato de mundos.
+
+            Es una compilación debug/prerelease. Requiere validación visual y auditiva en dispositivos físicos antes de considerarse estable.
       - name: Package complete source tree
         shell: bash
         run: |
