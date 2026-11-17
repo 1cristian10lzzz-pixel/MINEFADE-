@@ -92,7 +92,10 @@ public:
     void BuildMesh(std::vector<WorldVertex>& output, int centerWorldX = 0,
                    int centerWorldZ = 0, int radiusInChunks = -1,
                    std::vector<WorldVertex>* transparentOutput = nullptr,
-                   std::vector<ChunkMeshRange>* chunkRanges = nullptr) const;
+                   std::vector<ChunkMeshRange>* chunkRanges = nullptr,
+                   std::size_t meshBuildBudget = 0u) const;
+    bool HasPendingMeshBuild(int centerWorldX, int centerWorldZ,
+                             int radiusInChunks) const;
     bool Save(const std::string& filePath, const Vec3& playerPosition,
               const std::array<std::uint32_t, 36>& inventory) const;
     bool Load(const std::string& filePath, Vec3& playerPosition,
