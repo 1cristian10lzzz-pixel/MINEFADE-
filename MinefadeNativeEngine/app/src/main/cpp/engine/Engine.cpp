@@ -113,7 +113,9 @@ vec2 AtlasUv(vec2 localUv, int tile) {
     float row = float(tile / 32);
     vec2 pixel = vec2(column * 18.0 + 1.5 + fract(localUv.x) * 15.0,
                       row * 18.0 + 1.5 + (1.0 - fract(localUv.y)) * 15.0);
-    return vec2(pixel.x / atlasSize.x, 1.0 - pixel.y / atlasSize.y);
+    // The RGBA atlas is uploaded row-major without a vertical flip. OpenGL
+    // treats the first uploaded row as v=0, so do not invert the atlas row again.
+    return vec2(pixel.x / atlasSize.x, pixel.y / atlasSize.y);
 }
 void main() {
     vec4 texel = (uUseAtlas == 1) ? texture(uBlockAtlas, AtlasUv(vTexCoord, vAtlasTile)) : vec4(1.0);
@@ -424,7 +426,9 @@ vec2 AtlasUv(vec2 localUv, int tile) {
     float row = float(tile / 32);
     vec2 pixel = vec2(column * 18.0 + 1.5 + fract(localUv.x) * 15.0,
                       row * 18.0 + 1.5 + (1.0 - fract(localUv.y)) * 15.0);
-    return vec2(pixel.x / atlasSize.x, 1.0 - pixel.y / atlasSize.y);
+    // The RGBA atlas is uploaded row-major without a vertical flip. OpenGL
+    // treats the first uploaded row as v=0, so do not invert the atlas row again.
+    return vec2(pixel.x / atlasSize.x, pixel.y / atlasSize.y);
 }
 void main() {
     vec4 texel = (uUseAtlas == 1) ? texture(uBlockAtlas, AtlasUv(vTexCoord, vAtlasTile)) : vec4(1.0);
