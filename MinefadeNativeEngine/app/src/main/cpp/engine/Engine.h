@@ -11,6 +11,7 @@
 #include <atomic>
 #include <chrono>
 #include <cstdint>
+#include <map>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -193,6 +194,9 @@ private:
     std::vector<WorldVertex> worldMesh_;
     std::vector<WorldVertex> transparentWorldMesh_;
     std::vector<ChunkMeshRange> worldChunkRanges_;
+    // A transparent triangle order is retained until that chunk's geometry
+    // revision changes; camera movement only reorders chunks at draw time.
+    std::map<std::pair<int, int>, std::uint64_t> transparentSortRevisions_;
     WorldMeshRenderer worldRenderer_;
     std::vector<WorldVertex> entityMesh_;
     std::vector<WorldVertex> itemMesh_;
