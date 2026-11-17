@@ -741,7 +741,7 @@ bool Engine::Initialise(float displayDensity, const std::uint8_t* atlasPixels,
     if (!ui_.Initialise(width_, height_, displayDensity,
                         [this](const std::string& action) { HandleUiAction(action); })) {
         lastInitError_ = "El HUD RmlUi no está disponible; se activarán los controles Android de respaldo.";
-        if (!ui_.LastError().empty()) lastInitError_ += "\\nDiagnóstico RmlUi: " + ui_.LastError();
+        if (!ui_.LastError().empty()) lastInitError_ += "\nDiagnóstico RmlUi: " + ui_.LastError();
         ENGINE_LOGE("RmlUi unavailable; continuing with Android fallback controls: %s",
                     lastInitError_.c_str());
         // The world renderer and simulation are independent from RmlUi. A HUD
