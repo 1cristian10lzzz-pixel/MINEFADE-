@@ -25,6 +25,7 @@ public:
     void Resize(int width, int height);
     void SetBlockAtlas(const std::uint8_t* pixels, std::size_t bytes, int width, int height);
     bool Touch(int action, float x, float y);
+    bool IsInMovementPad(float x, float y) const;
     void UpdateAndRender();
     void SetStatus(const std::string& status);
     void SetLeftHanded(bool enabled) { leftHanded_ = enabled; }
