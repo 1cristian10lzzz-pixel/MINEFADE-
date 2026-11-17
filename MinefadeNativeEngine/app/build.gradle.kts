@@ -11,8 +11,8 @@ android {
         applicationId = "com.minefade.nativeengine"
         minSdk = 24
         targetSdk = 36
-        versionCode = 22
-        versionName = "2.0.2"
+        versionCode = 23
+        versionName = "2.0.3"
 
         ndk {
             abiFilters += listOf("arm64-v8a", "armeabi-v7a")
