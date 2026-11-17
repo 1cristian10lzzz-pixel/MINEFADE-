@@ -22,9 +22,7 @@ public:
     WorldMeshRenderer(const WorldMeshRenderer&) = delete;
     WorldMeshRenderer& operator=(const WorldMeshRenderer&) = delete;
 
-    bool Sync(const std::vector<WorldVertex>& opaqueVertices,
-              const std::vector<WorldVertex>& transparentVertices,
-              const std::vector<ChunkMeshRange>& ranges);
+    bool Sync(const std::vector<ChunkMeshView>& chunkViews);
     void Shutdown();
 
     GLsizei OpaqueVertexCount() const noexcept { return opaqueVertexCount_; }
