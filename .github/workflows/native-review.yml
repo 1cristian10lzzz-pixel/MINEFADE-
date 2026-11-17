@@ -93,6 +93,7 @@ jobs:
           python3 tests/test_shader_pack.py
           python3 tests/test_android_startup_recovery.py
           python3 tests/test_renderer_invariants.py
+          python3 tests/test_phase_four_lan_controls.py
 
       - name: Build Android debug APK
         working-directory: MinefadeNativeEngine
