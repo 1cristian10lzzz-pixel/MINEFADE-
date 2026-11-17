@@ -43,6 +43,7 @@ public final class MainActivity extends Activity {
     private FrameLayout loadingOverlay;
     private FrameLayout gameContainer;
     private FrameLayout fallbackOverlay;
+    private WorldManager.WorldInfo requestedWorld;
     private WorldManager worldManager;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private boolean engineReady;
@@ -186,6 +187,7 @@ public final class MainActivity extends Activity {
 
         requestedMultiplayer = multiplayer;
         requestedPlayerSlot = Math.max(0, Math.min(31, playerSlot));
+        requestedWorld = world;
 
         // Native setup now happens on the GLSurfaceView thread immediately before
         // nativeInit. This keeps all Engine/JNI state changes serialised with GL.
@@ -256,7 +258,10 @@ public final class MainActivity extends Activity {
         overlay.setClipChildren(false);
         overlay.setClipToPadding(false);
         overlay.setBackgroundColor(Color.TRANSPARENT);
-        overlay.setClickable(false);
+        // Unhandled touches are forwarded to the native engine so the right half
+        // remains a camera-look surface when the RmlUi HUD is unavailable.
+        overlay.setClickable(true);
+        overlay.setOnTouchListener((view, event) -> dispatchFallbackWorldTouch(event));
 
         FrameLayout joystick = new FrameLayout(this);
         GradientDrawable padBackground = new GradientDrawable(
@@ -367,6 +372,30 @@ public final class MainActivity extends Activity {
 
         fallbackOverlay = overlay;
         gameContainer.addView(overlay, 1, new FrameLayout.LayoutParams(-1, -1));
+    }
+
+    private boolean dispatchFallbackWorldTouch(MotionEvent event) {
+        if (surfaceView == null || !engineReady) return true;
+        final int action = event.getActionMasked();
+        if (action == MotionEvent.ACTION_MOVE) {
+            for (int i = 0; i < event.getPointerCount(); i++) {
+                surfaceView.dispatchFallbackTouch(2, event.getPointerId(i), event.getX(i), event.getY(i));
+            }
+            return true;
+        }
+        final int mapped;
+        switch (action) {
+            case MotionEvent.ACTION_DOWN:
+            case MotionEvent.ACTION_POINTER_DOWN: mapped = 0; break;
+            case MotionEvent.ACTION_UP:
+            case MotionEvent.ACTION_POINTER_UP: mapped = 1; break;
+            case MotionEvent.ACTION_CANCEL: mapped = 3; break;
+            default: return true;
+        }
+        final int index = event.getActionIndex();
+        surfaceView.dispatchFallbackTouch(mapped, event.getPointerId(index),
+                event.getX(index), event.getY(index));
+        return true;
     }
 
     private void showFallbackPauseDialog() {
@@ -622,9 +651,15 @@ public final class MainActivity extends Activity {
         TextView message = statusText(detail, 10, 0xffc4d1d9, false);
         message.setGravity(Gravity.CENTER);
         message.setTextIsSelectable(true);
-        LinearLayout.LayoutParams mp = new LinearLayout.LayoutParams(-1, -2);
+        message.setMovementMethod(new android.text.method.ScrollingMovementMethod());
+        ScrollView diagnosticScroll = new ScrollView(this);
+        diagnosticScroll.setFillViewport(false);
+        diagnosticScroll.setVerticalScrollBarEnabled(true);
+        diagnosticScroll.setOverScrollMode(View.OVER_SCROLL_IF_CONTENT_SCROLLS);
+        diagnosticScroll.addView(message, new ScrollView.LayoutParams(-1, -2));
+        LinearLayout.LayoutParams mp = new LinearLayout.LayoutParams(-1, dp(112));
         mp.topMargin = dp(8);
-        card.addView(message, mp);
+        card.addView(diagnosticScroll, mp);
 
         TextView copyDiagnostics = statusButton("COPIAR DIAGNÓSTICO", false);
         LinearLayout.LayoutParams copyParams = new LinearLayout.LayoutParams(-1, dp(34));
@@ -645,7 +680,7 @@ public final class MainActivity extends Activity {
         ap.topMargin = dp(16);
         card.addView(actions, ap);
         TextView retry = statusButton("REINTENTAR", true);
-        retry.setOnClickListener(v -> startGame(requestedMultiplayer, requestedPlayerSlot));
+        retry.setOnClickListener(v -> startGame(requestedMultiplayer, requestedPlayerSlot, requestedWorld));
         actions.addView(retry, new LinearLayout.LayoutParams(0, -1, 1f));
         TextView back = statusButton("VOLVER", false);
         back.setOnClickListener(v -> showHome());
