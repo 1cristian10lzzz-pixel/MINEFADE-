@@ -71,25 +71,23 @@ bool WorldMeshRenderer::UploadPass(GLuint& vao, GLuint& vbo, GLsizei& drawCount,
     return true;
 }
 
-bool WorldMeshRenderer::Sync(const std::vector<WorldVertex>& opaqueVertices,
-                             const std::vector<WorldVertex>& transparentVertices,
-                             const std::vector<ChunkMeshRange>& ranges) {
+bool WorldMeshRenderer::Sync(const std::vector<ChunkMeshView>& chunkViews) {
     std::set<std::pair<int, int>> active;
     std::size_t opaqueTotal = 0;
     std::size_t transparentTotal = 0;
     bool success = true;
 
-    for (const ChunkMeshRange& range : ranges) {
-        const auto key = std::make_pair(range.chunkX, range.chunkZ);
+    for (const ChunkMeshView& view : chunkViews) {
+        if (view.opaque == nullptr || view.transparent == nullptr) continue;
+        const auto key = std::make_pair(view.chunkX, view.chunkZ);
         active.insert(key);
         GpuChunk& gpu = chunks_[key];
 
-        if (gpu.revision != range.revision) {
+        if (gpu.revision != view.revision) {
             const bool opaqueOk = UploadPass(gpu.opaqueVao, gpu.opaqueVbo, gpu.opaqueCount,
-                opaqueVertices, range.opaqueFirst, range.opaqueCount);
+                *view.opaque, 0u, view.opaque->size());
             const bool transparentOk = UploadPass(gpu.transparentVao, gpu.transparentVbo,
-                gpu.transparentCount, transparentVertices,
-                range.transparentFirst, range.transparentCount);
+                gpu.transparentCount, *view.transparent, 0u, view.transparent->size());
             if (!opaqueOk || !transparentOk) {
                 gpu.revision = 0;
                 gpu.opaqueCount = 0;
@@ -97,9 +95,9 @@ bool WorldMeshRenderer::Sync(const std::vector<WorldVertex>& opaqueVertices,
                 success = false;
                 continue;
             }
-            gpu.revision = range.revision;
-            gpu.minY = range.minY;
-            gpu.maxY = range.maxY;
+            gpu.revision = view.revision;
+            gpu.minY = view.minY;
+            gpu.maxY = view.maxY;
         }
 
         opaqueTotal += static_cast<std::size_t>(gpu.opaqueCount);
