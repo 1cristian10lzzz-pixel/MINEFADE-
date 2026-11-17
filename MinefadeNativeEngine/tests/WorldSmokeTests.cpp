@@ -102,6 +102,86 @@ int main() {
     assert(greedyRanges[0].opaqueCount == greedyOpaque.size());
     assert(greedyRanges[0].lodLevel == 0);
     assert(greedyOpaque.size() >= 36u);
+    assert(greedyRanges[0].revision > 0u);
+
+    // A second mesh collection without world edits must reuse every cached
+    // chunk revision, including the visible outer border (the old renderer
+    // rebuilt that ring unconditionally and stalled exploration).
+    const std::uint64_t initialGreedyRevision = greedyRanges[0].revision;
+    std::vector<WorldVertex> cachedOpaque;
+    std::vector<WorldVertex> cachedTransparent;
+    std::vector<ChunkMeshRange> cachedRanges;
+    greedyWorld.BuildMesh(cachedOpaque, 8, 8, 0, &cachedTransparent, &cachedRanges);
+    assert(cachedRanges.size() == 1u);
+    assert(cachedRanges[0].revision == initialGreedyRevision);
+    assert(cachedOpaque.size() == greedyOpaque.size());
+    assert(cachedTransparent.size() == greedyTransparent.size());
+
+    VoxelWorld revisionWorld(0x52455631u);
+    revisionWorld.GenerateAround(8, 8, 1);
+    std::vector<WorldVertex> revisionOpaque;
+    std::vector<WorldVertex> revisionTransparent;
+    std::vector<ChunkMeshRange> revisionRanges;
+    revisionWorld.BuildMesh(revisionOpaque, 8, 8, 1, &revisionTransparent, &revisionRanges);
+    assert(revisionRanges.size() == 9u);
+    std::vector<std::uint64_t> beforeRevisions;
+    beforeRevisions.reserve(revisionRanges.size());
+    for (const ChunkMeshRange& range : revisionRanges) beforeRevisions.push_back(range.revision);
+    revisionWorld.BuildMesh(revisionOpaque, 8, 8, 1, &revisionTransparent, &revisionRanges);
+    for (std::size_t i = 0; i < revisionRanges.size(); ++i)
+        assert(revisionRanges[i].revision == beforeRevisions[i]);
+
+    // Editing one interior chunk must increment only that chunk's revision;
+    // unrelated chunks retain their GPU buffers.
+    const int revisionGround = revisionWorld.GetSurfaceHeight(8, 8);
+    assert(revisionWorld.SetBlock(8, revisionGround + 6, 8, BlockId::Stone));
+    revisionWorld.BuildMesh(revisionOpaque, 8, 8, 1, &revisionTransparent, &revisionRanges);
+    bool centreRevisionAdvanced = false;
+    for (const ChunkMeshRange& range : revisionRanges) {
+        if (range.chunkX == 0 && range.chunkZ == 0) {
+            assert(range.revision > beforeRevisions[4]);
+            centreRevisionAdvanced = true;
+        } else {
+            const auto index = static_cast<std::size_t>(
+                (range.chunkZ + 1) * 3 + (range.chunkX + 1));
+            assert(range.revision == beforeRevisions[index]);
+        }
+    }
+    assert(centreRevisionAdvanced);
+
+    // Every emitted terrain triangle must contain finite attributes, a unit
+    // normal, non-degenerate winding consistent with that normal, and a valid
+    // catalog tile. This catches broken face order and atlas references.
+    const auto validateWorldMesh = [](const std::vector<WorldVertex>& vertices) {
+        assert(vertices.size() % 3u == 0u);
+        for (const WorldVertex& vertex : vertices) {
+            assert(std::isfinite(vertex.x) && std::isfinite(vertex.y) && std::isfinite(vertex.z));
+            assert(std::isfinite(vertex.nx) && std::isfinite(vertex.ny) && std::isfinite(vertex.nz));
+            assert(std::isfinite(vertex.u) && std::isfinite(vertex.v));
+            const float normalLength = std::sqrt(vertex.nx * vertex.nx +
+                vertex.ny * vertex.ny + vertex.nz * vertex.nz);
+            assert(normalLength > 0.98f && normalLength < 1.02f);
+            assert(vertex.atlasTile >= 0.0f);
+            assert(vertex.atlasTile < static_cast<float>(GetBlockDefinitionCount() * 3u));
+        }
+        for (std::size_t i = 0; i + 2u < vertices.size(); i += 3u) {
+            const WorldVertex& a = vertices[i];
+            const WorldVertex& b = vertices[i + 1u];
+            const WorldVertex& c = vertices[i + 2u];
+            const float abx = b.x - a.x, aby = b.y - a.y, abz = b.z - a.z;
+            const float acx = c.x - a.x, acy = c.y - a.y, acz = c.z - a.z;
+            const float nx = aby * acz - abz * acy;
+            const float ny = abz * acx - abx * acz;
+            const float nz = abx * acy - aby * acx;
+            const float area = std::sqrt(nx * nx + ny * ny + nz * nz);
+            assert(area > 0.00001f);
+            assert(nx * a.nx + ny * a.ny + nz * a.nz > 0.00001f);
+            assert(nx * b.nx + ny * b.ny + nz * b.nz > 0.00001f);
+            assert(nx * c.nx + ny * c.ny + nz * c.nz > 0.00001f);
+        }
+    };
+    validateWorldMesh(revisionOpaque);
+    validateWorldMesh(revisionTransparent);
 
     // The nearest two rings retain full block detail; only the outer
     // Far chunks must use compact surface-heightfield LOD2 while the
