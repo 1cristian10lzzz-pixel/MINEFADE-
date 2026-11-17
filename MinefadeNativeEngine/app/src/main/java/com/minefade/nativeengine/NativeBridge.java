@@ -16,6 +16,9 @@ public final class NativeBridge {
     public static native void nativeTouch(int action, int pointerId, float x, float y);
     public static native void nativePause();
     public static native void nativeResume();
+    public static native boolean nativeSetMusicPath(String absolutePath);
+    public static native void nativeSetMusicVolume(float volume);
+    public static native void nativeSetMusicEnabled(boolean enabled);
     public static native void nativeSetStoragePath(String path);
     public static native boolean nativeConsumeExitRequest();
     public static native int nativeConsumeSoundEvents();

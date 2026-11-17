@@ -51,8 +51,27 @@ if(NOT TARGET RmlUi::Core)
     message(FATAL_ERROR "RmlUi 6.3 did not provide the RmlUi::Core target")
 endif()
 
+# Dedicated music mixer. Short effects continue using Android SoundPool.
+set(SOLOUD_STATIC ON CACHE BOOL "Build SoLoud statically" FORCE)
+set(SOLOUD_DYNAMIC OFF CACHE BOOL "Disable SoLoud shared library" FORCE)
+set(SOLOUD_BACKEND_NULL OFF CACHE BOOL "Disable silent backend" FORCE)
+set(SOLOUD_BACKEND_SDL2 OFF CACHE BOOL "Disable desktop SDL backend" FORCE)
+set(SOLOUD_BACKEND_OPENSLES ON CACHE BOOL "Enable Android OpenSL ES backend" FORCE)
+FetchContent_Declare(
+    soloud
+    GIT_REPOSITORY https://github.com/jarikomppa/soloud.git
+    GIT_TAG e82fd32c1f62183922f08c14c814a02b58db1873
+    GIT_SHALLOW FALSE
+    SOURCE_SUBDIR contrib
+)
+FetchContent_MakeAvailable(soloud)
+if(NOT TARGET soloud)
+    message(FATAL_ERROR "SoLoud did not provide the expected static target")
+endif()
+
 add_library(minefade_native SHARED
     NativeEngine.cpp
+    audio/MusicPlayer.cpp
     engine/Engine.cpp
     game/Player.cpp
     world/VoxelWorld.cpp
@@ -63,6 +82,7 @@ add_library(minefade_native SHARED
 
 target_include_directories(minefade_native PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
+    ${soloud_SOURCE_DIR}/include
 )
 
 target_compile_features(minefade_native PRIVATE cxx_std_20)
@@ -80,6 +100,7 @@ find_library(m-lib m REQUIRED)
 target_link_libraries(minefade_native PRIVATE
     RmlUi::Core
     Freetype::Freetype
+    soloud
     ${gles-lib}
     ${android-lib}
     ${log-lib}

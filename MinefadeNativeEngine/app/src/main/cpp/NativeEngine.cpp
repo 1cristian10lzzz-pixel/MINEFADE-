@@ -1,4 +1,5 @@
 #include "engine/Engine.h"
+#include "audio/MusicPlayer.h"
 
 #include <jni.h>
 #include <android/log.h>
@@ -105,11 +106,33 @@ Java_com_minefade_nativeengine_NativeBridge_nativeTouch(JNIEnv*, jclass, jint ac
 extern "C" JNIEXPORT void JNICALL
 Java_com_minefade_nativeengine_NativeBridge_nativePause(JNIEnv*, jclass) {
     minefade::GetEngine().Pause();
+    minefade::GetMusicPlayer().Pause();
 }
 
 extern "C" JNIEXPORT void JNICALL
 Java_com_minefade_nativeengine_NativeBridge_nativeResume(JNIEnv*, jclass) {
     minefade::GetEngine().Resume();
+    minefade::GetMusicPlayer().Resume();
+}
+
+extern "C" JNIEXPORT jboolean JNICALL
+Java_com_minefade_nativeengine_NativeBridge_nativeSetMusicPath(JNIEnv* env, jclass, jstring path) {
+    if (path == nullptr) return JNI_FALSE;
+    const char* chars = env->GetStringUTFChars(path, nullptr);
+    if (chars == nullptr) return JNI_FALSE;
+    const bool loaded = minefade::GetMusicPlayer().SetTrack(chars);
+    env->ReleaseStringUTFChars(path, chars);
+    return loaded ? JNI_TRUE : JNI_FALSE;
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_minefade_nativeengine_NativeBridge_nativeSetMusicVolume(JNIEnv*, jclass, jfloat volume) {
+    minefade::GetMusicPlayer().SetVolume(static_cast<float>(volume));
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_minefade_nativeengine_NativeBridge_nativeSetMusicEnabled(JNIEnv*, jclass, jboolean enabled) {
+    minefade::GetMusicPlayer().SetEnabled(enabled == JNI_TRUE);
 }
 
 extern "C" JNIEXPORT void JNICALL

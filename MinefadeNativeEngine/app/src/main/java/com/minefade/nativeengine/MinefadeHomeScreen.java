@@ -579,7 +579,10 @@ public final class MinefadeHomeScreen extends FrameLayout {
 
         switch (settingsModule) {
             case "audio":
-                settingsHeading(content, "SONIDO DEL JUEGO", "Ajusta la mezcla de efectos que se reproduce en el dispositivo.");
+                settingsHeading(content, "SONIDO DEL JUEGO", "Ajusta la banda sonora ambiental y los efectos del dispositivo.");
+                content.addView(musicVolumeControl());
+                content.addView(settingSwitch("Música ambiental", "Banda sonora original en bucle. Se reproduce desde el juego, sin radio ni conexión a Internet.",
+                        "music_enabled", true));
                 content.addView(soundVolumeControl());
                 content.addView(settingSwitch("Efectos de juego", "Rotura, colocación, pasos, salto y recogida.",
                         "sound_effects_enabled", true));
@@ -767,6 +770,43 @@ public final class MinefadeHomeScreen extends FrameLayout {
         seek.topMargin = dp(2);
         card.addView(volume, seek);
         card.addView(text("Rotura · colocación · recogida · salto · pasos · interfaz", 8, muted, false));
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(-1, -2);
+        params.bottomMargin = dp(7);
+        card.setLayoutParams(params);
+        return card;
+    }
+
+
+    private View musicVolumeControl() {
+        LinearLayout card = column();
+        card.setPadding(dp(12), dp(9), dp(12), dp(8));
+        card.setBackground(shape(new int[]{0xff20394d, 0xff142638}, 14, 0x665b788d));
+        LinearLayout heading = row();
+        heading.addView(text("Volumen de música", 12, white, true),
+                new LinearLayout.LayoutParams(0, dp(22), 1f));
+        TextView amount = text("", 10, 0xffb9f27c, true);
+        amount.setGravity(Gravity.CENTER);
+        heading.addView(amount, new LinearLayout.LayoutParams(dp(44), dp(22)));
+        card.addView(heading);
+        SeekBar volume = new SeekBar(getContext());
+        volume.setMax(100);
+        int initial = Math.round(preferences.getFloat("music_volume", 0.46f) * 100f);
+        volume.setProgress(Math.max(0, Math.min(100, initial)));
+        amount.setText(volume.getProgress() + "%");
+        volume.setProgressTintList(ColorStateList.valueOf(0xffa9ee70));
+        volume.setThumbTintList(ColorStateList.valueOf(0xffc7f59a));
+        volume.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override public void onProgressChanged(SeekBar bar, int progress, boolean fromUser) {
+                amount.setText(progress + "%");
+                if (fromUser) preferences.edit().putFloat("music_volume", progress / 100.0f).apply();
+            }
+            @Override public void onStartTrackingTouch(SeekBar bar) { }
+            @Override public void onStopTrackingTouch(SeekBar bar) { }
+        });
+        LinearLayout.LayoutParams seek = new LinearLayout.LayoutParams(-1, dp(31));
+        seek.topMargin = dp(2);
+        card.addView(volume, seek);
+        card.addView(text("Música local en bucle · sin transmisión ni estática", 8, muted, false));
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(-1, -2);
         params.bottomMargin = dp(7);
         card.setLayoutParams(params);

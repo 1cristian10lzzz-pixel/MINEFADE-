@@ -9,6 +9,8 @@ import android.util.Log;
 import android.view.MotionEvent;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.concurrent.CountDownLatch;
@@ -216,7 +218,12 @@ public final class MinefadeSurfaceView extends GLSurfaceView {
     private final class EngineRenderer implements GLSurfaceView.Renderer {
         private final SoundEffects soundEffects;
         private final float displayDensity;
+        private final Context context;
         private final AssetManager assetManager;
+        private boolean musicAssetAttempted;
+        private boolean musicAssetPrepared;
+        private float appliedMusicVolume = -1.0f;
+        private Boolean appliedMusicEnabled;
         private final boolean multiplayerMode;
         private final int playerSlot;
         private final String storagePath;
@@ -225,6 +232,7 @@ public final class MinefadeSurfaceView extends GLSurfaceView {
         EngineRenderer(Context context, SoundEffects soundEffects, float displayDensity,
                        boolean multiplayerMode, int playerSlot, String storagePath,
                        LanMultiplayerService multiplayer) {
+            this.context = context;
             assetManager = context.getAssets();
             this.soundEffects = soundEffects;
             this.displayDensity = displayDensity;
@@ -232,6 +240,49 @@ public final class MinefadeSurfaceView extends GLSurfaceView {
             this.playerSlot = Math.max(0, Math.min(31, playerSlot));
             this.storagePath = storagePath;
             this.multiplayer = multiplayer;
+        }
+
+
+        /** Copy the build-generated WAV to private storage; SoLoud streams it from disk. */
+        private void prepareMusicAndApplyPreferences() {
+            if (!musicAssetAttempted) {
+                musicAssetAttempted = true;
+                try {
+                    File directory = new File(context.getFilesDir(), "music");
+                    if (!directory.isDirectory() && !directory.mkdirs()) {
+                        throw new IOException("No se pudo crear el directorio privado de música.");
+                    }
+                    File musicFile = new File(directory, "overworld.wav");
+                    if (!musicFile.isFile() || musicFile.length() == 0L) {
+                        try (InputStream input = assetManager.open("audio/music/overworld.wav");
+                             FileOutputStream output = new FileOutputStream(musicFile, false)) {
+                            byte[] buffer = new byte[16 * 1024];
+                            int count;
+                            while ((count = input.read(buffer)) != -1) output.write(buffer, 0, count);
+                            output.flush();
+                        }
+                    }
+                    musicAssetPrepared = NativeBridge.nativeSetMusicPath(musicFile.getAbsolutePath());
+                    if (!musicAssetPrepared) {
+                        Log.w(TAG, "SoLoud could not initialise or load the soundtrack; gameplay will continue with existing sound effects.");
+                    }
+                } catch (IOException | RuntimeException | LinkageError error) {
+                    Log.w(TAG, "Bundled soundtrack unavailable; existing gameplay audio remains available.", error);
+                }
+            }
+
+            if (!musicAssetPrepared) return;
+            float volume = Math.max(0.0f, Math.min(1.0f,
+                    preferences.getFloat("music_volume", 0.46f)));
+            boolean enabled = preferences.getBoolean("music_enabled", true);
+            if (Float.compare(volume, appliedMusicVolume) != 0) {
+                NativeBridge.nativeSetMusicVolume(volume);
+                appliedMusicVolume = volume;
+            }
+            if (appliedMusicEnabled == null || appliedMusicEnabled.booleanValue() != enabled) {
+                NativeBridge.nativeSetMusicEnabled(enabled);
+                appliedMusicEnabled = enabled;
+            }
         }
 
         @Override
@@ -300,6 +351,7 @@ public final class MinefadeSurfaceView extends GLSurfaceView {
                     }
                 }
                 if (nativeReady) {
+                    prepareMusicAndApplyPreferences();
                     Log.i(TAG, "Native renderer initialised successfully");
                     notifyReady();
                 }
@@ -341,6 +393,7 @@ public final class MinefadeSurfaceView extends GLSurfaceView {
                     NativeBridge.nativeConsumeBlockEdits();
                 }
                 NativeBridge.nativeRender();
+                prepareMusicAndApplyPreferences();
                 if (NativeBridge.nativeConsumeEngineFailure()) {
                     nativeReady = false;
                     Log.e(TAG, "Native engine reported a recoverable render failure");
