@@ -1345,8 +1345,7 @@ void Engine::Touch(int action, int pointerId, float x, float y) {
         state.startY = state.lastY = y;
         state.startedAt = ElapsedSeconds();
         state.uiHandled = !uiUnhandled;
-        state.joystick = uiUnhandled && (leftHandedControls_ ? x > static_cast<float>(width_) * 0.58f
-                : x < static_cast<float>(width_) * 0.42f);
+        state.joystick = uiUnhandled && ui_.IsInMovementPad(x, y);
         state.mining = uiUnhandled && !state.joystick && gameMode_ != 2;
         touches_[pointerId] = state;
         if (state.joystick) player_.SetMovement(0.0f, 0.0f);
