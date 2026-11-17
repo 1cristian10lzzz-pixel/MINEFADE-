@@ -422,7 +422,8 @@ public final class MinefadeHomeScreen extends FrameLayout {
                 enter.setPadding(dp(8),0,dp(8),0);
                 card.addView(enter,new LinearLayout.LayoutParams(dp(72),dp(34)));
 
-                TextView more = text("⋮",21,0xffc5d9e4,true);
+                TextView more = text("⚙",17,0xffc5d9e4,true);
+                more.setContentDescription("Opciones del mundo");
                 more.setGravity(Gravity.CENTER);
                 card.addView(more,new LinearLayout.LayoutParams(dp(30),dp(42)));
                 more.setOnClickListener(v -> showWorldActions(world,more));
@@ -1266,9 +1267,12 @@ public final class MinefadeHomeScreen extends FrameLayout {
         card.setPadding(dp(12), dp(9), dp(12), dp(8));
         card.setBackground(shape(new int[]{0xff20394d, 0xff142638}, 14, 0x665b788d));
         LinearLayout heading = row();
-        heading.addView(text("Volumen de efectos", 12, white, true),
+        heading.addView(text("Volumen de efectos", 10, white, true),
                 new LinearLayout.LayoutParams(0, dp(22), 1f));
-        TextView amount = text("", 10, 0xffb9f27c, true);
+        heading.addView(settingInfoButton("Volumen de efectos",
+                "Ajusta el volumen de los sonidos de juego, pasos, rotura y recogida."),
+                new LinearLayout.LayoutParams(dp(21), dp(21)));
+        TextView amount = text("", 9, 0xffb9f27c, true);
         amount.setGravity(Gravity.CENTER);
         heading.addView(amount, new LinearLayout.LayoutParams(dp(44), dp(22)));
         card.addView(heading);
