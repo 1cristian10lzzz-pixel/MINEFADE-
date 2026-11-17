@@ -35,6 +35,7 @@ public:
     std::uint32_t ConsumeSoundEvents();
     void SetMultiplayerMode(bool enabled, int playerSlot);
     void SetGraphicsOptions(int quality, int renderDistanceChunks, bool waterWaves, float fieldOfView, bool contactShadows);
+    void SetShaderOptions(bool lavaAnimations, bool leafWind, float leafWindStrength);
     void SetInputOptions(float sensitivityX, float sensitivityY, float joystickDeadzone, bool invertLookY, bool leftHanded, int controlMode, bool autoJump);
     void SetHudOptions(bool showStats);
     void SetAnimationOptions(int quality, bool enabled);
@@ -97,6 +98,9 @@ private:
     GLint timeLocation_{-1};
     GLint qualityLocation_{-1};
     GLint waterWavesLocation_{-1};
+    GLint lavaAnimationsLocation_{-1};
+    GLint leafWindLocation_{-1};
+    GLint leafWindStrengthLocation_{-1};
     GLint cameraLocation_{-1};
     GLint fogColorLocation_{-1};
     GLint fogNearLocation_{-1};
@@ -127,6 +131,9 @@ private:
     int renderDistanceChunks_{2};
     int pendingRenderDistanceChunks_{2};
     bool waterWaves_{true};
+    bool lavaAnimations_{true};
+    bool leafWind_{true};
+    float leafWindStrength_{0.04f};
     bool pendingWaterWaves_{true};
     float fieldOfView_{68.0f};
     float pendingFieldOfView_{68.0f};
