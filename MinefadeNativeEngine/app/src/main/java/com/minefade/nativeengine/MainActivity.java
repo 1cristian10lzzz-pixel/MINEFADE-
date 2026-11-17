@@ -254,6 +254,8 @@ public final class MainActivity extends Activity {
      */
     private void showFallbackTouchControls() {
         if (gameContainer == null || surfaceView == null || fallbackOverlay != null) return;
+        boolean leftHanded = getSharedPreferences("minefade_ui", MODE_PRIVATE)
+                .getBoolean("left_handed_controls", false);
         FrameLayout overlay = new FrameLayout(this);
         overlay.setClipChildren(false);
         overlay.setClipToPadding(false);
@@ -280,8 +282,9 @@ public final class MainActivity extends Activity {
         FrameLayout.LayoutParams thumbParams = new FrameLayout.LayoutParams(dp(38), dp(38), Gravity.CENTER);
         joystick.addView(thumb, thumbParams);
         FrameLayout.LayoutParams joystickParams = new FrameLayout.LayoutParams(dp(112), dp(112),
-                Gravity.BOTTOM | Gravity.LEFT);
-        joystickParams.leftMargin = dp(14);
+                Gravity.BOTTOM | (leftHanded ? Gravity.RIGHT : Gravity.LEFT));
+        if (leftHanded) joystickParams.rightMargin = dp(14);
+        else joystickParams.leftMargin = dp(14);
         joystickParams.bottomMargin = dp(54);
         overlay.addView(joystick, joystickParams);
 
@@ -319,8 +322,9 @@ public final class MainActivity extends Activity {
         jump.setTextSize(22);
         jump.setContentDescription("Saltar");
         FrameLayout.LayoutParams jumpParams = new FrameLayout.LayoutParams(dp(58), dp(58),
-                Gravity.BOTTOM | Gravity.RIGHT);
-        jumpParams.rightMargin = dp(20);
+                Gravity.BOTTOM | (leftHanded ? Gravity.LEFT : Gravity.RIGHT));
+        if (leftHanded) jumpParams.leftMargin = dp(20);
+        else jumpParams.rightMargin = dp(20);
         jumpParams.bottomMargin = dp(58);
         overlay.addView(jump, jumpParams);
         jump.setOnTouchListener((view, event) -> {
@@ -335,8 +339,9 @@ public final class MainActivity extends Activity {
         crouch.setTextSize(18);
         crouch.setContentDescription("Agacharse");
         FrameLayout.LayoutParams crouchParams = new FrameLayout.LayoutParams(dp(46), dp(46),
-                Gravity.BOTTOM | Gravity.RIGHT);
-        crouchParams.rightMargin = dp(86);
+                Gravity.BOTTOM | (leftHanded ? Gravity.LEFT : Gravity.RIGHT));
+        if (leftHanded) crouchParams.leftMargin = dp(86);
+        else crouchParams.rightMargin = dp(86);
         crouchParams.bottomMargin = dp(64);
         overlay.addView(crouch, crouchParams);
         crouch.setOnTouchListener((view, event) -> {
