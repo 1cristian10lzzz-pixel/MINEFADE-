@@ -62,6 +62,17 @@ struct ChunkMeshRange {
     float maxY{0.0f};
 };
 
+struct ChunkMeshView {
+    int chunkX{0};
+    int chunkZ{0};
+    int lodLevel{0};
+    std::uint64_t revision{0};
+    float minY{0.0f};
+    float maxY{0.0f};
+    const std::vector<WorldVertex>* opaque{nullptr};
+    const std::vector<WorldVertex>* transparent{nullptr};
+};
+
 class VoxelWorld {
 public:
     static constexpr int kChunkSize = 16;
@@ -93,7 +104,10 @@ public:
                    int centerWorldZ = 0, int radiusInChunks = -1,
                    std::vector<WorldVertex>* transparentOutput = nullptr,
                    std::vector<ChunkMeshRange>* chunkRanges = nullptr,
-                   std::size_t meshBuildBudget = 0u) const;
+                   std::size_t meshBuildBudget = 0u,
+                   bool collectMergedMesh = true) const;
+    void GetChunkMeshViews(int centerWorldX, int centerWorldZ, int radiusInChunks,
+                           std::vector<ChunkMeshView>& output) const;
     bool HasPendingMeshBuild(int centerWorldX, int centerWorldZ,
                              int radiusInChunks) const;
     bool Save(const std::string& filePath, const Vec3& playerPosition,
