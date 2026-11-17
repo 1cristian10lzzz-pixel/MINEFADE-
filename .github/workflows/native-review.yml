@@ -178,6 +178,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Minefade-2.0.4-source
-          path: Minefade-2.0-source.zip
+          path: Minefade-2.0.4-source.zip
           if-no-files-found: error
           retention-days: 14
