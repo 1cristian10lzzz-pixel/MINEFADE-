@@ -73,6 +73,7 @@ public final class MinefadeHomeScreen extends FrameLayout {
     private int avatarModuleIndex = 1;
     private String settingsModule = "video";
     private AvatarPreview avatarPreview;
+    private LinearLayout pageHeader;
     private TextView multiplayerStatus;
     private LinearLayout multiplayerGames;
 
@@ -210,7 +211,7 @@ public final class MinefadeHomeScreen extends FrameLayout {
         }
         outer.setElevation(dp(2));
         LinearLayout content = row();
-        content.setPadding(dp(10), dp(5), dp(12), dp(5));
+        content.setPadding(dp(8), dp(4), dp(9), dp(4));
         outer.addView(content, new FrameLayout.LayoutParams(-1, -1));
 
         FrameLayout iconBox = new FrameLayout(getContext());
@@ -219,17 +220,19 @@ public final class MinefadeHomeScreen extends FrameLayout {
         iconBox.setContentDescription(title);
         iconBox.addView(new MenuGlyph(getContext(), index, accent),
                 new FrameLayout.LayoutParams(-1, -1));
-        content.addView(iconBox, new LinearLayout.LayoutParams(dp(34), dp(34)));
+        content.addView(iconBox, new LinearLayout.LayoutParams(dp(30), dp(30)));
 
         LinearLayout labels = column();
         labels.setGravity(Gravity.CENTER_VERTICAL);
         labels.setPadding(dp(10), 0, 0, 0);
-        TextView name = text(title, 13, white, true);
-        TextView detail = text(subtitle, 9, 0xffb4c5d0, false);
+        TextView name = text(title, 11, white, true);
         labels.addView(name);
-        LinearLayout.LayoutParams detailParams = new LinearLayout.LayoutParams(-1, -2);
-        detailParams.topMargin = dp(3);
-        labels.addView(detail, detailParams);
+        if (subtitle != null && !subtitle.trim().isEmpty()) {
+            TextView detail = text(subtitle, 8, 0xffb4c5d0, false);
+            LinearLayout.LayoutParams detailParams = new LinearLayout.LayoutParams(-1, -2);
+            detailParams.topMargin = dp(2);
+            labels.addView(detail, detailParams);
+        }
         content.addView(labels, new LinearLayout.LayoutParams(0, -1, 1f));
 
         TextView arrow = text("›", 24, accent, true);
@@ -250,7 +253,7 @@ public final class MinefadeHomeScreen extends FrameLayout {
         addView(new Backdrop(getContext()), new LayoutParams(-1, -1));
 
         LinearLayout shell = column();
-        shell.setPadding(dp(18), dp(11), dp(18), dp(12));
+        shell.setPadding(dp(14), dp(8), dp(14), dp(8));
         addView(shell, new LayoutParams(-1, -1));
 
         LinearLayout header = row();
@@ -258,11 +261,7 @@ public final class MinefadeHomeScreen extends FrameLayout {
         header.addView(mark, new LinearLayout.LayoutParams(dp(28), dp(34)));
         LinearLayout brand = column();
         TextView name = text("MINEFADE", 18, white, true);
-        TextView sub = text("VOXEL ADVENTURE", 8, 0xff8fa5b3, true);
         brand.addView(name);
-        LinearLayout.LayoutParams subParams = new LinearLayout.LayoutParams(-1, -2);
-        subParams.topMargin = dp(2);
-        brand.addView(sub, subParams);
         header.addView(brand, new LinearLayout.LayoutParams(0, -2, 1f));
         shell.addView(header, new LinearLayout.LayoutParams(-1, dp(38)));
 
@@ -278,25 +277,25 @@ public final class MinefadeHomeScreen extends FrameLayout {
         // The home actions start directly below the brand: removing the oversized
         // slogan frees space for the actual game navigation on short screens.
         List<View> buttons = new ArrayList<>();
-        buttons.add(menuButton("▶", "JUGAR", "Continuar tu aventura",
-                new int[]{0xff275d3b, 0xff183e35}, 0xffa9ee70, 48,
+        buttons.add(menuButton("▶", "JUGAR", "",
+                new int[]{0xff275d3b, 0xff183e35}, 0xffa9ee70, 40,
                 () -> showWorlds(), 0));
-        buttons.add(menuButton("◈", "AVATAR", "Aspecto y personalización",
+        buttons.add(menuButton("◈", "AVATAR", "",
                 new int[]{0xff43345d, 0xff282943}, 0xffc3a4ff, 42,
                 () -> showSection("avatar"), 1));
-        buttons.add(menuButton("⌘", "MULTIJUGADOR", "Red local y servidores",
+        buttons.add(menuButton("⌘", "MULTIJUGADOR", "",
                 new int[]{0xff24506a, 0xff1d344e}, 0xff74d5ee, 42,
                 () -> showSection("multiplayer"), 2));
-        buttons.add(menuButton("☷", "AJUSTES", "Gráficos, interfaz y controles",
+        buttons.add(menuButton("☷", "AJUSTES", "",
                 new int[]{0xff51432c, 0xff302d2c}, 0xffffce72, 42,
                 () -> showSection("settings"), 3));
-        buttons.add(menuButton("▧", "MODS", "Paquetes y contenido adicional",
+        buttons.add(menuButton("▧", "MODS", "",
                 new int[]{0xff3a4c6b, 0xff242e48}, 0xff9db9ff, 42,
                 () -> showSection("mods"), 4));
 
         for (int i = 0; i < buttons.size(); i++) {
-            LinearLayout.LayoutParams bp = new LinearLayout.LayoutParams(-1, dp(i == 0 ? 48 : 42));
-            if (i > 0) bp.topMargin = dp(5);
+            LinearLayout.LayoutParams bp = new LinearLayout.LayoutParams(-1, dp(i == 0 ? 40 : 36));
+            if (i > 0) bp.topMargin = dp(4);
             left.addView(buttons.get(i), bp);
         }
 
@@ -308,23 +307,6 @@ public final class MinefadeHomeScreen extends FrameLayout {
 
         CoverArtView cover = new CoverArtView(getContext());
         showcase.addView(cover, new FrameLayout.LayoutParams(-1, -1));
-        LinearLayout overlay = column();
-        overlay.setGravity(Gravity.BOTTOM);
-        overlay.setPadding(dp(14), dp(10), dp(14), dp(12));
-        overlay.setBackground(new GradientDrawable(GradientDrawable.Orientation.BOTTOM_TOP,
-                new int[]{0xee081321, 0x00081321}));
-        showcase.addView(overlay, new FrameLayout.LayoutParams(-1, -1));
-        TextView feature = text("MINEFADE VOXEL", 15, white, true);
-        overlay.addView(feature);
-        TextView tagline = text("UN UNIVERSO HECHO DE BLOQUES", 8, 0xffc1d7e4, true);
-        LinearLayout.LayoutParams taglineParams = new LinearLayout.LayoutParams(-1, -2);
-        taglineParams.topMargin = dp(4);
-        overlay.addView(tagline, taglineParams);
-        TextView footer = text("Biomas · cuevas · montañas · mundo persistente", 9, 0xffa5bac8, false);
-        LinearLayout.LayoutParams footParams = new LinearLayout.LayoutParams(-1, -2);
-        footParams.topMargin = dp(9);
-        overlay.addView(footer, footParams);
-
         // No engine/version/debug banner on the start screen; build metadata stays
         // in the APK and release notes rather than consuming game-menu space.
     }
@@ -716,24 +698,27 @@ public final class MinefadeHomeScreen extends FrameLayout {
         removeAllViews();
         addView(new Backdrop(getContext()), new LayoutParams(-1, -1));
         LinearLayout root = column();
-        root.setPadding(dp(16), dp(10), dp(16), dp(12));
+        root.setPadding(dp(12), dp(7), dp(12), dp(8));
         addView(root, new LayoutParams(-1, -1));
 
         LinearLayout header = row();
-        TextView back = text("‹", 29, white, true);
+        header.setGravity(Gravity.CENTER_VERTICAL);
+        TextView back = text("‹", 27, white, true);
         back.setGravity(Gravity.CENTER);
-        back.setBackground(shape(new int[]{0x55364f62, 0x33202d3b}, 13, 0x886b879b));
-        back.setOnClickListener(v -> showHome());
-        header.addView(back, new LinearLayout.LayoutParams(dp(42), dp(40)));
-        LinearLayout titleBox = column();
-        titleBox.setPadding(dp(10), 0, 0, 0);
-        titleBox.addView(text(title, 16, white, true));
-        TextView desc = text(subtitle, 8, muted, false);
-        LinearLayout.LayoutParams descParams = new LinearLayout.LayoutParams(-1, -2);
-        descParams.topMargin = dp(3);
-        titleBox.addView(desc, descParams);
-        header.addView(titleBox, new LinearLayout.LayoutParams(0, -2, 1f));
-        root.addView(header, new LinearLayout.LayoutParams(-1, dp(44)));
+        back.setContentDescription("Salir");
+        back.setBackgroundColor(Color.TRANSPARENT);
+        back.setOnClickListener(v -> { haptic(v); showHome(); });
+        header.addView(back, new LinearLayout.LayoutParams(dp(34), dp(34)));
+        if (title != null && !title.trim().isEmpty()) {
+            TextView heading = text(title, 13, white, true);
+            LinearLayout.LayoutParams titleParams = new LinearLayout.LayoutParams(0, dp(34), 1f);
+            titleParams.leftMargin = dp(7);
+            header.addView(heading, titleParams);
+        } else {
+            header.addView(new View(getContext()), new LinearLayout.LayoutParams(0, dp(34), 1f));
+        }
+        pageHeader = header;
+        root.addView(header, new LinearLayout.LayoutParams(-1, dp(36)));
         return root;
     }
 
