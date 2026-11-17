@@ -57,6 +57,9 @@ struct ChunkMeshRange {
     std::size_t transparentFirst{0};
     std::size_t transparentCount{0};
     int lodLevel{0};
+    std::uint64_t revision{0};
+    float minY{0.0f};
+    float maxY{0.0f};
 };
 
 class VoxelWorld {
@@ -111,6 +114,9 @@ private:
         std::vector<WorldVertex> transparent;
         int lod{0};
         bool outerBorder{false};
+        std::uint64_t revision{0};
+        float minY{0.0f};
+        float maxY{0.0f};
     };
 
     enum class Biome : std::uint8_t {
