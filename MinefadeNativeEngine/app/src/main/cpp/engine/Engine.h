@@ -209,6 +209,7 @@ private:
     float miningElapsed_{0.0f};
     float miningRequired_{0.0f};
     float footstepElapsed_{0.0f};
+    float chunkMeshAccumulator_{0.0f};
     float entityMeshAccumulator_{0.0f};
     float itemMeshAccumulator_{0.0f};
     float minimapAccumulator_{0.0f};
