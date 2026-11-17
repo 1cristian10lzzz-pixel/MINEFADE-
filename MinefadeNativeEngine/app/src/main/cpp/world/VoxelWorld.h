@@ -113,7 +113,11 @@ private:
         bool outerBorder{false};
     };
 
-    enum class Biome : std::uint8_t { Plains, Forest, Desert, Snow, Ocean, Mountains, Swamp, Savanna, River };
+    enum class Biome : std::uint8_t {
+        Plains, Forest, Desert, Snow, Ocean, Mountains, Swamp, Savanna, River,
+        Beach, Taiga, BirchForest, DarkForest, Jungle, CherryGrove, Badlands,
+        MushroomFields, IceSpikes, MangroveSwamp, StonyPeaks
+    };
 
     static int FloorDiv(int value, int divisor);
     static int PositiveMod(int value, int divisor);
