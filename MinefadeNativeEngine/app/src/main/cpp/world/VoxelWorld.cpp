@@ -491,6 +491,64 @@ VoxelWorld::Chunk VoxelWorld::MakeChunk(int chunkX,int chunkZ) const {
             for(int dy=1;dy<=cactusHeight;++dy)chunk.blocks[Index(x,height+dy,z)]=BlockId::Cactus;
         }
     }
+
+    // Deterministic surface ruins (phase 3). Each ruin is wholly contained in
+    // its owning chunk, so loading chunks in a different order cannot leave
+    // half-structures at borders. No existing block IDs or save formats change.
+    const int ruinCenterX = chunkX * kChunkSize + kChunkSize / 2;
+    const int ruinCenterZ = chunkZ * kChunkSize + kChunkSize / 2;
+    const Biome ruinBiome = GetBiome(ruinCenterX, ruinCenterZ);
+    const bool dryLand = ruinBiome != Biome::Ocean && ruinBiome != Biome::River &&
+        ruinBiome != Biome::Beach && ruinBiome != Biome::Swamp &&
+        ruinBiome != Biome::MangroveSwamp;
+    const std::uint32_t ruinHash = Hash(seed_ ^
+        (static_cast<std::uint32_t>(chunkX) * 0x9e3779b9u) ^
+        (static_cast<std::uint32_t>(chunkZ) * 0x85ebca6bu) ^ 0x5255494eu);
+    const int ruinBaseY = TerrainHeight(ruinCenterX, ruinCenterZ);
+    if (dryLand && ruinBaseY > kSeaLevel + 2 && ruinHash % 9u == 0u &&
+        ruinBaseY + 4 < kWorldHeight) {
+        constexpr int kMin = 5;
+        constexpr int kMax = 11;
+        for (int z = kMin; z <= kMax; ++z) {
+            for (int x = kMin; x <= kMax; ++x) {
+                const bool northSouthWall = (z == kMin || z == kMax);
+                const bool eastWestWall = (x == kMin || x == kMax);
+                if (!northSouthWall && !eastWestWall) continue;
+                const bool entrance = (northSouthWall && x == 8) ||
+                                      (eastWestWall && z == 8);
+                if (entrance) continue;
+
+                const int worldX = chunkX * kChunkSize + x;
+                const int worldZ = chunkZ * kChunkSize + z;
+                const int surfaceY = TerrainHeight(worldX, worldZ);
+                if (surfaceY <= kSeaLevel || surfaceY + 3 >= kWorldHeight) continue;
+                const std::uint32_t wallHash = Hash(ruinHash ^
+                    static_cast<std::uint32_t>(x * 31 + z * 17));
+                const BlockId wall = (wallHash % 5u == 0u) ? BlockId::MossyStoneBricks
+                    : ((wallHash % 7u == 0u) ? BlockId::CrackedStoneBricks
+                                              : BlockId::StoneBricks);
+                chunk.blocks[Index(x, surfaceY + 1, z)] = wall;
+
+                const bool corner = (x == kMin || x == kMax) &&
+                                    (z == kMin || z == kMax);
+                if (corner && (wallHash & 1u) == 0u)
+                    chunk.blocks[Index(x, surfaceY + 2, z)] = BlockId::MossyStoneBricks;
+            }
+        }
+
+        // A small broken altar distinguishes the ruin from natural rubble.
+        const int altarWorldX = ruinCenterX;
+        const int altarWorldZ = ruinCenterZ;
+        const int altarY = TerrainHeight(altarWorldX, altarWorldZ);
+        if (altarY > kSeaLevel && altarY + 2 < kWorldHeight) {
+            chunk.blocks[Index(8, altarY + 1, 8)] = BlockId::ChiseledStoneBricks;
+            chunk.blocks[Index(7, altarY + 1, 8)] = BlockId::MossyStoneBricks;
+            chunk.blocks[Index(9, altarY + 1, 8)] = BlockId::MossyStoneBricks;
+            if ((ruinHash & 2u) != 0u)
+                chunk.blocks[Index(8, altarY + 1, 7)] = BlockId::CrackedStoneBricks;
+        }
+    }
+
     return chunk;
 }
 
