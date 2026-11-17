@@ -802,7 +802,8 @@ bool VoxelWorld::PlaceRay(const Vec3& origin,const Vec3& direction,float maxDist
 void VoxelWorld::BuildMesh(std::vector<WorldVertex>& output,int centerWorldX,int centerWorldZ,
                            int radiusInChunks,std::vector<WorldVertex>* transparentOutput,
                            std::vector<ChunkMeshRange>* chunkRanges,
-                           std::size_t meshBuildBudget) const {
+                           std::size_t meshBuildBudget,
+                           bool collectMergedMesh) const {
     output.clear();
     if (transparentOutput != nullptr) transparentOutput->clear();
     if (chunkRanges != nullptr) chunkRanges->clear();
@@ -1161,6 +1162,29 @@ void VoxelWorld::BuildMesh(std::vector<WorldVertex>& output,int centerWorldX,int
         dirtyChunkMeshes_.erase(key);
     }
 
+    // Keep cached geometry bounded to the currently resident render radius.
+    const auto pruneCachedMeshes = [&]() {
+        if (radiusInChunks < 0) return;
+        for (auto it = chunkMeshCache_.begin(); it != chunkMeshCache_.end();) {
+            if (std::abs(it->first.first - centerChunkX) > radiusInChunks ||
+                std::abs(it->first.second - centerChunkZ) > radiusInChunks) {
+                it = chunkMeshCache_.erase(it);
+            } else {
+                ++it;
+            }
+        }
+        for (auto it = dirtyChunkMeshes_.begin(); it != dirtyChunkMeshes_.end();) {
+            if (std::abs(it->first - centerChunkX) > radiusInChunks ||
+                std::abs(it->second - centerChunkZ) > radiusInChunks) {
+                it = dirtyChunkMeshes_.erase(it);
+            } else {
+                ++it;
+            }
+        }
+    };
+    pruneCachedMeshes();
+    if (!collectMergedMesh) return;
+
     const std::size_t reserveChunks=selected.size();
     output.reserve(reserveChunks*7000u);
     if (transparentOutput!=nullptr) transparentOutput->reserve(reserveChunks*1200u);
@@ -1189,25 +1213,39 @@ void VoxelWorld::BuildMesh(std::vector<WorldVertex>& output,int centerWorldX,int
         }
         if (chunkRanges!=nullptr) chunkRanges->push_back(range);
     }
-    // Keep cached geometry bounded to the currently resident render radius.
+}
+
+void VoxelWorld::GetChunkMeshViews(int centerWorldX, int centerWorldZ, int radiusInChunks,
+                                   std::vector<ChunkMeshView>& output) const {
+    output.clear();
+    const int centerChunkX = FloorDiv(centerWorldX, kChunkSize);
+    const int centerChunkZ = FloorDiv(centerWorldZ, kChunkSize);
     if (radiusInChunks >= 0) {
-        for (auto it = chunkMeshCache_.begin(); it != chunkMeshCache_.end();) {
-            if (std::abs(it->first.first - centerChunkX) > radiusInChunks ||
-                std::abs(it->first.second - centerChunkZ) > radiusInChunks) {
-                it = chunkMeshCache_.erase(it);
-            } else {
-                ++it;
-            }
-        }
-        for (auto it = dirtyChunkMeshes_.begin(); it != dirtyChunkMeshes_.end();) {
-            if (std::abs(it->first - centerChunkX) > radiusInChunks ||
-                std::abs(it->second - centerChunkZ) > radiusInChunks) {
-                it = dirtyChunkMeshes_.erase(it);
-            } else {
-                ++it;
-            }
-        }
+        const std::size_t side = static_cast<std::size_t>(radiusInChunks * 2 + 1);
+        output.reserve(std::min(chunkMeshCache_.size(), side * side));
+    } else {
+        output.reserve(chunkMeshCache_.size());
     }
+    for (const auto& entry : chunkMeshCache_) {
+        const int chunkX = entry.first.first;
+        const int chunkZ = entry.first.second;
+        if (radiusInChunks >= 0 &&
+            (std::abs(chunkX - centerChunkX) > radiusInChunks ||
+             std::abs(chunkZ - centerChunkZ) > radiusInChunks)) continue;
+        const ChunkMeshCache& mesh = entry.second;
+        output.push_back({chunkX, chunkZ, mesh.lod, mesh.revision,
+                          mesh.minY, mesh.maxY, &mesh.opaque, &mesh.transparent});
+    }
+    std::sort(output.begin(), output.end(), [centerChunkX, centerChunkZ](
+        const ChunkMeshView& a, const ChunkMeshView& b) {
+        const int da = std::max(std::abs(a.chunkX - centerChunkX),
+                                std::abs(a.chunkZ - centerChunkZ));
+        const int db = std::max(std::abs(b.chunkX - centerChunkX),
+                                std::abs(b.chunkZ - centerChunkZ));
+        if (da != db) return da < db;
+        if (a.chunkX != b.chunkX) return a.chunkX < b.chunkX;
+        return a.chunkZ < b.chunkZ;
+    });
 }
 
 std::size_t VoxelWorld::CountNonAirBlocks() const {
