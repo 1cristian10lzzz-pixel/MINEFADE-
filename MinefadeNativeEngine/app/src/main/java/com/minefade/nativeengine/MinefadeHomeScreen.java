@@ -769,7 +769,7 @@ public final class MinefadeHomeScreen extends FrameLayout {
     }
 
     private void showAvatarPage() {
-        LinearLayout root = pageRoot("AVATAR", "Personaliza el aspecto del personaje.");
+        LinearLayout root = pageRoot("", "");
 
         // Landscape editor: the character preview stays on the RIGHT while every
         // customization module and choice remains on the LEFT.
@@ -797,9 +797,6 @@ public final class MinefadeHomeScreen extends FrameLayout {
         previewOverlay.setPadding(dp(7), dp(7), dp(7), dp(7));
         previewOverlay.setGravity(Gravity.CENTER_HORIZONTAL);
         previewCard.addView(previewOverlay, new FrameLayout.LayoutParams(-1, -1));
-        TextView previewState = text("PERSONAJE", 10, 0xffd8eaf0, true);
-        previewState.setGravity(Gravity.CENTER);
-        previewOverlay.addView(previewState, new LinearLayout.LayoutParams(-1, dp(20)));
         FrameLayout previewFrame = new FrameLayout(getContext());
         LinearLayout.LayoutParams avatarParams = new LinearLayout.LayoutParams(-1, 0, 1f);
         avatarParams.topMargin = dp(2);
@@ -807,9 +804,6 @@ public final class MinefadeHomeScreen extends FrameLayout {
         previewOverlay.addView(previewFrame, avatarParams);
         avatarPreview = new AvatarPreview(getContext());
         previewFrame.addView(avatarPreview, new FrameLayout.LayoutParams(-1, -1));
-        TextView rotateHint = text("DESLIZA PARA GIRAR", 8, 0xffb6cedb, true);
-        rotateHint.setGravity(Gravity.CENTER);
-        previewOverlay.addView(rotateHint, new LinearLayout.LayoutParams(-1, dp(19)));
 
         String[] moduleLabels = {"PIEL", "CABELLO", "OJOS", "ROPA", "ARMADURA", "ACCESORIOS"};
         String[][] optionNames = {
@@ -826,8 +820,8 @@ public final class MinefadeHomeScreen extends FrameLayout {
         moduleScroller.setFillViewport(false);
         moduleScroller.setClipChildren(true);
         moduleScroller.setClipToPadding(true);
-        LinearLayout.LayoutParams tabsParams = new LinearLayout.LayoutParams(-1, dp(42));
-        tabsParams.bottomMargin = dp(7);
+        LinearLayout.LayoutParams tabsParams = new LinearLayout.LayoutParams(-1, dp(34));
+        tabsParams.bottomMargin = dp(5);
         editor.addView(moduleScroller, tabsParams);
         LinearLayout tabs = row();
         tabs.setPadding(dp(1), 0, dp(1), 0);
@@ -837,15 +831,15 @@ public final class MinefadeHomeScreen extends FrameLayout {
             boolean selected = avatarModuleIndex == module;
             LinearLayout tab = row();
             tab.setGravity(Gravity.CENTER);
-            tab.setPadding(dp(9), 0, dp(10), 0);
+            tab.setPadding(dp(7), 0, dp(8), 0);
             tab.setBackground(shape(selected
                     ? new int[]{0xff3a624e, 0xff1c403b}
                     : new int[]{0xff20374a, 0xff142638},
                     11, selected ? 0xff9be17e : 0x66516c7f));
             tab.addView(new AvatarModuleGlyph(getContext(), module, selected
                     ? 0xffc9f4a1 : 0xffa8c3d0),
-                    new LinearLayout.LayoutParams(dp(22), dp(22)));
-            TextView label = text(moduleLabels[i], 8, selected ? 0xffe2ffd1 : 0xffb8cbd5, true);
+                    new LinearLayout.LayoutParams(dp(18), dp(18)));
+            TextView label = text(moduleLabels[i], 7, selected ? 0xffe2ffd1 : 0xffb8cbd5, true);
             LinearLayout.LayoutParams labelParams = new LinearLayout.LayoutParams(-2, -1);
             labelParams.leftMargin = dp(5);
             tab.addView(label, labelParams);
@@ -867,10 +861,9 @@ public final class MinefadeHomeScreen extends FrameLayout {
 
         LinearLayout optionHeading = row();
         optionHeading.setGravity(Gravity.CENTER_VERTICAL);
-        optionHeading.addView(text(moduleLabels[avatarModuleIndex] + "  ·  6 ESTILOS",
-                9, 0xffd8eaf0, true), new LinearLayout.LayoutParams(0, dp(22), 1f));
+        optionHeading.addView(new View(getContext()), new LinearLayout.LayoutParams(0, dp(20), 1f));
         TextView selectedName = text(optionNames[avatarModuleIndex][avatarStyles[avatarModuleIndex]],
-                9, 0xffb9f27c, true);
+                8, 0xffb9f27c, true);
         selectedName.setGravity(Gravity.CENTER);
         optionHeading.addView(selectedName, new LinearLayout.LayoutParams(-2, dp(22)));
         optionShell.addView(optionHeading);
@@ -891,7 +884,7 @@ public final class MinefadeHomeScreen extends FrameLayout {
 
         for (int r = 0; r < 2; r++) {
             LinearLayout line = row();
-            LinearLayout.LayoutParams lineParams = new LinearLayout.LayoutParams(-1, dp(82));
+            LinearLayout.LayoutParams lineParams = new LinearLayout.LayoutParams(-1, dp(76));
             if (r > 0) lineParams.topMargin = dp(6);
             grid.addView(line, lineParams);
             for (int col = 0; col < 3; col++) {
