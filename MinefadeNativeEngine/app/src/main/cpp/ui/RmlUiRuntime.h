@@ -3,6 +3,7 @@
 #include "RmlUiOpenGLES.h"
 
 #include <RmlUi/Core.h>
+#include <RmlUi/Core/FileInterface.h>
 #include <functional>
 #include <cstdint>
 #include <cstddef>
@@ -43,12 +44,24 @@ public:
     void SetEquipmentContents(const std::string& markup);
     void SetPanelVisible(const char* elementId, bool visible);
     bool IsReady() const { return ready_; }
+    const std::string& LastError() const { return lastError_; }
 
 private:
     class AndroidSystemInterface final : public Rml::SystemInterface {
     public:
         double GetElapsedTime() override;
         bool LogMessage(Rml::Log::Type type, const Rml::String& message) override;
+    };
+
+    // The native HUD is loaded from memory, so it installs an explicit
+    // read-only file interface instead of relying on an optional stdio backend.
+    class MemoryOnlyFileInterface final : public Rml::FileInterface {
+    public:
+        Rml::FileHandle Open(const Rml::String& path) override;
+        void Close(Rml::FileHandle file) override;
+        std::size_t Read(void* buffer, std::size_t size, Rml::FileHandle file) override;
+        bool Seek(Rml::FileHandle file, long offset, int origin) override;
+        std::size_t Tell(Rml::FileHandle file) override;
     };
 
     class ActionListener final : public Rml::EventListener {
@@ -65,6 +78,7 @@ private:
 
     RmlUiOpenGLES renderer_;
     AndroidSystemInterface system_;
+    MemoryOnlyFileInterface fileInterface_;
     Rml::Context* context_{nullptr};
     Rml::ElementDocument* document_{nullptr};
     ActionCallback callback_;
@@ -84,6 +98,7 @@ private:
     bool leftHanded_{false};
     int controlMode_{0};
     bool showStats_{true};
+    std::string lastError_;
 };
 
 } // namespace minefade
