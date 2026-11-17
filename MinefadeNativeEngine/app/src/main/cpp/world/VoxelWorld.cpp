@@ -301,15 +301,28 @@ VoxelWorld::Biome VoxelWorld::GetBiome(int x,int z) const {
     const float riverField=Noise2D(fx*0.0105f+riverWarp*2.0f+57.0f,
                                    fz*0.0105f-riverWarp*2.0f-93.0f);
 
-    if(continental<-0.44f)return Biome::Ocean;
+    if(continental<-0.50f)return Biome::Ocean;
     if(continental>-0.30f&&continental<0.43f&&std::abs(riverField)<0.026f)
         return Biome::River;
+    if(continental>-0.55f&&continental<-0.39f&&std::abs(riverField)>0.045f)
+        return Biome::Beach;
+    if(temperature<-0.52f&&mountainField>0.12f)return Biome::IceSpikes;
+    if(temperature>0.38f&&humidity<-0.14f)return Biome::Badlands;
+    if(temperature>0.27f&&humidity>0.42f&&continental<0.24f)return Biome::Jungle;
+    if(temperature>0.16f&&humidity>0.47f&&continental<0.10f)return Biome::MangroveSwamp;
+    if(humidity>0.48f&&temperature>-0.12f&&continental<0.24f)return Biome::Swamp;
+    if(temperature<-0.15f&&humidity>0.08f)return Biome::Taiga;
+    if(temperature>0.02f&&temperature<0.38f&&humidity>0.17f&&humidity<0.44f&&mountainField>0.02f)
+        return Biome::CherryGrove;
+    if(continental>0.38f&&mountainField>0.24f&&temperature>0.10f)return Biome::StonyPeaks;
     if(continental>0.38f&&mountainField>-0.10f)return Biome::Mountains;
-    if(temperature>0.36f&&humidity<-0.04f)return Biome::Desert;
+    if(temperature>0.34f&&humidity<-0.04f)return Biome::Desert;
     if(temperature<-0.36f)return Biome::Snow;
-    if(humidity>0.43f&&continental<0.22f)return Biome::Swamp;
+    if(humidity>0.53f)return Biome::DarkForest;
+    if(humidity>0.22f)return Biome::BirchForest;
     if(temperature>0.20f&&humidity<0.12f)return Biome::Savanna;
     if(humidity>0.08f)return Biome::Forest;
+    if(temperature>-0.05f&&humidity<-0.20f&&continental>-0.18f)return Biome::MushroomFields;
     return Biome::Plains;
 }
 
@@ -330,9 +343,14 @@ int VoxelWorld::TerrainHeight(int x,int z) const {
                +continentalMask*4.0f+mountainMask*(ridged*34.0f-5.0f)
                +detail*2.6f;
 
-    if(biome==Biome::Desert||biome==Biome::Savanna)height+=1.5f;
+    if(biome==Biome::Desert||biome==Biome::Savanna||biome==Biome::Badlands)height+=1.5f;
     if(biome==Biome::Snow)height+=3.0f;
-    if(biome==Biome::Swamp)height=33.4f+erosion*1.9f+detail*0.7f;
+    if(biome==Biome::IceSpikes)height+=11.0f+std::max(0.0f,peakNoise)*13.0f;
+    if(biome==Biome::StonyPeaks)height+=8.0f+ridged*7.0f;
+    if(biome==Biome::Badlands)height=48.0f+continental*5.0f+std::abs(erosion)*4.0f+detail*1.3f;
+    if(biome==Biome::MushroomFields)height=42.0f+erosion*2.2f+detail*1.1f;
+    if(biome==Biome::Swamp||biome==Biome::MangroveSwamp)height=33.4f+erosion*1.9f+detail*0.7f;
+    if(biome==Biome::Beach)height=29.0f+erosion*1.0f+detail*0.45f;
     if(biome==Biome::River)height=30.2f+erosion*1.1f+detail*0.45f;
     if(biome==Biome::Ocean)height=22.5f+continental*4.5f+erosion*1.8f;
     return std::clamp(static_cast<int>(std::lround(height)),5,kWorldHeight-7);
@@ -346,12 +364,19 @@ VoxelWorld::Chunk VoxelWorld::MakeChunk(int chunkX,int chunkZ) const {
         for(int y=0;y<=height;++y) {
             BlockId block = y < 17 ? BlockId::Deepslate : BlockId::Stone;
             if(y==height) {
-                if(biome==Biome::Desert || biome==Biome::Ocean) block=BlockId::Sand;
+                if(biome==Biome::Desert || biome==Biome::Ocean || biome==Biome::Beach) block=BlockId::Sand;
                 else if(biome==Biome::River) block=BlockId::Gravel;
+                else if(biome==Biome::Badlands) block=BlockId::HardenedClay;
+                else if(biome==Biome::MushroomFields) block=BlockId::Mycelium;
+                else if(biome==Biome::MangroveSwamp) block=BlockId::Mud;
+                else if(biome==Biome::IceSpikes) block=BlockId::PackedIce;
                 else if(biome==Biome::Snow || (biome==Biome::Mountains && height>69)) block=BlockId::Snow;
+                else if(biome==Biome::StonyPeaks && height>63) block=BlockId::Stone;
                 else block=BlockId::Grass;
             } else if(y>=height-3) {
-                block=(biome==Biome::Desert || biome==Biome::Savanna)?BlockId::Sand:BlockId::Dirt;
+                block=(biome==Biome::Desert || biome==Biome::Savanna || biome==Biome::Beach)?BlockId::Sand:
+                      biome==Biome::Badlands?BlockId::RedSandstone:
+                      biome==Biome::MangroveSwamp?BlockId::Mud:BlockId::Dirt;
             } else {
                 // Two differently scaled cave fields make winding chambers and
                 // connecting passages. The vertical term opens larger caverns
@@ -365,8 +390,17 @@ VoxelWorld::Chunk VoxelWorld::MakeChunk(int chunkX,int chunkZ) const {
                                            static_cast<float>(wz)*0.031f-static_cast<float>(y)*0.016f-46.0f);
                 const bool broadCavern=y>10&&cavern>0.57f&&caveB>-0.20f;
                 const bool windingTunnel=y>6&&caveA>caveGate&&caveB>0.08f;
-                if(broadCavern||windingTunnel) block=BlockId::Air;
-                else {
+                if(broadCavern||windingTunnel) {
+                    block=BlockId::Air;
+                    const float caveClimate=Noise2D(static_cast<float>(wx)*0.013f+49.0f,
+                                                     static_cast<float>(wz)*0.013f-83.0f);
+                    if(y<38 && biome==Biome::Jungle && caveClimate>0.68f && (Hash(seed_^static_cast<std::uint32_t>(wx*31+wz*17+y*7))%17u)==0u)
+                        block=BlockId::MossyCobblestone;
+                    else if(y<30 && caveClimate>0.77f && cavern>0.62f && (Hash(seed_^static_cast<std::uint32_t>(wx*13+wz*29+y*11))%29u)==0u)
+                        block=BlockId::Calcite;
+                    else if(y<14 && caveClimate<-0.70f && cavern>0.60f && (Hash(seed_^static_cast<std::uint32_t>(wx*19+wz*23+y*5))%31u)==0u)
+                        block=BlockId::Sculk;
+                } else {
                     const float ore=Noise2D(static_cast<float>(wx)*0.29f+static_cast<float>(y)*0.13f,
                                             static_cast<float>(wz)*0.29f-static_cast<float>(y)*0.17f);
                     if (y < 17) {
@@ -393,29 +427,57 @@ VoxelWorld::Chunk VoxelWorld::MakeChunk(int chunkX,int chunkZ) const {
             chunk.blocks[Index(x,y,z)]=block;
         }
         // Oceans and low-lying wetlands fill to the common water table.
-        if(height<kSeaLevel && (biome==Biome::Ocean || biome==Biome::Swamp || biome==Biome::River)) {
+        if(height<kSeaLevel && (biome==Biome::Ocean || biome==Biome::Swamp || biome==Biome::MangroveSwamp || biome==Biome::River || biome==Biome::Beach)) {
             for(int y=height+1;y<=kSeaLevel;++y)chunk.blocks[Index(x,y,z)]=BlockId::Water;
         }
         const std::uint32_t cellHash=Hash(seed_^static_cast<std::uint32_t>((wx/7)*0x45d9f3bu)^static_cast<std::uint32_t>((wz/7)*0x119de1f3u));
         const bool treeCell=(cellHash%9u)==0u&&(x%7==3)&&(z%7==3);
-        if(treeCell&&(biome==Biome::Forest||biome==Biome::Plains||biome==Biome::Swamp)&&height+7<kWorldHeight) {
-            const int trunkHeight=4+static_cast<int>((cellHash>>9u)%3u);
-            for(int dy=1;dy<=trunkHeight;++dy)chunk.blocks[Index(x,height+dy,z)]=BlockId::Log;
+        const bool forestBiome=biome==Biome::Forest||biome==Biome::Plains||biome==Biome::Swamp||
+            biome==Biome::Taiga||biome==Biome::BirchForest||biome==Biome::DarkForest||
+            biome==Biome::Jungle||biome==Biome::CherryGrove||biome==Biome::MangroveSwamp;
+        if(treeCell&&forestBiome&&height+9<kWorldHeight) {
+            const bool cherry=biome==Biome::CherryGrove;
+            const bool mangrove=biome==Biome::MangroveSwamp;
+            const int trunkHeight=(biome==Biome::Jungle?7:4)+static_cast<int>((cellHash>>9u)%3u);
+            const BlockId trunk=cherry?BlockId::CherryLog:(mangrove?BlockId::MangroveLog:BlockId::Log);
+            const BlockId leaves=cherry?BlockId::CherryLeaves:(mangrove?BlockId::MangroveLeaves:
+                ((biome==Biome::Taiga||biome==Biome::DarkForest)?BlockId::Leaves2:BlockId::Leaves));
+            for(int dy=1;dy<=trunkHeight;++dy)chunk.blocks[Index(x,height+dy,z)]=trunk;
+            const int crownRadius=biome==Biome::Jungle?3:2;
             for(int dy=trunkHeight-1;dy<=trunkHeight+2;++dy)
-                for(int dz=-2;dz<=2;++dz)for(int dx=-2;dx<=2;++dx) {
+                for(int dz=-crownRadius;dz<=crownRadius;++dz)for(int dx=-crownRadius;dx<=crownRadius;++dx) {
                     const int radius=std::abs(dx)+std::abs(dz)+(dy==trunkHeight+2?1:0);
-                    if(radius>4)continue;
+                    if(radius>crownRadius*2)continue;
                     const int lx=x+dx,lz=z+dz;
                     if(lx>=0&&lx<kChunkSize&&lz>=0&&lz<kChunkSize&&
                        chunk.blocks[Index(lx,height+dy,lz)]==BlockId::Air)
-                        chunk.blocks[Index(lx,height+dy,lz)]=BlockId::Leaves;
+                        chunk.blocks[Index(lx,height+dy,lz)]=leaves;
                 }
+            if(mangrove&&height>kSeaLevel-1) {
+                for(int dx=-1;dx<=1;++dx)for(int dz=-1;dz<=1;++dz)
+                    if((dx==0)!=(dz==0)) {
+                        const int lx=x+dx,lz=z+dz;
+                        if(lx>=0&&lx<kChunkSize&&lz>=0&&lz<kChunkSize)
+                            chunk.blocks[Index(lx,height-1,lz)]=BlockId::MuddyMangroveRoots;
+                    }
+            }
         }
         // Small ground cover and mineral rubble diversify plains, taiga-like
         // clearings and rocky highlands without forcing expensive structure jobs.
-        if((cellHash%31u)==0u&&(biome==Biome::Forest||biome==Biome::Plains)&&
+        if((cellHash%31u)==0u&&(biome==Biome::Forest||biome==Biome::Plains||biome==Biome::BirchForest||biome==Biome::CherryGrove)&&
            height+1<kWorldHeight&&chunk.blocks[Index(x,height+1,z)]==BlockId::Air) {
             chunk.blocks[Index(x,height+1,z)]=(cellHash&0x100u)?BlockId::YellowFlower:BlockId::RedFlower;
+        }
+        if(biome==Biome::MushroomFields && height+1<kWorldHeight && (cellHash%23u)==0u &&
+           chunk.blocks[Index(x,height+1,z)]==BlockId::Air)
+            chunk.blocks[Index(x,height+1,z)]=(cellHash&0x200u)?BlockId::RedMushroom:BlockId::BrownMushroom;
+        if(biome==Biome::IceSpikes && height+7<kWorldHeight && (cellHash%41u)==0u) {
+            const int spike=3+static_cast<int>((cellHash>>10u)%5u);
+            for(int dy=1;dy<=spike;++dy)
+                chunk.blocks[Index(x,height+dy,z)]=(dy%3==0)?BlockId::BlueIce:BlockId::PackedIce;
+        }
+        if(biome==Biome::Badlands && height+4<kWorldHeight && (cellHash%39u)==0u) {
+            for(int dy=1;dy<=3;++dy)chunk.blocks[Index(x,height+dy,z)]=BlockId::HardenedClay;
         }
         if((cellHash%127u)==0u&&biome==Biome::Mountains&&height+2<kWorldHeight) {
             chunk.blocks[Index(x,height+1,z)]=BlockId::Cobblestone;
@@ -751,6 +813,70 @@ void VoxelWorld::BuildMesh(std::vector<WorldVertex>& output,int centerWorldX,int
         // beyond the normal mobile render radius.
         result.lod = chunkDistance<=2 ? 0 : (chunkDistance==3 ? 1 : 2);
         result.outerBorder = radiusInChunks >= 0 && chunkDistance >= radiusInChunks;
+
+        // Distant-Horizons-inspired far terrain path: store a compact height/material
+        // view for distant chunks instead of retaining every hidden voxel face.
+        if (result.lod >= 2) {
+            constexpr int kGridSize = kChunkSize + 2;
+            std::array<int, kGridSize * kGridSize> heights{};
+            std::array<BlockId, kGridSize * kGridSize> surfaceBlocks{};
+            heights.fill(-1);
+            surfaceBlocks.fill(BlockId::Air);
+            const auto gridIndex = [](int x, int z) {
+                return static_cast<std::size_t>((z + 1) * kGridSize + (x + 1));
+            };
+            for (int z = -1; z <= kChunkSize; ++z) {
+                for (int x = -1; x <= kChunkSize; ++x) {
+                    for (int y = kWorldHeight - 1; y >= 0; --y) {
+                        const BlockId candidate = getMeshBlock(baseX + x, y, baseZ + z);
+                        if (candidate == BlockId::Air) continue;
+                        const BlockDefinition* def = GetBlockDefinition(candidate);
+                        if (def == nullptr || def->shape != BlockShape::Cube ||
+                            (def->flags & (BlockOpaque | BlockFluid | BlockTransparent)) == 0u) continue;
+                        heights[gridIndex(x, z)] = y;
+                        surfaceBlocks[gridIndex(x, z)] = candidate;
+                        break;
+                    }
+                }
+            }
+            for (int z = 0; z < kChunkSize; ++z) {
+                for (int x = 0; x < kChunkSize; ++x) {
+                    const std::size_t cell = gridIndex(x, z);
+                    const int topY = heights[cell];
+                    if (topY < 0) continue;
+                    const BlockId topBlock = surfaceBlocks[cell];
+                    const BlockDefinition* def = GetBlockDefinition(topBlock);
+                    if (def == nullptr) continue;
+                    const bool transparent = (def->flags & (BlockTransparent | BlockFluid)) != 0u;
+                    std::vector<WorldVertex>& target = transparent ? result.transparent : result.opaque;
+                    const float wx = static_cast<float>(baseX + x);
+                    const float wz = static_cast<float>(baseZ + z);
+                    const float top = static_cast<float>(topY + 1);
+                    const std::array<Vec3,4> topPoints{{
+                        {wx,top,wz+1.0f},{wx+1.0f,top,wz+1.0f},
+                        {wx+1.0f,top,wz},{wx,top,wz}
+                    }};
+                    AddFace(target, topPoints, FaceShade(2), TileForFace(*def, 2));
+                    for (int face : {0,1,4,5}) {
+                        int nx=x, nz=z;
+                        if (face==0) ++nx;
+                        else if (face==1) --nx;
+                        else if (face==4) ++nz;
+                        else --nz;
+                        const int neighborY = heights[gridIndex(nx,nz)];
+                        if (neighborY >= topY) continue;
+                        const float bottom = static_cast<float>(neighborY + 1);
+                        std::array<Vec3,4> points{};
+                        for (std::size_t v=0;v<4;++v) {
+                            const Vec3& p=faces[static_cast<std::size_t>(face)][v];
+                            points[v]={wx+p.x, bottom+p.y*(top-bottom), wz+p.z};
+                        }
+                        AddFace(target, points, FaceShade(face), TileForFace(*def, face));
+                    }
+                }
+            }
+            return;
+        }
 
         struct FaceCell { std::uint16_t tile{0}; bool visible{false}; };
         const auto coordinates = [&](int face,int slice,int u,int v) {
