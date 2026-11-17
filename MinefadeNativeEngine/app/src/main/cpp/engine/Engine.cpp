@@ -806,7 +806,7 @@ void Engine::Resize(int width, int height) {
 void Engine::RebuildWorldMesh() {
     world_.BuildMesh(worldMesh_, static_cast<int>(std::floor(player_.position.x)),
                      static_cast<int>(std::floor(player_.position.z)),
-                     renderDistanceChunks_, &transparentWorldMesh_, &worldChunkRanges_);
+                     renderDistanceChunks_, &transparentWorldMesh_, &worldChunkRanges_, 1u);
 
     // Sort only transparent chunks whose geometry revision changed. Unchanged
     // chunks keep their previously uploaded triangle order and GPU buffers.
@@ -1134,10 +1134,11 @@ void Engine::Render() {
         }
 
         UpdateMining(safeDelta);
-        if (world_.PumpChunkGeneration()) {
-            RebuildWorldMesh();
-            UploadWorldMesh();
-            UploadTransparentWorldMesh();
+        const bool generatedChunkReady = world_.PumpChunkGeneration();
+        if (generatedChunkReady) {
+            // Start meshing as soon as a generated chunk becomes available, but
+            // never rebuild every dirty chunk in one render frame.
+            chunkMeshAccumulator_ = 1.0f / 30.0f;
         }
         // Simulation remains frame-stepped, while animated vertex buffers are
         // uploaded at bounded rates to avoid rebuilding all creature/item geometry
@@ -1161,9 +1162,22 @@ void Engine::Render() {
                                          renderDistanceChunks_);
             lastChunkX_ = playerChunkX;
             lastChunkZ_ = playerChunkZ;
+            chunkMeshAccumulator_ = 1.0f / 30.0f;
+        }
+
+        // Spread expensive greedy-mesh work over a 30 Hz budget. The world
+        // worker still generates chunks independently; nearby pending meshes
+        // are prioritized by VoxelWorld before farther LOD rings.
+        constexpr float kChunkMeshInterval = 1.0f / 30.0f;
+        chunkMeshAccumulator_ = std::min(chunkMeshAccumulator_ + safeDelta, kChunkMeshInterval);
+        const int meshCenterX = static_cast<int>(std::floor(player_.position.x));
+        const int meshCenterZ = static_cast<int>(std::floor(player_.position.z));
+        if (chunkMeshAccumulator_ >= kChunkMeshInterval &&
+            world_.HasPendingMeshBuild(meshCenterX, meshCenterZ, renderDistanceChunks_)) {
             RebuildWorldMesh();
             UploadWorldMesh();
             UploadTransparentWorldMesh();
+            chunkMeshAccumulator_ = 0.0f;
         }
     }
     const auto sky = environment_.SkyColor();
