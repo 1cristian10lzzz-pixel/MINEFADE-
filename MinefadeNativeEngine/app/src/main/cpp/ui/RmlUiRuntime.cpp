@@ -192,7 +192,7 @@ Rml::FileHandle RmlUiRuntime::MemoryOnlyFileInterface::Open(const Rml::String& p
     __android_log_print(ANDROID_LOG_WARN, kTag,
                         "RmlUi requested a disk resource outside the in-memory HUD: %s",
                         path.c_str());
-    return nullptr;
+    return static_cast<Rml::FileHandle>(0);
 }
 
 void RmlUiRuntime::MemoryOnlyFileInterface::Close(Rml::FileHandle) {}
