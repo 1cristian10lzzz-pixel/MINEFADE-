@@ -453,22 +453,26 @@ void RmlUiRuntime::Resize(int width, int height) {
     if (context_ != nullptr) context_->SetDimensions({width_, height_});
 }
 
-bool RmlUiRuntime::Touch(int action, float x, float y) {
-    if (!ready_ || context_ == nullptr) return true;
+bool RmlUiRuntime::IsInMovementPad(float x, float y) const {
     const float padSize = 108.0f * density_;
     const float padMargin = 14.0f * density_;
     const float padBottom = 54.0f * density_;
     const float padLeft = leftHanded_
         ? static_cast<float>(width_) - padMargin - padSize : padMargin;
     const float padTop = static_cast<float>(height_) - padBottom - padSize;
-    // Reserve only the actual D-pad bounds for native continuous movement.
-    // This leaves the first/last hotbar slots and nearby buttons clickable.
-    const bool inJoystickPad = x >= padLeft && x <= padLeft + padSize &&
-        y >= padTop && y <= static_cast<float>(height_) - padBottom;
-    if (inJoystickPad) {
+    return x >= padLeft && x <= padLeft + padSize &&
+           y >= padTop && y <= static_cast<float>(height_) - padBottom;
+}
+
+bool RmlUiRuntime::Touch(int action, float x, float y) {
+    // Movement-pad hit testing must also work while the emergency Android HUD
+    // is active and the RmlUi context is unavailable.
+    if (IsInMovementPad(x, y)) {
         mouseCaptured_ = false;
         return true;
     }
+    if (!ready_ || context_ == nullptr) return true;
+
     const int px = static_cast<int>(x);
     const int py = static_cast<int>(y);
     const bool outside = context_->ProcessMouseMove(px, py, 0);
