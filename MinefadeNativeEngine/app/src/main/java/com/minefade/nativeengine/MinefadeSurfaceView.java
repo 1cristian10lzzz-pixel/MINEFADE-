@@ -327,6 +327,10 @@ public final class MinefadeSurfaceView extends GLSurfaceView {
                 float hudScale = preferences.getInt("hud_scale", 100) / 100.0f;
                 NativeBridge.nativeSetGraphicsOptions(quality, renderDistance, waterWaves,
                         fieldOfView, contactShadows);
+                NativeBridge.nativeSetShaderOptions(
+                        preferences.getBoolean("lava_animations", true),
+                        preferences.getBoolean("leaf_wind", true),
+                        preferences.getInt("leaf_wind_strength", 4) / 100.0f);
                 NativeBridge.nativeSetInputOptions(sensitivityX, sensitivityY, joystickDeadzone, invertLookY, leftHanded, controlMode, preferences.getBoolean("auto_jump", true));
                 NativeBridge.nativeSetHudOptions(showHudStats);
                 int animationQuality = Math.max(0, Math.min(2, preferences.getInt("animation_quality", 2)));
