@@ -191,12 +191,10 @@ private:
     EntitySystem entities_;
     EnvironmentSystem environment_;
     RmlUiRuntime ui_;
-    std::vector<WorldVertex> worldMesh_;
-    std::vector<WorldVertex> transparentWorldMesh_;
-    std::vector<ChunkMeshRange> worldChunkRanges_;
-    // A transparent triangle order is retained until that chunk's geometry
-    // revision changes; camera movement only reorders chunks at draw time.
-    std::map<std::pair<int, int>, std::uint64_t> transparentSortRevisions_;
+    // Scratch output is kept empty in normal play: BuildMesh updates only the
+    // cache, and the renderer reads the per-chunk vectors directly.
+    std::vector<WorldVertex> meshBuildScratch_;
+    std::vector<ChunkMeshView> worldChunkViews_;
     WorldMeshRenderer worldRenderer_;
     std::vector<WorldVertex> entityMesh_;
     std::vector<WorldVertex> itemMesh_;
