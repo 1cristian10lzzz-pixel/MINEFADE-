@@ -78,10 +78,14 @@ void main() {
     // Keep squared distance for fog interpolation; avoids a per-vertex square root.
     vec3 fogDelta = position - uCameraPosition;
     vFogDistanceSquared = dot(fogDelta, fogDelta);
-    float diffuse = max(dot(normalize(aNormal), normalize(-uLightDirection)), 0.0);
+    vec3 normal = normalize(aNormal);
+    float diffuse = max(dot(normal, normalize(-uLightDirection)), 0.0);
     float qualityFactor = clamp(uQuality * 0.5, 0.0, 1.0);
-    float ambient = mix(0.17, 0.34, qualityFactor);
-    float illumination = ambient + diffuse * (0.40 + 0.60 * uDaylight);
+    float skyExposure = clamp(normal.y * 0.5 + 0.5, 0.0, 1.0);
+    float ambientBase = mix(0.23, 0.32, qualityFactor);
+    float hemisphereFill = mix(0.88, 1.08, skyExposure);
+    float directLight = diffuse * (0.12 + 0.58 * uDaylight);
+    float illumination = clamp(ambientBase * hemisphereFill + directLight, 0.20, 1.12);
     vec3 material = aColor;
     if (fluidCode < -1.5) material = vec3(1.0, 0.43, 0.16);
     else if (fluidCode < -0.5) material = vec3(0.36, 0.72, 0.91);
@@ -424,7 +428,13 @@ vec2 AtlasUv(vec2 localUv, int tile) {
 }
 void main() {
     vec4 texel = (uUseAtlas == 1) ? texture(uBlockAtlas, AtlasUv(vTexCoord, vAtlasTile)) : vec4(1.0);
-    outColor = vec4(texel.rgb * vColor, texel.a);
+    vec3 material = vColor;
+    // Fluid tags are encoded in the red component by the mesh builder. The
+    // conservative shader must decode them too; multiplying the negative tag
+    // directly by the atlas turns water/lava black on fallback-only drivers.
+    if (vColor.r < -1.5) material = vec3(1.0, 0.43, 0.16);
+    else if (vColor.r < -0.5) material = vec3(0.36, 0.72, 0.91);
+    outColor = vec4(texel.rgb * material, texel.a);
 }
 )";
     std::string fallbackDiagnostic;
