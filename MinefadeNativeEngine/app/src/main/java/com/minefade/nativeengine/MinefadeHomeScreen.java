@@ -6,8 +6,6 @@ import android.text.InputType;
 import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
 import android.graphics.Canvas;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.RectF;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -1712,54 +1710,140 @@ public final class MinefadeHomeScreen extends FrameLayout {
     private static final class Backdrop extends View {
         private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
         private final long createdAt = SystemClock.uptimeMillis();
+
         Backdrop(Context context) { super(context); }
+
+        private void polygon(Canvas canvas, int color, float... points) {
+            Path path = new Path();
+            path.moveTo(points[0], points[1]);
+            for (int i = 2; i < points.length; i += 2) path.lineTo(points[i], points[i + 1]);
+            path.close();
+            paint.setShader(null);
+            paint.setColor(color);
+            canvas.drawPath(path, paint);
+        }
+
+        private void cloud(Canvas canvas, float x, float y, float scale, int alpha) {
+            paint.setColor(Color.argb(alpha, 241, 249, 242));
+            canvas.drawRoundRect(new RectF(x, y + scale * 0.22f, x + scale * 2.7f,
+                    y + scale * 0.82f), scale * 0.28f, scale * 0.28f, paint);
+            canvas.drawCircle(x + scale * 0.66f, y + scale * 0.42f, scale * 0.45f, paint);
+            canvas.drawCircle(x + scale * 1.18f, y + scale * 0.22f, scale * 0.62f, paint);
+            canvas.drawCircle(x + scale * 1.82f, y + scale * 0.39f, scale * 0.48f, paint);
+        }
+
+        private void mountain(Canvas canvas, float width, float height, float shift,
+                              int color, float baseY, float peakScale) {
+            Path path = new Path();
+            path.moveTo(-width * 0.1f + shift, baseY);
+            path.lineTo(width * 0.12f + shift, baseY - height * peakScale * 0.58f);
+            path.lineTo(width * 0.24f + shift, baseY - height * peakScale * 0.34f);
+            path.lineTo(width * 0.39f + shift, baseY - height * peakScale);
+            path.lineTo(width * 0.56f + shift, baseY - height * peakScale * 0.45f);
+            path.lineTo(width * 0.72f + shift, baseY - height * peakScale * 0.74f);
+            path.lineTo(width * 0.91f + shift, baseY - height * peakScale * 0.32f);
+            path.lineTo(width * 1.1f + shift, baseY);
+            path.close();
+            paint.setColor(color);
+            canvas.drawPath(path, paint);
+        }
+
+        private void tree(Canvas canvas, float x, float base, float size, int leafColor) {
+            paint.setColor(0xff473d34);
+            canvas.drawRect(x - size * 0.07f, base - size * 0.55f,
+                    x + size * 0.07f, base, paint);
+            polygon(canvas, leafColor,
+                    x, base - size * 1.28f,
+                    x - size * 0.45f, base - size * 0.58f,
+                    x + size * 0.43f, base - size * 0.58f);
+            polygon(canvas, leafColor,
+                    x, base - size * 0.98f,
+                    x - size * 0.52f, base - size * 0.32f,
+                    x + size * 0.49f, base - size * 0.32f);
+        }
+
         @Override protected void onDraw(Canvas canvas) {
             super.onDraw(canvas);
-            float w = getWidth(), h = getHeight();
-            boolean animate = getContext().getSharedPreferences("minefade_ui", Context.MODE_PRIVATE)
-                    .getBoolean("menu_background_animations", true)
-                    && !getContext().getSharedPreferences("minefade_ui", Context.MODE_PRIVATE)
-                    .getBoolean("reduce_motion", false);
+            final float w = getWidth(), h = getHeight();
+            SharedPreferences prefs = getContext().getSharedPreferences("minefade_ui", Context.MODE_PRIVATE);
+            boolean animate = prefs.getBoolean("menu_background_animations", true)
+                    && !prefs.getBoolean("reduce_motion", false);
             float time = (SystemClock.uptimeMillis() - createdAt) / 1000.0f;
-            float driftX = animate ? (float) Math.sin(time * 0.23f) * w * 0.012f : 0.0f;
-            float driftY = animate ? (float) Math.cos(time * 0.19f) * h * 0.010f : 0.0f;
-            paint.setShader(new LinearGradient(0, 0, w, h,
-                    new int[]{0xff0b1726, 0xff10283a, 0xff0b1422},
-                    null, Shader.TileMode.CLAMP));
-            canvas.drawRect(0, 0, w, h, paint);
-            paint.setShader(null);
-            // A layered atmospheric backdrop replaces the old visible square grid.
-            // Broad arcs, diagonal light strokes and sparse particles provide depth
-            // without competing with cards, text or the voxel cover illustration.
             float density = getResources().getDisplayMetrics().density;
-            paint.setColor(0x164c9cba);
-            paint.setStyle(Paint.Style.STROKE);
-            paint.setStrokeWidth(Math.max(1f, density));
-            canvas.drawCircle(w * 0.82f + driftX, h * 0.25f + driftY, Math.max(w, h) * 0.22f, paint);
-            canvas.drawCircle(w * 0.82f + driftX, h * 0.25f + driftY, Math.max(w, h) * 0.34f, paint);
-            canvas.drawCircle(w * 0.82f + driftX, h * 0.25f + driftY, Math.max(w, h) * 0.46f, paint);
-            canvas.drawArc(new RectF(-w * 0.42f, h * 0.52f, w * 0.55f, h * 1.45f),
-                    205, 115, false, paint);
-            paint.setColor(0x124c9cba);
-            canvas.drawLine(w * 0.05f, h * 0.86f, w * 0.42f, h * 0.49f, paint);
-            canvas.drawLine(w * 0.16f, h, w * 0.62f, h * 0.54f, paint);
-            paint.setStyle(Paint.Style.FILL);
-            paint.setColor(0x337ed6bd);
-            for (int i = 0; i < 24; i++) {
-                float px = (i * 79 % 997) / 997f * w
-                        + (animate ? (float) Math.sin(time * 0.28f + i * 0.7f) * density * 5.0f : 0.0f);
-                float py = (i * 137 % 991) / 991f * h
-                        + (animate ? (float) Math.cos(time * 0.22f + i * 0.47f) * density * 7.0f : 0.0f);
-                float radius = density * (i % 5 == 0 ? 2.0f : 0.8f);
-                canvas.drawCircle(px, py, radius, paint);
-            }
-            paint.setShader(new RadialGradient(w * 0.76f, h * 0.22f,
-                    Math.max(w, h) * 0.65f,
-                    new int[]{0x3342bb8a, 0x00152c3d},
-                    null, Shader.TileMode.CLAMP));
+            float parallax = animate ? (float) Math.sin(time * 0.075f) * w * 0.025f : 0.0f;
+
+            paint.setShader(new LinearGradient(0, 0, 0, h,
+                    new int[]{0xff4f9ab8, 0xff93c9c1, 0xffe2d9a9}, null, Shader.TileMode.CLAMP));
             canvas.drawRect(0, 0, w, h, paint);
             paint.setShader(null);
-            if (animate && isAttachedToWindow()) postInvalidateDelayed(42L);
+
+            float sunX = w * 0.77f + parallax * 0.32f;
+            float sunY = h * 0.235f;
+            paint.setShader(new RadialGradient(sunX, sunY, h * 0.34f,
+                    new int[]{0x88fff5c2, 0x32fff0c2, 0x00fff0c2}, null, Shader.TileMode.CLAMP));
+            canvas.drawRect(0, 0, w, h, paint);
+            paint.setShader(null);
+            paint.setColor(0xffffefbb);
+            canvas.drawCircle(sunX, sunY, h * 0.074f, paint);
+
+            float cloudShift = animate ? (time * w * 0.012f) % (w * 1.25f) : 0.0f;
+            cloud(canvas, w * 0.07f + cloudShift - w * 0.16f, h * 0.16f, h * 0.07f, 118);
+            cloud(canvas, w * 0.54f + cloudShift - w * 0.32f, h * 0.11f, h * 0.055f, 90);
+            cloud(canvas, w * 0.83f - cloudShift * 0.65f, h * 0.31f, h * 0.045f, 68);
+
+            mountain(canvas, w, h, -parallax * 0.35f, 0xff8aa9a5, h * 0.72f, 0.43f);
+            mountain(canvas, w, h, parallax * 0.45f, 0xff597e78, h * 0.80f, 0.34f);
+            mountain(canvas, w, h, -parallax * 0.8f, 0xff355f55, h * 0.87f, 0.25f);
+
+            Path valley = new Path();
+            valley.moveTo(0, h * 0.71f);
+            valley.cubicTo(w * 0.23f, h * 0.66f, w * 0.34f, h * 0.78f, w * 0.49f, h * 0.73f);
+            valley.cubicTo(w * 0.68f, h * 0.66f, w * 0.83f, h * 0.79f, w, h * 0.70f);
+            valley.lineTo(w, h);
+            valley.lineTo(0, h);
+            valley.close();
+            paint.setShader(new LinearGradient(0, h * 0.67f, 0, h,
+                    new int[]{0xff426c4d, 0xff25483d, 0xff102c32}, null, Shader.TileMode.CLAMP));
+            canvas.drawPath(valley, paint);
+            paint.setShader(null);
+
+            Path river = new Path();
+            river.moveTo(w * 0.46f + parallax * 0.3f, h);
+            river.cubicTo(w * 0.55f, h * 0.87f, w * 0.47f, h * 0.83f, w * 0.57f, h * 0.75f);
+            river.cubicTo(w * 0.64f, h * 0.78f, w * 0.62f, h * 0.87f, w * 0.72f, h);
+            river.close();
+            paint.setShader(new LinearGradient(0, h * 0.74f, 0, h,
+                    new int[]{0xff7cc8c0, 0xff367f80, 0xff1c5361}, null, Shader.TileMode.CLAMP));
+            canvas.drawPath(river, paint);
+            paint.setShader(null);
+
+            float treeBase = h * 0.91f;
+            for (int i = 0; i < 13; i++) {
+                float x = (i / 12.0f) * w + (i % 2 == 0 ? -parallax : parallax);
+                float size = h * (0.11f + (i % 4) * 0.012f);
+                tree(canvas, x, treeBase + (i % 3) * h * 0.025f, size,
+                        i % 2 == 0 ? 0xff204d42 : 0xff2f634d);
+            }
+
+            paint.setShader(new LinearGradient(0, h * 0.72f, 0, h,
+                    new int[]{0x00203939, 0x66101e25, 0xcc07121c}, null, Shader.TileMode.CLAMP));
+            canvas.drawRect(0, h * 0.68f, w, h, paint);
+            paint.setShader(null);
+
+            paint.setColor(0x58e4f4df);
+            paint.setStrokeWidth(Math.max(1.0f, density));
+            for (int i = 0; i < 12; i++) {
+                float y = h * (0.78f + (i % 4) * 0.045f);
+                float x = w * (0.35f + (i * 0.047f) % 0.38f) + (animate ? (float)Math.sin(time * 0.3f + i) * density * 4 : 0);
+                canvas.drawLine(x, y, x + w * (0.025f + (i % 3) * 0.01f), y, paint);
+            }
+
+            // Keep the foreground legible while preserving the scenic panorama.
+            paint.setShader(new LinearGradient(0, 0, 0, h,
+                    new int[]{0x00071421, 0x22071421, 0x99071421}, null, Shader.TileMode.CLAMP));
+            canvas.drawRect(0, 0, w, h, paint);
+            paint.setShader(null);
+            if (animate && isAttachedToWindow()) postInvalidateDelayed(50L);
         }
     }
 
