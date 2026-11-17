@@ -524,15 +524,15 @@ VoxelWorld::Chunk VoxelWorld::MakeChunk(int chunkX,int chunkZ) const {
                 if (surfaceY <= kSeaLevel || surfaceY + 3 >= kWorldHeight) continue;
                 const std::uint32_t wallHash = Hash(ruinHash ^
                     static_cast<std::uint32_t>(x * 31 + z * 17));
-                const BlockId wall = (wallHash % 5u == 0u) ? BlockId::MossyStoneBricks
-                    : ((wallHash % 7u == 0u) ? BlockId::CrackedStoneBricks
-                                              : BlockId::StoneBricks);
+                const BlockId wall = (wallHash % 5u == 0u) ? BlockId::MossyCobblestone
+                    : ((wallHash % 7u == 0u) ? BlockId::Stonebrick
+                                              : BlockId::Stonebrick);
                 chunk.blocks[Index(x, surfaceY + 1, z)] = wall;
 
                 const bool corner = (x == kMin || x == kMax) &&
                                     (z == kMin || z == kMax);
                 if (corner && (wallHash & 1u) == 0u)
-                    chunk.blocks[Index(x, surfaceY + 2, z)] = BlockId::MossyStoneBricks;
+                    chunk.blocks[Index(x, surfaceY + 2, z)] = BlockId::MossyCobblestone;
             }
         }
 
@@ -541,11 +541,11 @@ VoxelWorld::Chunk VoxelWorld::MakeChunk(int chunkX,int chunkZ) const {
         const int altarWorldZ = ruinCenterZ;
         const int altarY = TerrainHeight(altarWorldX, altarWorldZ);
         if (altarY > kSeaLevel && altarY + 2 < kWorldHeight) {
-            chunk.blocks[Index(8, altarY + 1, 8)] = BlockId::ChiseledStoneBricks;
-            chunk.blocks[Index(7, altarY + 1, 8)] = BlockId::MossyStoneBricks;
-            chunk.blocks[Index(9, altarY + 1, 8)] = BlockId::MossyStoneBricks;
+            chunk.blocks[Index(8, altarY + 1, 8)] = BlockId::Stonebrick;
+            chunk.blocks[Index(7, altarY + 1, 8)] = BlockId::MossyCobblestone;
+            chunk.blocks[Index(9, altarY + 1, 8)] = BlockId::MossyCobblestone;
             if ((ruinHash & 2u) != 0u)
-                chunk.blocks[Index(8, altarY + 1, 7)] = BlockId::CrackedStoneBricks;
+                chunk.blocks[Index(8, altarY + 1, 7)] = BlockId::Stonebrick;
         }
     }
 
