@@ -46,6 +46,18 @@ def test_frustum_uses_real_mesh_height_bounds():
     assert "gpu.maxY = range.maxY;" in RENDERER
 
 
+def test_chunk_mesh_work_is_budgeted_and_nearby_first():
+    signature = WORLD[WORLD.index("void VoxelWorld::BuildMesh"):WORLD.index("bool VoxelWorld::HasPendingMeshBuild")]
+    assert "std::size_t meshBuildBudget" in signature
+    assert "if (meshBuildBudget > 0u)" in WORLD
+    assert "if (scheduled < meshBuildBudget)" in WORLD
+    assert "return distanceA < distanceB;" in WORLD
+    assert "bool VoxelWorld::HasPendingMeshBuild" in WORLD
+    assert "constexpr float kChunkMeshInterval = 1.0f / 30.0f;" in ENGINE
+    assert "world_.HasPendingMeshBuild(meshCenterX, meshCenterZ, renderDistanceChunks_)" in ENGINE
+    assert "worldChunkRanges_, 1u);" in ENGINE
+
+
 def test_both_shaders_sample_raw_opengl_atlas_rows_without_double_flip():
     uv = "return vec2(pixel.x / atlasSize.x, pixel.y / atlasSize.y);"
     assert ENGINE.count(uv) == 2
@@ -59,5 +71,6 @@ if __name__ == "__main__":
     test_chunk_cache_is_revision_driven_not_outer_border_driven()
     test_terrain_gpu_resources_are_incremental_per_chunk()
     test_frustum_uses_real_mesh_height_bounds()
+    test_chunk_mesh_work_is_budgeted_and_nearby_first()
     test_both_shaders_sample_raw_opengl_atlas_rows_without_double_flip()
     print("Minefade renderer invariants passed.")
