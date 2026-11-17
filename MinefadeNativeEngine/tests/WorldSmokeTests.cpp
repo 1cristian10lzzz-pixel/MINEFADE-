@@ -104,25 +104,36 @@ int main() {
     assert(greedyOpaque.size() >= 36u);
 
     // The nearest two rings retain full block detail; only the outer
-    // visible ring may use the lighter LOD1 representation.
+    // Far chunks must use compact surface-heightfield LOD2 while the
+    // nearest two rings retain full voxel geometry.
     VoxelWorld lodWorld(0x4c4f4431u);
-    lodWorld.GenerateAround(8, 8, 3);
+    lodWorld.GenerateAround(8, 8, 4);
     std::vector<WorldVertex> lodMesh;
     std::vector<ChunkMeshRange> lodRanges;
-    lodWorld.BuildMesh(lodMesh, 8, 8, 3, nullptr, &lodRanges);
+    lodWorld.BuildMesh(lodMesh, 8, 8, 4, nullptr, &lodRanges);
     bool foundLod2Chunk = false;
-    bool foundLod3Chunk = false;
+    bool foundLod1Chunk = false;
+    std::size_t largestNearMesh = 0;
+    std::size_t largestFarMesh = 0;
     for (const ChunkMeshRange& range : lodRanges) {
         const int distance = std::max(std::abs(range.chunkX), std::abs(range.chunkZ));
-        if (distance <= 2) assert(range.lodLevel == 0);
+        if (distance <= 2) {
+            assert(range.lodLevel == 0);
+            largestNearMesh = std::max(largestNearMesh, range.opaqueCount);
+        }
         if (distance == 3) {
             assert(range.lodLevel == 1);
-            foundLod3Chunk = true;
+            foundLod1Chunk = true;
         }
-        if (distance > 3) foundLod2Chunk = true;
+        if (distance >= 4) {
+            assert(range.lodLevel == 2);
+            foundLod2Chunk = true;
+            largestFarMesh = std::max(largestFarMesh, range.opaqueCount);
+        }
     }
-    assert(foundLod3Chunk);
-    assert(!foundLod2Chunk);
+    assert(foundLod1Chunk && foundLod2Chunk);
+    assert(largestFarMesh > 0u);
+    assert(largestNearMesh > largestFarMesh);
 
     // Frustum AABB tests use a simple [-4,+4] cube around the camera.
     CameraFrustum testFrustum;
