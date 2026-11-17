@@ -1330,61 +1330,48 @@ public final class MinefadeHomeScreen extends FrameLayout {
     }
 
     private void showMultiplayerPage() {
-        LinearLayout root = pageRoot("LOCAL", "Juega con otros dispositivos conectados a tu Wi-Fi.");
-        LinearLayout actionRow = row();
-        LinearLayout.LayoutParams actionParams = new LinearLayout.LayoutParams(-1, dp(48));
-        actionParams.topMargin = dp(12);
-        root.addView(actionRow, actionParams);
-
-        TextView host = actionButton("CREAR PARTIDA", () -> {
-            if (listener != null) listener.onHostMultiplayer();
-        });
-        actionRow.addView(host, new LinearLayout.LayoutParams(0, -1, 1f));
-        TextView search = actionButton("BUSCAR PARTIDAS", () -> {
-            if (listener != null) listener.onSearchMultiplayer();
-        });
-        LinearLayout.LayoutParams searchParams = new LinearLayout.LayoutParams(0, -1, 1f);
-        searchParams.leftMargin = dp(8);
-        actionRow.addView(search, searchParams);
-
-        multiplayerStatus = text("Conecta los teléfonos a la misma red Wi-Fi y busca partidas.", 9, 0xffb9cbd6, false);
+        LinearLayout root = pageRoot("", "");
+        multiplayerStatus = text("Buscando partidas en la red local…", 8, 0xffb9cbd6, false);
         multiplayerStatus.setGravity(Gravity.CENTER_VERTICAL);
-        multiplayerStatus.setPadding(dp(10), 0, dp(10), 0);
-        multiplayerStatus.setBackground(shape(new int[]{0x332c4658, 0x22172535}, 9, 0x444d6979));
-        LinearLayout.LayoutParams statusParams = new LinearLayout.LayoutParams(-1, dp(34));
-        statusParams.topMargin = dp(9);
+        multiplayerStatus.setPadding(dp(8), 0, dp(8), 0);
+        LinearLayout.LayoutParams statusParams = new LinearLayout.LayoutParams(-1, dp(25));
+        statusParams.topMargin = dp(3);
         root.addView(multiplayerStatus, statusParams);
 
-        TextView nearbyTitle = text("PARTIDAS ENCONTRADAS", 9, 0xffa9ee70, true);
-        LinearLayout.LayoutParams titleParams = new LinearLayout.LayoutParams(-1, dp(26));
-        titleParams.topMargin = dp(7);
-        root.addView(nearbyTitle, titleParams);
-
-        ScrollView scroll = new ScrollView(getContext());
-        scroll.setFillViewport(true);
-        scroll.setClipChildren(true);
-        scroll.setClipToPadding(true);
-        scroll.setVerticalScrollBarEnabled(true);
-        scroll.setOverScrollMode(View.OVER_SCROLL_IF_CONTENT_SCROLLS);
         multiplayerGames = column();
         multiplayerGames.setClipChildren(true);
         multiplayerGames.setClipToPadding(true);
+        ScrollView scroll = new ScrollView(getContext());
+        scroll.setFillViewport(false);
+        scroll.setClipChildren(true);
+        scroll.setClipToPadding(true);
+        scroll.setVerticalScrollBarEnabled(false);
+        scroll.setOverScrollMode(View.OVER_SCROLL_NEVER);
         scroll.addView(multiplayerGames, new ScrollView.LayoutParams(-1, -2));
         root.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1f));
         setNearbyGames(new ArrayList<>());
-        // Discover Wi-Fi LAN sessions as soon as the LOCAL module is opened.
-        // The search button remains available as a manual refresh action.
-        if (listener != null) listener.onSearchMultiplayer();
 
-        LinearLayout serverCard = row();
-        serverCard.setPadding(dp(10), dp(6), dp(10), dp(6));
-        serverCard.setBackground(shape(new int[]{0xff263141, 0xff182333}, 10, 0x444b6074));
-        serverCard.addView(text("SERVIDORES PÚBLICOS", 8, 0xffd5e0e8, true),
-                new LinearLayout.LayoutParams(0, dp(25), 1f));
-        serverCard.addView(pill("NO DISPONIBLE", 0xffffce72), new LinearLayout.LayoutParams(-2, dp(23)));
-        LinearLayout.LayoutParams serverParams = new LinearLayout.LayoutParams(-1, dp(36));
-        serverParams.topMargin = dp(8);
-        root.addView(serverCard, serverParams);
+        LinearLayout actionRow = row();
+        actionRow.setGravity(Gravity.RIGHT | Gravity.CENTER_VERTICAL);
+        LinearLayout.LayoutParams actionParams = new LinearLayout.LayoutParams(-1, dp(40));
+        actionParams.topMargin = dp(5);
+        root.addView(actionRow, actionParams);
+        TextView host = actionButton("CREAR PARTIDA", () -> {
+            if (listener != null) listener.onHostMultiplayer();
+        });
+        host.setTextSize(8);
+        actionRow.addView(host, new LinearLayout.LayoutParams(dp(112), dp(34)));
+        TextView search = actionButton("BUSCAR", () -> {
+            setMultiplayerStatus("Buscando partidas en la red local…");
+            if (listener != null) listener.onSearchMultiplayer();
+        });
+        search.setTextSize(8);
+        LinearLayout.LayoutParams searchParams = new LinearLayout.LayoutParams(dp(88), dp(34));
+        searchParams.leftMargin = dp(6);
+        actionRow.addView(search, searchParams);
+
+        // Discover Wi-Fi LAN sessions as soon as the LOCAL module is opened.
+        if (listener != null) listener.onSearchMultiplayer();
     }
 
     public void setMultiplayerStatus(String status) {
@@ -1395,7 +1382,7 @@ public final class MinefadeHomeScreen extends FrameLayout {
         if (multiplayerGames == null) return;
         multiplayerGames.removeAllViews();
         if (games == null || games.isEmpty()) {
-            TextView empty = text("No se encontraron partidas todavía. Pulsa BUSCAR PARTIDAS.", 9, muted, false);
+            TextView empty = text("No se encontraron partidas en esta red todavía.", 9, muted, false);
             empty.setGravity(Gravity.CENTER);
             multiplayerGames.addView(empty, new LinearLayout.LayoutParams(-1, dp(62)));
             return;
