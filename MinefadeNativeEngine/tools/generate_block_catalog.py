@@ -926,9 +926,17 @@ def make_tile(key: str, face: int, block_idx: int) -> bytes:
                 elif facet in (4, 5): n += 15
                 if (x * 5 + y * 9 + block_idx) % 19 == 0: n -= 14
             elif 'leaves' in k:
-                cluster = math.sin((x + block_idx) * 0.72) + math.cos((y - block_idx) * 0.61)
-                n += 20 if cluster > 0.55 else (-13 if cluster < -0.8 else 0)
-                if (x * 13 + y * 7 + block_idx) % 23 == 0: n -= 28
+                # Multi-scale 16x16 foliage: broad canopy clusters, small leaf
+                # groups and thin veins give each wood family a less flat read.
+                broad = math.sin((x + block_idx * 2) * 0.42) + math.cos((y - block_idx) * 0.48)
+                mid = math.sin((x * 0.88 + y * 0.37 + block_idx) * 1.10)
+                sector = ((x // 4) * 5 + (y // 4) * 7 + block_idx * 3) % 13
+                n += 17 if broad > 0.25 else (-14 if broad < -0.8 else 0)
+                n += 9 if mid > 0.35 else (-5 if mid < -0.65 else 0)
+                n += 13 if sector in (0, 1, 5) else (-17 if sector == 9 else 0)
+                if x in (0, 15) or y in (0, 15): n -= 5
+                if 'cherry_leaves' in k and (x * 5 + y * 11 + block_idx) % 17 < 3: n += 25
+                if 'mangrove_leaves' in k and (x + y * 2 + block_idx) % 7 == 0: n -= 13
             elif 'grass' in k or 'sapling' in k or 'plant' in k or 'bamboo' in k or 'seagrass' in k or 'wheat' in k:
                 blade = math.sin((x * 0.9 + y * 0.28) + block_idx)
                 n += 24 if blade > 0.68 else (-9 if blade < -0.7 else 0)
@@ -967,7 +975,10 @@ def make_tile(key: str, face: int, block_idx: int) -> bytes:
             elif 'ice' in k:
                 a = 158
             elif 'leaves' in k:
-                a = 0 if (x * 13 + y * 7 + block_idx) % 17 == 0 else 218
+                pore = (x * 13 + y * 7 + block_idx * 5) % 19
+                vein = (x + y * 2 + block_idx) % 7 == 0
+                a = 0 if pore in (0, 1) else (246 if vein else 222)
+                if 'cherry_leaves' in k and (x * 7 + y * 3 + block_idx) % 23 == 0: a = 248
             elif 'slime' in k:
                 a = 182
             elif 'web' in k:
