@@ -155,8 +155,14 @@ void Engine::FallbackAction(int action, bool pressed) {
             UploadEntityMesh();
             break;
         case 3:
-            if (!paused_) Pause(); else Resume();
-            pauseVisible_ = paused_;
+            if (!paused_) {
+                Pause();
+                pauseVisible_ = true;
+            } else {
+                pauseVisible_ = false;
+                inventoryVisible_ = false;
+                paused_ = false;
+            }
             break;
         case 4:
             pauseVisible_ = false;
