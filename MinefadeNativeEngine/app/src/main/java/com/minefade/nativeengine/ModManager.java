@@ -45,39 +45,12 @@ public final class ModManager {
         this.context = context.getApplicationContext();
         modsDirectory = new File(this.context.getFilesDir(), "mods");
         if (!modsDirectory.exists()) modsDirectory.mkdirs();
-        installBundledMods();
-    }
-
-    /** Install the included first-party pack once, without overwriting user data. */
-    private void installBundledMods() {
-        File destination = new File(modsDirectory, "minefade_ultimate_core.mfmod");
-        if (destination.isFile()) return;
-        File temporary = new File(modsDirectory, "minefade_ultimate_core.mfmod.part");
-        try (InputStream input = context.getAssets().open("mods/minefade_ultimate_core.mfmod");
-             FileOutputStream output = new FileOutputStream(temporary, false)) {
-            byte[] buffer = new byte[4096];
-            int total = 0;
-            int count;
-            while ((count = input.read(buffer)) != -1) {
-                total += count;
-                if (total > 32768) throw new IllegalArgumentException("El mod incluido supera 32 KB.");
-                output.write(buffer, 0, count);
-            }
-            output.flush();
-            output.getFD().sync();
-        } catch (Exception error) {
-            temporary.delete();
-            return;
-        }
-        if (read(temporary) == null) {
-            temporary.delete();
-            return;
-        }
-        try {
-            Os.rename(temporary.getAbsolutePath(), destination.getAbsolutePath());
-        } catch (Exception error) {
-            temporary.delete();
-        }
+        // Remove only the two legacy auto-installed/demo packs. The library
+        // must contain packages explicitly imported by the player.
+        new File(modsDirectory, "minefade_ultimate_core.mfmod").delete();
+        new File(modsDirectory, "minefade_ultimate_core.mfmod.part").delete();
+        new File(modsDirectory, "example_fauna.mfmod").delete();
+        new File(modsDirectory, "example_fauna.mfmod.tmp").delete();
     }
 
     public File getDirectory() { return modsDirectory; }
@@ -165,26 +138,6 @@ public final class ModManager {
         } catch (Exception ignored) {
             return false;
         }
-    }
-
-    public synchronized File createExamplePack() {
-        File file = new File(modsDirectory, "example_fauna.mfmod");
-        if (file.exists()) return file;
-        String data = "# Minefade data mod v1\n"
-                + "id=example_fauna\n"
-                + "name=Fauna abundante\n"
-                + "version=1.0\n"
-                + "description=Añade animales al iniciar cada mundo y acelera un poco el día.\n"
-                + "enabled=false\n"
-                + "spawn.sheep=2\n"
-                + "spawn.cow=1\n"
-                + "spawn.bird=2\n"
-                + "player.speed=1.0\n"
-                + "player.jump=1.08\n"
-                + "entity.speed=1.12\n"
-                + "world.day_speed=1.15\n";
-        if (writeAtomically(file, data.getBytes(StandardCharsets.UTF_8))) return file;
-        return null;
     }
 
     private static boolean writeAtomically(File target, byte[] bytes) {
