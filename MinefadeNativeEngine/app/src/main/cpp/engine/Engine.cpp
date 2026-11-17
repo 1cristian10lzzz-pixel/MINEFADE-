@@ -792,7 +792,8 @@ void Engine::Shutdown() {
     lavaAnimationsLocation_ = leafWindLocation_ = leafWindStrengthLocation_ = -1;
     cameraLocation_ = fogColorLocation_ = fogNearLocation_ = fogFarLocation_ = -1;
     entityVertexCount_ = itemVertexCount_ = 0;
-    worldChunkRanges_.clear();
+    worldChunkViews_.clear();
+    meshBuildScratch_.clear();
     ready_ = false;
     touches_.clear();
 }
