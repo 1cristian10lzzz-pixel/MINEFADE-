@@ -136,6 +136,15 @@ assert atlas_meta["width"] == 576
 assert atlas_meta["height"] == expected_height
 assert atlas_meta["rows"] == expected_height // 18
 assert len(rgba) == 576 * expected_height * 4
+
+# The native atlas UV helper must use the generated row count. A stale fixed
+# height clips every row after the old 486px atlas when more entries are added.
+registry_source = (ROOT / "app/src/main/cpp/blocks/BlockRegistry.cpp").read_text(encoding="utf-8")
+assert "const float atlasHeight=static_cast<float>(rows*18u)" in registry_source
+assert "GetBlockDefinitionCount()*3u" in registry_source
+assert "static_cast<std::size_t>(tile)>=tileCount" in registry_source
+assert "/486.0f" not in registry_source
+
 png = (ROOT / "docs/block_atlas_preview.png").read_bytes()
 assert png[:8] == b"\x89PNG\r\n\x1a\n"
 assert struct.unpack(">II", png[16:24]) == (576, expected_height)
