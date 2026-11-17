@@ -39,6 +39,9 @@ uniform float uDaylight;
 uniform float uTime;
 uniform float uQuality;
 uniform int uWaterWaves;
+uniform int uLavaAnimations;
+uniform int uLeafWind;
+uniform float uLeafWindStrength;
 uniform vec3 uCameraPosition;
 out mediump vec3 vColor;
 out mediump vec2 vTexCoord;
@@ -48,10 +51,27 @@ void main() {
     vec3 position = aPosition;
     float fluidCode = aColor.r;
     bool waterSurface = fluidCode < -0.5 && fluidCode > -1.5 && aNormal.y > 0.8;
+    bool lavaSurface = fluidCode < -1.5 && aNormal.y > 0.8;
     if (waterSurface && uWaterWaves == 1) {
         float wave = sin(position.x * 0.72 + uTime * 1.25)
                    * cos(position.z * 0.61 - uTime * 0.92);
         position.y += wave * (uQuality > 1.5 ? 0.018 : 0.009);
+    }
+    if (lavaSurface && uLavaAnimations == 1) {
+        float heat = sin(position.x * 0.42 + uTime * 1.7)
+                   * cos(position.z * 0.36 - uTime * 1.25);
+        position.y += heat * 0.007;
+    }
+    int leafTile = int(aAtlasTile + 0.5);
+    bool leafMaterial = (leafTile >= 72 && leafTile <= 74)
+                     || (leafTile >= 606 && leafTile <= 608)
+                     || (leafTile >= 927 && leafTile <= 929)
+                     || (leafTile >= 951 && leafTile <= 953);
+    if (leafMaterial && uLeafWind == 1 && uLeafWindStrength > 0.0) {
+        float sway = sin(uTime * 1.35 + position.x * 0.21 + position.z * 0.18);
+        float gust = cos(uTime * 0.82 + position.z * 0.13);
+        position.x += sway * uLeafWindStrength;
+        position.z += gust * uLeafWindStrength * 0.42;
     }
     gl_Position = uMvp * vec4(position, 1.0);
     // Keep squared distance for fog interpolation; avoids a per-vertex square root.
@@ -288,6 +308,9 @@ bool Engine::CreateWorldProgram() {
         timeLocation_ = glGetUniformLocation(worldProgram_, "uTime");
         qualityLocation_ = glGetUniformLocation(worldProgram_, "uQuality");
         waterWavesLocation_ = glGetUniformLocation(worldProgram_, "uWaterWaves");
+        lavaAnimationsLocation_ = glGetUniformLocation(worldProgram_, "uLavaAnimations");
+        leafWindLocation_ = glGetUniformLocation(worldProgram_, "uLeafWind");
+        leafWindStrengthLocation_ = glGetUniformLocation(worldProgram_, "uLeafWindStrength");
         cameraLocation_ = glGetUniformLocation(worldProgram_, "uCameraPosition");
         fogColorLocation_ = glGetUniformLocation(worldProgram_, "uFogColor");
         fogNearLocation_ = glGetUniformLocation(worldProgram_, "uFogNear");
@@ -299,7 +322,8 @@ bool Engine::CreateWorldProgram() {
         fetchLocations();
         if (mvpLocation_ >= 0 && lightLocation_ >= 0 && daylightLocation_ >= 0 &&
             atlasLocation_ >= 0 && useAtlasLocation_ >= 0 && timeLocation_ >= 0 &&
-            qualityLocation_ >= 0 && waterWavesLocation_ >= 0 && cameraLocation_ >= 0 &&
+            qualityLocation_ >= 0 && waterWavesLocation_ >= 0 && lavaAnimationsLocation_ >= 0 &&
+            leafWindLocation_ >= 0 && leafWindStrengthLocation_ >= 0 && cameraLocation_ >= 0 &&
             fogColorLocation_ >= 0 && fogNearLocation_ >= 0 && fogFarLocation_ >= 0) {
             glUseProgram(worldProgram_);
             glUniform1i(atlasLocation_, 0);
@@ -707,6 +731,7 @@ void Engine::Shutdown() {
     worldProgram_ = blockAtlasTexture_ = 0;
     mvpLocation_ = lightLocation_ = daylightLocation_ = atlasLocation_ = useAtlasLocation_ = -1;
     timeLocation_ = qualityLocation_ = waterWavesLocation_ = -1;
+    lavaAnimationsLocation_ = leafWindLocation_ = leafWindStrengthLocation_ = -1;
     cameraLocation_ = fogColorLocation_ = fogNearLocation_ = fogFarLocation_ = -1;
     worldVertexCount_ = transparentVertexCount_ = entityVertexCount_ = itemVertexCount_ = 0;
     worldChunkRanges_.clear();
@@ -1147,6 +1172,9 @@ void Engine::Render() {
         glUniform1f(timeLocation_, static_cast<float>(ElapsedSeconds()));
         glUniform1f(qualityLocation_, static_cast<float>(graphicsQuality_));
         glUniform1i(waterWavesLocation_, waterWaves_ ? 1 : 0);
+        if (lavaAnimationsLocation_ >= 0) glUniform1i(lavaAnimationsLocation_, lavaAnimations_ ? 1 : 0);
+        if (leafWindLocation_ >= 0) glUniform1i(leafWindLocation_, leafWind_ ? 1 : 0);
+        if (leafWindStrengthLocation_ >= 0) glUniform1f(leafWindStrengthLocation_, leafWindStrength_);
         glUniform3f(cameraLocation_, eye.x, eye.y, eye.z);
         glUniform3f(fogColorLocation_, sky[0], sky[1], sky[2]);
         const float fogStart = 12.0f + static_cast<float>(renderDistanceChunks_) * 14.0f;
@@ -2351,6 +2379,12 @@ void Engine::SetGraphicsOptions(int quality,int renderDistanceChunks,bool waterW
         RebuildEntityMesh();
         UploadEntityMesh();
     }
+}
+
+void Engine::SetShaderOptions(bool lavaAnimations, bool leafWind, float leafWindStrength) {
+    lavaAnimations_ = lavaAnimations;
+    leafWind_ = leafWind;
+    leafWindStrength_ = std::clamp(leafWindStrength, 0.0f, 0.12f);
 }
 
 void Engine::SetInputOptions(float sensitivityX, float sensitivityY, float joystickDeadzone, bool invertLookY, bool leftHanded, int controlMode, bool autoJump) {
