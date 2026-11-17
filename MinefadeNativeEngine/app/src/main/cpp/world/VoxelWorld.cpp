@@ -51,12 +51,14 @@ bool ShouldHideFace(BlockId current, BlockId neighbor) {
 }
 
 std::array<float, 3> FaceShade(int face) {
-    // Slight directional contrast without the old single flat-color appearance.
+    // Keep only a subtle baked face tint. OpenGL ES supplies the main
+    // directional/hemisphere lighting; strong baked multipliers made side and
+    // underside faces nearly black on lower-end mobile GPUs.
     switch (face) {
         case 2: return {1.00f, 1.00f, 1.00f}; // top
-        case 3: return {0.57f, 0.57f, 0.57f}; // bottom
-        case 0: case 1: return {0.82f, 0.82f, 0.82f};
-        default: return {0.91f, 0.91f, 0.91f};
+        case 3: return {0.88f, 0.88f, 0.88f}; // bottom
+        case 0: case 1: return {0.94f, 0.94f, 0.94f};
+        default: return {0.97f, 0.97f, 0.97f};
     }
 }
 
