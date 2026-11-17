@@ -68,6 +68,17 @@ Java_com_minefade_nativeengine_NativeBridge_nativeGetLastInitError(JNIEnv* env, 
     return env->NewStringUTF(message.c_str());
 }
 
+extern "C" JNIEXPORT jboolean JNICALL
+Java_com_minefade_nativeengine_NativeBridge_nativeIsUiReady(JNIEnv*, jclass) {
+    return minefade::GetEngine().IsUiReady() ? JNI_TRUE : JNI_FALSE;
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_minefade_nativeengine_NativeBridge_nativeFallbackAction(JNIEnv*, jclass,
+                                                                   jint action, jboolean pressed) {
+    minefade::GetEngine().FallbackAction(static_cast<int>(action), pressed == JNI_TRUE);
+}
+
 extern "C" JNIEXPORT void JNICALL
 Java_com_minefade_nativeengine_NativeBridge_nativeResize(JNIEnv*, jclass, jint width, jint height) {
     minefade::GetEngine().Resize(static_cast<int>(width), static_cast<int>(height));
