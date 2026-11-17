@@ -91,6 +91,7 @@ jobs:
           python3 tests/test_audio_assets.py
           python3 tests/test_mfmod_pack.py
           python3 tests/test_shader_pack.py
+          python3 tests/test_android_startup_recovery.py
 
       - name: Build Android debug APK
         working-directory: MinefadeNativeEngine
@@ -113,7 +114,7 @@ jobs:
 
           "$AAPT" dump badging "$APK" > /tmp/minefade-apk-badging.txt
           grep -F "package: name='com.minefade.nativeengine'" /tmp/minefade-apk-badging.txt
-          grep -F "versionName='2.0.1'" /tmp/minefade-apk-badging.txt
+          grep -F "versionName='2.0.2'" /tmp/minefade-apk-badging.txt
 
           unzip -Z1 "$APK" | grep -Fx 'lib/arm64-v8a/libminefade_native.so'
           unzip -Z1 "$APK" | grep -Fx 'lib/armeabi-v7a/libminefade_native.so'
