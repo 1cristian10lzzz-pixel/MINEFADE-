@@ -43,6 +43,8 @@ android {
 
     buildTypes {
         debug {
+            applicationIdSuffix = ".temporal"
+            versionNameSuffix = "-temporal"
             isMinifyEnabled = false
             isDebuggable = true
         }
