@@ -43,7 +43,7 @@ def test_joystick_hit_box_is_shared_when_rmlui_is_unavailable():
 
 def test_phase_two_navigation_and_layout_regressions():
     assert "LinearLayout moduleRail = column();" in HOME
-    assert "workspace.addView(moduleRail" in HOME
+    assert "moduleScroll.addView(moduleRail" in HOME
     assert "pageHeader.addView(search" in HOME
     assert "pageHeader.addView(importButton" in HOME
     assert "for (int col = 0; col < 5; col++)" in HOME
