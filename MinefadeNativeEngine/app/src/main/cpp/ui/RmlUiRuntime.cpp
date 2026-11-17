@@ -305,35 +305,58 @@ bool RmlUiRuntime::Initialise(int width, int height, float displayDensity, Actio
                             primaryError.c_str());
         gLastRmlLogMessage.clear();
         constexpr char kFallbackHud[] = R"RML(
-<rml><head><title>Minefade Safe HUD</title><style>
-body { margin:0dp; padding:0dp; width:100%; height:100%; font-family:Roboto; color:#ffffff; }
-button { background:#45667acc; border:1dp #ffffffaa; border-radius:10dp; color:#ffffff; padding:6dp; font-size:12dp; }
-#topbar { position:absolute; top:8dp; right:8dp; display:flex; gap:6dp; }
-#stats { position:absolute; left:10dp; top:10dp; display:block; font-size:10dp; color:#ffffff; }
-#movement-pad { position:absolute; left:14dp; bottom:54dp; width:108dp; height:108dp; border-radius:54dp; border:2dp #e1efb8; background:#193249aa; }
-#movement-pad-inner { position:absolute; left:35dp; top:35dp; width:36dp; height:36dp; border-radius:18dp; background:#9ab59aaa; }
-#quickbar { position:absolute; bottom:10dp; left:50%; margin-left:-180dp; display:flex; gap:3dp; }
-.slot { width:36dp; height:40dp; padding:2dp; }
-#jump { position:absolute; right:22dp; bottom:60dp; width:56dp; height:56dp; font-size:20dp; }
-#crouch { position:absolute; right:82dp; bottom:65dp; width:44dp; height:44dp; font-size:16dp; }
-#minimap { position:absolute; top:54dp; left:10dp; width:64dp; height:64dp; border:1dp #ffffff88; background:#122b40aa; }
-#target { position:absolute; top:58%; left:50%; margin-left:-70dp; width:140dp; text-align:center; display:none; }
-#selected-item { position:absolute; left:50%; bottom:58dp; margin-left:-76dp; width:152dp; text-align:center; display:none; }
-#pickup { position:absolute; right:12dp; bottom:54dp; display:none; }
-.panel { position:absolute; left:50%; top:50%; width:280dp; margin-left:-140dp; margin-top:-100dp; padding:12dp; border:1dp #ffffffaa; border-radius:12dp; background:#15293df2; display:none; }
-#pause-panel .actions { display:flex; gap:8dp; }
-</style></head><body>
-<div id="topbar"><div id="stats"></div><button id="inventory">▦</button><button id="perspective">◉</button><button id="pause">Ⅱ</button></div>
+<rml>
+<head>
+<title>Minefade Safe HUD</title>
+<style>
+body { margin: 0dp; padding: 0dp; width: 100%; height: 100%; color: #ffffff; font-family: Roboto; }
+button { background-color: rgba(52, 83, 105, 0.88); border: 1dp solid rgba(220, 238, 249, 0.65); border-radius: 9dp; color: #ffffff; padding: 5dp; font-size: 12dp; }
+#topbar { position: absolute; top: 8dp; right: 8dp; display: flex; }
+#topbar button { width: 38dp; height: 38dp; margin-left: 4dp; }
+#stats { position: absolute; left: 10dp; top: 10dp; display: block; font-size: 10dp; color: #ffffff; }
+#movement-pad { position: absolute; left: 14dp; bottom: 54dp; width: 108dp; height: 108dp; border: 2dp solid #e1efb8; border-radius: 54dp; background-color: rgba(25, 50, 73, 0.70); }
+#movement-pad-inner { position: absolute; left: 35dp; top: 35dp; width: 36dp; height: 36dp; border-radius: 18dp; background-color: rgba(154, 181, 154, 0.75); }
+#quickbar { position: absolute; bottom: 10dp; left: 50%; margin-left: -180dp; display: flex; }
+.slot { width: 36dp; height: 40dp; margin-right: 3dp; padding: 2dp; }
+#jump { position: absolute; right: 22dp; bottom: 60dp; width: 56dp; height: 56dp; font-size: 20dp; }
+#crouch { position: absolute; right: 82dp; bottom: 65dp; width: 44dp; height: 44dp; font-size: 16dp; }
+#minimap { position: absolute; top: 54dp; left: 10dp; width: 64dp; height: 64dp; border: 1dp solid #ffffff88; background-color: rgba(18, 43, 64, 0.70); }
+#target { position: absolute; top: 58%; left: 50%; margin-left: -70dp; width: 140dp; text-align: center; display: none; }
+#selected-item { position: absolute; left: 50%; bottom: 58dp; margin-left: -76dp; width: 152dp; text-align: center; display: none; }
+#pickup { position: absolute; right: 12dp; bottom: 54dp; display: none; }
+.panel { position: absolute; left: 50%; top: 50%; width: 280dp; margin-left: -140dp; margin-top: -100dp; padding: 12dp; border: 1dp solid #ffffffaa; border-radius: 12dp; background-color: rgba(21, 41, 61, 0.96); display: none; }
+#pause-panel .actions { display: flex; }
+#pause-panel button { width: 128dp; margin-right: 6dp; }
+</style>
+</head>
+<body>
+<div id="topbar">
+<div id="stats"></div>
+<button id="inventory">▦</button>
+<button id="perspective">◉</button>
+<button id="pause">Ⅱ</button>
+</div>
 <div id="minimap"><div id="minimap-grid"></div><div id="minimap-coords">X 0 · Z 0</div></div>
 <div id="movement-pad"><div id="movement-pad-inner"></div></div>
-<div id="quickbar"><button class="slot" id="slot-0">1</button><button class="slot" id="slot-1">2</button><button class="slot" id="slot-2">3</button><button class="slot" id="slot-3">4</button><button class="slot" id="slot-4">5</button><button class="slot" id="slot-5">6</button><button class="slot" id="slot-6">7</button><button class="slot" id="slot-7">8</button><button class="slot" id="slot-8">9</button></div>
+<div id="quickbar">
+<button class="slot" id="slot-0">1</button><button class="slot" id="slot-1">2</button><button class="slot" id="slot-2">3</button>
+<button class="slot" id="slot-3">4</button><button class="slot" id="slot-4">5</button><button class="slot" id="slot-5">6</button>
+<button class="slot" id="slot-6">7</button><button class="slot" id="slot-7">8</button><button class="slot" id="slot-8">9</button>
+</div>
 <button id="jump">↑</button><button id="crouch">↓</button>
-<div id="crosshair"></div><div id="target"><div id="target-name"></div><div id="target-progress-fill"></div></div><div id="selected-item"></div><div id="pickup"></div>
-<div id="inventory-panel" class="panel"><button id="inventory-close">Cerrar</button><div id="equipment-items"></div><div id="inventory-items"></div><div id="inventory-catalog"></div><button id="crafting-open">Fabricar</button></div>
+<div id="crosshair"></div>
+<div id="target"><div id="target-name"></div><div id="target-progress-fill"></div></div>
+<div id="selected-item"></div><div id="pickup"></div>
+<div id="inventory-panel" class="panel">
+<button id="inventory-close">Cerrar</button><div id="equipment-items"></div><div id="inventory-items"></div>
+<div id="inventory-catalog"></div><button id="crafting-open">Fabricar</button>
+</div>
 <div id="crafting-panel" class="panel"><div id="crafting-recipes"></div><button id="crafting-close">Volver</button></div>
 <div id="pause-panel" class="panel"><div class="actions"><button id="resume">Continuar</button><button id="save-exit">Guardar y salir</button></div></div>
-<div id="starter-chest-panel" class="panel"><div id="starter-chest-items"></div><button id="starter-chest-take">Recoger</button><button id="starter-chest-close">Cerrar</button></div>
-</body></rml>
+<div id="starter-chest-panel" class="panel"><div id="starter-chest-items"></div>
+<button id="starter-chest-take">Recoger</button><button id="starter-chest-close">Cerrar</button></div>
+</body>
+</rml>
 )RML";
         document_ = context_->LoadDocumentFromMemory(kFallbackHud, "minefade://hud-safe.rml");
         if (document_ == nullptr) {
