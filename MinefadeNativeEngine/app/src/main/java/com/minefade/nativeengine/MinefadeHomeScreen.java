@@ -564,27 +564,29 @@ public final class MinefadeHomeScreen extends FrameLayout {
     }
 
     private void showModsPage() {
-        LinearLayout root = pageRoot("MODS", "");
-        LinearLayout actions = row();
-        LinearLayout.LayoutParams actionParams = new LinearLayout.LayoutParams(-1, dp(40));
-        actionParams.topMargin = dp(4);
-        root.addView(actions, actionParams);
+        // The back arrow, search field and import action share one compact line.
+        // No explanatory banner or oversized example card consumes the mod list.
+        LinearLayout root = pageRoot("", "");
+        if (pageHeader.getChildCount() > 1) pageHeader.removeViewAt(1);
+
         EditText search = new EditText(getContext());
         search.setSingleLine(true);
-        search.setTextSize(11);
+        search.setTextSize(10);
         search.setTextColor(white);
         search.setHintTextColor(muted);
         search.setHint("Buscar mods…");
-        search.setPadding(dp(10), 0, dp(8), 0);
-        search.setBackground(shape(new int[]{0xaa132b3e, 0xaa0d1c2c}, 10, 0x665d7a90));
-        actions.addView(search, new LinearLayout.LayoutParams(0, dp(36), 1f));
+        search.setPadding(dp(9), 0, dp(7), 0);
+        search.setBackground(shape(new int[]{0xaa132b3e, 0xaa0d1c2c}, 9, 0x665d7a90));
+        pageHeader.addView(search, new LinearLayout.LayoutParams(0, dp(32), 1f));
+
         TextView importButton = actionButton("IMPORTAR", () -> {
             if (listener != null) listener.onImportMod();
         });
-        importButton.setTextSize(9);
-        LinearLayout.LayoutParams importParams = new LinearLayout.LayoutParams(dp(112), dp(36));
-        importParams.leftMargin = dp(7);
-        actions.addView(importButton, importParams);
+        importButton.setTextSize(8);
+        importButton.setPadding(dp(7), 0, dp(7), 0);
+        LinearLayout.LayoutParams importParams = new LinearLayout.LayoutParams(dp(78), dp(32));
+        importParams.leftMargin = dp(6);
+        pageHeader.addView(importButton, importParams);
 
         ScrollView scroll = new ScrollView(getContext());
         scroll.setFillViewport(false);
@@ -592,7 +594,7 @@ public final class MinefadeHomeScreen extends FrameLayout {
         scroll.setClipToPadding(true);
         scroll.setVerticalScrollBarEnabled(false);
         LinearLayout.LayoutParams scrollParams = new LinearLayout.LayoutParams(-1, 0, 1f);
-        scrollParams.topMargin = dp(7);
+        scrollParams.topMargin = dp(6);
         root.addView(scroll, scrollParams);
         LinearLayout list = column();
         list.setClipChildren(false);
