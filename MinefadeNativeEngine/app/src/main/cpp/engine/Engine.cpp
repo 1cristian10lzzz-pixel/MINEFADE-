@@ -693,8 +693,11 @@ bool Engine::Initialise(float displayDensity, const std::uint8_t* atlasPixels,
     ui_.SetControlMode(controlMode_);
     if (!ui_.Initialise(width_, height_, displayDensity,
                         [this](const std::string& action) { HandleUiAction(action); })) {
-        ENGINE_LOGE("RmlUi failed to initialise; refusing to enter a world without touch controls");
-        return failInitialisation("No se pudo iniciar la interfaz táctil de Minefade 2.0. El mundo no se ha abierto para evitar dejarte sin joystick ni botones. Reintenta la carga.");
+        std::string reason = "No se pudo iniciar la interfaz táctil de Minefade 2.0.";
+        if (!ui_.LastError().empty()) reason += "\\nDiagnóstico RmlUi: " + ui_.LastError();
+        ENGINE_LOGE("RmlUi failed to initialise: %s", reason.c_str());
+        return failInitialisation(reason +
+            "\\nEl mundo no se ha abierto para evitar dejarte sin joystick ni botones. Reintenta la carga.");
     }
     lastFrame_ = std::chrono::steady_clock::now();
     lastStats_ = lastFrame_;
