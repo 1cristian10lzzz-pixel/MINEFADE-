@@ -10,6 +10,8 @@ public final class NativeBridge {
 
     public static native boolean nativeInit(float displayDensity, byte[] blockAtlasRgba, int atlasWidth, int atlasHeight);
     public static native String nativeGetLastInitError();
+    public static native boolean nativeIsUiReady();
+    public static native void nativeFallbackAction(int action, boolean pressed);
     public static native void nativeResize(int width, int height);
     public static native void nativeRender();
     public static native boolean nativeConsumeEngineFailure();
