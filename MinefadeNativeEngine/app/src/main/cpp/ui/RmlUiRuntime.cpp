@@ -13,6 +13,7 @@ namespace minefade {
 namespace {
 constexpr const char* kTag = "MinefadeRmlUi";
 const auto kStartTime = std::chrono::steady_clock::now();
+std::string gLastRmlLogMessage;
 
 constexpr char kHudDocument[] = R"RML(
 <rml>
@@ -180,11 +181,24 @@ double RmlUiRuntime::AndroidSystemInterface::GetElapsedTime() {
 }
 
 bool RmlUiRuntime::AndroidSystemInterface::LogMessage(Rml::Log::Type type, const Rml::String& message) {
+    gLastRmlLogMessage = message;
     const int priority = type == Rml::Log::LT_ERROR ? ANDROID_LOG_ERROR :
                         type == Rml::Log::LT_WARNING ? ANDROID_LOG_WARN : ANDROID_LOG_INFO;
     __android_log_print(priority, kTag, "%s", message.c_str());
     return true;
 }
+
+Rml::FileHandle RmlUiRuntime::MemoryOnlyFileInterface::Open(const Rml::String& path) {
+    __android_log_print(ANDROID_LOG_WARN, kTag,
+                        "RmlUi requested a disk resource outside the in-memory HUD: %s",
+                        path.c_str());
+    return nullptr;
+}
+
+void RmlUiRuntime::MemoryOnlyFileInterface::Close(Rml::FileHandle) {}
+std::size_t RmlUiRuntime::MemoryOnlyFileInterface::Read(void*, std::size_t, Rml::FileHandle) { return 0; }
+bool RmlUiRuntime::MemoryOnlyFileInterface::Seek(Rml::FileHandle, long, int) { return false; }
+std::size_t RmlUiRuntime::MemoryOnlyFileInterface::Tell(Rml::FileHandle) { return 0; }
 
 void RmlUiRuntime::ActionListener::ProcessEvent(Rml::Event& event) {
     (void)event;
@@ -193,13 +207,18 @@ void RmlUiRuntime::ActionListener::ProcessEvent(Rml::Event& event) {
 
 bool RmlUiRuntime::Initialise(int width, int height, float displayDensity, ActionCallback callback) {
     Shutdown();
+    lastError_.clear();
+    gLastRmlLogMessage.clear();
     width_ = width > 0 ? width : 1;
     height_ = height > 0 ? height : 1;
     density_ = displayDensity > 0.25f ? displayDensity : 1.0f;
     callback_ = std::move(callback);
 
     if (!renderer_.Initialise()) {
-        __android_log_print(ANDROID_LOG_ERROR, kTag, "Could not initialise the OpenGL ES RmlUi renderer");
+        lastError_ = renderer_.LastError().empty()
+            ? "No se pudo inicializar el backend OpenGL ES de RmlUi."
+            : renderer_.LastError();
+        __android_log_print(ANDROID_LOG_ERROR, kTag, "%s", lastError_.c_str());
         return false;
     }
     if(!blockAtlasPixels_.empty())
@@ -208,8 +227,11 @@ bool RmlUiRuntime::Initialise(int width, int height, float displayDensity, Actio
 
     Rml::SetSystemInterface(&system_);
     Rml::SetRenderInterface(&renderer_);
+    Rml::SetFileInterface(&fileInterface_);
     if (!Rml::Initialise()) {
-        __android_log_print(ANDROID_LOG_ERROR, kTag, "Rml::Initialise failed");
+        lastError_ = "Rml::Initialise() rechazó las interfaces Android.";
+        if (!gLastRmlLogMessage.empty()) lastError_ += " Detalle: " + gLastRmlLogMessage;
+        __android_log_print(ANDROID_LOG_ERROR, kTag, "%s", lastError_.c_str());
         renderer_.Shutdown();
         return false;
     }
@@ -235,7 +257,9 @@ bool RmlUiRuntime::Initialise(int width, int height, float displayDensity, Actio
 
     context_ = Rml::CreateContext("minefade_hud", {width_, height_}, &renderer_);
     if (context_ == nullptr) {
-        __android_log_print(ANDROID_LOG_ERROR, kTag, "Could not create the Minefade RmlUi context");
+        lastError_ = "RmlUi no pudo crear el contexto táctil.";
+        if (!gLastRmlLogMessage.empty()) lastError_ += " Detalle: " + gLastRmlLogMessage;
+        __android_log_print(ANDROID_LOG_ERROR, kTag, "%s", lastError_.c_str());
         Rml::Shutdown();
         rmlInitialised_ = false;
         renderer_.Shutdown();
@@ -275,13 +299,54 @@ bool RmlUiRuntime::Initialise(int width, int height, float displayDensity, Actio
     }
     document_ = context_->LoadDocumentFromMemory(hudMarkup, "minefade://hud.rml");
     if (document_ == nullptr) {
-        __android_log_print(ANDROID_LOG_ERROR, kTag, "Could not load the Minefade HUD document");
-        Rml::RemoveContext("minefade_hud");
-        context_ = nullptr;
-        Rml::Shutdown();
-        rmlInitialised_ = false;
-        renderer_.Shutdown();
-        return false;
+        const std::string primaryError = gLastRmlLogMessage;
+        __android_log_print(ANDROID_LOG_WARN, kTag,
+                            "The full HUD did not parse; retrying a safe touch HUD: %s",
+                            primaryError.c_str());
+        gLastRmlLogMessage.clear();
+        constexpr char kFallbackHud[] = R"RML(
+<rml><head><title>Minefade Safe HUD</title><style>
+body { margin:0dp; padding:0dp; width:100%; height:100%; font-family:Roboto; color:#ffffff; }
+button { background:#45667acc; border:1dp #ffffffaa; border-radius:10dp; color:#ffffff; padding:6dp; font-size:12dp; }
+#topbar { position:absolute; top:8dp; right:8dp; display:flex; gap:6dp; }
+#stats { display:none; }
+#movement-pad { position:absolute; left:14dp; bottom:54dp; width:108dp; height:108dp; border-radius:54dp; border:2dp #e1efb8; background:#193249aa; }
+#movement-pad-inner { position:absolute; left:35dp; top:35dp; width:36dp; height:36dp; border-radius:18dp; background:#9ab59aaa; }
+#quickbar { position:absolute; bottom:10dp; left:50%; margin-left:-180dp; display:flex; gap:3dp; }
+.slot { width:36dp; height:40dp; padding:2dp; }
+#jump { position:absolute; right:22dp; bottom:60dp; width:56dp; height:56dp; font-size:20dp; }
+#crouch { position:absolute; right:82dp; bottom:65dp; width:44dp; height:44dp; font-size:16dp; }
+#minimap { position:absolute; top:54dp; left:10dp; width:64dp; height:64dp; border:1dp #ffffff88; background:#122b40aa; }
+#target { position:absolute; top:58%; left:50%; margin-left:-70dp; width:140dp; text-align:center; display:none; }
+#selected-item { position:absolute; left:50%; bottom:58dp; margin-left:-76dp; width:152dp; text-align:center; display:none; }
+#pickup { position:absolute; right:12dp; bottom:54dp; display:none; }
+.panel { position:absolute; left:50%; top:50%; width:280dp; margin-left:-140dp; margin-top:-100dp; padding:12dp; border:1dp #ffffffaa; border-radius:12dp; background:#15293df2; display:none; }
+#pause-panel .actions { display:flex; gap:8dp; }
+</style></head><body>
+<div id="topbar"><div id="stats"></div><button id="inventory">▦</button><button id="perspective">◉</button><button id="pause">Ⅱ</button></div>
+<div id="minimap"><div id="minimap-grid"></div><div id="minimap-coords">X 0 · Z 0</div></div>
+<div id="movement-pad"><div id="movement-pad-inner"></div></div>
+<div id="quickbar"><button class="slot" id="slot-0">1</button><button class="slot" id="slot-1">2</button><button class="slot" id="slot-2">3</button><button class="slot" id="slot-3">4</button><button class="slot" id="slot-4">5</button><button class="slot" id="slot-5">6</button><button class="slot" id="slot-6">7</button><button class="slot" id="slot-7">8</button><button class="slot" id="slot-8">9</button></div>
+<button id="jump">↑</button><button id="crouch">↓</button>
+<div id="crosshair"></div><div id="target"><div id="target-name"></div><div id="target-progress-fill"></div></div><div id="selected-item"></div><div id="pickup"></div>
+<div id="inventory-panel" class="panel"><button id="inventory-close">Cerrar</button><div id="equipment-items"></div><div id="inventory-items"></div><div id="inventory-catalog"></div><button id="crafting-open">Fabricar</button></div>
+<div id="crafting-panel" class="panel"><div id="crafting-recipes"></div><button id="crafting-close">Volver</button></div>
+<div id="pause-panel" class="panel"><div class="actions"><button id="resume">Continuar</button><button id="save-exit">Guardar y salir</button></div></div>
+<div id="starter-chest-panel" class="panel"><div id="starter-chest-items"></div><button id="starter-chest-take">Recoger</button><button id="starter-chest-close">Cerrar</button></div>
+</body></rml>
+)RML";
+        document_ = context_->LoadDocumentFromMemory(kFallbackHud, "minefade://hud-safe.rml");
+        if (document_ == nullptr) {
+            lastError_ = "RmlUi no pudo interpretar ni el HUD principal ni el HUD táctil seguro.";
+            if (!gLastRmlLogMessage.empty()) lastError_ += " Detalle: " + gLastRmlLogMessage;
+            __android_log_print(ANDROID_LOG_ERROR, kTag, "%s", lastError_.c_str());
+            Rml::RemoveContext("minefade_hud");
+            context_ = nullptr;
+            Rml::Shutdown();
+            rmlInitialised_ = false;
+            renderer_.Shutdown();
+            return false;
+        }
     }
 
     AttachAction("inventory", "inventory");
