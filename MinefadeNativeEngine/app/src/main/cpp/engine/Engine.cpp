@@ -11,6 +11,7 @@
 #include <fstream>
 #include <sstream>
 #include <cctype>
+#include <set>
 #include <limits>
 #include <string>
 #include <unordered_set>
@@ -592,17 +593,12 @@ bool Engine::Initialise(float displayDensity, const std::uint8_t* atlasPixels,
     if (!UploadBlockAtlas(atlasPixels, atlasBytes, atlasWidth, atlasHeight)) {
         return failInitialisation("No se pudo cargar la textura atlas de bloques. Comprueba sus dimensiones, memoria gráfica y GL_MAX_TEXTURE_SIZE.");
     }
-    glGenVertexArrays(1, &worldVao_);
-    glGenBuffers(1, &worldVbo_);
     glGenVertexArrays(1, &entityVao_);
     glGenBuffers(1, &entityVbo_);
-    glGenVertexArrays(1, &transparentVao_);
-    glGenBuffers(1, &transparentVbo_);
     glGenVertexArrays(1, &itemVao_);
     glGenBuffers(1, &itemVbo_);
-    if (worldVao_ == 0 || worldVbo_ == 0 || entityVao_ == 0 || entityVbo_ == 0 ||
-        transparentVao_ == 0 || transparentVbo_ == 0 || itemVao_ == 0 || itemVbo_ == 0)
-        return failInitialisation("El controlador no pudo reservar los VAO/VBO del mundo, entidades, transparencia u objetos. Posible falta de memoria gráfica.");
+    if (entityVao_ == 0 || entityVbo_ == 0 || itemVao_ == 0 || itemVbo_ == 0)
+        return failInitialisation("El controlador no pudo reservar los VAO/VBO de entidades u objetos. Posible falta de memoria gráfica.");
     if (const GLenum error = glGetError(); error != GL_NO_ERROR) {
         char code[24]{};
         std::snprintf(code, sizeof(code), "0x%04X", static_cast<unsigned int>(error));
@@ -766,18 +762,21 @@ bool Engine::Initialise(float displayDensity, const std::uint8_t* atlasPixels,
 void Engine::Shutdown() {
     if (ready_) SaveWorld();
     ui_.Shutdown();
-    if (worldVbo_ != 0) glDeleteBuffers(1, &worldVbo_);
-    if (worldVao_ != 0) glDeleteVertexArrays(1, &worldVao_);
+    for (auto& entry : chunkGpuMeshes_) {
+        ChunkGpuMesh& mesh = entry.second;
+        if (mesh.opaqueVbo != 0) glDeleteBuffers(1, &mesh.opaqueVbo);
+        if (mesh.opaqueVao != 0) glDeleteVertexArrays(1, &mesh.opaqueVao);
+        if (mesh.transparentVbo != 0) glDeleteBuffers(1, &mesh.transparentVbo);
+        if (mesh.transparentVao != 0) glDeleteVertexArrays(1, &mesh.transparentVao);
+    }
+    chunkGpuMeshes_.clear();
     if (entityVbo_ != 0) glDeleteBuffers(1, &entityVbo_);
     if (entityVao_ != 0) glDeleteVertexArrays(1, &entityVao_);
-    if (transparentVbo_ != 0) glDeleteBuffers(1, &transparentVbo_);
-    if (transparentVao_ != 0) glDeleteVertexArrays(1, &transparentVao_);
     if (itemVbo_ != 0) glDeleteBuffers(1, &itemVbo_);
     if (itemVao_ != 0) glDeleteVertexArrays(1, &itemVao_);
     if (worldProgram_ != 0) glDeleteProgram(worldProgram_);
     if (blockAtlasTexture_ != 0) glDeleteTextures(1, &blockAtlasTexture_);
-    worldVbo_ = worldVao_ = entityVbo_ = entityVao_ = transparentVbo_ = transparentVao_ = 0;
-    itemVbo_ = itemVao_ = 0;
+    entityVbo_ = entityVao_ = itemVbo_ = itemVao_ = 0;
     worldProgram_ = blockAtlasTexture_ = 0;
     mvpLocation_ = lightLocation_ = daylightLocation_ = atlasLocation_ = useAtlasLocation_ = -1;
     timeLocation_ = qualityLocation_ = waterWavesLocation_ = -1;
@@ -829,57 +828,114 @@ void Engine::RebuildWorldMesh() {
 }
 
 void Engine::UploadWorldMesh() {
-    if (worldVao_ == 0 || worldVbo_ == 0) return;
-    glBindVertexArray(worldVao_);
-    glBindBuffer(GL_ARRAY_BUFFER, worldVbo_);
-    glBufferData(GL_ARRAY_BUFFER,
-                 static_cast<GLsizeiptr>(worldMesh_.size() * sizeof(WorldVertex)),
-                 worldMesh_.empty() ? nullptr : worldMesh_.data(), GL_DYNAMIC_DRAW);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(WorldVertex),
-                          reinterpret_cast<const void*>(offsetof(WorldVertex, x)));
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(WorldVertex),
-                          reinterpret_cast<const void*>(offsetof(WorldVertex, nx)));
-    glEnableVertexAttribArray(2);
-    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(WorldVertex),
-                          reinterpret_cast<const void*>(offsetof(WorldVertex, r)));
-    glEnableVertexAttribArray(3);
-    glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, sizeof(WorldVertex),
-                          reinterpret_cast<const void*>(offsetof(WorldVertex, u)));
-    glEnableVertexAttribArray(4);
-    glVertexAttribPointer(4, 1, GL_FLOAT, GL_FALSE, sizeof(WorldVertex),
-                          reinterpret_cast<const void*>(offsetof(WorldVertex, atlasTile)));
-    glBindVertexArray(0);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    worldVertexCount_ = static_cast<GLsizei>(worldMesh_.size());
+    SyncChunkGpuMeshes();
 }
 
 void Engine::UploadTransparentWorldMesh() {
-    if (transparentVao_ == 0 || transparentVbo_ == 0) return;
-    glBindVertexArray(transparentVao_);
-    glBindBuffer(GL_ARRAY_BUFFER, transparentVbo_);
-    glBufferData(GL_ARRAY_BUFFER,
-                 static_cast<GLsizeiptr>(transparentWorldMesh_.size() * sizeof(WorldVertex)),
-                 transparentWorldMesh_.empty() ? nullptr : transparentWorldMesh_.data(), GL_DYNAMIC_DRAW);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(WorldVertex),
-                          reinterpret_cast<const void*>(offsetof(WorldVertex, x)));
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(WorldVertex),
-                          reinterpret_cast<const void*>(offsetof(WorldVertex, nx)));
-    glEnableVertexAttribArray(2);
-    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(WorldVertex),
-                          reinterpret_cast<const void*>(offsetof(WorldVertex, r)));
-    glEnableVertexAttribArray(3);
-    glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, sizeof(WorldVertex),
-                          reinterpret_cast<const void*>(offsetof(WorldVertex, u)));
-    glEnableVertexAttribArray(4);
-    glVertexAttribPointer(4, 1, GL_FLOAT, GL_FALSE, sizeof(WorldVertex),
-                          reinterpret_cast<const void*>(offsetof(WorldVertex, atlasTile)));
-    glBindVertexArray(0);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    transparentVertexCount_ = static_cast<GLsizei>(transparentWorldMesh_.size());
+    // Opaque and transparent buffers are uploaded together by SyncChunkGpuMeshes.
+    // This compatibility entry point remains for the existing engine call sites.
+}
+
+void Engine::SyncChunkGpuMeshes() {
+    std::set<std::pair<int, int>> active;
+    std::size_t opaqueTotal = 0;
+    std::size_t transparentTotal = 0;
+
+    const auto releasePass = [](GLuint& vao, GLuint& vbo, GLsizei& count) {
+        if (vbo != 0) glDeleteBuffers(1, &vbo);
+        if (vao != 0) glDeleteVertexArrays(1, &vao);
+        vao = vbo = 0;
+        count = 0;
+    };
+    const auto uploadPass = [](GLuint& vao, GLuint& vbo, GLsizei& drawCount,
+                               const std::vector<WorldVertex>& vertices,
+                               std::size_t first, std::size_t count) -> bool {
+        if (count == 0u) {
+            if (vbo != 0) glDeleteBuffers(1, &vbo);
+            if (vao != 0) glDeleteVertexArrays(1, &vao);
+            vao = vbo = 0;
+            drawCount = 0;
+            return true;
+        }
+        if (first > vertices.size() || count > vertices.size() - first ||
+            count > static_cast<std::size_t>(std::numeric_limits<GLsizei>::max())) {
+            __android_log_print(ANDROID_LOG_ERROR, "MinefadeNative",
+                "Invalid chunk mesh range: first=%zu count=%zu size=%zu",
+                first, count, vertices.size());
+            return false;
+        }
+        if (vao == 0) glGenVertexArrays(1, &vao);
+        if (vbo == 0) glGenBuffers(1, &vbo);
+        if (vao == 0 || vbo == 0) return false;
+
+        glBindVertexArray(vao);
+        glBindBuffer(GL_ARRAY_BUFFER, vbo);
+        glBufferData(GL_ARRAY_BUFFER,
+            static_cast<GLsizeiptr>(count * sizeof(WorldVertex)),
+            vertices.data() + first, GL_STATIC_DRAW);
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(WorldVertex),
+            reinterpret_cast<const void*>(offsetof(WorldVertex, x)));
+        glEnableVertexAttribArray(1);
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(WorldVertex),
+            reinterpret_cast<const void*>(offsetof(WorldVertex, nx)));
+        glEnableVertexAttribArray(2);
+        glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(WorldVertex),
+            reinterpret_cast<const void*>(offsetof(WorldVertex, r)));
+        glEnableVertexAttribArray(3);
+        glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, sizeof(WorldVertex),
+            reinterpret_cast<const void*>(offsetof(WorldVertex, u)));
+        glEnableVertexAttribArray(4);
+        glVertexAttribPointer(4, 1, GL_FLOAT, GL_FALSE, sizeof(WorldVertex),
+            reinterpret_cast<const void*>(offsetof(WorldVertex, atlasTile)));
+        glBindVertexArray(0);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        const GLenum error = glGetError();
+        if (error != GL_NO_ERROR) {
+            __android_log_print(ANDROID_LOG_ERROR, "MinefadeNative",
+                "Chunk VBO upload failed: GL error 0x%04X",
+                static_cast<unsigned int>(error));
+            return false;
+        }
+        drawCount = static_cast<GLsizei>(count);
+        return true;
+    };
+
+    for (const ChunkMeshRange& range : worldChunkRanges_) {
+        const auto key = std::make_pair(range.chunkX, range.chunkZ);
+        active.insert(key);
+        ChunkGpuMesh& gpu = chunkGpuMeshes_[key];
+        if (gpu.revision != range.revision) {
+            const bool opaqueOk = uploadPass(gpu.opaqueVao, gpu.opaqueVbo, gpu.opaqueCount,
+                worldMesh_, range.opaqueFirst, range.opaqueCount);
+            const bool transparentOk = uploadPass(gpu.transparentVao, gpu.transparentVbo,
+                gpu.transparentCount, transparentWorldMesh_,
+                range.transparentFirst, range.transparentCount);
+            if (!opaqueOk || !transparentOk) {
+                gpu.opaqueCount = 0;
+                gpu.transparentCount = 0;
+                continue;
+            }
+            gpu.revision = range.revision;
+        }
+        opaqueTotal += static_cast<std::size_t>(gpu.opaqueCount);
+        transparentTotal += static_cast<std::size_t>(gpu.transparentCount);
+    }
+
+    for (auto it = chunkGpuMeshes_.begin(); it != chunkGpuMeshes_.end();) {
+        if (active.find(it->first) == active.end()) {
+            ChunkGpuMesh& gpu = it->second;
+            releasePass(gpu.opaqueVao, gpu.opaqueVbo, gpu.opaqueCount);
+            releasePass(gpu.transparentVao, gpu.transparentVbo, gpu.transparentCount);
+            it = chunkGpuMeshes_.erase(it);
+        } else {
+            ++it;
+        }
+    }
+    worldVertexCount_ = static_cast<GLsizei>(std::min(
+        opaqueTotal, static_cast<std::size_t>(std::numeric_limits<GLsizei>::max())));
+    transparentVertexCount_ = static_cast<GLsizei>(std::min(
+        transparentTotal, static_cast<std::size_t>(std::numeric_limits<GLsizei>::max())));
 }
 
 void Engine::RebuildEntityMesh() {
