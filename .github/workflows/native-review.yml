@@ -2,7 +2,7 @@ name: Minefade 2.0 Android Build
 
 on:
   push:
-    branches: [minefade-deep-renewal, minefade-render-optimization, minefade-worlds-mods-commands, minefade-render-overhaul-review12, minefade-ultimate-overhaul-phase1, minefade-1.0-complete-overhaul, minefade-2.0, minefade-2.1-stability-shaders]
+    branches: [minefade-deep-renewal, minefade-render-optimization, minefade-worlds-mods-commands, minefade-render-overhaul-review12, minefade-ultimate-overhaul-phase1, minefade-1.0-complete-overhaul, minefade-2.0, minefade-2.1-stability-shaders, minefade-2.0.3-renderer-rebuild]
   workflow_dispatch:
 
 concurrency:
@@ -27,7 +27,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if [[ "${GITHUB_REF_NAME:-}" == "minefade-ultimate-overhaul-phase1" || "${GITHUB_REF_NAME:-}" == "minefade-1.0-complete-overhaul" || "${GITHUB_REF_NAME:-}" == "minefade-2.0" || "${GITHUB_REF_NAME:-}" == "minefade-2.1-stability-shaders" ]]; then
+          if [[ "${GITHUB_REF_NAME:-}" == "minefade-ultimate-overhaul-phase1" || "${GITHUB_REF_NAME:-}" == "minefade-1.0-complete-overhaul" || "${GITHUB_REF_NAME:-}" == "minefade-2.0" || "${GITHUB_REF_NAME:-}" == "minefade-2.1-stability-shaders" || "${GITHUB_REF_NAME:-}" == "minefade-2.0.3-renderer-rebuild" ]]; then
             echo "Minefade 2.0 validates the committed source snapshot."
           else
             cat review12-render/part-*.b64 | base64 --decode | xz -dc > /tmp/review12-render.patch
@@ -92,6 +92,7 @@ jobs:
           python3 tests/test_mfmod_pack.py
           python3 tests/test_shader_pack.py
           python3 tests/test_android_startup_recovery.py
+          python3 tests/test_renderer_invariants.py
 
       - name: Build Android debug APK
         working-directory: MinefadeNativeEngine
@@ -114,7 +115,7 @@ jobs:
 
           "$AAPT" dump badging "$APK" > /tmp/minefade-apk-badging.txt
           grep -F "package: name='com.minefade.nativeengine'" /tmp/minefade-apk-badging.txt
-          grep -F "versionName='2.0.2'" /tmp/minefade-apk-badging.txt
+          grep -F "versionName='2.0.3'" /tmp/minefade-apk-badging.txt
 
           unzip -Z1 "$APK" | grep -Fx 'lib/arm64-v8a/libminefade_native.so'
           unzip -Z1 "$APK" | grep -Fx 'lib/armeabi-v7a/libminefade_native.so'
@@ -125,7 +126,7 @@ jobs:
       - name: Upload Minefade 2.0 APK
         uses: actions/upload-artifact@v4
         with:
-          name: Minefade-2.0-APK
+          name: Minefade-2.0.3-APK
           path: MinefadeNativeEngine/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 14
@@ -147,7 +148,7 @@ jobs:
       - name: Upload complete source
         uses: actions/upload-artifact@v4
         with:
-          name: Minefade-2.0-source
+          name: Minefade-2.0.3-source
           path: Minefade-2.0-source.zip
           if-no-files-found: error
           retention-days: 14
