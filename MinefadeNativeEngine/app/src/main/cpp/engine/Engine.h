@@ -3,6 +3,7 @@
 #include "../game/Player.h"
 #include "../ui/RmlUiRuntime.h"
 #include "../world/VoxelWorld.h"
+#include "../render/WorldMeshRenderer.h"
 
 #include <GLES3/gl3.h>
 
@@ -10,7 +11,6 @@
 #include <atomic>
 #include <chrono>
 #include <cstdint>
-#include <map>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -50,15 +50,6 @@ public:
 
 private:
     struct Mat4 { std::array<float, 16> v{}; };
-    struct ChunkGpuMesh {
-        GLuint opaqueVao{0};
-        GLuint opaqueVbo{0};
-        GLuint transparentVao{0};
-        GLuint transparentVbo{0};
-        GLsizei opaqueCount{0};
-        GLsizei transparentCount{0};
-        std::uint64_t revision{0};
-    };
     struct TouchState {
         float startX{0.0f};
         float startY{0.0f};
@@ -81,7 +72,6 @@ private:
     void RebuildWorldMesh();
     void UploadWorldMesh();
     void UploadTransparentWorldMesh();
-    void SyncChunkGpuMeshes();
     void RebuildEntityMesh();
     void UploadEntityMesh();
     void UploadItemMesh();
@@ -121,8 +111,6 @@ private:
     GLuint entityVbo_{0};
     GLuint itemVao_{0};
     GLuint itemVbo_{0};
-    GLsizei worldVertexCount_{0};
-    GLsizei transparentVertexCount_{0};
     GLsizei entityVertexCount_{0};
     GLsizei itemVertexCount_{0};
     int lastChunkX_{999999};
@@ -205,7 +193,7 @@ private:
     std::vector<WorldVertex> worldMesh_;
     std::vector<WorldVertex> transparentWorldMesh_;
     std::vector<ChunkMeshRange> worldChunkRanges_;
-    std::map<std::pair<int, int>, ChunkGpuMesh> chunkGpuMeshes_;
+    WorldMeshRenderer worldRenderer_;
     std::vector<WorldVertex> entityMesh_;
     std::vector<WorldVertex> itemMesh_;
     std::vector<float> remotePlayers_;
