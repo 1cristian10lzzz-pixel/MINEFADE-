@@ -4,6 +4,8 @@
 
 #include <RmlUi/Core.h>
 #include <RmlUi/Core/FileInterface.h>
+#include <cstddef>
+#include <string>
 #include <functional>
 #include <cstdint>
 #include <cstddef>
