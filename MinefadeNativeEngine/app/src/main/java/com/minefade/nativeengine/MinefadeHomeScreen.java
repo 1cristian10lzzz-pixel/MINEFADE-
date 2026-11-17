@@ -6,6 +6,9 @@ import android.text.InputType;
 import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
 import android.graphics.Canvas;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.RectF;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
@@ -53,6 +56,7 @@ public final class MinefadeHomeScreen extends FrameLayout {
         void onPlayWorld(WorldManager.WorldInfo world);
         void onCreateWorld(WorldManager.WorldInfo world);
         void onImportMod();
+        void onImportShader();
         void onHostMultiplayer();
         void onSearchMultiplayer();
         void onJoinMultiplayer(LanMultiplayerService.GameInfo game);
@@ -67,6 +71,7 @@ public final class MinefadeHomeScreen extends FrameLayout {
     private final int[] avatarStyles = new int[6];
     private final WorldManager worldManager;
     private final ModManager modManager;
+    private final ShaderPackManager shaderPackManager;
     private final String[] avatarModules = {"piel", "cabello", "ojos", "ropa", "armadura", "accesorios"};
     private int avatarModuleIndex = 1;
     private String settingsModule = "video";
@@ -81,6 +86,7 @@ public final class MinefadeHomeScreen extends FrameLayout {
         preferences = context.getSharedPreferences("minefade_ui", Context.MODE_PRIVATE);
         worldManager = new WorldManager(context);
         modManager = new ModManager(context);
+        shaderPackManager = new ShaderPackManager(context);
         for (int i = 0; i < avatarModules.length; i++)
             avatarStyles[i] = preferences.getInt("avatar_" + avatarModules[i], 0);
         avatarModuleIndex = Math.max(0, Math.min(5, preferences.getInt("avatar_module", 1)));
@@ -579,75 +585,121 @@ public final class MinefadeHomeScreen extends FrameLayout {
     }
 
     private void showModsPage() {
-        LinearLayout root = pageRoot("MODS","Importa y activa paquetes de datos .mfmod.");
+        LinearLayout root = pageRoot("MODS", "");
         LinearLayout actions = row();
-        LinearLayout.LayoutParams actionParams = new LinearLayout.LayoutParams(-1,dp(40));
-        actionParams.topMargin = dp(8);
-        root.addView(actions,actionParams);
-        TextView importButton = actionButton("IMPORTAR MOD",() -> {
+        LinearLayout.LayoutParams actionParams = new LinearLayout.LayoutParams(-1, dp(40));
+        actionParams.topMargin = dp(4);
+        root.addView(actions, actionParams);
+        EditText search = new EditText(getContext());
+        search.setSingleLine(true);
+        search.setTextSize(11);
+        search.setTextColor(white);
+        search.setHintTextColor(muted);
+        search.setHint("Buscar mods…");
+        search.setPadding(dp(10), 0, dp(8), 0);
+        search.setBackground(shape(new int[]{0xaa132b3e, 0xaa0d1c2c}, 10, 0x665d7a90));
+        actions.addView(search, new LinearLayout.LayoutParams(0, dp(36), 1f));
+        TextView importButton = actionButton("IMPORTAR", () -> {
             if (listener != null) listener.onImportMod();
         });
         importButton.setTextSize(9);
-        actions.addView(importButton,new LinearLayout.LayoutParams(0,dp(36),1f));
-        TextView example = actionButton("EJEMPLO",() -> {
-            modManager.createExamplePack();
-            showModsPage();
-        });
-        example.setTextSize(9);
-        LinearLayout.LayoutParams exampleParams = new LinearLayout.LayoutParams(0,dp(36),1f);
-        exampleParams.leftMargin = dp(7);
-        actions.addView(example,exampleParams);
+        LinearLayout.LayoutParams importParams = new LinearLayout.LayoutParams(dp(112), dp(36));
+        importParams.leftMargin = dp(7);
+        actions.addView(importButton, importParams);
 
         ScrollView scroll = new ScrollView(getContext());
         scroll.setFillViewport(false);
         scroll.setClipChildren(true);
         scroll.setClipToPadding(true);
-        LinearLayout.LayoutParams scrollParams = new LinearLayout.LayoutParams(-1,0,1f);
-        scrollParams.topMargin = dp(8);
-        root.addView(scroll,scrollParams);
+        scroll.setVerticalScrollBarEnabled(false);
+        LinearLayout.LayoutParams scrollParams = new LinearLayout.LayoutParams(-1, 0, 1f);
+        scrollParams.topMargin = dp(7);
+        root.addView(scroll, scrollParams);
         LinearLayout list = column();
-        list.setClipChildren(true);
-        list.setClipToPadding(true);
-        scroll.addView(list,new ScrollView.LayoutParams(-1,-2));
+        list.setClipChildren(false);
+        list.setClipToPadding(false);
+        scroll.addView(list, new ScrollView.LayoutParams(-1, -2));
+        Runnable update = () -> renderModCards(list, search.getText().toString());
+        search.addTextChangedListener(new android.text.TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) { }
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) { update.run(); }
+            @Override public void afterTextChanged(android.text.Editable editable) { }
+        });
+        update.run();
+    }
+
+    private void renderModCards(LinearLayout list, String query) {
+        list.removeAllViews();
         List<ModManager.ModInfo> mods = modManager.listMods();
-        if (mods.isEmpty()) {
-            TextView empty = text("No hay paquetes instalados. Importa un archivo .mfmod o crea el paquete de ejemplo.",10,muted,false);
-            empty.setGravity(Gravity.CENTER);
-            empty.setPadding(dp(16),dp(22),dp(16),dp(22));
-            list.addView(empty,new LinearLayout.LayoutParams(-1,-2));
-        }
+        String needle = query == null ? "" : query.trim().toLowerCase(java.util.Locale.ROOT);
+        List<ModManager.ModInfo> filtered = new ArrayList<>();
         for (ModManager.ModInfo mod : mods) {
-            LinearLayout card = row();
-            card.setPadding(dp(10),dp(8),dp(10),dp(8));
-            card.setBackground(shape(new int[]{0xff20384b,0xff142638},13,0x554d6b80));
-            LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(-1,dp(74));
-            cardParams.bottomMargin = dp(7);
-            list.addView(card,cardParams);
-            LinearLayout labels = column();
-            labels.setGravity(Gravity.CENTER_VERTICAL);
-            labels.addView(text(mod.name + "  ·  v" + mod.version,10,white,true));
-            TextView detail = text(mod.description,8,muted,false);
-            detail.setMaxLines(2);
-            LinearLayout.LayoutParams detailParams = new LinearLayout.LayoutParams(-1,-2);
-            detailParams.topMargin = dp(3);
-            labels.addView(detail,detailParams);
-            card.addView(labels,new LinearLayout.LayoutParams(0,-2,1f));
-            Switch enabled = new Switch(getContext());
-            enabled.setChecked(mod.enabled);
-            enabled.setButtonTintList(ColorStateList.valueOf(0xffa9ee70));
-            enabled.setOnCheckedChangeListener((button,checked) -> {
-                modManager.setEnabled(mod,checked);
-                showModsPage();
-            });
-            card.addView(enabled);
+            if (needle.isEmpty() || mod.name.toLowerCase(java.util.Locale.ROOT).contains(needle)
+                    || mod.id.toLowerCase(java.util.Locale.ROOT).contains(needle)
+                    || mod.description.toLowerCase(java.util.Locale.ROOT).contains(needle)) filtered.add(mod);
         }
-        TextView footer = text("Los cambios se aplican al entrar en un mundo. Los paquetes son de datos y no ejecutan código nativo.",8,muted,false);
-        LinearLayout.LayoutParams footerParams = new LinearLayout.LayoutParams(-1,-2);
-        footerParams.topMargin = dp(6);
-        root.addView(footer,footerParams);
+        if (filtered.isEmpty()) {
+            TextView empty = text(mods.isEmpty() ? "No hay mods instalados. Importa un paquete .mfmod." : "No hay resultados para esa búsqueda.",
+                    10, muted, false);
+            empty.setGravity(Gravity.CENTER);
+            empty.setPadding(dp(16), dp(22), dp(16), dp(22));
+            list.addView(empty, new LinearLayout.LayoutParams(-1, -2));
+            return;
+        }
+        for (int index = 0; index < filtered.size(); index += 2) {
+            LinearLayout pair = row();
+            pair.setGravity(Gravity.TOP);
+            LinearLayout.LayoutParams pairParams = new LinearLayout.LayoutParams(-1, -2);
+            pairParams.bottomMargin = dp(6);
+            list.addView(pair, pairParams);
+            addModCard(pair, filtered.get(index), true);
+            if (index + 1 < filtered.size()) addModCard(pair, filtered.get(index + 1), false);
+            else pair.addView(new View(getContext()), new LinearLayout.LayoutParams(0, dp(1), 1f));
+        }
+    }
+
+    private void addModCard(LinearLayout parentRow, ModManager.ModInfo mod, boolean first) {
+        LinearLayout card = column();
+        card.setPadding(dp(9), dp(8), dp(9), dp(8));
+        card.setBackground(shape(new int[]{0xee243e53, 0xee14283a}, 13, 0x665e7e94));
+        LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(0, dp(112), 1f);
+        if (first) cardParams.rightMargin = dp(4); else cardParams.leftMargin = dp(4);
+        parentRow.addView(card, cardParams);
+        LinearLayout top = row();
+        card.addView(top, new LinearLayout.LayoutParams(-1, 0, 1f));
+        FrameLayout thumb = new FrameLayout(getContext());
+        thumb.setBackground(shape(new int[]{0xff3b6b58, 0xff1b3548}, 9, 0x6696c99b));
+        TextView initials = text(mod.name.length() > 1 ? mod.name.substring(0, 2).toUpperCase(java.util.Locale.ROOT) : "MF",
+                15, 0xffe5f4cf, true);
+        initials.setGravity(Gravity.CENTER);
+        thumb.addView(initials, new FrameLayout.LayoutParams(-1, -1));
+        top.addView(thumb, new LinearLayout.LayoutParams(dp(40), dp(40)));
+        LinearLayout labels = column();
+        labels.setPadding(dp(7), 0, 0, 0);
+        labels.setGravity(Gravity.CENTER_VERTICAL);
+        TextView name = text(mod.name, 9, white, true);
+        name.setMaxLines(2);
+        labels.addView(name);
+        labels.addView(text("v" + mod.version, 8, muted, false));
+        top.addView(labels, new LinearLayout.LayoutParams(0, -1, 1f));
+        LinearLayout bottom = row();
+        card.addView(bottom, new LinearLayout.LayoutParams(-1, dp(25)));
+        TextView state = text(mod.enabled ? "ACTIVO" : "INACTIVO", 7, mod.enabled ? 0xffa9ee70 : muted, true);
+        bottom.addView(state, new LinearLayout.LayoutParams(0, -2, 1f));
+        Switch enabled = new Switch(getContext());
+        enabled.setChecked(mod.enabled);
+        enabled.setButtonTintList(ColorStateList.valueOf(0xffa9ee70));
+        enabled.setScaleX(0.78f);
+        enabled.setScaleY(0.78f);
+        enabled.setOnCheckedChangeListener((button, checked) -> {
+            modManager.setEnabled(mod, checked);
+            showModsPage();
+        });
+        bottom.addView(enabled);
     }
 
     public void refreshMods() { showModsPage(); }
+    public void refreshShaders() { showSettingsPage(); }
 
     private void showSection(String section) {
         if ("avatar".equals(section)) {
@@ -901,6 +953,7 @@ public final class MinefadeHomeScreen extends FrameLayout {
 
         String[][] modules = {
                 {"video", "VÍDEO", "◈"},
+                {"shaders", "SHADERS", "✧"},
                 {"audio", "AUDIO", "♫"},
                 {"controls", "CONTROLES", "⌖"},
                 {"interface", "HUD", "▤"},
@@ -956,6 +1009,20 @@ public final class MinefadeHomeScreen extends FrameLayout {
         scroll.addView(content, new ScrollView.LayoutParams(-1, -2));
 
         switch (settingsModule) {
+            case "shaders":
+                settingsHeading(content, "SHADERS", "Efectos del renderizador GLES y perfiles importados.");
+                settingsCards.add(settingSwitch("Ondulación del agua", "Animación de la superficie del agua.", "water_waves", true));
+                settingsCards.add(settingSwitch("Animación de lava", "Movimiento de calor y superficie de la lava.", "lava_animations", true));
+                settingsCards.add(settingSwitch("Viento en las hojas", "Balanceo sutil de las hojas de los árboles.", "leaf_wind", true));
+                settingsCards.add(settingSlider("Intensidad del viento", "Controla cuánto se mueven las hojas.", "leaf_wind_strength", 0, 12, 4, "%"));
+                settingsCards.add(menuButton("✦", "IMPORTAR SHADER", "Importa un perfil .mfshader compatible.", new int[]{0xff365d71, 0xff203e52}, 0xffaee6f1, 38, () -> {
+                    if (listener != null) listener.onImportShader();
+                }, 4));
+                settingsCards.add(menuButton("↺", "SHADER ORIGINAL", "Restaura el perfil visual integrado de Minefade.", new int[]{0xff3a4b5d, 0xff263648}, 0xffa9c6d8, 38, () -> {
+                    ShaderPackManager.selectBuiltIn(preferences);
+                    showSettingsPage();
+                }, 5));
+                break;
             case "audio":
                 settingsHeading(content, "SONIDO DEL JUEGO", "Ajusta la mezcla que reproduce el dispositivo.");
                 settingsCards.add(soundVolumeControl());
@@ -1030,14 +1097,47 @@ public final class MinefadeHomeScreen extends FrameLayout {
                         "render_distance", new String[]{"Cercana · 3×3", "Normal · 5×5", "Amplia · 7×7"}, 1));
                 settingsCards.add(settingSlider("Campo de visión", "Ángulo de cámara en primera y tercera persona.",
                         "field_of_view", 60, 100, 68, "°"));
-                settingsCards.add(settingSwitch("Ondulación del agua", "Movimiento suave de la superficie.",
-                        "water_waves", true));
                 settingsCards.add(settingSwitch("Sombras de contacto", "Oscurecimiento suave bajo jugador y criaturas.",
                         "contact_shadows", true));
                 break;
         }
         addSettingsGrid(content, settingsCards);
+        if ("shaders".equals(settingsModule)) addImportedShaderProfiles(content);
         animateIn(content, 0);
+    }
+
+    private void addImportedShaderProfiles(LinearLayout parent) {
+        TextView heading = text("PERFILES IMPORTADOS", 9, 0xffc5d9e4, true);
+        LinearLayout.LayoutParams headingParams = new LinearLayout.LayoutParams(-1, dp(24));
+        headingParams.topMargin = dp(8);
+        parent.addView(heading, headingParams);
+        List<ShaderPackManager.PackInfo> packs = shaderPackManager.listPacks();
+        if (packs.isEmpty()) {
+            parent.addView(text("Aún no has importado perfiles shader. El perfil integrado sigue activo.",
+                    8, muted, false), new LinearLayout.LayoutParams(-1, -2));
+            return;
+        }
+        String activeId = preferences.getString("shader_pack_active", "builtin-vibrant");
+        for (ShaderPackManager.PackInfo pack : packs) {
+            LinearLayout row = row();
+            row.setPadding(dp(9), dp(6), dp(8), dp(6));
+            row.setBackground(shape(new int[]{0xdd243d50, 0xdd152a3c}, 10, 0x555f8195));
+            LinearLayout.LayoutParams rowParams = new LinearLayout.LayoutParams(-1, dp(46));
+            rowParams.bottomMargin = dp(5);
+            parent.addView(row, rowParams);
+            LinearLayout labels = column();
+            labels.setGravity(Gravity.CENTER_VERTICAL);
+            labels.addView(text(pack.name + " · v" + pack.version, 9, white, true));
+            labels.addView(text(pack.id.equals(activeId) ? "ACTIVO" : "PERFIL DISPONIBLE", 7,
+                    pack.id.equals(activeId) ? 0xffa9ee70 : muted, false));
+            row.addView(labels, new LinearLayout.LayoutParams(0, -1, 1f));
+            TextView activate = actionButton(pack.id.equals(activeId) ? "ACTIVO" : "USAR", () -> {
+                shaderPackManager.activate(pack, preferences);
+                showSettingsPage();
+            });
+            activate.setTextSize(8);
+            row.addView(activate, new LinearLayout.LayoutParams(dp(86), dp(32)));
+        }
     }
 
     private void addSettingsGrid(LinearLayout parent, List<View> cards) {
