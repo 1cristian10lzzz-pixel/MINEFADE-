@@ -215,6 +215,35 @@ int main() {
     // nearest two rings retain full voxel geometry.
     VoxelWorld lodWorld(0x4c4f4431u);
     lodWorld.GenerateAround(8, 8, 4);
+    std::size_t generatedRuinBlocks = 0u;
+    for (int chunkZ = -4; chunkZ <= 4; ++chunkZ) {
+        for (int chunkX = -4; chunkX <= 4; ++chunkX) {
+            for (int y = 0; y < VoxelWorld::kWorldHeight; ++y) {
+                for (int z = 0; z < VoxelWorld::kChunkSize; ++z) {
+                    for (int x = 0; x < VoxelWorld::kChunkSize; ++x) {
+                        const BlockId id = lodWorld.GetBlock(
+                            chunkX * VoxelWorld::kChunkSize + x, y,
+                            chunkZ * VoxelWorld::kChunkSize + z);
+                        if (id == BlockId::Stonebrick) ++generatedRuinBlocks;
+                    }
+                }
+            }
+        }
+    }
+    assert(generatedRuinBlocks > 0u);
+    VoxelWorld sameRuinSeed(0x4c4f4431u);
+    sameRuinSeed.GenerateAround(8, 8, 4);
+    std::size_t repeatedRuinBlocks = 0u;
+    for (int chunkZ = -4; chunkZ <= 4; ++chunkZ)
+        for (int chunkX = -4; chunkX <= 4; ++chunkX)
+            for (int y = 0; y < VoxelWorld::kWorldHeight; ++y)
+                for (int z = 0; z < VoxelWorld::kChunkSize; ++z)
+                    for (int x = 0; x < VoxelWorld::kChunkSize; ++x)
+                        if (sameRuinSeed.GetBlock(chunkX * VoxelWorld::kChunkSize + x, y,
+                                chunkZ * VoxelWorld::kChunkSize + z) == BlockId::Stonebrick)
+                            ++repeatedRuinBlocks;
+    assert(repeatedRuinBlocks == generatedRuinBlocks);
+
     std::vector<WorldVertex> lodMesh;
     std::vector<ChunkMeshRange> lodRanges;
     lodWorld.BuildMesh(lodMesh, 8, 8, 4, nullptr, &lodRanges);
