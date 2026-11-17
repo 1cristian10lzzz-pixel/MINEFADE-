@@ -134,7 +134,7 @@ int main() {
     // Editing one interior chunk must increment only that chunk's revision;
     // unrelated chunks retain their GPU buffers.
     const int revisionGround = revisionWorld.GetSurfaceHeight(8, 8);
-    assert(revisionWorld.SetBlock(8, revisionGround + 6, 8, BlockId::Stone));
+    assert(revisionWorld.SetBlock(8, VoxelWorld::kWorldHeight - 1, 8, BlockId::Stone));
     revisionWorld.BuildMesh(revisionOpaque, 8, 8, 1, &revisionTransparent, &revisionRanges);
     bool centreRevisionAdvanced = false;
     for (const ChunkMeshRange& range : revisionRanges) {
@@ -143,7 +143,7 @@ int main() {
             centreRevisionAdvanced = true;
         } else {
             const auto index = static_cast<std::size_t>(
-                (range.chunkZ + 1) * 3 + (range.chunkX + 1));
+                (range.chunkX + 1) * 3 + (range.chunkZ + 1));
             assert(range.revision == beforeRevisions[index]);
         }
     }
