@@ -787,7 +787,7 @@ void VoxelWorld::BuildMesh(std::vector<WorldVertex>& output,int centerWorldX,int
         needsBuild[i] = cached == chunkMeshCache_.end() ||
             dirtyChunkMeshes_.find(key) != dirtyChunkMeshes_.end() ||
             cached->second.lod != expectedLod ||
-            cached->second.outerBorder != outerBorder || outerBorder;
+            cached->second.outerBorder != outerBorder;
     }
     static constexpr int neighborOffsets[6][3] = {
         {1,0,0},{-1,0,0},{0,1,0},{0,-1,0},{0,0,1},{0,0,-1}
@@ -1037,7 +1037,9 @@ void VoxelWorld::BuildMesh(std::vector<WorldVertex>& output,int centerWorldX,int
 
     // Two independent CPU workers build disjoint chunk meshes. The result is
     // merged in stable chunk order so VBO ranges stay deterministic.
-    const std::size_t workerCount=std::min(kMeshWorkerCount,selected.size());
+    const std::size_t dirtyMeshCount=static_cast<std::size_t>(
+        std::count(needsBuild.begin(),needsBuild.end(),true));
+    const std::size_t workerCount=std::min(kMeshWorkerCount,dirtyMeshCount);
     if (workerCount<=1u) {
         for (std::size_t i=0;i<selected.size();++i) buildOneChunk(i);
     } else {
@@ -1052,12 +1054,29 @@ void VoxelWorld::BuildMesh(std::vector<WorldVertex>& output,int centerWorldX,int
     }
 
     // Commit only newly built or invalidated meshes to the persistent per-chunk cache.
+    // The revision advances only when this chunk's geometry actually changes. The
+    // renderer uses it to retain GPU buffers for every unaffected chunk.
     for (std::size_t i = 0; i < selected.size(); ++i) {
         const auto key = std::make_pair(selected[i]->x, selected[i]->z);
-        if (needsBuild[i]) {
-            chunkMeshCache_[key] = std::move(built[i]);
-            dirtyChunkMeshes_.erase(key);
-        }
+        if (!needsBuild[i]) continue;
+        ChunkMeshData& fresh = built[i];
+        fresh.minY = static_cast<float>(kWorldHeight);
+        fresh.maxY = 0.0f;
+        bool hasVertices = false;
+        const auto includeBounds = [&](const std::vector<WorldVertex>& vertices) {
+            for (const WorldVertex& vertex : vertices) {
+                fresh.minY = std::min(fresh.minY, vertex.y);
+                fresh.maxY = std::max(fresh.maxY, vertex.y);
+                hasVertices = true;
+            }
+        };
+        includeBounds(fresh.opaque);
+        includeBounds(fresh.transparent);
+        if (!hasVertices) fresh.minY = fresh.maxY = 0.0f;
+        const auto previous = chunkMeshCache_.find(key);
+        fresh.revision = previous == chunkMeshCache_.end() ? 1u : previous->second.revision + 1u;
+        chunkMeshCache_[key] = std::move(fresh);
+        dirtyChunkMeshes_.erase(key);
     }
 
     const std::size_t reserveChunks=selected.size();
@@ -1072,6 +1091,9 @@ void VoxelWorld::BuildMesh(std::vector<WorldVertex>& output,int centerWorldX,int
         range.chunkX=selected[i]->x;
         range.chunkZ=selected[i]->z;
         range.lodLevel=data.lod;
+        range.revision=data.revision;
+        range.minY=data.minY;
+        range.maxY=data.maxY;
         range.opaqueFirst=output.size();
         output.insert(output.end(),data.opaque.begin(),data.opaque.end());
         if (transparentOutput!=nullptr) {
