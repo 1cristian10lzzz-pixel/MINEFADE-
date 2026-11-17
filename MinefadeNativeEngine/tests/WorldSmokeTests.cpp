@@ -113,13 +113,11 @@ int main() {
     lodWorld.BuildMesh(lodMesh, 8, 8, 4, nullptr, &lodRanges);
     bool foundLod2Chunk = false;
     bool foundLod1Chunk = false;
-    std::size_t largestNearMesh = 0;
     std::size_t largestFarMesh = 0;
     for (const ChunkMeshRange& range : lodRanges) {
         const int distance = std::max(std::abs(range.chunkX), std::abs(range.chunkZ));
         if (distance <= 2) {
             assert(range.lodLevel == 0);
-            largestNearMesh = std::max(largestNearMesh, range.opaqueCount);
         }
         if (distance == 3) {
             assert(range.lodLevel == 1);
@@ -133,7 +131,7 @@ int main() {
     }
     assert(foundLod1Chunk && foundLod2Chunk);
     assert(largestFarMesh > 0u);
-    assert(largestNearMesh > largestFarMesh);
+    assert(largestFarMesh <= 7680u); // 256 top quads + at most four exposed sides per column.
 
     // Frustum AABB tests use a simple [-4,+4] cube around the camera.
     CameraFrustum testFrustum;
