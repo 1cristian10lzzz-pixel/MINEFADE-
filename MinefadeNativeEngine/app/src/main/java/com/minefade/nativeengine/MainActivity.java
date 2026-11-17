@@ -14,6 +14,7 @@ import android.os.Looper;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
 import android.view.Gravity;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
@@ -41,6 +42,7 @@ public final class MainActivity extends Activity {
     private LanMultiplayerService lanMultiplayer;
     private FrameLayout loadingOverlay;
     private FrameLayout gameContainer;
+    private FrameLayout fallbackOverlay;
     private WorldManager worldManager;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private boolean engineReady;
@@ -117,6 +119,7 @@ public final class MainActivity extends Activity {
         loadingOverlay = null;
         surfaceView = null;
         gameContainer = null;
+        fallbackOverlay = null;
         root.removeAllViews();
 
         if (lanMultiplayer != null) {
@@ -176,6 +179,7 @@ public final class MainActivity extends Activity {
         homeScreen = null;
         surfaceView = null;
         loadingOverlay = null;
+        fallbackOverlay = null;
         engineReady = false;
 
         showLoading("PREPARANDO MINEFADE", "Comprobando el motor gráfico y los recursos…");
@@ -202,6 +206,14 @@ public final class MainActivity extends Activity {
                         mainHandler.removeCallbacks(engineTimeout);
                         mainHandler.postDelayed(exitPoll, 200L);
                         hideLoadingOverlay();
+                        if (surfaceView != null && !surfaceView.isNativeHudAvailable()) {
+                            android.util.Log.e("Minefade", "RmlUi unavailable; installing Android touch fallback: "
+                                    + surfaceView.nativeHudDiagnostic());
+                            showFallbackTouchControls();
+                            Toast.makeText(MainActivity.this,
+                                    "Se activaron los controles de respaldo para poder jugar.",
+                                    Toast.LENGTH_LONG).show();
+                        }
                     }
 
                     @Override public void onEngineError(String message) {
@@ -231,6 +243,152 @@ public final class MainActivity extends Activity {
         if (loadingOverlay != null) root.bringChildToFront(loadingOverlay);
         mainHandler.postDelayed(engineTimeout, ENGINE_TIMEOUT_MS);
         applyImmersiveMode();
+    }
+
+    /**
+     * Emergency Android-native controls used only when the RmlUi HUD could not
+     * initialise. The world stays open and continues to receive touches on the
+     * GL thread; this is a recovery path, not a replacement for the normal HUD.
+     */
+    private void showFallbackTouchControls() {
+        if (gameContainer == null || surfaceView == null || fallbackOverlay != null) return;
+        FrameLayout overlay = new FrameLayout(this);
+        overlay.setClipChildren(false);
+        overlay.setClipToPadding(false);
+        overlay.setBackgroundColor(Color.TRANSPARENT);
+        overlay.setClickable(false);
+
+        FrameLayout joystick = new FrameLayout(this);
+        GradientDrawable padBackground = new GradientDrawable(
+                GradientDrawable.Orientation.TOP_BOTTOM,
+                new int[]{0x99516f83, 0x77304a60});
+        padBackground.setShape(GradientDrawable.OVAL);
+        padBackground.setStroke(dp(2), 0x99e1efb8);
+        joystick.setBackground(padBackground);
+        View thumb = new View(this);
+        GradientDrawable thumbBackground = new GradientDrawable(
+                GradientDrawable.Orientation.TOP_BOTTOM,
+                new int[]{0xffc2d4bf, 0xff7c9c89});
+        thumbBackground.setShape(GradientDrawable.OVAL);
+        thumbBackground.setStroke(dp(1), 0xffe4f0dc);
+        thumb.setBackground(thumbBackground);
+        FrameLayout.LayoutParams thumbParams = new FrameLayout.LayoutParams(dp(38), dp(38), Gravity.CENTER);
+        joystick.addView(thumb, thumbParams);
+        FrameLayout.LayoutParams joystickParams = new FrameLayout.LayoutParams(dp(112), dp(112),
+                Gravity.BOTTOM | Gravity.LEFT);
+        joystickParams.leftMargin = dp(14);
+        joystickParams.bottomMargin = dp(54);
+        overlay.addView(joystick, joystickParams);
+
+        joystick.setOnTouchListener((view, event) -> {
+            int[] viewLocation = new int[2];
+            int[] surfaceLocation = new int[2];
+            view.getLocationOnScreen(viewLocation);
+            surfaceView.getLocationOnScreen(surfaceLocation);
+            int action = event.getActionMasked();
+            if (action == MotionEvent.ACTION_MOVE) {
+                for (int i = 0; i < event.getPointerCount(); i++) {
+                    float x = viewLocation[0] - surfaceLocation[0] + event.getX(i);
+                    float y = viewLocation[1] - surfaceLocation[1] + event.getY(i);
+                    surfaceView.dispatchFallbackTouch(2, event.getPointerId(i), x, y);
+                }
+                return true;
+            }
+            int actionIndex = event.getActionIndex();
+            int mapped;
+            switch (action) {
+                case MotionEvent.ACTION_DOWN:
+                case MotionEvent.ACTION_POINTER_DOWN: mapped = 0; break;
+                case MotionEvent.ACTION_UP:
+                case MotionEvent.ACTION_POINTER_UP: mapped = 1; break;
+                case MotionEvent.ACTION_CANCEL: mapped = 3; break;
+                default: return true;
+            }
+            float x = viewLocation[0] - surfaceLocation[0] + event.getX(actionIndex);
+            float y = viewLocation[1] - surfaceLocation[1] + event.getY(actionIndex);
+            surfaceView.dispatchFallbackTouch(mapped, event.getPointerId(actionIndex), x, y);
+            return true;
+        });
+
+        TextView jump = statusButton("↑", true);
+        jump.setTextSize(22);
+        jump.setContentDescription("Saltar");
+        FrameLayout.LayoutParams jumpParams = new FrameLayout.LayoutParams(dp(58), dp(58),
+                Gravity.BOTTOM | Gravity.RIGHT);
+        jumpParams.rightMargin = dp(20);
+        jumpParams.bottomMargin = dp(58);
+        overlay.addView(jump, jumpParams);
+        jump.setOnTouchListener((view, event) -> {
+            int action = event.getActionMasked();
+            if (action == MotionEvent.ACTION_DOWN) surfaceView.dispatchFallbackAction(0, true);
+            else if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL)
+                surfaceView.dispatchFallbackAction(0, false);
+            return true;
+        });
+
+        TextView crouch = statusButton("↓", false);
+        crouch.setTextSize(18);
+        crouch.setContentDescription("Agacharse");
+        FrameLayout.LayoutParams crouchParams = new FrameLayout.LayoutParams(dp(46), dp(46),
+                Gravity.BOTTOM | Gravity.RIGHT);
+        crouchParams.rightMargin = dp(86);
+        crouchParams.bottomMargin = dp(64);
+        overlay.addView(crouch, crouchParams);
+        crouch.setOnTouchListener((view, event) -> {
+            int action = event.getActionMasked();
+            if (action == MotionEvent.ACTION_DOWN) surfaceView.dispatchFallbackAction(1, true);
+            else if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL)
+                surfaceView.dispatchFallbackAction(1, false);
+            return true;
+        });
+
+        LinearLayout topButtons = new LinearLayout(this);
+        topButtons.setOrientation(LinearLayout.HORIZONTAL);
+        topButtons.setGravity(Gravity.CENTER_VERTICAL);
+        FrameLayout.LayoutParams topParams = new FrameLayout.LayoutParams(-2, dp(42),
+                Gravity.TOP | Gravity.RIGHT);
+        topParams.topMargin = dp(8);
+        topParams.rightMargin = dp(8);
+        overlay.addView(topButtons, topParams);
+
+        TextView perspective = statusButton("◉", false);
+        perspective.setTextSize(17);
+        perspective.setContentDescription("Cambiar perspectiva");
+        topButtons.addView(perspective, new LinearLayout.LayoutParams(dp(40), dp(40)));
+        perspective.setOnClickListener(v -> surfaceView.dispatchFallbackAction(2, true));
+
+        TextView pause = statusButton("Ⅱ", false);
+        pause.setTextSize(17);
+        pause.setContentDescription("Pausar");
+        LinearLayout.LayoutParams pauseParams = new LinearLayout.LayoutParams(dp(40), dp(40));
+        pauseParams.leftMargin = dp(6);
+        topButtons.addView(pause, pauseParams);
+        pause.setOnClickListener(v -> showFallbackPauseDialog());
+
+        fallbackOverlay = overlay;
+        gameContainer.addView(overlay, 1, new FrameLayout.LayoutParams(-1, -1));
+    }
+
+    private void showFallbackPauseDialog() {
+        if (surfaceView == null || !engineReady) return;
+        surfaceView.dispatchFallbackAction(3, true);
+        final boolean[] handled = {false};
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setTitle("Minefade · Pausa")
+                .setItems(new CharSequence[]{"Reanudar", "Guardar y salir"}, (shown, which) -> {
+                    handled[0] = true;
+                    if (which == 0) {
+                        surfaceView.dispatchFallbackAction(4, true);
+                    } else {
+                        surfaceView.dispatchFallbackAction(5, true);
+                    }
+                })
+                .setOnCancelListener(shown -> {
+                    if (!handled[0] && surfaceView != null)
+                        surfaceView.dispatchFallbackAction(4, true);
+                })
+                .create();
+        dialog.show();
     }
 
     private void showCommandDialog() {
