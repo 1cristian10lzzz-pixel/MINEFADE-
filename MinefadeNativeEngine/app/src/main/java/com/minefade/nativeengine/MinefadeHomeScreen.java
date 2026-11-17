@@ -1409,7 +1409,7 @@ public final class MinefadeHomeScreen extends FrameLayout {
     }
 
     private void showAchievementsPage() {
-        LinearLayout root = pageRoot("MUNDOS · LOGROS", "Progreso de tus aventuras guardado automáticamente.");
+        LinearLayout root = pageRoot("", "");
         addWorldTabs(root, true);
         int mined = preferences.getInt("achievement_blocks_mined", 0);
         int placed = preferences.getInt("achievement_blocks_placed", 0);
@@ -1417,14 +1417,14 @@ public final class MinefadeHomeScreen extends FrameLayout {
         int jumps = preferences.getInt("achievement_jumps", 0);
         boolean entered = preferences.getBoolean("achievement_world_entered", false);
 
-        String[] titles = {"Primera aventura", "Primer minero", "Minero experto", "Constructor",
-                "Arquitecto", "Recolector", "Primer salto", "Explorador del cielo"};
+        String[] titles = {"Primera aventura", "Primer minero", "Minero experto", "Constructor", "Arquitecto",
+                "Recolector", "Primer salto", "Explorador del cielo", "Coleccionista", "Maestro constructor"};
         String[] details = {"Entra en tu primer mundo.", "Rompe tu primer bloque.",
                 "Rompe 100 bloques.", "Coloca tu primer bloque.", "Coloca 100 bloques.",
-                "Recoge un objeto del suelo.", "Salta por primera vez.", "Realiza 25 saltos."};
-        String[] icons = {"◈", "⚒", "◆", "▦", "⌂", "◇", "↑", "✦"};
-        int[] progress = {entered ? 1 : 0, mined, mined, placed, placed, collected, jumps, jumps};
-        int[] targets = {1, 1, 100, 1, 100, 1, 1, 25};
+                "Recoge un objeto del suelo.", "Salta por primera vez.", "Realiza 25 saltos.",
+                "Recoge 25 objetos.", "Coloca 500 bloques."};
+        int[] progress = {entered ? 1 : 0, mined, mined, placed, placed, collected, jumps, jumps, collected, placed};
+        int[] targets = {1, 1, 100, 1, 100, 1, 1, 25, 25, 500};
 
         ScrollView scroll = new ScrollView(getContext());
         scroll.setFillViewport(true);
@@ -1445,14 +1445,14 @@ public final class MinefadeHomeScreen extends FrameLayout {
             LinearLayout.LayoutParams lineParams = new LinearLayout.LayoutParams(-1, dp(112));
             if (rowIndex > 0) lineParams.topMargin = dp(7);
             grid.addView(line, lineParams);
-            for (int col = 0; col < 4; col++) {
-                final int index = rowIndex * 4 + col;
+            for (int col = 0; col < 5; col++) {
+                final int index = rowIndex * 5 + col;
                 final int current = Math.max(0, progress[index]);
                 final int target = Math.max(1, targets[index]);
                 final boolean unlocked = current >= target;
                 LinearLayout tile = column();
                 tile.setGravity(Gravity.CENTER_VERTICAL);
-                tile.setPadding(dp(8), dp(6), dp(8), dp(6));
+                tile.setPadding(dp(5), dp(5), dp(5), dp(5));
                 tile.setBackground(shape(unlocked
                         ? new int[]{0xff274d3e, 0xff17382f}
                         : new int[]{0xff203449, 0xff142438},
@@ -1461,13 +1461,13 @@ public final class MinefadeHomeScreen extends FrameLayout {
                 LinearLayout top = row();
                 top.setGravity(Gravity.CENTER_VERTICAL);
                 top.addView(new AchievementGlyph(getContext(), index, unlocked ? 0xffb9f27c : 0xff8caabd),
-                        new LinearLayout.LayoutParams(dp(28), dp(28)));
+                        new LinearLayout.LayoutParams(dp(21), dp(21)));
                 LinearLayout labels = column();
                 labels.setPadding(dp(6), 0, 0, 0);
-                TextView title = text(titles[index], 9, white, true);
+                TextView title = text(titles[index], 7, white, true);
                 title.setMaxLines(1);
                 labels.addView(title);
-                TextView description = text(details[index], 7, muted, false);
+                TextView description = text(details[index], 6, muted, false);
                 description.setMaxLines(2);
                 LinearLayout.LayoutParams detailParams = new LinearLayout.LayoutParams(-1, -2);
                 detailParams.topMargin = dp(2);
@@ -1489,7 +1489,7 @@ public final class MinefadeHomeScreen extends FrameLayout {
                         new LinearLayout.LayoutParams(-1, dp(5)));
 
                 LinearLayout.LayoutParams cell = new LinearLayout.LayoutParams(0, -1, 1f);
-                if (col > 0) cell.leftMargin = dp(6);
+                if (col > 0) cell.leftMargin = dp(4);
                 line.addView(tile, cell);
             }
         }
