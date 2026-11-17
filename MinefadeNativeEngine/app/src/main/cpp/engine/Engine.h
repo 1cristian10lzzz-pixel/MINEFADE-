@@ -10,6 +10,7 @@
 #include <atomic>
 #include <chrono>
 #include <cstdint>
+#include <map>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -49,6 +50,15 @@ public:
 
 private:
     struct Mat4 { std::array<float, 16> v{}; };
+    struct ChunkGpuMesh {
+        GLuint opaqueVao{0};
+        GLuint opaqueVbo{0};
+        GLuint transparentVao{0};
+        GLuint transparentVbo{0};
+        GLsizei opaqueCount{0};
+        GLsizei transparentCount{0};
+        std::uint64_t revision{0};
+    };
     struct TouchState {
         float startX{0.0f};
         float startY{0.0f};
@@ -71,6 +81,7 @@ private:
     void RebuildWorldMesh();
     void UploadWorldMesh();
     void UploadTransparentWorldMesh();
+    void SyncChunkGpuMeshes();
     void RebuildEntityMesh();
     void UploadEntityMesh();
     void UploadItemMesh();
@@ -90,8 +101,6 @@ private:
     double ElapsedSeconds() const;
 
     GLuint worldProgram_{0};
-    GLuint worldVao_{0};
-    GLuint worldVbo_{0};
     GLint mvpLocation_{-1};
     GLint lightLocation_{-1};
     GLint daylightLocation_{-1};
@@ -110,8 +119,6 @@ private:
     GLuint blockAtlasTexture_{0};
     GLuint entityVao_{0};
     GLuint entityVbo_{0};
-    GLuint transparentVao_{0};
-    GLuint transparentVbo_{0};
     GLuint itemVao_{0};
     GLuint itemVbo_{0};
     GLsizei worldVertexCount_{0};
@@ -198,6 +205,7 @@ private:
     std::vector<WorldVertex> worldMesh_;
     std::vector<WorldVertex> transparentWorldMesh_;
     std::vector<ChunkMeshRange> worldChunkRanges_;
+    std::map<std::pair<int, int>, ChunkGpuMesh> chunkGpuMeshes_;
     std::vector<WorldVertex> entityMesh_;
     std::vector<WorldVertex> itemMesh_;
     std::vector<float> remotePlayers_;
