@@ -60,3 +60,26 @@
 El motor actual lee paquetes de texto `.mfmod`, hasta 32 KB y 128 líneas. Ajustes que reconoce ahora: `spawn.sheep`, `spawn.cow`, `spawn.bird`, `spawn.pig` (0–24), `player.speed` (0.5–2.0) y `world.day_speed` (0.25–4.0). Metadatos: `id`, `name`, `version`, `description`, `enabled`. No carga todavía nuevos bloques, texturas, recetas ni scripts. Los ajustes de aparición se aplican al iniciar el motor; no se deben usar como spawns naturales persistentes hasta verificar guardado de entidades.
 
 **Nota de honestidad:** el TXT previo contiene 50 áreas y 100 variantes de plantilla por área; no son 5.000 especificaciones completamente independientes. Este roadmap conserva todos los temas y los ordena por dependencias.
+
+## Estado verificado de las áreas 7/8 y fases 3/4 — revisión 2.0.3
+
+Esta sección separa lo implementado en el código de las condiciones que aún requieren contenido o prueba física.
+
+### Área 7 — visibilidad, chunk cache y LOD
+- En 2.0.3: revisión por chunk, caché persistente, eliminación del rebuild incondicional de la corona exterior, bounds verticales para frustum culling y presupuesto de una malla por paso a 30 Hz.
+- Pendiente: quadtree jerárquico completo, LOD con varias capas verticales para conservar cuevas/voladizos y mediciones P50/P95 de frame time, RAM y temperatura en el Mali-G57.
+
+### Área 8 — iluminación y shaders
+- En 2.0.3: corrección de la orientación vertical del atlas en shader principal, shader de reserva y generador; decode de colores de agua/lava en la ruta de reserva; luz ambiente hemisférica y menor oscurecimiento precalculado por cara.
+- Pendiente: sombras dinámicas escalables, calibración por GPU real, comparación visual de perfiles y validación de agua/lluvia durante recorridos prolongados.
+
+### Fase 3 — mundo y jugabilidad
+- En 2.0.3: primera familia de ruinas deterministas, contenidas dentro de un chunk y usando IDs de bloques existentes; pruebas de repetibilidad por semilla.
+- Ya existían biomas, cuevas, minerales, árboles y fauna básica.
+- Pendiente: mazmorras completas, estructuras variadas con loot, persistencia completa de entidades, pathfinding, IA avanzada, progresión/supervivencia amplia y sincronización de todos los estados de objetos.
+
+### Fase 4 — experiencia Android y LAN
+- En 2.0.3: controles táctiles con tres modos, distribución zurda, menú LOCAL con búsqueda automática al abrir, flujo de crear/buscar/unirse, y verificaciones de fuente para NSD/TCP.
+- Pendiente: editor HUD realmente libre con persistencia de coordenadas/tamaño; chat e inventarios/drops sincronizados; autoridad/persistencia compartida del anfitrión, reconexión y prueba de juego real entre dos o más teléfonos. Los tests de CI no sustituyen esta validación física.
+
+No se declara cerrada ninguna fase que tenga un criterio de aceptación pendiente.
