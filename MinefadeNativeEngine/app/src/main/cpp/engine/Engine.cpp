@@ -322,8 +322,7 @@ bool Engine::CreateWorldProgram() {
         fetchLocations();
         if (mvpLocation_ >= 0 && lightLocation_ >= 0 && daylightLocation_ >= 0 &&
             atlasLocation_ >= 0 && useAtlasLocation_ >= 0 && timeLocation_ >= 0 &&
-            qualityLocation_ >= 0 && waterWavesLocation_ >= 0 && lavaAnimationsLocation_ >= 0 &&
-            leafWindLocation_ >= 0 && leafWindStrengthLocation_ >= 0 && cameraLocation_ >= 0 &&
+            qualityLocation_ >= 0 && waterWavesLocation_ >= 0 && cameraLocation_ >= 0 &&
             fogColorLocation_ >= 0 && fogNearLocation_ >= 0 && fogFarLocation_ >= 0) {
             glUseProgram(worldProgram_);
             glUniform1i(atlasLocation_, 0);
