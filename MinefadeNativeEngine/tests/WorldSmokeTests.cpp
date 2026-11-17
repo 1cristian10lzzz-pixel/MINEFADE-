@@ -148,9 +148,12 @@ int main() {
     std::vector<ChunkMeshRange> revisionRanges;
     revisionWorld.BuildMesh(revisionOpaque, 8, 8, 1, &revisionTransparent, &revisionRanges);
     assert(revisionRanges.size() == 9u);
-    std::vector<std::uint64_t> beforeRevisions;
-    beforeRevisions.reserve(revisionRanges.size());
-    for (const ChunkMeshRange& range : revisionRanges) beforeRevisions.push_back(range.revision);
+    std::array<std::uint64_t, 9> beforeRevisions{};
+    for (const ChunkMeshRange& range : revisionRanges) {
+        const auto index = static_cast<std::size_t>(
+            (range.chunkX + 1) * 3 + (range.chunkZ + 1));
+        beforeRevisions[index] = range.revision;
+    }
     revisionWorld.BuildMesh(revisionOpaque, 8, 8, 1, &revisionTransparent, &revisionRanges);
     for (std::size_t i = 0; i < revisionRanges.size(); ++i)
         assert(revisionRanges[i].revision == beforeRevisions[i]);
