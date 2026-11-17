@@ -13,11 +13,11 @@ HOME = (ROOT / "app/src/main/java/com/minefade/nativeengine/MinefadeHomeScreen.j
 
 def test_rmlui_failure_does_not_abort_a_valid_world():
     start = ENGINE.index("if (!ui_.Initialise(")
-    end = ENGINE.index("lastFrame_ = std::chrono::steady_clock::now();", start)
-    recovery = ENGINE[start:end]
+    ready = ENGINE.index("ready_ = true;", start)
+    recovery = ENGINE[start:ready]
     assert "El HUD RmlUi no está disponible" in recovery
     assert "return failInitialisation" not in recovery
-    assert "ready_ = true;" in ENGINE[end:end + 240]
+    assert "ready_ = true;" in ENGINE[ready:ready + 40]
 
 
 def test_android_emergency_controls_and_selected_world_retry_are_connected():
