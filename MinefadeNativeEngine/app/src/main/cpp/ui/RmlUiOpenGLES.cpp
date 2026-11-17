@@ -6,6 +6,7 @@
 #include <cstddef>
 #include <string>
 #include <cstring>
+#include <cstdio>
 
 namespace minefade {
 namespace {
@@ -51,7 +52,13 @@ RmlUiOpenGLES::~RmlUiOpenGLES() { Shutdown(); }
 
 GLuint RmlUiOpenGLES::CompileShader(GLenum type, const char* source) {
     const GLuint shader = glCreateShader(type);
-    if (shader == 0) return 0;
+    if (shader == 0) {
+        const GLenum error = glGetError();
+        char code[24]{};
+        std::snprintf(code, sizeof(code), "0x%04X", static_cast<unsigned int>(error));
+        lastError_ = std::string("glCreateShader falló (GL ") + code + ").";
+        return 0;
+    }
     glShaderSource(shader, 1, &source, nullptr);
     glCompileShader(shader);
     GLint success = GL_FALSE;
@@ -61,7 +68,8 @@ GLuint RmlUiOpenGLES::CompileShader(GLenum type, const char* source) {
         glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &length);
         std::string log(static_cast<std::size_t>(std::max(length, 1)), '\0');
         glGetShaderInfoLog(shader, length, nullptr, log.data());
-        UI_LOGE("RmlUi shader compile failed: %s", log.c_str());
+        lastError_ = std::string("Compilación del shader de RmlUi: ") + log;
+        UI_LOGE("%s", lastError_.c_str());
         glDeleteShader(shader);
         return 0;
     }
@@ -70,14 +78,31 @@ GLuint RmlUiOpenGLES::CompileShader(GLenum type, const char* source) {
 
 bool RmlUiOpenGLES::Initialise() {
     Shutdown();
+    lastError_.clear();
+    while (glGetError() != GL_NO_ERROR) { }
+    if (glGetString(GL_VERSION) == nullptr) {
+        lastError_ = "No hay un contexto OpenGL ES actual en el hilo de renderizado.";
+        UI_LOGE("%s", lastError_.c_str());
+        return false;
+    }
     const GLuint vertex = CompileShader(GL_VERTEX_SHADER, kVertexShader);
     const GLuint fragment = CompileShader(GL_FRAGMENT_SHADER, kFragmentShader);
     if (vertex == 0 || fragment == 0) {
         if (vertex != 0) glDeleteShader(vertex);
         if (fragment != 0) glDeleteShader(fragment);
+        if (lastError_.empty()) lastError_ = "No se pudieron crear los shaders OpenGL ES de la interfaz.";
         return false;
     }
     program_ = glCreateProgram();
+    if (program_ == 0) {
+        const GLenum error = glGetError();
+        char code[24]{};
+        std::snprintf(code, sizeof(code), "0x%04X", static_cast<unsigned int>(error));
+        lastError_ = std::string("glCreateProgram de RmlUi falló (GL ") + code + ").";
+        glDeleteShader(vertex);
+        glDeleteShader(fragment);
+        return false;
+    }
     glAttachShader(program_, vertex);
     glAttachShader(program_, fragment);
     glLinkProgram(program_);
@@ -91,7 +116,8 @@ bool RmlUiOpenGLES::Initialise() {
         glGetProgramiv(program_, GL_INFO_LOG_LENGTH, &length);
         std::string log(static_cast<std::size_t>(std::max(length, 1)), '\0');
         glGetProgramInfoLog(program_, length, nullptr, log.data());
-        UI_LOGE("RmlUi shader link failed: %s", log.c_str());
+        lastError_ = std::string("Enlace del shader de RmlUi: ") + log;
+        UI_LOGE("%s", lastError_.c_str());
         glDeleteProgram(program_);
         program_ = 0;
         return false;
@@ -102,13 +128,22 @@ bool RmlUiOpenGLES::Initialise() {
     texturedLocation_ = glGetUniformLocation(program_, "uTextured");
     samplerLocation_ = glGetUniformLocation(program_, "uTexture");
     if (viewportLocation_ < 0 || translationLocation_ < 0 || texturedLocation_ < 0 || samplerLocation_ < 0) {
-        UI_LOGE("RmlUi shader uniforms missing");
+        lastError_ = "El shader de RmlUi no expuso todos los uniforms requeridos.";
+        UI_LOGE("%s", lastError_.c_str());
         Shutdown();
         return false;
     }
     glUseProgram(program_);
     glUniform1i(samplerLocation_, 0);
     glUseProgram(0);
+    if (const GLenum error = glGetError(); error != GL_NO_ERROR) {
+        char code[24]{};
+        std::snprintf(code, sizeof(code), "0x%04X", static_cast<unsigned int>(error));
+        lastError_ = std::string("Error OpenGL ES al preparar RmlUi (GL ") + code + ").";
+        UI_LOGE("%s", lastError_.c_str());
+        Shutdown();
+        return false;
+    }
     return true;
 }
 
