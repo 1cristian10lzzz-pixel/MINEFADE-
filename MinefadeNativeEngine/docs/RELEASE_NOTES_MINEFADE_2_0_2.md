@@ -1,5 +1,7 @@
 # Minefade 2.0.2 — fases 1 y 2
 
+Esta actualización sustituye la compilación 2.0.1 e integra las fases de estabilidad y navegación de Minefade 2.0.
+
 ## Fase 1 — estabilidad, inicio y recuperación del mundo
 
 - Un fallo de inicialización de RmlUi ya no cancela un mundo que el motor GLES y la simulación hayan podido iniciar correctamente.
