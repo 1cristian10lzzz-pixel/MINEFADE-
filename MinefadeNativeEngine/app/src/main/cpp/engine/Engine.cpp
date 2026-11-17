@@ -131,6 +131,47 @@ Engine& GetEngine() {
 
 std::string Engine::LastInitError() const { return lastInitError_; }
 
+bool Engine::IsUiReady() const { return ui_.IsReady(); }
+
+void Engine::FallbackAction(int action, bool pressed) {
+    if (!ready_) return;
+    // 0 jump, 1 crouch, 2 perspective, 3 pause, 4 resume, 5 save-and-exit.
+    if (action == 1) {
+        crouching_ = pressed;
+        player_.SetCrouching(pressed);
+        return;
+    }
+    if (!pressed) return;
+    switch (action) {
+        case 0:
+            if (!paused_ && player_.grounded) {
+                player_.Jump();
+                soundEvents_.fetch_or(16u, std::memory_order_release);
+            }
+            break;
+        case 2:
+            thirdPerson_ = !thirdPerson_;
+            RebuildEntityMesh();
+            UploadEntityMesh();
+            break;
+        case 3:
+            if (!paused_) Pause(); else Resume();
+            pauseVisible_ = paused_;
+            break;
+        case 4:
+            pauseVisible_ = false;
+            inventoryVisible_ = false;
+            Resume();
+            break;
+        case 5:
+            SaveWorld();
+            exitRequested_.store(true, std::memory_order_release);
+            break;
+        default:
+            break;
+    }
+}
+
 void Engine::SetLastInitError(std::string message) { lastInitError_ = std::move(message); }
 
 std::uint32_t Engine::ConsumeSoundEvents() {
@@ -693,11 +734,12 @@ bool Engine::Initialise(float displayDensity, const std::uint8_t* atlasPixels,
     ui_.SetControlMode(controlMode_);
     if (!ui_.Initialise(width_, height_, displayDensity,
                         [this](const std::string& action) { HandleUiAction(action); })) {
-        std::string reason = "No se pudo iniciar la interfaz táctil de Minefade 2.0.";
-        if (!ui_.LastError().empty()) reason += "\\nDiagnóstico RmlUi: " + ui_.LastError();
-        ENGINE_LOGE("RmlUi failed to initialise: %s", reason.c_str());
-        return failInitialisation(reason +
-            "\\nEl mundo no se ha abierto para evitar dejarte sin joystick ni botones. Reintenta la carga.");
+        lastInitError_ = "El HUD RmlUi no está disponible; se activarán los controles Android de respaldo.";
+        if (!ui_.LastError().empty()) lastInitError_ += "\\nDiagnóstico RmlUi: " + ui_.LastError();
+        ENGINE_LOGE("RmlUi unavailable; continuing with Android fallback controls: %s",
+                    lastInitError_.c_str());
+        // The world renderer and simulation are independent from RmlUi. A HUD
+        // parser/driver error must not discard a valid world or make it unplayable.
     }
     lastFrame_ = std::chrono::steady_clock::now();
     lastStats_ = lastFrame_;
