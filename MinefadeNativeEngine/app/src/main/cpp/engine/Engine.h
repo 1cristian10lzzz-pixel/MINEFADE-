@@ -20,6 +20,8 @@ class Engine {
 public:
     bool Initialise(float displayDensity, const std::uint8_t* atlasPixels, std::size_t atlasBytes, int atlasWidth, int atlasHeight);
     std::string LastInitError() const;
+    bool IsUiReady() const;
+    void FallbackAction(int action, bool pressed);
     void SetLastInitError(std::string message);
     void Shutdown();
     void Resize(int width, int height);
