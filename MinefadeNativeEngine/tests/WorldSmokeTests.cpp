@@ -117,6 +117,30 @@ int main() {
     assert(cachedOpaque.size() == greedyOpaque.size());
     assert(cachedTransparent.size() == greedyTransparent.size());
 
+    // Frame-budgeted startup: the first pass emits the nearest chunk only,
+    // then fills the visible square over subsequent passes without rebuilding
+    // previously completed chunks.
+    VoxelWorld budgetWorld(0x42554447u);
+    budgetWorld.GenerateAround(8, 8, 1);
+    std::vector<WorldVertex> budgetOpaque;
+    std::vector<WorldVertex> budgetTransparent;
+    std::vector<ChunkMeshRange> budgetRanges;
+    assert(budgetWorld.HasPendingMeshBuild(8, 8, 1));
+    budgetWorld.BuildMesh(budgetOpaque, 8, 8, 1,
+                          &budgetTransparent, &budgetRanges, 1u);
+    assert(budgetRanges.size() == 1u);
+    const auto firstBudgetRevision = budgetRanges.front().revision;
+    assert(budgetWorld.HasPendingMeshBuild(8, 8, 1));
+    for (int frame = 0; frame < 10 &&
+         budgetWorld.HasPendingMeshBuild(8, 8, 1); ++frame) {
+        budgetWorld.BuildMesh(budgetOpaque, 8, 8, 1,
+                              &budgetTransparent, &budgetRanges, 1u);
+        assert(budgetRanges.size() == static_cast<std::size_t>(frame + 2));
+        assert(budgetRanges.front().revision == firstBudgetRevision);
+    }
+    assert(budgetRanges.size() == 9u);
+    assert(!budgetWorld.HasPendingMeshBuild(8, 8, 1));
+
     VoxelWorld revisionWorld(0x52455631u);
     revisionWorld.GenerateAround(8, 8, 1);
     std::vector<WorldVertex> revisionOpaque;
