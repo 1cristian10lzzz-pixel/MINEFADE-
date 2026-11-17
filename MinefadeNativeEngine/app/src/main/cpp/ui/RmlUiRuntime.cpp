@@ -309,7 +309,7 @@ bool RmlUiRuntime::Initialise(int width, int height, float displayDensity, Actio
 body { margin:0dp; padding:0dp; width:100%; height:100%; font-family:Roboto; color:#ffffff; }
 button { background:#45667acc; border:1dp #ffffffaa; border-radius:10dp; color:#ffffff; padding:6dp; font-size:12dp; }
 #topbar { position:absolute; top:8dp; right:8dp; display:flex; gap:6dp; }
-#stats { display:none; }
+#stats { position:absolute; left:10dp; top:10dp; display:block; font-size:10dp; color:#ffffff; }
 #movement-pad { position:absolute; left:14dp; bottom:54dp; width:108dp; height:108dp; border-radius:54dp; border:2dp #e1efb8; background:#193249aa; }
 #movement-pad-inner { position:absolute; left:35dp; top:35dp; width:36dp; height:36dp; border-radius:18dp; background:#9ab59aaa; }
 #quickbar { position:absolute; bottom:10dp; left:50%; margin-left:-180dp; display:flex; gap:3dp; }
