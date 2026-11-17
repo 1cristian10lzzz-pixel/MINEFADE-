@@ -4,6 +4,7 @@
 #include <GLES3/gl3.h>
 
 #include <cstdint>
+#include <string>
 #include <unordered_map>
 #include <vector>
 
@@ -18,6 +19,7 @@ public:
     void Shutdown();
     void SetViewport(int width, int height);
     void SetBlockAtlas(const std::uint8_t* pixels, std::size_t bytes, int width, int height);
+    const std::string& LastError() const { return lastError_; }
 
     Rml::CompiledGeometryHandle CompileGeometry(Rml::Span<const Rml::Vertex> vertices,
                                                 Rml::Span<const int> indices) override;
@@ -55,6 +57,7 @@ private:
     std::unordered_map<std::uintptr_t, Geometry> geometries_;
     std::unordered_map<std::uintptr_t, GLuint> textures_;
     std::vector<std::uint8_t> blockAtlasPixels_;
+    std::string lastError_;
     int blockAtlasWidth_{0};
     int blockAtlasHeight_{0};
 };
