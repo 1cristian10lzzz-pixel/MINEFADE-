@@ -143,6 +143,9 @@ registry_source = (ROOT / "app/src/main/cpp/blocks/BlockRegistry.cpp").read_text
 assert "const float atlasHeight=static_cast<float>(rows*18u)" in registry_source
 assert "GetBlockDefinitionCount()*3u" in registry_source
 assert "static_cast<std::size_t>(tile)>=tileCount" in registry_source
+assert "v0=(y+0.5f)/atlasHeight" in registry_source
+assert "v1=(y+15.5f)/atlasHeight" in registry_source
+assert "1.0f-(y+" not in registry_source
 assert "/486.0f" not in registry_source
 
 png = (ROOT / "docs/block_atlas_preview.png").read_bytes()
