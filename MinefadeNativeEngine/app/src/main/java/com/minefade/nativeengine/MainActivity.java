@@ -135,6 +135,7 @@ public final class MainActivity extends Activity {
             @Override public void onPlayWorld(WorldManager.WorldInfo world) { startWorld(world); }
             @Override public void onCreateWorld(WorldManager.WorldInfo world) { startWorld(world); }
             @Override public void onImportMod() { pickModFile(); }
+            @Override public void onImportShader() { pickShaderFile(); }
             @Override public void onHostMultiplayer() { startLanHost(); }
             @Override public void onSearchMultiplayer() { searchLanGames(); }
             @Override public void onJoinMultiplayer(LanMultiplayerService.GameInfo game) { joinLanGame(game); }
@@ -327,17 +328,36 @@ public final class MainActivity extends Activity {
         startActivityForResult(intent, 7401);
     }
 
+    private void pickShaderFile() {
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType("*/*");
+        startActivityForResult(intent, 7402);
+    }
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode != 7401 || resultCode != RESULT_OK || data == null || data.getData() == null) return;
-        ModManager manager = new ModManager(this);
-        ModManager.ModInfo imported = manager.importMod(data.getData());
-        if (imported == null) {
-            Toast.makeText(this, "No se pudo importar. Usa un paquete .mfmod válido.", Toast.LENGTH_LONG).show();
-        } else {
-            Toast.makeText(this, "Mod importado: " + imported.name, Toast.LENGTH_LONG).show();
-            if (homeScreen != null) homeScreen.refreshMods();
+        if (resultCode != RESULT_OK || data == null || data.getData() == null) return;
+        if (requestCode == 7401) {
+            ModManager manager = new ModManager(this);
+            ModManager.ModInfo imported = manager.importMod(data.getData());
+            if (imported == null) {
+                Toast.makeText(this, "No se pudo importar. Usa un paquete .mfmod válido.", Toast.LENGTH_LONG).show();
+            } else {
+                Toast.makeText(this, "Mod importado: " + imported.name, Toast.LENGTH_LONG).show();
+                if (homeScreen != null) homeScreen.refreshMods();
+            }
+        } else if (requestCode == 7402) {
+            ShaderPackManager manager = new ShaderPackManager(this);
+            ShaderPackManager.PackInfo imported = manager.importShader(data.getData());
+            if (imported == null) {
+                Toast.makeText(this, "No se pudo importar. Usa un perfil .mfshader v1 compatible.", Toast.LENGTH_LONG).show();
+            } else {
+                manager.activate(imported, getSharedPreferences("minefade_ui", MODE_PRIVATE));
+                Toast.makeText(this, "Perfil shader activado: " + imported.name, Toast.LENGTH_LONG).show();
+                if (homeScreen != null) homeScreen.refreshShaders();
+            }
         }
     }
 
