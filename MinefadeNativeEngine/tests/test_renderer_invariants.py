@@ -39,6 +39,10 @@ def test_terrain_gpu_resources_are_incremental_per_chunk():
     assert "worldRenderer_.DrawTransparent(frustum, eye)" in ENGINE
     assert "glBufferData(GL_ARRAY_BUFFER,\n                 static_cast<GLsizeiptr>(worldMesh_.size()" not in ENGINE
     assert "worldVao_" not in ENGINE and "transparentVao_" not in ENGINE
+    assert "worldChunkRanges_" not in ENGINE
+    assert "worldMesh_" not in ENGINE and "transparentWorldMesh_" not in ENGINE
+    assert "worldChunkViews_.clear();" in ENGINE
+    assert "meshBuildScratch_.clear();" in ENGINE
     assert "ResidentChunkCount" in RENDERER_H
 
 
