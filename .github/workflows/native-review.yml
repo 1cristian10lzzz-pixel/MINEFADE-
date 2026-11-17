@@ -2,7 +2,7 @@ name: Minefade 2.0 Android Build
 
 on:
   push:
-    branches: [minefade-deep-renewal, minefade-render-optimization, minefade-worlds-mods-commands, minefade-render-overhaul-review12, minefade-ultimate-overhaul-phase1, minefade-1.0-complete-overhaul, minefade-2.0, minefade-2.1-stability-shaders, minefade-2.0.3-renderer-rebuild, minefade-2.2-phase6-7-audio]
+    branches: [minefade-deep-renewal, minefade-render-optimization, minefade-worlds-mods-commands, minefade-render-overhaul-review12, minefade-ultimate-overhaul-phase1, minefade-1.0-complete-overhaul, minefade-2.0, minefade-2.1-stability-shaders, minefade-2.0.3-renderer-rebuild, minefade-2.2-phase6-7-audio, minefade-2.3-bedrock-controls-gameplay, minefade-prueba-temporal]
   workflow_dispatch:
 
 concurrency:
@@ -20,7 +20,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Apply Minefade 2.0.4 phases 6 and 7
-        if: github.ref_name == 'minefade-2.2-phase6-7-audio'
+        if: github.ref_name == 'minefade-2.2-phase6-7-audio' || github.ref_name == 'minefade-2.3-bedrock-controls-gameplay' || github.ref_name == 'minefade-prueba-temporal'
         shell: bash
         run: |
           set -euo pipefail
@@ -36,7 +36,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if [[ "${GITHUB_REF_NAME:-}" == "minefade-ultimate-overhaul-phase1" || "${GITHUB_REF_NAME:-}" == "minefade-1.0-complete-overhaul" || "${GITHUB_REF_NAME:-}" == "minefade-2.0" || "${GITHUB_REF_NAME:-}" == "minefade-2.1-stability-shaders" || "${GITHUB_REF_NAME:-}" == "minefade-2.0.3-renderer-rebuild" || "${GITHUB_REF_NAME:-}" == "minefade-2.2-phase6-7-audio" ]]; then
+          if [[ "${GITHUB_REF_NAME:-}" == "minefade-ultimate-overhaul-phase1" || "${GITHUB_REF_NAME:-}" == "minefade-1.0-complete-overhaul" || "${GITHUB_REF_NAME:-}" == "minefade-2.0" || "${GITHUB_REF_NAME:-}" == "minefade-2.1-stability-shaders" || "${GITHUB_REF_NAME:-}" == "minefade-2.0.3-renderer-rebuild" || "${GITHUB_REF_NAME:-}" == "minefade-2.2-phase6-7-audio" || "${GITHUB_REF_NAME:-}" == "minefade-2.3-bedrock-controls-gameplay" || "${GITHUB_REF_NAME:-}" == "minefade-prueba-temporal" ]]; then
             echo "Minefade 2.0 validates the committed source snapshot."
           else
             cat review12-render/part-*.b64 | base64 --decode | xz -dc > /tmp/review12-render.patch
@@ -125,8 +125,13 @@ jobs:
           "$APKSIGNER" verify --verbose --print-certs "$APK"
 
           "$AAPT" dump badging "$APK" > /tmp/minefade-apk-badging.txt
-          grep -F "package: name='com.minefade.nativeengine'" /tmp/minefade-apk-badging.txt
-          grep -F "versionName='2.0.4'" /tmp/minefade-apk-badging.txt
+          if [[ "${GITHUB_REF_NAME:-}" == "minefade-prueba-temporal" ]]; then
+            grep -F "package: name='com.minefade.nativeengine.temporal'" /tmp/minefade-apk-badging.txt
+            grep -F "versionName='2.0.4-temporal'" /tmp/minefade-apk-badging.txt
+          else
+            grep -F "package: name='com.minefade.nativeengine'" /tmp/minefade-apk-badging.txt
+            grep -F "versionName='2.0.4'" /tmp/minefade-apk-badging.txt
+          fi
 
           unzip -Z1 "$APK" | grep -Fx 'lib/arm64-v8a/libminefade_native.so'
           unzip -Z1 "$APK" | grep -Fx 'lib/armeabi-v7a/libminefade_native.so'
@@ -142,42 +147,45 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
-      - name: Publish Minefade 2.0.4 GitHub release
+      - name: Publish Minefade Prueba Temporal GitHub release
+        if: github.ref_name == 'minefade-prueba-temporal'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: minefade-v2.0.4-phase6-7
-          name: Minefade 2.0.4 — Fases 6 y 7
+          tag_name: minefade-prueba-temporal
+          name: Minefade Prueba Temporal
           draft: false
           prerelease: true
           files: MinefadeNativeEngine/app/build/outputs/apk/debug/app-debug.apk
           body: |
-            Minefade 2.0.4 — actualización candidata para Android.
+            Minefade Prueba Temporal — compilación de evaluación.
 
-            Incluye:
-            - LOD distante estratificado con hasta seis bandas verticales por columna.
-            - Siete pistas musicales originales y doce capas ambientales originales adaptadas a bioma, hora, profundidad y agua.
-            - Controles independientes de volumen de música y ambiente.
-            - Conservación de los efectos de juego, IDs de bloques y formato de mundos.
+            Basada en el último árbol de código de minefade-2.3-bedrock-controls-gameplay y aplica las fases 6 y 7 durante la compilación:
+            - Render LOD distante estratificado.
+            - Audio ambiental y música con controles independientes.
+            - Núcleo Rust/C++20, OpenGL ES 3.0, RmlUi y catálogo/atlas del proyecto.
+            - Pruebas nativas, de catálogo, render, audio, arranque, controles y LAN en CI.
 
-            Es una compilación debug/prerelease. Requiere validación visual y auditiva en dispositivos físicos antes de considerarse estable.
+            APK de depuración con identificador independiente com.minefade.nativeengine.temporal para instalarla junto a otras revisiones.
+            No es una versión estable ni completa: siguen pendientes lluvia y clima, fluidos completos, shadow maps, IA de producción, crafting/progresión completa, sincronización multijugador y validación táctil/visual en teléfonos reales.
+            Esta publicación temporal se retirará cuando se publique y valide la versión completa.
       - name: Package complete source tree
         shell: bash
         run: |
           set -euo pipefail
           # Include generated catalogue/atlas files produced by the preceding step.
           # git archive omits worktree changes, so package the checked-out tree itself.
-          zip -r -q Minefade-2.0.4-source.zip . \
+          zip -r -q Minefade-Prueba-Temporal-source.zip . \
             -x ".git/*" "*/.git/*" \
                "*/build/*" "*/.gradle/*" "*/.cxx/*" \
                "*/.externalNativeBuild/*" "*/intermediates/*" \
                "*/outputs/*" "*/tmp/*" "*/target/*" "*/rust-target/*" \
-               "Minefade-2.0.4-source.zip"
-          test -s Minefade-2.0.4-source.zip
+               "Minefade-Prueba-Temporal-source.zip"
+          test -s Minefade-Prueba-Temporal-source.zip
 
       - name: Upload complete source
         uses: actions/upload-artifact@v4
         with:
-          name: Minefade-2.0.4-source
-          path: Minefade-2.0.4-source.zip
+          name: Minefade-Prueba-Temporal-source
+          path: Minefade-Prueba-Temporal-source.zip
           if-no-files-found: error
           retention-days: 14
