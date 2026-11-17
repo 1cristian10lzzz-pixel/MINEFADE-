@@ -171,7 +171,7 @@ jobs:
                "*/build/*" "*/.gradle/*" "*/.cxx/*" \
                "*/.externalNativeBuild/*" "*/intermediates/*" \
                "*/outputs/*" "*/tmp/*" "*/target/*" "*/rust-target/*" \
-               "Minefade-2.0-source.zip"
+               "Minefade-2.0.4-source.zip"
           test -s Minefade-2.0-source.zip
 
       - name: Upload complete source
