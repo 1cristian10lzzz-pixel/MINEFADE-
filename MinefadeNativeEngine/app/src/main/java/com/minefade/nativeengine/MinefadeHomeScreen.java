@@ -932,7 +932,9 @@ public final class MinefadeHomeScreen extends FrameLayout {
     }
 
     private void showSettingsPage() {
-        LinearLayout root = pageRoot("AJUSTES", "Ajusta gráficos, controles y comportamiento.");
+        // Compact settings workspace: modules remain visible in a left rail and
+        // the selected module has its own scrollable control pane on the right.
+        LinearLayout root = pageRoot("", "");
         List<View> settingsCards = new ArrayList<>();
 
         String[][] modules = {
@@ -944,52 +946,61 @@ public final class MinefadeHomeScreen extends FrameLayout {
                 {"animation", "ANIMACIÓN", "✧"},
                 {"accessibility", "ACCESO", "◉"}
         };
-        HorizontalScrollView moduleScroller = new HorizontalScrollView(getContext());
-        moduleScroller.setHorizontalScrollBarEnabled(false);
-        moduleScroller.setClipChildren(true);
-        moduleScroller.setClipToPadding(true);
-        LinearLayout.LayoutParams tabsParams = new LinearLayout.LayoutParams(-1, dp(42));
-        tabsParams.topMargin = dp(8);
-        tabsParams.bottomMargin = dp(7);
-        root.addView(moduleScroller, tabsParams);
-        LinearLayout tabs = row();
-        tabs.setPadding(dp(1), 0, dp(1), 0);
-        moduleScroller.addView(tabs, new HorizontalScrollView.LayoutParams(-2, -1));
+
+        LinearLayout workspace = row();
+        LinearLayout.LayoutParams workspaceParams = new LinearLayout.LayoutParams(-1, 0, 1f);
+        workspaceParams.topMargin = dp(4);
+        root.addView(workspace, workspaceParams);
+
+        ScrollView moduleScroll = new ScrollView(getContext());
+        moduleScroll.setFillViewport(false);
+        moduleScroll.setVerticalScrollBarEnabled(false);
+        moduleScroll.setOverScrollMode(View.OVER_SCROLL_NEVER);
+        workspace.addView(moduleScroll, new LinearLayout.LayoutParams(dp(82), -1));
+        LinearLayout moduleRail = column();
+        moduleRail.setPadding(0, dp(2), dp(2), dp(4));
+        moduleScroll.addView(moduleRail, new ScrollView.LayoutParams(-1, -2));
         for (String[] module : modules) {
             boolean active = settingsModule.equals(module[0]);
-            TextView tab = text(module[2] + "  " + module[1], 9,
-                    active ? 0xffe4ffd6 : 0xffb8cbd5, true);
+            LinearLayout tab = column();
             tab.setGravity(Gravity.CENTER);
-            tab.setPadding(dp(12), 0, dp(12), 0);
+            tab.setPadding(dp(3), dp(4), dp(3), dp(4));
             tab.setBackground(shape(active
                     ? new int[]{0xff355b48, 0xff1d403a}
-                    : new int[]{0xff20374a, 0xff142638},
-                    11, active ? 0xff91d77a : 0x55496379));
+                    : new int[]{0x8830475a, 0x66172536},
+                    10, active ? 0xff91d77a : 0x55496379));
+            TextView icon = text(module[2], 15, active ? 0xffe4ffd6 : 0xffb8cbd5, true);
+            icon.setGravity(Gravity.CENTER);
+            tab.addView(icon, new LinearLayout.LayoutParams(-1, dp(19)));
+            TextView label = text(module[1], 7, active ? 0xffe4ffd6 : 0xffb8cbd5, true);
+            label.setGravity(Gravity.CENTER);
+            label.setMaxLines(2);
+            tab.addView(label, new LinearLayout.LayoutParams(-1, dp(18)));
             tab.setOnClickListener(v -> {
                 haptic(v);
                 settingsModule = module[0];
                 preferences.edit().putString("settings_module", settingsModule).apply();
                 showSettingsPage();
             });
-            LinearLayout.LayoutParams itemParams = new LinearLayout.LayoutParams(-2, -1);
-            if (tabs.getChildCount() > 0) itemParams.leftMargin = dp(6);
-            tabs.addView(tab, itemParams);
+            LinearLayout.LayoutParams tabParams = new LinearLayout.LayoutParams(-1, dp(45));
+            tabParams.bottomMargin = dp(5);
+            moduleRail.addView(tab, tabParams);
         }
 
         ScrollView scroll = new ScrollView(getContext());
-        scroll.setFillViewport(true);
+        scroll.setFillViewport(false);
         scroll.setClipChildren(true);
         scroll.setClipToPadding(true);
         scroll.setVerticalScrollBarEnabled(false);
         scroll.setSmoothScrollingEnabled(true);
         scroll.setOverScrollMode(View.OVER_SCROLL_NEVER);
-        LinearLayout.LayoutParams scrollParams = new LinearLayout.LayoutParams(-1, 0, 1f);
-        root.addView(scroll, scrollParams);
+        LinearLayout.LayoutParams scrollParams = new LinearLayout.LayoutParams(0, -1, 1f);
+        scrollParams.leftMargin = dp(5);
+        workspace.addView(scroll, scrollParams);
         LinearLayout content = column();
-        content.setPadding(dp(10), dp(9), dp(10), dp(14));
+        content.setPadding(dp(3), dp(2), dp(3), dp(10));
         content.setClipChildren(true);
         content.setClipToPadding(true);
-        content.setBackground(shape(new int[]{0x33243e52, 0x22101d2b}, 15, 0x44506b80));
         scroll.addView(content, new ScrollView.LayoutParams(-1, -2));
 
         switch (settingsModule) {
@@ -1154,37 +1165,47 @@ public final class MinefadeHomeScreen extends FrameLayout {
     }
 
     private void settingsHeading(LinearLayout parent, String title, String subtitle) {
-        TextView heading = text(title, 11, 0xffd8edf6, true);
-        parent.addView(heading);
-        TextView detail = text(subtitle, 9, muted, false);
-        detail.setGravity(Gravity.TOP);
-        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(-1, -2);
-        params.topMargin = dp(4);
-        params.bottomMargin = dp(9);
-        parent.addView(detail, params);
+        // The left module rail already identifies this category. Keep the right
+        // pane focused on its controls instead of repeating a title and paragraph.
+    }
+
+    private TextView settingInfoButton(String title, String information) {
+        TextView info = text("i", 10, 0xffc6d9e4, true);
+        info.setGravity(Gravity.CENTER);
+        info.setBackground(shape(new int[]{0x553c596d, 0x33243d50}, 12, 0x665d7a90));
+        info.setContentDescription("Información de " + title);
+        info.setOnClickListener(v -> {
+            haptic(v);
+            new AlertDialog.Builder(getContext()).setTitle(title)
+                    .setMessage(information == null ? "" : information)
+                    .setPositiveButton("ENTENDIDO", null).show();
+        });
+        return info;
     }
 
     private View settingChoice(String title, String subtitle, String key,
                                String[] entries, int defaultValue) {
         LinearLayout card = column();
-        card.setPadding(dp(12), dp(9), dp(12), dp(9));
-        card.setBackground(shape(new int[]{0xff20394d, 0xff142638}, 14, 0x665b788d));
-        card.addView(text(title, 11, white, true));
-        TextView detail = text(subtitle, 8, muted, false);
-        LinearLayout.LayoutParams detailParams = new LinearLayout.LayoutParams(-1, -2);
-        detailParams.topMargin = dp(3);
-        card.addView(detail, detailParams);
+        card.setPadding(dp(8), dp(6), dp(8), dp(6));
+        card.setBackground(shape(new int[]{0xff20394d, 0xff142638}, 11, 0x665b788d));
+        LinearLayout heading = row();
+        heading.setGravity(Gravity.CENTER_VERTICAL);
+        heading.addView(text(title, 9, white, true),
+                new LinearLayout.LayoutParams(0, dp(20), 1f));
+        heading.addView(settingInfoButton(title, subtitle),
+                new LinearLayout.LayoutParams(dp(21), dp(21)));
+        card.addView(heading);
 
         int initial = Math.max(0, Math.min(entries.length - 1, preferences.getInt(key, defaultValue)));
         LinearLayout selector = row();
         selector.setGravity(Gravity.CENTER_VERTICAL);
-        selector.setPadding(dp(11), 0, dp(10), 0);
-        selector.setBackground(shape(new int[]{0xff304a5e, 0xff1e3447}, 10, 0x77617e91));
-        TextView current = text(entries[initial], 10, 0xffe6f4f7, true);
-        selector.addView(current, new LinearLayout.LayoutParams(0, dp(38), 1f));
-        TextView arrow = text("⌄", 18, 0xffb9f27c, true);
+        selector.setPadding(dp(8), 0, dp(7), 0);
+        selector.setBackground(shape(new int[]{0xff304a5e, 0xff1e3447}, 8, 0x77617e91));
+        TextView current = text(entries[initial], 8, 0xffe6f4f7, true);
+        selector.addView(current, new LinearLayout.LayoutParams(0, dp(29), 1f));
+        TextView arrow = text("⌄", 15, 0xffb9f27c, true);
         arrow.setGravity(Gravity.CENTER);
-        selector.addView(arrow, new LinearLayout.LayoutParams(dp(28), dp(38)));
+        selector.addView(arrow, new LinearLayout.LayoutParams(dp(22), dp(29)));
         installPressAnimation(selector);
         selector.setOnClickListener(v -> {
             haptic(v);
@@ -1198,11 +1219,11 @@ public final class MinefadeHomeScreen extends FrameLayout {
             });
             menu.show();
         });
-        LinearLayout.LayoutParams selectorParams = new LinearLayout.LayoutParams(-1, dp(38));
-        selectorParams.topMargin = dp(8);
+        LinearLayout.LayoutParams selectorParams = new LinearLayout.LayoutParams(-1, dp(30));
+        selectorParams.topMargin = dp(3);
         card.addView(selector, selectorParams);
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(-1, -2);
-        params.bottomMargin = dp(8);
+        params.bottomMargin = dp(5);
         card.setLayoutParams(params);
         return card;
     }
@@ -1210,19 +1231,19 @@ public final class MinefadeHomeScreen extends FrameLayout {
     private View settingSlider(String title, String subtitle, String key,
                                int min, int max, int defaultValue, String suffix) {
         LinearLayout card = column();
-        card.setPadding(dp(10), dp(7), dp(10), dp(6));
+        card.setPadding(dp(8), dp(5), dp(8), dp(4));
         card.setBackground(shape(new int[]{0xff1c3043, 0xff142334}, 11, 0x554b6478));
         LinearLayout heading = row();
-        heading.addView(text(title, 10, white, true),
+        heading.setGravity(Gravity.CENTER_VERTICAL);
+        heading.addView(text(title, 9, white, true),
                 new LinearLayout.LayoutParams(0, dp(19), 1f));
-        TextView amount = text("", 9, 0xffb9f27c, true);
+        heading.addView(settingInfoButton(title, subtitle),
+                new LinearLayout.LayoutParams(dp(20), dp(20)));
+        TextView amount = text("", 8, 0xffb9f27c, true);
         amount.setGravity(Gravity.CENTER);
-        heading.addView(amount, new LinearLayout.LayoutParams(dp(45), dp(19)));
+        heading.addView(amount, new LinearLayout.LayoutParams(dp(39), dp(19)));
         card.addView(heading);
-        TextView detail = text(subtitle, 8, muted, false);
-        LinearLayout.LayoutParams detailParams = new LinearLayout.LayoutParams(-1, -2);
-        detailParams.topMargin = dp(2);
-        card.addView(detail, detailParams);
+
         SeekBar seek = new SeekBar(getContext());
         seek.setMax(max - min);
         int initial = Math.max(min, Math.min(max, preferences.getInt(key, defaultValue)));
@@ -1239,11 +1260,10 @@ public final class MinefadeHomeScreen extends FrameLayout {
             @Override public void onStartTrackingTouch(SeekBar bar) { }
             @Override public void onStopTrackingTouch(SeekBar bar) { }
         });
-        LinearLayout.LayoutParams seekParams = new LinearLayout.LayoutParams(-1, dp(31));
-        seekParams.topMargin = dp(1);
+        LinearLayout.LayoutParams seekParams = new LinearLayout.LayoutParams(-1, dp(26));
         card.addView(seek, seekParams);
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(-1, -2);
-        params.bottomMargin = dp(7);
+        params.bottomMargin = dp(5);
         card.setLayoutParams(params);
         return card;
     }
@@ -1286,23 +1306,25 @@ public final class MinefadeHomeScreen extends FrameLayout {
 
     private View settingSwitch(String title, String subtitle, String key, boolean defaultValue) {
         LinearLayout card = row();
-        card.setPadding(dp(12), dp(8), dp(11), dp(8));
-        card.setBackground(shape(new int[]{0xff1c3043, 0xff142334}, 13, 0x554b6478));
-        LinearLayout labels = column();
-        labels.addView(text(title, 12, white, true));
-        TextView detail = text(subtitle, 9, muted, false);
-        LinearLayout.LayoutParams detailParams = new LinearLayout.LayoutParams(-1, -2);
-        detailParams.topMargin = dp(3);
-        labels.addView(detail, detailParams);
-        card.addView(labels, new LinearLayout.LayoutParams(0, -2, 1f));
+        card.setGravity(Gravity.CENTER_VERTICAL);
+        card.setPadding(dp(8), dp(5), dp(7), dp(5));
+        card.setBackground(shape(new int[]{0xff1c3043, 0xff142334}, 11, 0x554b6478));
+        card.addView(text(title, 9, white, true),
+                new LinearLayout.LayoutParams(0, -2, 1f));
+        card.addView(settingInfoButton(title, subtitle),
+                new LinearLayout.LayoutParams(dp(21), dp(21)));
         Switch toggle = new Switch(getContext());
         toggle.setButtonTintList(ColorStateList.valueOf(0xffa9ee70));
+        toggle.setScaleX(0.82f);
+        toggle.setScaleY(0.82f);
         toggle.setChecked(preferences.getBoolean(key, defaultValue));
         toggle.setOnCheckedChangeListener((button, checked) ->
                 preferences.edit().putBoolean(key, checked).apply());
-        card.addView(toggle);
-        LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(-1, dp(58));
-        p.bottomMargin = dp(7);
+        LinearLayout.LayoutParams toggleParams = new LinearLayout.LayoutParams(dp(40), dp(32));
+        toggleParams.leftMargin = dp(2);
+        card.addView(toggle, toggleParams);
+        LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(-1, dp(46));
+        p.bottomMargin = dp(5);
         card.setOnClickListener(v -> toggle.setChecked(!toggle.isChecked()));
         return wrapWithParams(card, p);
     }
