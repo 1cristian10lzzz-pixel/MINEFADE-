@@ -777,7 +777,6 @@ void Engine::Shutdown() {
     if (ready_) SaveWorld();
     ui_.Shutdown();
     worldRenderer_.Shutdown();
-    transparentSortRevisions_.clear();
     if (entityVbo_ != 0) glDeleteBuffers(1, &entityVbo_);
     if (entityVao_ != 0) glDeleteVertexArrays(1, &entityVao_);
     if (itemVbo_ != 0) glDeleteBuffers(1, &itemVbo_);
@@ -804,59 +803,24 @@ void Engine::Resize(int width, int height) {
 }
 
 void Engine::RebuildWorldMesh() {
-    world_.BuildMesh(worldMesh_, static_cast<int>(std::floor(player_.position.x)),
+    // Update only dirty cache entries. The normal play path deliberately skips
+    // flattening every cached chunk into one large CPU vertex vector.
+    world_.BuildMesh(meshBuildScratch_, static_cast<int>(std::floor(player_.position.x)),
                      static_cast<int>(std::floor(player_.position.z)),
-                     renderDistanceChunks_, &transparentWorldMesh_, &worldChunkRanges_, 1u);
-
-    // Sort only transparent chunks whose geometry revision changed. Unchanged
-    // chunks keep their previously uploaded triangle order and GPU buffers.
-    std::set<std::pair<int, int>> activeSortKeys;
-    const Vec3 eye = ViewPosition();
-    for (const ChunkMeshRange& range : worldChunkRanges_) {
-        const auto key = std::make_pair(range.chunkX, range.chunkZ);
-        activeSortKeys.insert(key);
-        const auto previous = transparentSortRevisions_.find(key);
-        if (previous != transparentSortRevisions_.end() &&
-            previous->second == range.revision) continue;
-        if (range.transparentCount >= 6u) {
-            using Triangle = std::array<WorldVertex, 3>;
-            std::vector<std::pair<float, Triangle>> sorted;
-            sorted.reserve(range.transparentCount / 3u);
-            const std::size_t first = range.transparentFirst;
-            const std::size_t last = first + range.transparentCount;
-            for (std::size_t i = first; i + 2u < last; i += 3u) {
-                Triangle triangle{transparentWorldMesh_[i], transparentWorldMesh_[i + 1u],
-                                  transparentWorldMesh_[i + 2u]};
-                const float cx = (triangle[0].x + triangle[1].x + triangle[2].x) / 3.0f - eye.x;
-                const float cy = (triangle[0].y + triangle[1].y + triangle[2].y) / 3.0f - eye.y;
-                const float cz = (triangle[0].z + triangle[1].z + triangle[2].z) / 3.0f - eye.z;
-                sorted.emplace_back(cx * cx + cy * cy + cz * cz, triangle);
-            }
-            std::sort(sorted.begin(), sorted.end(), [](const auto& a, const auto& b) {
-                return a.first > b.first;
-            });
-            std::size_t cursor = first;
-            for (const auto& entry : sorted)
-                for (const WorldVertex& vertex : entry.second) transparentWorldMesh_[cursor++] = vertex;
-        }
-        transparentSortRevisions_[key] = range.revision;
-    }
-    for (auto it = transparentSortRevisions_.begin(); it != transparentSortRevisions_.end();) {
-        if (activeSortKeys.find(it->first) == activeSortKeys.end())
-            it = transparentSortRevisions_.erase(it);
-        else
-            ++it;
-    }
+                     renderDistanceChunks_, nullptr, nullptr, 1u, false);
 }
 
 void Engine::UploadWorldMesh() {
-    if (!worldRenderer_.Sync(worldMesh_, transparentWorldMesh_, worldChunkRanges_)) {
+    const int centerX = static_cast<int>(std::floor(player_.position.x));
+    const int centerZ = static_cast<int>(std::floor(player_.position.z));
+    world_.GetChunkMeshViews(centerX, centerZ, renderDistanceChunks_, worldChunkViews_);
+    if (!worldRenderer_.Sync(worldChunkViews_)) {
         ENGINE_LOGE("One or more chunk GPU buffers could not be synchronized; affected chunks will retry on the next mesh update");
     }
 }
 
 void Engine::UploadTransparentWorldMesh() {
-    // The per-chunk renderer synchronizes opaque and transparent buffers together.
+    // Opaque and transparent per-chunk buffers are synchronized together.
 }
 
 void Engine::RebuildEntityMesh() {
