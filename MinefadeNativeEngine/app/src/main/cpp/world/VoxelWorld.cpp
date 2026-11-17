@@ -743,7 +743,8 @@ bool VoxelWorld::PlaceRay(const Vec3& origin,const Vec3& direction,float maxDist
 
 void VoxelWorld::BuildMesh(std::vector<WorldVertex>& output,int centerWorldX,int centerWorldZ,
                            int radiusInChunks,std::vector<WorldVertex>* transparentOutput,
-                           std::vector<ChunkMeshRange>* chunkRanges) const {
+                           std::vector<ChunkMeshRange>* chunkRanges,
+                           std::size_t meshBuildBudget) const {
     output.clear();
     if (transparentOutput != nullptr) transparentOutput->clear();
     if (chunkRanges != nullptr) chunkRanges->clear();
@@ -762,6 +763,16 @@ void VoxelWorld::BuildMesh(std::vector<WorldVertex>& output,int centerWorldX,int
 
         selected.push_back(&entry.second);
     }
+    // Prioritize the chunks around the camera first. A per-frame budget can then
+    // spread the remaining dirty work over several frames without leaving nearby
+    // terrain missing while distant chunks are being meshed.
+    std::sort(selected.begin(), selected.end(), [&](const Chunk* a, const Chunk* b) {
+        const int distanceA = std::max(std::abs(a->x - centerChunkX), std::abs(a->z - centerChunkZ));
+        const int distanceB = std::max(std::abs(b->x - centerChunkX), std::abs(b->z - centerChunkZ));
+        if (distanceA != distanceB) return distanceA < distanceB;
+        if (a->x != b->x) return a->x < b->x;
+        return a->z < b->z;
+    });
 
     // Neighbour queries outside the rendered radius must behave as air.
     // Otherwise already-generated off-screen chunks can hide boundary faces
@@ -790,6 +801,17 @@ void VoxelWorld::BuildMesh(std::vector<WorldVertex>& output,int centerWorldX,int
             dirtyChunkMeshes_.find(key) != dirtyChunkMeshes_.end() ||
             cached->second.lod != expectedLod ||
             cached->second.outerBorder != outerBorder;
+    }
+    if (meshBuildBudget > 0u) {
+        std::size_t scheduled = 0u;
+        for (std::size_t i = 0; i < needsBuild.size(); ++i) {
+            if (!needsBuild[i]) continue;
+            if (scheduled < meshBuildBudget) {
+                ++scheduled;
+            } else {
+                needsBuild[i] = false;
+            }
+        }
     }
     static constexpr int neighborOffsets[6][3] = {
         {1,0,0},{-1,0,0},{0,1,0},{0,-1,0},{0,0,1},{0,0,-1}
@@ -1208,6 +1230,30 @@ bool VoxelWorld::Load(const std::string& filePath,Vec3& playerPosition,
         }
     }
     seed_=loadedSeed;chunks_=std::move(loadedChunks);chunkMeshCache_.clear();dirtyChunkMeshes_.clear();playerPosition=loadedPlayer;inventory=loadedInventory;return true;
+}
+
+bool VoxelWorld::HasPendingMeshBuild(int centerWorldX, int centerWorldZ,
+                                     int radiusInChunks) const {
+    const int centerChunkX = FloorDiv(centerWorldX, kChunkSize);
+    const int centerChunkZ = FloorDiv(centerWorldZ, kChunkSize);
+    for (const auto& entry : chunks_) {
+        const int cx = entry.first.first;
+        const int cz = entry.first.second;
+        if (radiusInChunks >= 0 &&
+            (std::abs(cx - centerChunkX) > radiusInChunks ||
+             std::abs(cz - centerChunkZ) > radiusInChunks)) continue;
+        const int distance = std::max(std::abs(cx - centerChunkX),
+                                      std::abs(cz - centerChunkZ));
+        const int expectedLod = distance <= 2 ? 0 : (distance == 3 ? 1 : 2);
+        const bool outerBorder = radiusInChunks >= 0 && distance >= radiusInChunks;
+        const auto key = std::make_pair(cx, cz);
+        const auto cached = chunkMeshCache_.find(key);
+        if (cached == chunkMeshCache_.end() ||
+            dirtyChunkMeshes_.find(key) != dirtyChunkMeshes_.end() ||
+            cached->second.lod != expectedLod ||
+            cached->second.outerBorder != outerBorder) return true;
+    }
+    return false;
 }
 
 void AppendCube(std::vector<WorldVertex>& output,const Vec3& center,const Vec3& half,const std::array<float,3>& color) {
