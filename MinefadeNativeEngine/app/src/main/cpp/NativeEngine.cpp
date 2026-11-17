@@ -172,6 +172,13 @@ Java_com_minefade_nativeengine_NativeBridge_nativeSetGraphicsOptions(
 }
 
 extern "C" JNIEXPORT void JNICALL
+Java_com_minefade_nativeengine_NativeBridge_nativeSetShaderOptions(
+        JNIEnv*, jclass, jboolean lavaAnimations, jboolean leafWind, jfloat leafWindStrength) {
+    minefade::GetEngine().SetShaderOptions(lavaAnimations == JNI_TRUE,
+        leafWind == JNI_TRUE, static_cast<float>(leafWindStrength));
+}
+
+extern "C" JNIEXPORT void JNICALL
 Java_com_minefade_nativeengine_NativeBridge_nativeSetInputOptions(
         JNIEnv*, jclass, jfloat sensitivityX, jfloat sensitivityY, jfloat joystickDeadzone,
         jboolean invertLookY, jboolean leftHanded, jint controlMode, jboolean autoJump) {
