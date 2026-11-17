@@ -777,6 +777,7 @@ void Engine::Shutdown() {
     if (ready_) SaveWorld();
     ui_.Shutdown();
     worldRenderer_.Shutdown();
+    transparentSortRevisions_.clear();
     if (entityVbo_ != 0) glDeleteBuffers(1, &entityVbo_);
     if (entityVao_ != 0) glDeleteVertexArrays(1, &entityVao_);
     if (itemVbo_ != 0) glDeleteBuffers(1, &itemVbo_);
@@ -807,30 +808,44 @@ void Engine::RebuildWorldMesh() {
                      static_cast<int>(std::floor(player_.position.z)),
                      renderDistanceChunks_, &transparentWorldMesh_, &worldChunkRanges_);
 
-    // Keep each chunk's transparent triangles far-to-near without changing the
-    // chunk ranges. The renderer sorts the chunk ranges again as the camera moves.
+    // Sort only transparent chunks whose geometry revision changed. Unchanged
+    // chunks keep their previously uploaded triangle order and GPU buffers.
+    std::set<std::pair<int, int>> activeSortKeys;
+    const Vec3 eye = ViewPosition();
     for (const ChunkMeshRange& range : worldChunkRanges_) {
-        if (range.transparentCount < 6u) continue;
-        using Triangle = std::array<WorldVertex,3>;
-        std::vector<std::pair<float,Triangle>> sorted;
-        sorted.reserve(range.transparentCount/3u);
-        const Vec3 eye=ViewPosition();
-        const std::size_t first=range.transparentFirst;
-        const std::size_t last=first+range.transparentCount;
-        for (std::size_t i=first;i+2u<last;i+=3u) {
-            Triangle triangle{transparentWorldMesh_[i],transparentWorldMesh_[i+1u],
-                              transparentWorldMesh_[i+2u]};
-            const float cx=(triangle[0].x+triangle[1].x+triangle[2].x)/3.0f-eye.x;
-            const float cy=(triangle[0].y+triangle[1].y+triangle[2].y)/3.0f-eye.y;
-            const float cz=(triangle[0].z+triangle[1].z+triangle[2].z)/3.0f-eye.z;
-            sorted.emplace_back(cx*cx+cy*cy+cz*cz,triangle);
+        const auto key = std::make_pair(range.chunkX, range.chunkZ);
+        activeSortKeys.insert(key);
+        const auto previous = transparentSortRevisions_.find(key);
+        if (previous != transparentSortRevisions_.end() &&
+            previous->second == range.revision) continue;
+        if (range.transparentCount >= 6u) {
+            using Triangle = std::array<WorldVertex, 3>;
+            std::vector<std::pair<float, Triangle>> sorted;
+            sorted.reserve(range.transparentCount / 3u);
+            const std::size_t first = range.transparentFirst;
+            const std::size_t last = first + range.transparentCount;
+            for (std::size_t i = first; i + 2u < last; i += 3u) {
+                Triangle triangle{transparentWorldMesh_[i], transparentWorldMesh_[i + 1u],
+                                  transparentWorldMesh_[i + 2u]};
+                const float cx = (triangle[0].x + triangle[1].x + triangle[2].x) / 3.0f - eye.x;
+                const float cy = (triangle[0].y + triangle[1].y + triangle[2].y) / 3.0f - eye.y;
+                const float cz = (triangle[0].z + triangle[1].z + triangle[2].z) / 3.0f - eye.z;
+                sorted.emplace_back(cx * cx + cy * cy + cz * cz, triangle);
+            }
+            std::sort(sorted.begin(), sorted.end(), [](const auto& a, const auto& b) {
+                return a.first > b.first;
+            });
+            std::size_t cursor = first;
+            for (const auto& entry : sorted)
+                for (const WorldVertex& vertex : entry.second) transparentWorldMesh_[cursor++] = vertex;
         }
-        std::sort(sorted.begin(),sorted.end(),[](const auto& a,const auto& b){
-            return a.first>b.first;
-        });
-        std::size_t cursor=first;
-        for (const auto& entry:sorted)
-            for (const WorldVertex& vertex:entry.second) transparentWorldMesh_[cursor++]=vertex;
+        transparentSortRevisions_[key] = range.revision;
+    }
+    for (auto it = transparentSortRevisions_.begin(); it != transparentSortRevisions_.end();) {
+        if (activeSortKeys.find(it->first) == activeSortKeys.end())
+            it = transparentSortRevisions_.erase(it);
+        else
+            ++it;
     }
 }
 
