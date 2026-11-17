@@ -97,6 +97,43 @@ public final class MinefadeSurfaceView extends GLSurfaceView {
         }
     }
 
+    /** True when the RmlUi HUD rendered successfully; false selects Android touch fallback. */
+    public boolean isNativeHudAvailable() {
+        if (!nativeReady) return false;
+        try {
+            return NativeBridge.nativeIsUiReady();
+        } catch (LinkageError | RuntimeException error) {
+            Log.w(TAG, "Could not query native HUD readiness", error);
+            return false;
+        }
+    }
+
+    public String nativeHudDiagnostic() {
+        if (!nativeReady) return "El motor no está listo.";
+        try {
+            String detail = NativeBridge.nativeGetLastInitError();
+            return detail == null ? "" : detail;
+        } catch (LinkageError | RuntimeException error) {
+            return "No se pudo leer el diagnóstico de RmlUi.";
+        }
+    }
+
+    /** Forward fallback overlay touches onto the same GL thread as the simulation. */
+    public void dispatchFallbackTouch(int action, int pointerId, float x, float y) {
+        if (!nativeReady) return;
+        queueEvent(() -> {
+            if (nativeReady) NativeBridge.nativeTouch(action, pointerId, x, y);
+        });
+    }
+
+    /** Dispatch emergency UI actions while RmlUi is unavailable. */
+    public void dispatchFallbackAction(int action, boolean pressed) {
+        if (!nativeReady) return;
+        queueEvent(() -> {
+            if (nativeReady) NativeBridge.nativeFallbackAction(action, pressed);
+        });
+    }
+
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         if (!nativeReady) return true;
