@@ -765,8 +765,10 @@ bool Engine::Initialise(float displayDensity, const std::uint8_t* atlasPixels,
     ui_.SetPerspectiveEnabled(false);
     ui_.SetChestButtonVisible(starterChestEnabled_ && !multiplayerMode_);
     RefreshInventoryUi();
-    ENGINE_LOGI("World ready: %zu chunks, %zu vertices, seed=%u",
-                world_.ChunkCount(), worldMesh_.size(), world_.Seed());
+    ENGINE_LOGI("World ready: %zu chunks, %d GPU vertices, seed=%u",
+                world_.ChunkCount(),
+                worldRenderer_.OpaqueVertexCount() + worldRenderer_.TransparentVertexCount(),
+                world_.Seed());
     // Commit the first generated world immediately. This makes the first launch
     // distinguishable from an empty menu and ensures the next launch can continue it.
     SaveWorld();
