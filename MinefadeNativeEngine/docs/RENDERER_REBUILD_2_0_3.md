@@ -60,3 +60,9 @@ The previous whole-world VBO re-upload and unconditional outer-ring rebuild are 
 ## Distant Horizons adaptation
 
 Minefade keeps its OpenGL ES implementation independent. The Distant Horizons-inspired direction remains a hierarchy of progressively coarser terrain data, neighbor-aware visibility/occlusion, retained material layers and far-data reduction. Minefade 2.0.3 adds per-chunk GPU residency and budgeted dirty-mesh processing but does not copy the Distant Horizons Java renderer or implement its complete data-source/quadtree pipeline. The existing far LOD still uses a top-surface height/material field and can omit caves and overhangs at distance. A multi-layer column representation and hierarchical region selection remain the next renderer milestone.
+
+## Seguimiento de GPU buffers para Minefade 2.0.4
+
+El renderer por chunk conserva ahora la capacidad reservada de cada VBO opaco y transparente mientras el chunk permanezca residente. Si una nueva malla cabe en esa capacidad, se actualizan sus bytes con `glBufferSubData`; `glBufferData` solo vuelve a reservar almacenamiento cuando la malla supera el máximo anterior. Al retirar un chunk o liberar el renderer, también se reinicia esa capacidad.
+
+Esto reduce las reasignaciones de almacenamiento GPU durante ediciones repetidas del mismo chunk. No significa que el meshing ya sea asíncrono ni que exista un presupuesto rígido de bytes por frame: esos siguen siendo pasos separados del plan 2.1. La prueba `test_chunk_gpu_buffers_reuse_capacity` protege este contrato a nivel de integración del código.
