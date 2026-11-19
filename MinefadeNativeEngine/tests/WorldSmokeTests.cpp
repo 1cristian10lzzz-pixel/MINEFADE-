@@ -9,6 +9,8 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <chrono>
+#include <thread>
 
 using namespace minefade;
 
@@ -588,6 +590,36 @@ int main() {
     assert(epochWorld.DiscardedStaleChunkResults() >= 1u);
     assert(epochWorld.GetSurfaceHeight(16 * 12 + 8, -16 * 9 + 8) > 0);
     assert(epochWorld.GetSurfaceHeight(8, 8) == 0);
+
+    // Re-requesting a coordinate that is still in flight under an older epoch
+    // must enqueue a fresh current-epoch job instead of treating the old one as
+    // a valid replacement for it.
+    VoxelWorld reissuedWorld(0x52455155u);
+    reissuedWorld.RequestGenerateAround(8, 8, 0);
+    const auto reissuedFirstEpoch = reissuedWorld.GenerationEpoch();
+    reissuedWorld.RequestGenerateAround(8, 8, 0);
+    assert(reissuedWorld.GenerationEpoch() > reissuedFirstEpoch);
+    reissuedWorld.WaitForChunkGeneration();
+    assert(reissuedWorld.ChunkCount() == 1u);
+    assert(reissuedWorld.DiscardedStaleChunkResults() >= 1u);
+    assert(reissuedWorld.PendingChunkCount() == 0u);
+
+    // Exercise the frame-pumped path used during gameplay, not only the
+    // blocking save/load wait path tested above.
+    VoxelWorld pumpedEpochWorld(0x50554d50u);
+    pumpedEpochWorld.RequestGenerateAround(8, 8, 3);
+    pumpedEpochWorld.RequestGenerateAround(16 * 11 + 8, 16 * 7 + 8, 0);
+    for (int frame = 0; frame < 5000 &&
+         (pumpedEpochWorld.PendingChunkCount() > 0u ||
+          pumpedEpochWorld.ChunkCount() == 0u ||
+          pumpedEpochWorld.DiscardedStaleChunkResults() == 0u); ++frame) {
+        pumpedEpochWorld.PumpChunkGeneration();
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
+    assert(pumpedEpochWorld.PendingChunkCount() == 0u);
+    assert(pumpedEpochWorld.ChunkCount() == 1u);
+    assert(pumpedEpochWorld.DiscardedStaleChunkResults() >= 1u);
+    assert(pumpedEpochWorld.GetSurfaceHeight(16 * 11 + 8, 16 * 7 + 8) > 0);
 
     VoxelWorld asyncWorld(987u);
     asyncWorld.GenerateAround(0, 0, 0);

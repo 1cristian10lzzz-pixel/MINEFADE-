@@ -21,14 +21,14 @@ Los fallos de tareas antiguas no desactivan el pool de workers ni fuerzan genera
 
 ## Prueba añadida
 
-WorldSmokeTests.cpp crea una solicitud amplia y la sustituye inmediatamente por una región remota de un solo chunk. Después espera a que finalice el trabajo y verifica que:
+WorldSmokeTests.cpp cubre tres casos: reemplazo por una zona remota, reenvío del mismo chunk mientras sigue en vuelo una solicitud antigua y el camino de bombeo por frames utilizado durante la partida. Se verifica que:
 
 1. La época nueva es superior a la anterior.
 2. La región solicitada contiene un solo chunk objetivo.
 3. El resultado de al menos un worker obsoleto se ha descartado.
 4. No quedan tareas pendientes de la solicitud actual.
 5. Solo se ha insertado el chunk de la región nueva.
-6. La región anterior no se ha repoblado accidentalmente.
+6. La región anterior no se ha repoblado accidentalmente.\n7. Una solicitud nueva del mismo identificador de chunk no se pierde detrás de un worker antiguo.\n8. El camino PumpChunkGeneration descarta resultados antiguos y termina la generación de la región actual.
 
 La suite existente sigue comprobando generación determinista, guardado/carga, revisiones de malla y LOD actual. El test previo de reutilización GPU continúa ejecutándose en run-world-tests.sh.
 
