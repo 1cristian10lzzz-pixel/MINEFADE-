@@ -53,6 +53,7 @@ bool WorldMeshRenderer::UploadPass(GLuint& vao, GLuint& vbo, GLsizei& drawCount,
 
     glBindVertexArray(vao);
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    // This replaces the old GL_STATIC_DRAW whole-store reallocation on every rebuild.
     // Grow storage only when this chunk needs a larger mesh. Most edits reuse
     // the already-reserved allocation and transfer only the new vertex bytes.
     if (uploadBytes > capacityBytes) {
