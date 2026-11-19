@@ -572,6 +572,23 @@ int main() {
     assert(streamedLoaded.GetBlock(8, height + 1, 8) == BlockId::Dirt);
     std::filesystem::remove(path);
 
+    // A rapid move replaces the wanted region. Workers launched for the old
+    // region may finish, but their chunks must not be inserted into the new world
+    // stream, and an old in-flight job must not suppress a replacement request
+    // for the same coordinate in a newer epoch.
+    VoxelWorld epochWorld(0x45504f43u);
+    epochWorld.RequestGenerateAround(8, 8, 3);
+    const std::uint64_t firstGenerationEpoch = epochWorld.GenerationEpoch();
+    epochWorld.RequestGenerateAround(16 * 12 + 8, -16 * 9 + 8, 0);
+    assert(epochWorld.GenerationEpoch() > firstGenerationEpoch);
+    assert(epochWorld.RequestedChunkCount() == 1u);
+    epochWorld.WaitForChunkGeneration();
+    assert(epochWorld.PendingChunkCount() == 0u);
+    assert(epochWorld.ChunkCount() == 1u);
+    assert(epochWorld.DiscardedStaleChunkResults() >= 1u);
+    assert(epochWorld.GetSurfaceHeight(16 * 12 + 8, -16 * 9 + 8) > 0);
+    assert(epochWorld.GetSurfaceHeight(8, 8) == 0);
+
     VoxelWorld asyncWorld(987u);
     asyncWorld.GenerateAround(0, 0, 0);
     asyncWorld.RequestGenerateAround(32, 32, 1);

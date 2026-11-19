@@ -88,6 +88,9 @@ public:
     bool PumpChunkGeneration();
     void WaitForChunkGeneration();
     std::size_t PendingChunkCount() const;
+    std::uint64_t GenerationEpoch() const noexcept { return generationEpoch_; }
+    std::size_t RequestedChunkCount() const noexcept { return requestedChunks_.size(); }
+    std::uint64_t DiscardedStaleChunkResults() const noexcept { return discardedStaleChunkResults_; }
     BlockId GetBlock(int x, int y, int z) const;
     bool SetBlock(int x, int y, int z, BlockId block);
     bool IsSolid(int x, int y, int z) const;
@@ -162,13 +165,19 @@ private:
     mutable std::set<std::pair<int, int>> dirtyChunkMeshes_;
     std::deque<std::pair<int, int>> generationQueue_;
     std::set<std::pair<int, int>> queuedChunks_;
+    // The bounded desired region for the newest streaming request. Results from
+    // older epochs are discarded instead of repopulating chunks behind the player.
+    std::set<std::pair<int, int>> requestedChunks_;
     struct ChunkJob {
         std::pair<int, int> key;
+        std::uint64_t requestEpoch{0};
         std::future<Chunk> future;
     };
     static constexpr std::size_t kChunkWorkerCount = 2;
     static constexpr std::size_t kMeshWorkerCount = 2;
     std::vector<ChunkJob> pendingChunkJobs_;
+    std::uint64_t generationEpoch_{0};
+    std::uint64_t discardedStaleChunkResults_{0};
     bool asyncGenerationDisabled_{false};
 };
 

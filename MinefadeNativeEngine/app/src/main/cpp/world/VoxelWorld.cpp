@@ -582,6 +582,7 @@ void VoxelWorld::StartNextChunkJob() {
         const int chunkZ = key.second;
         ChunkJob job;
         job.key = key;
+        job.requestEpoch = generationEpoch_;
         try {
             job.future = std::async(std::launch::async, [this, chunkX, chunkZ]() {
                 return MakeChunk(chunkX, chunkZ);
@@ -599,6 +600,12 @@ void VoxelWorld::RequestGenerateAround(int worldX, int worldZ, int radiusInChunk
     const int centerX = FloorDiv(worldX, kChunkSize);
     const int centerZ = FloorDiv(worldZ, kChunkSize);
     radiusInChunks = std::clamp(radiusInChunks, 0, 8);
+
+    // A new request supersedes every older streaming target. Work already running
+    // cannot be force-cancelled portably, so each job carries this epoch and its
+    // result is accepted only while the chunk is still part of this requested area.
+    ++generationEpoch_;
+    requestedChunks_.clear();
     generationQueue_.clear();
     queuedChunks_.clear();
 
@@ -606,10 +613,16 @@ void VoxelWorld::RequestGenerateAround(int worldX, int worldZ, int radiusInChunk
     for (int z = centerZ - radiusInChunks; z <= centerZ + radiusInChunks; ++z) {
         for (int x = centerX - radiusInChunks; x <= centerX + radiusInChunks; ++x) {
             const auto key = std::make_pair(x, z);
+            requestedChunks_.insert(key);
             if (chunks_.find(key) != chunks_.end()) continue;
+            // An older job for the same key does not satisfy the current request:
+            // its result will be discarded, and the current epoch must queue a
+            // replacement rather than silently losing this chunk.
             const bool alreadyBuilding = std::any_of(
                 pendingChunkJobs_.begin(), pendingChunkJobs_.end(),
-                [&key](const ChunkJob& job) { return job.key == key; });
+                [this, &key](const ChunkJob& job) {
+                    return job.key == key && job.requestEpoch == generationEpoch_;
+                });
             if (alreadyBuilding) continue;
             missing.push_back(key);
         }
@@ -633,24 +646,37 @@ bool VoxelWorld::PumpChunkGeneration() {
         if (job.future.valid() &&
             job.future.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
             const auto key = job.key;
+            const bool currentRequest = job.requestEpoch == generationEpoch_ &&
+                requestedChunks_.find(key) != requestedChunks_.end();
             try {
                 Chunk chunk = job.future.get();
-                queuedChunks_.erase(key);
-                const auto completedKey = std::make_pair(chunk.x, chunk.z);
-                if (chunks_.find(completedKey) == chunks_.end()) {
-                    chunks_.emplace(completedKey, std::move(chunk));
-                    InvalidateChunkAndNeighbors(completedKey.first, completedKey.second);
-                    addedChunk = true;
+                if (!currentRequest) {
+                    ++discardedStaleChunkResults_;
+                } else {
+                    queuedChunks_.erase(key);
+                    const auto completedKey = std::make_pair(chunk.x, chunk.z);
+                    if (chunks_.find(completedKey) == chunks_.end()) {
+                        chunks_.emplace(completedKey, std::move(chunk));
+                        InvalidateChunkAndNeighbors(completedKey.first, completedKey.second);
+                        addedChunk = true;
+                    }
                 }
             } catch (...) {
-                // A worker failure should not permanently stop terrain streaming.
-                asyncGenerationDisabled_ = true;
-                queuedChunks_.erase(key);
-                if (chunks_.find(key) == chunks_.end()) {
-                    Chunk chunk = MakeChunk(key.first, key.second);
-                    chunks_.emplace(key, std::move(chunk));
-                    InvalidateChunkAndNeighbors(key.first, key.second);
-                    addedChunk = true;
+                if (!currentRequest) {
+                    // A failure in work that has already been superseded must not
+                    // disable the worker pool or synchronously generate stale terrain.
+                    ++discardedStaleChunkResults_;
+                } else {
+                    // A current worker failure falls back to one synchronous chunk,
+                    // preserving streaming instead of permanently blocking the queue.
+                    asyncGenerationDisabled_ = true;
+                    queuedChunks_.erase(key);
+                    if (chunks_.find(key) == chunks_.end()) {
+                        Chunk chunk = MakeChunk(key.first, key.second);
+                        chunks_.emplace(key, std::move(chunk));
+                        InvalidateChunkAndNeighbors(key.first, key.second);
+                        addedChunk = true;
+                    }
                 }
             }
             pendingChunkJobs_.erase(pendingChunkJobs_.begin() + static_cast<std::ptrdiff_t>(i));
@@ -663,7 +689,8 @@ bool VoxelWorld::PumpChunkGeneration() {
         const auto key = generationQueue_.front();
         generationQueue_.pop_front();
         queuedChunks_.erase(key);
-        if (chunks_.find(key) == chunks_.end()) {
+        if (requestedChunks_.find(key) != requestedChunks_.end() &&
+            chunks_.find(key) == chunks_.end()) {
             Chunk chunk = MakeChunk(key.first, key.second);
             chunks_.emplace(key, std::move(chunk));
             InvalidateChunkAndNeighbors(key.first, key.second);
@@ -680,7 +707,8 @@ void VoxelWorld::WaitForChunkGeneration() {
             const auto key = generationQueue_.front();
             generationQueue_.pop_front();
             queuedChunks_.erase(key);
-            if (chunks_.find(key) == chunks_.end()) {
+            if (requestedChunks_.find(key) != requestedChunks_.end() &&
+                chunks_.find(key) == chunks_.end()) {
                 Chunk chunk = MakeChunk(key.first, key.second);
                 chunks_.emplace(key, std::move(chunk));
                 InvalidateChunkAndNeighbors(key.first, key.second);
@@ -690,22 +718,32 @@ void VoxelWorld::WaitForChunkGeneration() {
         if (pendingChunkJobs_.empty()) continue;
         ChunkJob job = std::move(pendingChunkJobs_.front());
         pendingChunkJobs_.erase(pendingChunkJobs_.begin());
+        const bool currentRequest = job.requestEpoch == generationEpoch_ &&
+            requestedChunks_.find(job.key) != requestedChunks_.end();
         if (job.future.valid()) {
             try {
                 Chunk chunk = job.future.get();
-                queuedChunks_.erase(job.key);
-                const auto key = std::make_pair(chunk.x, chunk.z);
-                if (chunks_.find(key) == chunks_.end()) {
-                    chunks_.emplace(key, std::move(chunk));
-                    InvalidateChunkAndNeighbors(key.first, key.second);
+                if (!currentRequest) {
+                    ++discardedStaleChunkResults_;
+                } else {
+                    queuedChunks_.erase(job.key);
+                    const auto key = std::make_pair(chunk.x, chunk.z);
+                    if (chunks_.find(key) == chunks_.end()) {
+                        chunks_.emplace(key, std::move(chunk));
+                        InvalidateChunkAndNeighbors(key.first, key.second);
+                    }
                 }
             } catch (...) {
-                asyncGenerationDisabled_ = true;
-                queuedChunks_.erase(job.key);
-                if (chunks_.find(job.key) == chunks_.end()) {
-                    Chunk chunk = MakeChunk(job.key.first, job.key.second);
-                    chunks_.emplace(job.key, std::move(chunk));
-                    InvalidateChunkAndNeighbors(job.key.first, job.key.second);
+                if (!currentRequest) {
+                    ++discardedStaleChunkResults_;
+                } else {
+                    asyncGenerationDisabled_ = true;
+                    queuedChunks_.erase(job.key);
+                    if (chunks_.find(job.key) == chunks_.end()) {
+                        Chunk chunk = MakeChunk(job.key.first, job.key.second);
+                        chunks_.emplace(job.key, std::move(chunk));
+                        InvalidateChunkAndNeighbors(job.key.first, job.key.second);
+                    }
                 }
             }
         }
@@ -713,21 +751,29 @@ void VoxelWorld::WaitForChunkGeneration() {
 }
 
 std::size_t VoxelWorld::PendingChunkCount() const {
-    return generationQueue_.size() + pendingChunkJobs_.size();
+    const std::size_t currentWorkers = static_cast<std::size_t>(std::count_if(
+        pendingChunkJobs_.begin(), pendingChunkJobs_.end(),
+        [this](const ChunkJob& job) { return job.requestEpoch == generationEpoch_; }));
+    return generationQueue_.size() + currentWorkers;
 }
 
 void VoxelWorld::GenerateAround(int worldX,int worldZ,int radiusInChunks) {
     WaitForChunkGeneration();
+    ++generationEpoch_;
+    requestedChunks_.clear();
     generationQueue_.clear();
     queuedChunks_.clear();
     const int centerX=FloorDiv(worldX,kChunkSize),centerZ=FloorDiv(worldZ,kChunkSize);
     radiusInChunks=std::clamp(radiusInChunks,0,8);
     for(int z=centerZ-radiusInChunks;z<=centerZ+radiusInChunks;++z)
-        for(int x=centerX-radiusInChunks;x<=centerX+radiusInChunks;++x)
-            if(chunks_.find({x,z})==chunks_.end()) {
-                chunks_.emplace(std::make_pair(x,z),MakeChunk(x,z));
+        for(int x=centerX-radiusInChunks;x<=centerX+radiusInChunks;++x) {
+            const auto key = std::make_pair(x,z);
+            requestedChunks_.insert(key);
+            if(chunks_.find(key)==chunks_.end()) {
+                chunks_.emplace(key,MakeChunk(x,z));
                 InvalidateChunkAndNeighbors(x,z);
             }
+        }
 }
 
 BlockId VoxelWorld::GetBlock(int x,int y,int z) const {
@@ -1281,6 +1327,8 @@ bool VoxelWorld::Save(const std::string& filePath,const Vec3& playerPosition,
 bool VoxelWorld::Load(const std::string& filePath,Vec3& playerPosition,
                       std::array<std::uint32_t,36>& inventory) {
     WaitForChunkGeneration();
+    ++generationEpoch_;
+    requestedChunks_.clear();
     generationQueue_.clear();
     queuedChunks_.clear();
     std::ifstream file(filePath,std::ios::binary);if(!file)return false;
