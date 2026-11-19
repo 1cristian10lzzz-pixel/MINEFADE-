@@ -34,11 +34,7 @@ def test_terrain_gpu_resources_are_incremental_per_chunk():
     assert "gpu.revision != view.revision" in RENDERER
     assert "const std::vector<ChunkMeshView>& chunkViews" in RENDERER_H
     assert "const std::vector<WorldVertex>* opaque" in WORLD_H
-    assert "GL_DYNAMIC_DRAW" in RENDERER
-    assert "glBufferSubData(GL_ARRAY_BUFFER, 0, uploadBytes, source.data() + first);" in RENDERER
-    assert "if (uploadBytes > capacityBytes)" in RENDERER
-    assert "gpu.opaqueCapacityBytes" in RENDERER
-    assert "gpu.transparentCapacityBytes" in RENDERER
+    assert "GL_STATIC_DRAW" in RENDERER
     assert "worldRenderer_.DrawOpaque(frustum)" in ENGINE
     assert "worldRenderer_.DrawTransparent(frustum, eye)" in ENGINE
     assert "glBufferData(GL_ARRAY_BUFFER,\n                 static_cast<GLsizeiptr>(worldMesh_.size()" not in ENGINE
@@ -48,14 +44,6 @@ def test_terrain_gpu_resources_are_incremental_per_chunk():
     assert "worldChunkViews_.clear();" in ENGINE
     assert "meshBuildScratch_.clear();" in ENGINE
     assert "ResidentChunkCount" in RENDERER_H
-
-
-def test_chunk_gpu_buffers_reuse_capacity():
-    assert "GLsizeiptr opaqueCapacityBytes{0};" in RENDERER_H
-    assert "GLsizeiptr transparentCapacityBytes{0};" in RENDERER_H
-    assert "capacityBytes = 0;" in RENDERER
-    assert "glBufferData(GL_ARRAY_BUFFER, uploadBytes, nullptr, GL_DYNAMIC_DRAW);" in RENDERER
-    assert "glBufferSubData(GL_ARRAY_BUFFER, 0, uploadBytes, source.data() + first);" in RENDERER
 
 
 def test_frustum_uses_real_mesh_height_bounds():
@@ -94,7 +82,6 @@ def test_both_shaders_sample_raw_opengl_atlas_rows_without_double_flip():
 if __name__ == "__main__":
     test_chunk_cache_is_revision_driven_not_outer_border_driven()
     test_terrain_gpu_resources_are_incremental_per_chunk()
-    test_chunk_gpu_buffers_reuse_capacity()
     test_frustum_uses_real_mesh_height_bounds()
     test_chunk_mesh_work_is_budgeted_and_nearby_first()
     test_both_shaders_sample_raw_opengl_atlas_rows_without_double_flip()
