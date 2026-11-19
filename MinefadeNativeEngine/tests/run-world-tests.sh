@@ -30,4 +30,6 @@ c++ -std=c++20 -O2 -Wall -Wextra -Wpedantic -Wconversion -Wshadow \
 "$BIN"
 rm -f "$BIN"
 
+python3 "$ROOT/tests/test_gpu_buffer_reuse.py"
+
 echo "All Minefade Rust/C++ regression tests passed."
