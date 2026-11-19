@@ -13,38 +13,53 @@ WorldMeshRenderer::~WorldMeshRenderer() {
     Shutdown();
 }
 
-void WorldMeshRenderer::ReleasePass(GLuint& vao, GLuint& vbo, GLsizei& drawCount) {
+void WorldMeshRenderer::ReleasePass(GLuint& vao, GLuint& vbo, GLsizei& drawCount,
+                                  GLsizeiptr& capacityBytes) {
     if (vbo != 0) glDeleteBuffers(1, &vbo);
     if (vao != 0) glDeleteVertexArrays(1, &vao);
     vao = 0;
     vbo = 0;
     drawCount = 0;
+    capacityBytes = 0;
 }
 
 bool WorldMeshRenderer::UploadPass(GLuint& vao, GLuint& vbo, GLsizei& drawCount,
+                                   GLsizeiptr& capacityBytes,
                                    const std::vector<WorldVertex>& source,
                                    std::size_t first, std::size_t count) {
     if (count == 0u) {
-        ReleasePass(vao, vbo, drawCount);
+        ReleasePass(vao, vbo, drawCount, capacityBytes);
         return true;
     }
     if (first > source.size() || count > source.size() - first ||
         count > static_cast<std::size_t>(std::numeric_limits<GLsizei>::max())) {
-        ReleasePass(vao, vbo, drawCount);
+        ReleasePass(vao, vbo, drawCount, capacityBytes);
         return false;
     }
+
+    const std::size_t requiredBytes = count * sizeof(WorldVertex);
+    if (requiredBytes > static_cast<std::size_t>(std::numeric_limits<GLsizeiptr>::max())) {
+        ReleasePass(vao, vbo, drawCount, capacityBytes);
+        return false;
+    }
+    const GLsizeiptr uploadBytes = static_cast<GLsizeiptr>(requiredBytes);
+
     if (vao == 0) glGenVertexArrays(1, &vao);
     if (vbo == 0) glGenBuffers(1, &vbo);
     if (vao == 0 || vbo == 0) {
-        ReleasePass(vao, vbo, drawCount);
+        ReleasePass(vao, vbo, drawCount, capacityBytes);
         return false;
     }
 
     glBindVertexArray(vao);
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER,
-                 static_cast<GLsizeiptr>(count * sizeof(WorldVertex)),
-                 source.data() + first, GL_STATIC_DRAW);
+    // Grow storage only when this chunk needs a larger mesh. Most edits reuse
+    // the already-reserved allocation and transfer only the new vertex bytes.
+    if (uploadBytes > capacityBytes) {
+        glBufferData(GL_ARRAY_BUFFER, uploadBytes, nullptr, GL_DYNAMIC_DRAW);
+        capacityBytes = uploadBytes;
+    }
+    glBufferSubData(GL_ARRAY_BUFFER, 0, uploadBytes, source.data() + first);
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(WorldVertex),
                           reinterpret_cast<const void*>(offsetof(WorldVertex, x)));
@@ -64,7 +79,7 @@ bool WorldMeshRenderer::UploadPass(GLuint& vao, GLuint& vbo, GLsizei& drawCount,
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     if (glGetError() != GL_NO_ERROR) {
-        ReleasePass(vao, vbo, drawCount);
+        ReleasePass(vao, vbo, drawCount, capacityBytes);
         return false;
     }
     drawCount = static_cast<GLsizei>(count);
@@ -85,9 +100,10 @@ bool WorldMeshRenderer::Sync(const std::vector<ChunkMeshView>& chunkViews) {
 
         if (gpu.revision != view.revision) {
             const bool opaqueOk = UploadPass(gpu.opaqueVao, gpu.opaqueVbo, gpu.opaqueCount,
-                *view.opaque, 0u, view.opaque->size());
+                gpu.opaqueCapacityBytes, *view.opaque, 0u, view.opaque->size());
             const bool transparentOk = UploadPass(gpu.transparentVao, gpu.transparentVbo,
-                gpu.transparentCount, *view.transparent, 0u, view.transparent->size());
+                gpu.transparentCount, gpu.transparentCapacityBytes,
+                *view.transparent, 0u, view.transparent->size());
             if (!opaqueOk || !transparentOk) {
                 gpu.revision = 0;
                 gpu.opaqueCount = 0;
@@ -107,8 +123,8 @@ bool WorldMeshRenderer::Sync(const std::vector<ChunkMeshView>& chunkViews) {
     for (auto it = chunks_.begin(); it != chunks_.end();) {
         if (active.find(it->first) == active.end()) {
             GpuChunk& gpu = it->second;
-            ReleasePass(gpu.opaqueVao, gpu.opaqueVbo, gpu.opaqueCount);
-            ReleasePass(gpu.transparentVao, gpu.transparentVbo, gpu.transparentCount);
+            ReleasePass(gpu.opaqueVao, gpu.opaqueVbo, gpu.opaqueCount, gpu.opaqueCapacityBytes);
+            ReleasePass(gpu.transparentVao, gpu.transparentVbo, gpu.transparentCount, gpu.transparentCapacityBytes);
             it = chunks_.erase(it);
         } else {
             ++it;
@@ -192,8 +208,8 @@ void WorldMeshRenderer::DrawTransparent(const CameraFrustum& frustum,
 void WorldMeshRenderer::Shutdown() {
     for (auto& entry : chunks_) {
         GpuChunk& gpu = entry.second;
-        ReleasePass(gpu.opaqueVao, gpu.opaqueVbo, gpu.opaqueCount);
-        ReleasePass(gpu.transparentVao, gpu.transparentVbo, gpu.transparentCount);
+        ReleasePass(gpu.opaqueVao, gpu.opaqueVbo, gpu.opaqueCount, gpu.opaqueCapacityBytes);
+        ReleasePass(gpu.transparentVao, gpu.transparentVbo, gpu.transparentCount, gpu.transparentCapacityBytes);
     }
     chunks_.clear();
     opaqueVertexCount_ = 0;
