@@ -40,15 +40,21 @@ private:
         GLuint transparentVbo{0};
         GLsizei opaqueCount{0};
         GLsizei transparentCount{0};
+        // Keep the high-water allocation while this chunk remains resident.
+        // Mesh edits can then update the existing storage without reallocating it.
+        GLsizeiptr opaqueCapacityBytes{0};
+        GLsizeiptr transparentCapacityBytes{0};
         std::uint64_t revision{0};
         float minY{0.0f};
         float maxY{0.0f};
     };
 
     static bool UploadPass(GLuint& vao, GLuint& vbo, GLsizei& drawCount,
+                           GLsizeiptr& capacityBytes,
                            const std::vector<WorldVertex>& source,
                            std::size_t first, std::size_t count);
-    static void ReleasePass(GLuint& vao, GLuint& vbo, GLsizei& drawCount);
+    static void ReleasePass(GLuint& vao, GLuint& vbo, GLsizei& drawCount,
+                            GLsizeiptr& capacityBytes);
     static bool IsVisible(const ChunkMeshRange& range, const CameraFrustum& frustum) noexcept;
 
     std::map<std::pair<int, int>, GpuChunk> chunks_;
