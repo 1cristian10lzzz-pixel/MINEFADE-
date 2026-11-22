@@ -20,7 +20,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Apply Minefade 2.0.4 phases 6 and 7
-        if: github.ref_name == 'minefade-2.2-phase6-7-audio' || github.ref_name == 'minefade-2.0.5-phase1-stability'
+        if: ${{ github.ref_name == 'minefade-2.2-phase6-7-audio' || github.ref_name == 'minefade-2.0.5-phase1-stability' }}
         shell: bash
         run: |
           set -euo pipefail
@@ -29,7 +29,7 @@ jobs:
           git apply /tmp/minefade-phase6-7.patch
 
       - name: Apply Minefade 2.0.5 Phase 1 stability changes
-        if: github.ref_name == 'minefade-2.0.5-phase1-stability'
+        if: ${{ github.ref_name == 'minefade-2.0.5-phase1-stability' }}
         shell: bash
         run: |
           set -euo pipefail
@@ -156,7 +156,7 @@ jobs:
           retention-days: 14
 
       - name: Publish Minefade 2.0.4 GitHub release
-        if: github.ref_name != 'minefade-2.0.5-phase1-stability'
+        if: ${{ github.ref_name != 'minefade-2.0.5-phase1-stability' }}
         uses: softprops/action-gh-release@v2
         with:
           tag_name: minefade-v2.0.4-phase6-7
