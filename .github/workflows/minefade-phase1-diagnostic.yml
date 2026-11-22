@@ -1,0 +1,15 @@
+name: Minefade Phase 1 Actions Diagnostic
+
+on:
+  push:
+    branches:
+      - minefade-2.0.5-phase1-stability
+
+jobs:
+  diagnostic:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Confirm Actions runner
+        run: |
+          echo "Minefade Phase 1 runner started"
+          git --version
