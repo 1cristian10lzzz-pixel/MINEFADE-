@@ -2,7 +2,7 @@ name: Minefade 2.0 Android Build
 
 on:
   push:
-    branches: [minefade-deep-renewal, minefade-render-optimization, minefade-worlds-mods-commands, minefade-render-overhaul-review12, minefade-ultimate-overhaul-phase1, minefade-1.0-complete-overhaul, minefade-2.0, minefade-2.1-stability-shaders, minefade-2.0.3-renderer-rebuild, minefade-2.2-phase6-7-audio]
+    branches: [minefade-deep-renewal, minefade-render-optimization, minefade-worlds-mods-commands, minefade-render-overhaul-review12, minefade-ultimate-overhaul-phase1, minefade-1.0-complete-overhaul, minefade-2.0, minefade-2.1-stability-shaders, minefade-2.0.3-renderer-rebuild, minefade-2.2-phase6-7-audio, minefade-2.0.5-phase1-stability]
   workflow_dispatch:
 
 concurrency:
@@ -20,13 +20,23 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Apply Minefade 2.0.4 phases 6 and 7
-        if: github.ref_name == 'minefade-2.2-phase6-7-audio'
+        if: github.ref_name == 'minefade-2.2-phase6-7-audio' || github.ref_name == 'minefade-2.0.5-phase1-stability'
         shell: bash
         run: |
           set -euo pipefail
           base64 --decode patches/minefade-phase6-7.patch.xz.b64 | xz -dc > /tmp/minefade-phase6-7.patch
           git apply --check /tmp/minefade-phase6-7.patch
           git apply /tmp/minefade-phase6-7.patch
+
+      - name: Apply Minefade 2.0.5 Phase 1 stability changes
+        if: github.ref_name == 'minefade-2.0.5-phase1-stability'
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat patches/minefade-phase1-stability/part-*.b64 > /tmp/minefade-phase1-stability.patch.xz.b64
+          base64 --decode /tmp/minefade-phase1-stability.patch.xz.b64 | xz -dc > /tmp/minefade-phase1-stability.patch
+          git apply --check /tmp/minefade-phase1-stability.patch
+          git apply /tmp/minefade-phase1-stability.patch
 
       - name: Generate committed baseline block catalogue
         working-directory: MinefadeNativeEngine
@@ -36,7 +46,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if [[ "${GITHUB_REF_NAME:-}" == "minefade-ultimate-overhaul-phase1" || "${GITHUB_REF_NAME:-}" == "minefade-1.0-complete-overhaul" || "${GITHUB_REF_NAME:-}" == "minefade-2.0" || "${GITHUB_REF_NAME:-}" == "minefade-2.1-stability-shaders" || "${GITHUB_REF_NAME:-}" == "minefade-2.0.3-renderer-rebuild" || "${GITHUB_REF_NAME:-}" == "minefade-2.2-phase6-7-audio" ]]; then
+          if [[ "${GITHUB_REF_NAME:-}" == "minefade-ultimate-overhaul-phase1" || "${GITHUB_REF_NAME:-}" == "minefade-1.0-complete-overhaul" || "${GITHUB_REF_NAME:-}" == "minefade-2.0" || "${GITHUB_REF_NAME:-}" == "minefade-2.1-stability-shaders" || "${GITHUB_REF_NAME:-}" == "minefade-2.0.3-renderer-rebuild" || "${GITHUB_REF_NAME:-}" == "minefade-2.2-phase6-7-audio" || "${GITHUB_REF_NAME:-}" == "minefade-2.0.5-phase1-stability" ]]; then
             echo "Minefade 2.0 validates the committed source snapshot."
           else
             cat review12-render/part-*.b64 | base64 --decode | xz -dc > /tmp/review12-render.patch
@@ -104,6 +114,7 @@ jobs:
           python3 tests/test_renderer_invariants.py
           python3 tests/test_ambient_audio.py
           python3 tests/test_phase_four_lan_controls.py
+          python3 tests/test_phase1_stability.py
 
       - name: Build Android debug APK
         working-directory: MinefadeNativeEngine
@@ -126,7 +137,9 @@ jobs:
 
           "$AAPT" dump badging "$APK" > /tmp/minefade-apk-badging.txt
           grep -F "package: name='com.minefade.nativeengine'" /tmp/minefade-apk-badging.txt
-          grep -F "versionName='2.0.4'" /tmp/minefade-apk-badging.txt
+          EXPECTED_VERSION="2.0.4"
+          if [[ "${GITHUB_REF_NAME}" == "minefade-2.0.5-phase1-stability" ]]; then EXPECTED_VERSION="2.0.5"; fi
+          grep -F "versionName='${EXPECTED_VERSION}'" /tmp/minefade-apk-badging.txt
 
           unzip -Z1 "$APK" | grep -Fx 'lib/arm64-v8a/libminefade_native.so'
           unzip -Z1 "$APK" | grep -Fx 'lib/armeabi-v7a/libminefade_native.so'
@@ -137,12 +150,13 @@ jobs:
       - name: Upload Minefade 2.0 APK
         uses: actions/upload-artifact@v4
         with:
-          name: Minefade-2.0.4-APK
+          name: ${{ github.ref_name == 'minefade-2.0.5-phase1-stability' && 'Minefade-2.0.5-Phase1-APK' || 'Minefade-2.0.4-APK' }}
           path: MinefadeNativeEngine/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 14
 
       - name: Publish Minefade 2.0.4 GitHub release
+        if: github.ref_name != 'minefade-2.0.5-phase1-stability'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: minefade-v2.0.4-phase6-7
@@ -160,24 +174,46 @@ jobs:
             - Conservación de los efectos de juego, IDs de bloques y formato de mundos.
 
             Es una compilación debug/prerelease. Requiere validación visual y auditiva en dispositivos físicos antes de considerarse estable.
+
+      - name: Publish Minefade 2.0.5 Phase 1 GitHub release
+        if: github.ref_name == 'minefade-2.0.5-phase1-stability'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: minefade-v2.0.5-phase1
+          name: Minefade 2.0.5 — Fase 1: estabilidad
+          draft: false
+          prerelease: true
+          files: MinefadeNativeEngine/app/build/outputs/apk/debug/app-debug.apk
+          body: |
+            Minefade 2.0.5 — Fase 1 de estabilidad.
+
+            Incluye correcciones de geometría compuesta, multitáctil por ID de puntero,
+            selección coherente del HUD de recuperación, guardado antes de salir,
+            retorno al menú de mundos, ajustes básicos de juego y tres perspectivas.
+
+            Es una compilación debug/prerelease. Requiere validación física en Android
+            para confirmar el renderizado y el HUD en cada dispositivo.
+
       - name: Package complete source tree
         shell: bash
         run: |
           set -euo pipefail
           # Include generated catalogue/atlas files produced by the preceding step.
           # git archive omits worktree changes, so package the checked-out tree itself.
-          zip -r -q Minefade-2.0.4-source.zip . \
+          SOURCE_ZIP="Minefade-2.0.4-source.zip"
+          if [[ "${GITHUB_REF_NAME}" == "minefade-2.0.5-phase1-stability" ]]; then SOURCE_ZIP="Minefade-2.0.5-source.zip"; fi
+          zip -r -q "${SOURCE_ZIP}" . \\
             -x ".git/*" "*/.git/*" \
                "*/build/*" "*/.gradle/*" "*/.cxx/*" \
                "*/.externalNativeBuild/*" "*/intermediates/*" \
                "*/outputs/*" "*/tmp/*" "*/target/*" "*/rust-target/*" \
-               "Minefade-2.0.4-source.zip"
-          test -s Minefade-2.0.4-source.zip
+               "Minefade-2.0.4-source.zip" "Minefade-2.0.5-source.zip"
+          test -s "${SOURCE_ZIP}"
 
       - name: Upload complete source
         uses: actions/upload-artifact@v4
         with:
-          name: Minefade-2.0.4-source
-          path: Minefade-2.0.4-source.zip
+          name: ${{ github.ref_name == 'minefade-2.0.5-phase1-stability' && 'Minefade-2.0.5-source' || 'Minefade-2.0.4-source' }}
+          path: ${{ github.ref_name == 'minefade-2.0.5-phase1-stability' && 'Minefade-2.0.5-source.zip' || 'Minefade-2.0.4-source.zip' }}
           if-no-files-found: error
           retention-days: 14
