@@ -202,7 +202,7 @@ jobs:
           # git archive omits worktree changes, so package the checked-out tree itself.
           SOURCE_ZIP="Minefade-2.0.4-source.zip"
           if [[ "${GITHUB_REF_NAME}" == "minefade-2.0.5-phase1-stability" ]]; then SOURCE_ZIP="Minefade-2.0.5-source.zip"; fi
-          zip -r -q "${SOURCE_ZIP}" . \\
+          zip -r -q "${SOURCE_ZIP}" . \
             -x ".git/*" "*/.git/*" \
                "*/build/*" "*/.gradle/*" "*/.cxx/*" \
                "*/.externalNativeBuild/*" "*/intermediates/*" \
