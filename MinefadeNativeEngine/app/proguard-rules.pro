@@ -1,0 +1,3 @@
+-keep class com.minefade.nativeengine.MainActivity { *; }
+-keep class com.minefade.nativeengine.NativeBridge { *; }
+-keepclasseswithmembernames class * { native <methods>; }

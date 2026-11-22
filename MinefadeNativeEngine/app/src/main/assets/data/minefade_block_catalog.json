@@ -1,0 +1,6835 @@
+{
+  "source": "user-provided Minecraft MOD.apk / vanilla blocks.json",
+  "source_format_version": [
+    1,
+    1,
+    0
+  ],
+  "count": 284,
+  "atlas": {
+    "width": 576,
+    "height": 486,
+    "tile_size": 16,
+    "columns": 32,
+    "rows": 27,
+    "padding": 1
+  },
+  "blocks": [
+    {
+      "id": 0,
+      "key": "air",
+      "enum": "Air",
+      "name_es": "Aire",
+      "shape": "None",
+      "flags": 0,
+      "hardness": 0.0,
+      "tool": "None",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 0,
+      "texture_aliases": {
+        "top": "",
+        "side": "",
+        "bottom": ""
+      },
+      "sound": "",
+      "atlas": {
+        "top": 0,
+        "side": 1,
+        "bottom": 2
+      }
+    },
+    {
+      "id": 1,
+      "key": "stone",
+      "enum": "Stone",
+      "name_es": "Piedra",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 1,
+      "texture_aliases": {
+        "top": "stone",
+        "side": "stone",
+        "bottom": "stone"
+      },
+      "sound": "stone",
+      "atlas": {
+        "top": 3,
+        "side": 4,
+        "bottom": 5
+      }
+    },
+    {
+      "id": 2,
+      "key": "grass",
+      "enum": "Grass",
+      "name_es": "Hierba",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 0.6,
+      "tool": "Shovel",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 2,
+      "texture_aliases": {
+        "top": "grass_top",
+        "side": "grass_side",
+        "bottom": "grass_bottom"
+      },
+      "sound": "grass",
+      "atlas": {
+        "top": 6,
+        "side": 7,
+        "bottom": 8
+      }
+    },
+    {
+      "id": 3,
+      "key": "dirt",
+      "enum": "Dirt",
+      "name_es": "Tierra",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 0.6,
+      "tool": "Shovel",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 3,
+      "texture_aliases": {
+        "top": "dirt",
+        "side": "dirt",
+        "bottom": "dirt"
+      },
+      "sound": "gravel",
+      "atlas": {
+        "top": 9,
+        "side": 10,
+        "bottom": 11
+      }
+    },
+    {
+      "id": 4,
+      "key": "cobblestone",
+      "enum": "Cobblestone",
+      "name_es": "Roca",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 4,
+      "texture_aliases": {
+        "top": "cobblestone",
+        "side": "cobblestone",
+        "bottom": "cobblestone"
+      },
+      "sound": "stone",
+      "atlas": {
+        "top": 12,
+        "side": 13,
+        "bottom": 14
+      }
+    },
+    {
+      "id": 5,
+      "key": "planks",
+      "enum": "Planks",
+      "name_es": "Tablones",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 2.0,
+      "tool": "Axe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 5,
+      "texture_aliases": {
+        "top": "planks",
+        "side": "planks",
+        "bottom": "planks"
+      },
+      "sound": "wood",
+      "atlas": {
+        "top": 15,
+        "side": 16,
+        "bottom": 17
+      }
+    },
+    {
+      "id": 6,
+      "key": "sapling",
+      "enum": "Sapling",
+      "name_es": "Brote",
+      "shape": "CrossPlant",
+      "flags": 80,
+      "hardness": 0.0,
+      "tool": "None",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 6,
+      "texture_aliases": {
+        "top": "sapling",
+        "side": "sapling",
+        "bottom": "sapling"
+      },
+      "sound": "grass",
+      "atlas": {
+        "top": 18,
+        "side": 19,
+        "bottom": 20
+      }
+    },
+    {
+      "id": 7,
+      "key": "bedrock",
+      "enum": "Bedrock",
+      "name_es": "Piedra base",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": -1.0,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 7,
+      "texture_aliases": {
+        "top": "bedrock",
+        "side": "bedrock",
+        "bottom": "bedrock"
+      },
+      "sound": "stone",
+      "atlas": {
+        "top": 21,
+        "side": 22,
+        "bottom": 23
+      }
+    },
+    {
+      "id": 8,
+      "key": "flowing_water",
+      "enum": "FlowingWater",
+      "name_es": "Agua corriente",
+      "shape": "Fluid",
+      "flags": 76,
+      "hardness": 100.0,
+      "tool": "None",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 9,
+      "texture_aliases": {
+        "top": "still_water_grey",
+        "side": "flowing_water_grey",
+        "bottom": "still_water_grey"
+      },
+      "sound": "",
+      "atlas": {
+        "top": 24,
+        "side": 25,
+        "bottom": 26
+      }
+    },
+    {
+      "id": 9,
+      "key": "water",
+      "enum": "Water",
+      "name_es": "Agua",
+      "shape": "Fluid",
+      "flags": 76,
+      "hardness": 100.0,
+      "tool": "None",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 9,
+      "texture_aliases": {
+        "top": "still_water_grey",
+        "side": "flowing_water_grey",
+        "bottom": "still_water_grey"
+      },
+      "sound": "",
+      "atlas": {
+        "top": 27,
+        "side": 28,
+        "bottom": 29
+      }
+    },
+    {
+      "id": 10,
+      "key": "flowing_lava",
+      "enum": "FlowingLava",
+      "name_es": "Lava corriente",
+      "shape": "Fluid",
+      "flags": 108,
+      "hardness": 100.0,
+      "tool": "None",
+      "light": 15,
+      "stack_limit": 64,
+      "drop_id": 11,
+      "texture_aliases": {
+        "top": "still_lava",
+        "side": "flowing_lava",
+        "bottom": "still_lava"
+      },
+      "sound": "",
+      "atlas": {
+        "top": 30,
+        "side": 31,
+        "bottom": 32
+      }
+    },
+    {
+      "id": 11,
+      "key": "lava",
+      "enum": "Lava",
+      "name_es": "Lava",
+      "shape": "Fluid",
+      "flags": 108,
+      "hardness": 100.0,
+      "tool": "None",
+      "light": 15,
+      "stack_limit": 64,
+      "drop_id": 11,
+      "texture_aliases": {
+        "top": "still_lava",
+        "side": "flowing_lava",
+        "bottom": "still_lava"
+      },
+      "sound": "",
+      "atlas": {
+        "top": 33,
+        "side": 34,
+        "bottom": 35
+      }
+    },
+    {
+      "id": 12,
+      "key": "sand",
+      "enum": "Sand",
+      "name_es": "Arena",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 0.6,
+      "tool": "Shovel",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 12,
+      "texture_aliases": {
+        "top": "sand",
+        "side": "sand",
+        "bottom": "sand"
+      },
+      "sound": "sand",
+      "atlas": {
+        "top": 36,
+        "side": 37,
+        "bottom": 38
+      }
+    },
+    {
+      "id": 13,
+      "key": "gravel",
+      "enum": "Gravel",
+      "name_es": "Grava",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 0.6,
+      "tool": "Shovel",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 13,
+      "texture_aliases": {
+        "top": "gravel",
+        "side": "gravel",
+        "bottom": "gravel"
+      },
+      "sound": "gravel",
+      "atlas": {
+        "top": 39,
+        "side": 40,
+        "bottom": 41
+      }
+    },
+    {
+      "id": 14,
+      "key": "gold_ore",
+      "enum": "GoldOre",
+      "name_es": "Mena de oro",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 3.0,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 14,
+      "texture_aliases": {
+        "top": "gold_ore",
+        "side": "gold_ore",
+        "bottom": "gold_ore"
+      },
+      "sound": "stone",
+      "atlas": {
+        "top": 42,
+        "side": 43,
+        "bottom": 44
+      }
+    },
+    {
+      "id": 15,
+      "key": "iron_ore",
+      "enum": "IronOre",
+      "name_es": "Mena de hierro",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 3.0,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 15,
+      "texture_aliases": {
+        "top": "iron_ore",
+        "side": "iron_ore",
+        "bottom": "iron_ore"
+      },
+      "sound": "stone",
+      "atlas": {
+        "top": 45,
+        "side": 46,
+        "bottom": 47
+      }
+    },
+    {
+      "id": 16,
+      "key": "coal_ore",
+      "enum": "CoalOre",
+      "name_es": "Mena de carbón",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 3.0,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 16,
+      "texture_aliases": {
+        "top": "coal_ore",
+        "side": "coal_ore",
+        "bottom": "coal_ore"
+      },
+      "sound": "stone",
+      "atlas": {
+        "top": 48,
+        "side": 49,
+        "bottom": 50
+      }
+    },
+    {
+      "id": 17,
+      "key": "log",
+      "enum": "Log",
+      "name_es": "Tronco",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 2.0,
+      "tool": "Axe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 17,
+      "texture_aliases": {
+        "top": "log_top",
+        "side": "log_side",
+        "bottom": "log_top"
+      },
+      "sound": "wood",
+      "atlas": {
+        "top": 51,
+        "side": 52,
+        "bottom": 53
+      }
+    },
+    {
+      "id": 18,
+      "key": "stripped_oak_log",
+      "enum": "StrippedOakLog",
+      "name_es": "Tronco de roble descortezado",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 2.0,
+      "tool": "Axe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 18,
+      "texture_aliases": {
+        "top": "stripped_oak_log_top",
+        "side": "stripped_oak_log_side",
+        "bottom": "stripped_oak_log_top"
+      },
+      "sound": "wood",
+      "atlas": {
+        "top": 54,
+        "side": 55,
+        "bottom": 56
+      }
+    },
+    {
+      "id": 19,
+      "key": "stripped_birch_log",
+      "enum": "StrippedBirchLog",
+      "name_es": "Tronco de abedul descortezado",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 2.0,
+      "tool": "Axe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 19,
+      "texture_aliases": {
+        "top": "stripped_birch_log_top",
+        "side": "stripped_birch_log_side",
+        "bottom": "stripped_birch_log_top"
+      },
+      "sound": "wood",
+      "atlas": {
+        "top": 57,
+        "side": 58,
+        "bottom": 59
+      }
+    },
+    {
+      "id": 20,
+      "key": "stripped_dark_oak_log",
+      "enum": "StrippedDarkOakLog",
+      "name_es": "Tronco de roble oscuro descortezado",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 2.0,
+      "tool": "Axe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 20,
+      "texture_aliases": {
+        "top": "stripped_dark_oak_log_top",
+        "side": "stripped_dark_oak_log_side",
+        "bottom": "stripped_dark_oak_log_top"
+      },
+      "sound": "wood",
+      "atlas": {
+        "top": 60,
+        "side": 61,
+        "bottom": 62
+      }
+    },
+    {
+      "id": 21,
+      "key": "stripped_acacia_log",
+      "enum": "StrippedAcaciaLog",
+      "name_es": "Tronco de acacia descortezado",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 2.0,
+      "tool": "Axe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 21,
+      "texture_aliases": {
+        "top": "stripped_acacia_log_top",
+        "side": "stripped_acacia_log_side",
+        "bottom": "stripped_acacia_log_top"
+      },
+      "sound": "wood",
+      "atlas": {
+        "top": 63,
+        "side": 64,
+        "bottom": 65
+      }
+    },
+    {
+      "id": 22,
+      "key": "stripped_jungle_log",
+      "enum": "StrippedJungleLog",
+      "name_es": "Tronco de jungla descortezado",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 2.0,
+      "tool": "Axe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 22,
+      "texture_aliases": {
+        "top": "stripped_jungle_log_top",
+        "side": "stripped_jungle_log_side",
+        "bottom": "stripped_jungle_log_top"
+      },
+      "sound": "wood",
+      "atlas": {
+        "top": 66,
+        "side": 67,
+        "bottom": 68
+      }
+    },
+    {
+      "id": 23,
+      "key": "stripped_spruce_log",
+      "enum": "StrippedSpruceLog",
+      "name_es": "Tronco de pícea descortezado",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 2.0,
+      "tool": "Axe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 23,
+      "texture_aliases": {
+        "top": "stripped_spruce_log_top",
+        "side": "stripped_spruce_log_side",
+        "bottom": "stripped_spruce_log_top"
+      },
+      "sound": "wood",
+      "atlas": {
+        "top": 69,
+        "side": 70,
+        "bottom": 71
+      }
+    },
+    {
+      "id": 24,
+      "key": "leaves",
+      "enum": "Leaves",
+      "name_es": "Hojas",
+      "shape": "Cube",
+      "flags": 69,
+      "hardness": 0.3,
+      "tool": "Shears",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 24,
+      "texture_aliases": {
+        "top": "leaves",
+        "side": "leaves",
+        "bottom": "leaves"
+      },
+      "sound": "grass",
+      "atlas": {
+        "top": 72,
+        "side": 73,
+        "bottom": 74
+      }
+    },
+    {
+      "id": 25,
+      "key": "sponge",
+      "enum": "Sponge",
+      "name_es": "Esponja",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 25,
+      "texture_aliases": {
+        "top": "sponge",
+        "side": "sponge",
+        "bottom": "sponge"
+      },
+      "sound": "grass",
+      "atlas": {
+        "top": 75,
+        "side": 76,
+        "bottom": 77
+      }
+    },
+    {
+      "id": 26,
+      "key": "glass",
+      "enum": "Glass",
+      "name_es": "Cristal",
+      "shape": "Cube",
+      "flags": 69,
+      "hardness": 0.3,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 26,
+      "texture_aliases": {
+        "top": "glass",
+        "side": "glass",
+        "bottom": "glass"
+      },
+      "sound": "glass",
+      "atlas": {
+        "top": 78,
+        "side": 79,
+        "bottom": 80
+      }
+    },
+    {
+      "id": 27,
+      "key": "lapis_ore",
+      "enum": "LapisOre",
+      "name_es": "Mena de lapislázuli",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 3.0,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 27,
+      "texture_aliases": {
+        "top": "lapis_ore",
+        "side": "lapis_ore",
+        "bottom": "lapis_ore"
+      },
+      "sound": "stone",
+      "atlas": {
+        "top": 81,
+        "side": 82,
+        "bottom": 83
+      }
+    },
+    {
+      "id": 28,
+      "key": "lapis_block",
+      "enum": "LapisBlock",
+      "name_es": "Bloque de lapislázuli",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 5.0,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 28,
+      "texture_aliases": {
+        "top": "lapis_block",
+        "side": "lapis_block",
+        "bottom": "lapis_block"
+      },
+      "sound": "stone",
+      "atlas": {
+        "top": 84,
+        "side": 85,
+        "bottom": 86
+      }
+    },
+    {
+      "id": 29,
+      "key": "dispenser",
+      "enum": "Dispenser",
+      "name_es": "Dispensador",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 29,
+      "texture_aliases": {
+        "top": "dispenser_top",
+        "side": "dispenser_side",
+        "bottom": "dispenser_top"
+      },
+      "sound": "stone",
+      "atlas": {
+        "top": 87,
+        "side": 88,
+        "bottom": 89
+      }
+    },
+    {
+      "id": 30,
+      "key": "sandstone",
+      "enum": "Sandstone",
+      "name_es": "Arenisca",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 0.6,
+      "tool": "Shovel",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 30,
+      "texture_aliases": {
+        "top": "sandstone_top",
+        "side": "sandstone_side",
+        "bottom": "sandstone_bottom"
+      },
+      "sound": "stone",
+      "atlas": {
+        "top": 90,
+        "side": 91,
+        "bottom": 92
+      }
+    },
+    {
+      "id": 31,
+      "key": "noteblock",
+      "enum": "Noteblock",
+      "name_es": "Bloque musical",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 2.0,
+      "tool": "Axe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 31,
+      "texture_aliases": {
+        "top": "noteblock",
+        "side": "noteblock",
+        "bottom": "noteblock"
+      },
+      "sound": "wood",
+      "atlas": {
+        "top": 93,
+        "side": 94,
+        "bottom": 95
+      }
+    },
+    {
+      "id": 32,
+      "key": "jukebox",
+      "enum": "Jukebox",
+      "name_es": "Tocadiscos",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 2.0,
+      "tool": "Axe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 32,
+      "texture_aliases": {
+        "top": "jukebox_top",
+        "side": "jukebox_side",
+        "bottom": "jukebox_side"
+      },
+      "sound": "wood",
+      "atlas": {
+        "top": 96,
+        "side": 97,
+        "bottom": 98
+      }
+    },
+    {
+      "id": 33,
+      "key": "bed",
+      "enum": "Bed",
+      "name_es": "Cama",
+      "shape": "Thin",
+      "flags": 67,
+      "hardness": 0.5,
+      "tool": "None",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 33,
+      "texture_aliases": {
+        "top": "bed_bottom",
+        "side": "bed_bottom",
+        "bottom": "bed_bottom"
+      },
+      "sound": "wood",
+      "atlas": {
+        "top": 99,
+        "side": 100,
+        "bottom": 101
+      }
+    },
+    {
+      "id": 34,
+      "key": "golden_rail",
+      "enum": "GoldenRail",
+      "name_es": "Raíl propulsor",
+      "shape": "Thin",
+      "flags": 80,
+      "hardness": 0.5,
+      "tool": "None",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 34,
+      "texture_aliases": {
+        "top": "rail_golden_powered",
+        "side": "rail_golden",
+        "bottom": "rail_golden"
+      },
+      "sound": "metal",
+      "atlas": {
+        "top": 102,
+        "side": 103,
+        "bottom": 104
+      }
+    },
+    {
+      "id": 35,
+      "key": "detector_rail",
+      "enum": "DetectorRail",
+      "name_es": "Raíl detector",
+      "shape": "Thin",
+      "flags": 80,
+      "hardness": 0.5,
+      "tool": "None",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 35,
+      "texture_aliases": {
+        "top": "rail_detector_powered",
+        "side": "rail_detector",
+        "bottom": "rail_detector"
+      },
+      "sound": "metal",
+      "atlas": {
+        "top": 105,
+        "side": 106,
+        "bottom": 107
+      }
+    },
+    {
+      "id": 36,
+      "key": "sticky_piston",
+      "enum": "StickyPiston",
+      "name_es": "Pistón pegajoso",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 36,
+      "texture_aliases": {
+        "top": "piston_top",
+        "side": "piston_side",
+        "bottom": "piston_bottom"
+      },
+      "sound": "stone",
+      "atlas": {
+        "top": 108,
+        "side": 109,
+        "bottom": 110
+      }
+    },
+    {
+      "id": 37,
+      "key": "web",
+      "enum": "Web",
+      "name_es": "Telaraña",
+      "shape": "Cube",
+      "flags": 69,
+      "hardness": 0.3,
+      "tool": "Shears",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 37,
+      "texture_aliases": {
+        "top": "web",
+        "side": "web",
+        "bottom": "web"
+      },
+      "sound": "",
+      "atlas": {
+        "top": 111,
+        "side": 112,
+        "bottom": 113
+      }
+    },
+    {
+      "id": 38,
+      "key": "tallgrass",
+      "enum": "Tallgrass",
+      "name_es": "Hierba alta",
+      "shape": "CrossPlant",
+      "flags": 80,
+      "hardness": 0.0,
+      "tool": "None",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 38,
+      "texture_aliases": {
+        "top": "tallgrass",
+        "side": "tallgrass",
+        "bottom": "tallgrass"
+      },
+      "sound": "grass",
+      "atlas": {
+        "top": 114,
+        "side": 115,
+        "bottom": 116
+      }
+    },
+    {
+      "id": 39,
+      "key": "seagrass",
+      "enum": "Seagrass",
+      "name_es": "Hierba marina",
+      "shape": "CrossPlant",
+      "flags": 80,
+      "hardness": 0.0,
+      "tool": "None",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 39,
+      "texture_aliases": {
+        "top": "seagrass_short",
+        "side": "seagrass_tall_top_a",
+        "bottom": "seagrass_tall_bot_a"
+      },
+      "sound": "grass",
+      "atlas": {
+        "top": 117,
+        "side": 118,
+        "bottom": 119
+      }
+    },
+    {
+      "id": 40,
+      "key": "coral",
+      "enum": "Coral",
+      "name_es": "Coral",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 40,
+      "texture_aliases": {
+        "top": "coral",
+        "side": "coral",
+        "bottom": "coral"
+      },
+      "sound": "stone",
+      "atlas": {
+        "top": 120,
+        "side": 121,
+        "bottom": 122
+      }
+    },
+    {
+      "id": 41,
+      "key": "coral_fan",
+      "enum": "CoralFan",
+      "name_es": "Abanico de coral",
+      "shape": "CrossPlant",
+      "flags": 84,
+      "hardness": 0.0,
+      "tool": "None",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 41,
+      "texture_aliases": {
+        "top": "coral_fan",
+        "side": "coral_fan",
+        "bottom": "coral_fan"
+      },
+      "sound": "stone",
+      "atlas": {
+        "top": 123,
+        "side": 124,
+        "bottom": 125
+      }
+    },
+    {
+      "id": 42,
+      "key": "coral_fan_dead",
+      "enum": "CoralFanDead",
+      "name_es": "Abanico de coral muerto",
+      "shape": "CrossPlant",
+      "flags": 84,
+      "hardness": 0.0,
+      "tool": "None",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 42,
+      "texture_aliases": {
+        "top": "coral_fan_dead",
+        "side": "coral_fan_dead",
+        "bottom": "coral_fan_dead"
+      },
+      "sound": "stone",
+      "atlas": {
+        "top": 126,
+        "side": 127,
+        "bottom": 128
+      }
+    },
+    {
+      "id": 43,
+      "key": "coral_fan_hang",
+      "enum": "CoralFanHang",
+      "name_es": "Abanico de coral colgante",
+      "shape": "CrossPlant",
+      "flags": 84,
+      "hardness": 0.0,
+      "tool": "None",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 43,
+      "texture_aliases": {
+        "top": "coral_fan_hang_a",
+        "side": "coral_fan_hang_a",
+        "bottom": "coral_fan_hang_a"
+      },
+      "sound": "stone",
+      "atlas": {
+        "top": 129,
+        "side": 130,
+        "bottom": 131
+      }
+    },
+    {
+      "id": 44,
+      "key": "coral_fan_hang2",
+      "enum": "CoralFanHang2",
+      "name_es": "Abanico de coral colgante II",
+      "shape": "CrossPlant",
+      "flags": 84,
+      "hardness": 0.0,
+      "tool": "None",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 44,
+      "texture_aliases": {
+        "top": "coral_fan_hang_b",
+        "side": "coral_fan_hang_b",
+        "bottom": "coral_fan_hang_b"
+      },
+      "sound": "stone",
+      "atlas": {
+        "top": 132,
+        "side": 133,
+        "bottom": 134
+      }
+    },
+    {
+      "id": 45,
+      "key": "coral_fan_hang3",
+      "enum": "CoralFanHang3",
+      "name_es": "Abanico de coral colgante III",
+      "shape": "CrossPlant",
+      "flags": 84,
+      "hardness": 0.0,
+      "tool": "None",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 45,
+      "texture_aliases": {
+        "top": "coral_fan_hang_c",
+        "side": "coral_fan_hang_c",
+        "bottom": "coral_fan_hang_c"
+      },
+      "sound": "stone",
+      "atlas": {
+        "top": 135,
+        "side": 136,
+        "bottom": 137
+      }
+    },
+    {
+      "id": 46,
+      "key": "deadbush",
+      "enum": "Deadbush",
+      "name_es": "Arbusto seco",
+      "shape": "CrossPlant",
+      "flags": 80,
+      "hardness": 0.0,
+      "tool": "None",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 46,
+      "texture_aliases": {
+        "top": "deadbush",
+        "side": "deadbush",
+        "bottom": "deadbush"
+      },
+      "sound": "grass",
+      "atlas": {
+        "top": 138,
+        "side": 139,
+        "bottom": 140
+      }
+    },
+    {
+      "id": 47,
+      "key": "piston",
+      "enum": "Piston",
+      "name_es": "Pistón",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 47,
+      "texture_aliases": {
+        "top": "piston_top",
+        "side": "piston_side",
+        "bottom": "piston_bottom"
+      },
+      "sound": "stone",
+      "atlas": {
+        "top": 141,
+        "side": 142,
+        "bottom": 143
+      }
+    },
+    {
+      "id": 48,
+      "key": "pistonArmCollision",
+      "enum": "PistonArmCollision",
+      "name_es": "Brazo de pistón (colisión)",
+      "shape": "None",
+      "flags": 0,
+      "hardness": 0.0,
+      "tool": "None",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 0,
+      "texture_aliases": {
+        "top": "piston_top",
+        "side": "piston_top",
+        "bottom": "piston_top"
+      },
+      "sound": "",
+      "atlas": {
+        "top": 144,
+        "side": 145,
+        "bottom": 146
+      }
+    },
+    {
+      "id": 49,
+      "key": "wool",
+      "enum": "Wool",
+      "name_es": "Lana",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 49,
+      "texture_aliases": {
+        "top": "wool",
+        "side": "wool",
+        "bottom": "wool"
+      },
+      "sound": "cloth",
+      "atlas": {
+        "top": 147,
+        "side": 148,
+        "bottom": 149
+      }
+    },
+    {
+      "id": 50,
+      "key": "yellow_flower",
+      "enum": "YellowFlower",
+      "name_es": "Flor amarilla",
+      "shape": "CrossPlant",
+      "flags": 80,
+      "hardness": 0.0,
+      "tool": "None",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 50,
+      "texture_aliases": {
+        "top": "yellow_flower",
+        "side": "yellow_flower",
+        "bottom": "yellow_flower"
+      },
+      "sound": "grass",
+      "atlas": {
+        "top": 150,
+        "side": 151,
+        "bottom": 152
+      }
+    },
+    {
+      "id": 51,
+      "key": "red_flower",
+      "enum": "RedFlower",
+      "name_es": "Flor roja",
+      "shape": "CrossPlant",
+      "flags": 80,
+      "hardness": 0.0,
+      "tool": "None",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 51,
+      "texture_aliases": {
+        "top": "red_flower",
+        "side": "red_flower",
+        "bottom": "red_flower"
+      },
+      "sound": "grass",
+      "atlas": {
+        "top": 153,
+        "side": 154,
+        "bottom": 155
+      }
+    },
+    {
+      "id": 52,
+      "key": "brown_mushroom",
+      "enum": "BrownMushroom",
+      "name_es": "Champiñón marrón",
+      "shape": "CrossPlant",
+      "flags": 80,
+      "hardness": 0.0,
+      "tool": "None",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 52,
+      "texture_aliases": {
+        "top": "mushroom_brown",
+        "side": "mushroom_brown",
+        "bottom": "mushroom_brown"
+      },
+      "sound": "grass",
+      "atlas": {
+        "top": 156,
+        "side": 157,
+        "bottom": 158
+      }
+    },
+    {
+      "id": 53,
+      "key": "red_mushroom",
+      "enum": "RedMushroom",
+      "name_es": "Champiñón rojo",
+      "shape": "CrossPlant",
+      "flags": 80,
+      "hardness": 0.0,
+      "tool": "None",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 53,
+      "texture_aliases": {
+        "top": "mushroom_red",
+        "side": "mushroom_red",
+        "bottom": "mushroom_red"
+      },
+      "sound": "grass",
+      "atlas": {
+        "top": 159,
+        "side": 160,
+        "bottom": 161
+      }
+    },
+    {
+      "id": 54,
+      "key": "gold_block",
+      "enum": "GoldBlock",
+      "name_es": "Bloque de oro",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 5.0,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 54,
+      "texture_aliases": {
+        "top": "gold_block",
+        "side": "gold_block",
+        "bottom": "gold_block"
+      },
+      "sound": "metal",
+      "atlas": {
+        "top": 162,
+        "side": 163,
+        "bottom": 164
+      }
+    },
+    {
+      "id": 55,
+      "key": "iron_block",
+      "enum": "IronBlock",
+      "name_es": "Bloque de hierro",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 5.0,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 55,
+      "texture_aliases": {
+        "top": "iron_block",
+        "side": "iron_block",
+        "bottom": "iron_block"
+      },
+      "sound": "metal",
+      "atlas": {
+        "top": 165,
+        "side": 166,
+        "bottom": 167
+      }
+    },
+    {
+      "id": 56,
+      "key": "double_stone_slab",
+      "enum": "DoubleStoneSlab",
+      "name_es": "Doble losa de piedra",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 57,
+      "texture_aliases": {
+        "top": "stone_slab_top",
+        "side": "stone_slab_side",
+        "bottom": "stone_slab_bottom"
+      },
+      "sound": "stone",
+      "atlas": {
+        "top": 168,
+        "side": 169,
+        "bottom": 170
+      }
+    },
+    {
+      "id": 57,
+      "key": "stone_slab",
+      "enum": "StoneSlab",
+      "name_es": "Losa de piedra",
+      "shape": "Slab",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 57,
+      "texture_aliases": {
+        "top": "stone_slab_top",
+        "side": "stone_slab_side",
+        "bottom": "stone_slab_bottom"
+      },
+      "sound": "stone",
+      "atlas": {
+        "top": 171,
+        "side": 172,
+        "bottom": 173
+      }
+    },
+    {
+      "id": 58,
+      "key": "coral_block",
+      "enum": "CoralBlock",
+      "name_es": "Bloque de coral",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 58,
+      "texture_aliases": {
+        "top": "coral_block",
+        "side": "coral_block",
+        "bottom": "coral_block"
+      },
+      "sound": "",
+      "atlas": {
+        "top": 174,
+        "side": 175,
+        "bottom": 176
+      }
+    },
+    {
+      "id": 59,
+      "key": "brick_block",
+      "enum": "BrickBlock",
+      "name_es": "Bloque de ladrillos",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 59,
+      "texture_aliases": {
+        "top": "brick",
+        "side": "brick",
+        "bottom": "brick"
+      },
+      "sound": "",
+      "atlas": {
+        "top": 177,
+        "side": 178,
+        "bottom": 179
+      }
+    },
+    {
+      "id": 60,
+      "key": "tnt",
+      "enum": "Tnt",
+      "name_es": "TNT",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 60,
+      "texture_aliases": {
+        "top": "tnt_top",
+        "side": "tnt_side",
+        "bottom": "tnt_bottom"
+      },
+      "sound": "grass",
+      "atlas": {
+        "top": 180,
+        "side": 181,
+        "bottom": 182
+      }
+    },
+    {
+      "id": 61,
+      "key": "bookshelf",
+      "enum": "Bookshelf",
+      "name_es": "Librería",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 2.0,
+      "tool": "Axe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 61,
+      "texture_aliases": {
+        "top": "bookshelf_top",
+        "side": "bookshelf",
+        "bottom": "bookshelf_top"
+      },
+      "sound": "wood",
+      "atlas": {
+        "top": 183,
+        "side": 184,
+        "bottom": 185
+      }
+    },
+    {
+      "id": 62,
+      "key": "mossy_cobblestone",
+      "enum": "MossyCobblestone",
+      "name_es": "Roca musgosa",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 62,
+      "texture_aliases": {
+        "top": "cobblestone_mossy",
+        "side": "cobblestone_mossy",
+        "bottom": "cobblestone_mossy"
+      },
+      "sound": "stone",
+      "atlas": {
+        "top": 186,
+        "side": 187,
+        "bottom": 188
+      }
+    },
+    {
+      "id": 63,
+      "key": "obsidian",
+      "enum": "Obsidian",
+      "name_es": "Obsidiana",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 50.0,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 63,
+      "texture_aliases": {
+        "top": "obsidian",
+        "side": "obsidian",
+        "bottom": "obsidian"
+      },
+      "sound": "stone",
+      "atlas": {
+        "top": 189,
+        "side": 190,
+        "bottom": 191
+      }
+    },
+    {
+      "id": 64,
+      "key": "torch",
+      "enum": "Torch",
+      "name_es": "Antorcha",
+      "shape": "Thin",
+      "flags": 112,
+      "hardness": 0.5,
+      "tool": "None",
+      "light": 14,
+      "stack_limit": 64,
+      "drop_id": 64,
+      "texture_aliases": {
+        "top": "torch_on",
+        "side": "torch_on",
+        "bottom": "torch_on"
+      },
+      "sound": "wood",
+      "atlas": {
+        "top": 192,
+        "side": 193,
+        "bottom": 194
+      }
+    },
+    {
+      "id": 65,
+      "key": "mob_spawner",
+      "enum": "MobSpawner",
+      "name_es": "Generador de criaturas",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 65,
+      "texture_aliases": {
+        "top": "mob_spawner",
+        "side": "mob_spawner",
+        "bottom": "mob_spawner"
+      },
+      "sound": "metal",
+      "atlas": {
+        "top": 195,
+        "side": 196,
+        "bottom": 197
+      }
+    },
+    {
+      "id": 66,
+      "key": "oak_stairs",
+      "enum": "OakStairs",
+      "name_es": "Escaleras de roble",
+      "shape": "Stairs",
+      "flags": 67,
+      "hardness": 2.0,
+      "tool": "Axe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 66,
+      "texture_aliases": {
+        "top": "wood_oak",
+        "side": "wood_oak",
+        "bottom": "wood_oak"
+      },
+      "sound": "wood",
+      "atlas": {
+        "top": 198,
+        "side": 199,
+        "bottom": 200
+      }
+    },
+    {
+      "id": 67,
+      "key": "chest",
+      "enum": "Chest",
+      "name_es": "Cofre",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 67,
+      "texture_aliases": {
+        "top": "chest_inventory_top",
+        "side": "chest_inventory_side",
+        "bottom": "chest_inventory_top"
+      },
+      "sound": "wood",
+      "atlas": {
+        "top": 201,
+        "side": 202,
+        "bottom": 203
+      }
+    },
+    {
+      "id": 68,
+      "key": "redstone_wire",
+      "enum": "RedstoneWire",
+      "name_es": "Polvo de redstone",
+      "shape": "Thin",
+      "flags": 80,
+      "hardness": 0.5,
+      "tool": "None",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 68,
+      "texture_aliases": {
+        "top": "redstone_dust_cross",
+        "side": "redstone_dust_line",
+        "bottom": "redstone_dust_line"
+      },
+      "sound": "",
+      "atlas": {
+        "top": 204,
+        "side": 205,
+        "bottom": 206
+      }
+    },
+    {
+      "id": 69,
+      "key": "diamond_ore",
+      "enum": "DiamondOre",
+      "name_es": "Mena de diamante",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 3.0,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 69,
+      "texture_aliases": {
+        "top": "diamond_ore",
+        "side": "diamond_ore",
+        "bottom": "diamond_ore"
+      },
+      "sound": "stone",
+      "atlas": {
+        "top": 207,
+        "side": 208,
+        "bottom": 209
+      }
+    },
+    {
+      "id": 70,
+      "key": "diamond_block",
+      "enum": "DiamondBlock",
+      "name_es": "Bloque de diamante",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 5.0,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 70,
+      "texture_aliases": {
+        "top": "diamond_block",
+        "side": "diamond_block",
+        "bottom": "diamond_block"
+      },
+      "sound": "metal",
+      "atlas": {
+        "top": 210,
+        "side": 211,
+        "bottom": 212
+      }
+    },
+    {
+      "id": 71,
+      "key": "crafting_table",
+      "enum": "CraftingTable",
+      "name_es": "Mesa de trabajo",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 71,
+      "texture_aliases": {
+        "top": "crafting_table_top",
+        "side": "crafting_table_front",
+        "bottom": "crafting_table_bottom"
+      },
+      "sound": "wood",
+      "atlas": {
+        "top": 213,
+        "side": 214,
+        "bottom": 215
+      }
+    },
+    {
+      "id": 72,
+      "key": "wheat",
+      "enum": "Wheat",
+      "name_es": "Trigo",
+      "shape": "CrossPlant",
+      "flags": 80,
+      "hardness": 0.0,
+      "tool": "None",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 72,
+      "texture_aliases": {
+        "top": "wheat",
+        "side": "wheat",
+        "bottom": "wheat"
+      },
+      "sound": "grass",
+      "atlas": {
+        "top": 216,
+        "side": 217,
+        "bottom": 218
+      }
+    },
+    {
+      "id": 73,
+      "key": "farmland",
+      "enum": "Farmland",
+      "name_es": "Tierra de cultivo",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 0.6,
+      "tool": "Shovel",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 73,
+      "texture_aliases": {
+        "top": "farmland",
+        "side": "dirt",
+        "bottom": "dirt"
+      },
+      "sound": "gravel",
+      "atlas": {
+        "top": 219,
+        "side": 220,
+        "bottom": 221
+      }
+    },
+    {
+      "id": 74,
+      "key": "furnace",
+      "enum": "Furnace",
+      "name_es": "Horno",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 74,
+      "texture_aliases": {
+        "top": "furnace_top",
+        "side": "furnace_side",
+        "bottom": "furnace_top"
+      },
+      "sound": "stone",
+      "atlas": {
+        "top": 222,
+        "side": 223,
+        "bottom": 224
+      }
+    },
+    {
+      "id": 75,
+      "key": "lit_furnace",
+      "enum": "LitFurnace",
+      "name_es": "Horno encendido",
+      "shape": "Cube",
+      "flags": 99,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 13,
+      "stack_limit": 64,
+      "drop_id": 74,
+      "texture_aliases": {
+        "top": "furnace_top",
+        "side": "furnace_side",
+        "bottom": "furnace_top"
+      },
+      "sound": "stone",
+      "atlas": {
+        "top": 225,
+        "side": 226,
+        "bottom": 227
+      }
+    },
+    {
+      "id": 76,
+      "key": "standing_sign",
+      "enum": "StandingSign",
+      "name_es": "Cartel",
+      "shape": "Door",
+      "flags": 67,
+      "hardness": 3.0,
+      "tool": "Axe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 76,
+      "texture_aliases": {
+        "top": "sign",
+        "side": "sign",
+        "bottom": "sign"
+      },
+      "sound": "wood",
+      "atlas": {
+        "top": 228,
+        "side": 229,
+        "bottom": 230
+      }
+    },
+    {
+      "id": 77,
+      "key": "wooden_door",
+      "enum": "WoodenDoor",
+      "name_es": "Puerta de madera",
+      "shape": "Door",
+      "flags": 67,
+      "hardness": 3.0,
+      "tool": "Axe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 77,
+      "texture_aliases": {
+        "top": "door_lower",
+        "side": "door_upper",
+        "bottom": "door_lower"
+      },
+      "sound": "wood",
+      "atlas": {
+        "top": 231,
+        "side": 232,
+        "bottom": 233
+      }
+    },
+    {
+      "id": 78,
+      "key": "ladder",
+      "enum": "Ladder",
+      "name_es": "Escalera",
+      "shape": "Thin",
+      "flags": 80,
+      "hardness": 0.5,
+      "tool": "None",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 78,
+      "texture_aliases": {
+        "top": "ladder",
+        "side": "ladder",
+        "bottom": "ladder"
+      },
+      "sound": "ladder",
+      "atlas": {
+        "top": 234,
+        "side": 235,
+        "bottom": 236
+      }
+    },
+    {
+      "id": 79,
+      "key": "rail",
+      "enum": "Rail",
+      "name_es": "Raíl",
+      "shape": "Thin",
+      "flags": 80,
+      "hardness": 0.5,
+      "tool": "None",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 79,
+      "texture_aliases": {
+        "top": "rail_normal_turned",
+        "side": "rail_normal",
+        "bottom": "rail_normal"
+      },
+      "sound": "metal",
+      "atlas": {
+        "top": 237,
+        "side": 238,
+        "bottom": 239
+      }
+    },
+    {
+      "id": 80,
+      "key": "stone_stairs",
+      "enum": "StoneStairs",
+      "name_es": "Escaleras de piedra",
+      "shape": "Stairs",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 80,
+      "texture_aliases": {
+        "top": "cobblestone",
+        "side": "cobblestone",
+        "bottom": "cobblestone"
+      },
+      "sound": "",
+      "atlas": {
+        "top": 240,
+        "side": 241,
+        "bottom": 242
+      }
+    },
+    {
+      "id": 81,
+      "key": "wall_sign",
+      "enum": "WallSign",
+      "name_es": "Cartel de pared",
+      "shape": "Door",
+      "flags": 67,
+      "hardness": 3.0,
+      "tool": "Axe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 81,
+      "texture_aliases": {
+        "top": "sign",
+        "side": "sign",
+        "bottom": "sign"
+      },
+      "sound": "wood",
+      "atlas": {
+        "top": 243,
+        "side": 244,
+        "bottom": 245
+      }
+    },
+    {
+      "id": 82,
+      "key": "lever",
+      "enum": "Lever",
+      "name_es": "Palanca",
+      "shape": "Thin",
+      "flags": 80,
+      "hardness": 0.5,
+      "tool": "None",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 82,
+      "texture_aliases": {
+        "top": "lever",
+        "side": "lever",
+        "bottom": "lever"
+      },
+      "sound": "wood",
+      "atlas": {
+        "top": 246,
+        "side": 247,
+        "bottom": 248
+      }
+    },
+    {
+      "id": 83,
+      "key": "stone_pressure_plate",
+      "enum": "StonePressurePlate",
+      "name_es": "Placa de presión de piedra",
+      "shape": "Thin",
+      "flags": 80,
+      "hardness": 0.5,
+      "tool": "None",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 83,
+      "texture_aliases": {
+        "top": "stone",
+        "side": "stone",
+        "bottom": "stone"
+      },
+      "sound": "stone",
+      "atlas": {
+        "top": 249,
+        "side": 250,
+        "bottom": 251
+      }
+    },
+    {
+      "id": 84,
+      "key": "iron_door",
+      "enum": "IronDoor",
+      "name_es": "Puerta de hierro",
+      "shape": "Door",
+      "flags": 67,
+      "hardness": 3.0,
+      "tool": "Axe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 84,
+      "texture_aliases": {
+        "top": "door_lower",
+        "side": "door_upper",
+        "bottom": "door_lower"
+      },
+      "sound": "metal",
+      "atlas": {
+        "top": 252,
+        "side": 253,
+        "bottom": 254
+      }
+    },
+    {
+      "id": 85,
+      "key": "wooden_pressure_plate",
+      "enum": "WoodenPressurePlate",
+      "name_es": "Placa de presión de madera",
+      "shape": "Thin",
+      "flags": 80,
+      "hardness": 0.5,
+      "tool": "None",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 85,
+      "texture_aliases": {
+        "top": "planks",
+        "side": "planks",
+        "bottom": "planks"
+      },
+      "sound": "wood",
+      "atlas": {
+        "top": 255,
+        "side": 256,
+        "bottom": 257
+      }
+    },
+    {
+      "id": 86,
+      "key": "acacia_pressure_plate",
+      "enum": "AcaciaPressurePlate",
+      "name_es": "Placa de presión de acacia",
+      "shape": "Thin",
+      "flags": 80,
+      "hardness": 0.5,
+      "tool": "None",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 86,
+      "texture_aliases": {
+        "top": "acacia_planks",
+        "side": "acacia_planks",
+        "bottom": "acacia_planks"
+      },
+      "sound": "wood",
+      "atlas": {
+        "top": 258,
+        "side": 259,
+        "bottom": 260
+      }
+    },
+    {
+      "id": 87,
+      "key": "birch_pressure_plate",
+      "enum": "BirchPressurePlate",
+      "name_es": "Placa de presión de abedul",
+      "shape": "Thin",
+      "flags": 80,
+      "hardness": 0.5,
+      "tool": "None",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 87,
+      "texture_aliases": {
+        "top": "birch_planks",
+        "side": "birch_planks",
+        "bottom": "birch_planks"
+      },
+      "sound": "wood",
+      "atlas": {
+        "top": 261,
+        "side": 262,
+        "bottom": 263
+      }
+    },
+    {
+      "id": 88,
+      "key": "dark_oak_pressure_plate",
+      "enum": "DarkOakPressurePlate",
+      "name_es": "Placa de presión de roble oscuro",
+      "shape": "Thin",
+      "flags": 80,
+      "hardness": 0.5,
+      "tool": "None",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 88,
+      "texture_aliases": {
+        "top": "dark_oak_planks",
+        "side": "dark_oak_planks",
+        "bottom": "dark_oak_planks"
+      },
+      "sound": "wood",
+      "atlas": {
+        "top": 264,
+        "side": 265,
+        "bottom": 266
+      }
+    },
+    {
+      "id": 89,
+      "key": "jungle_pressure_plate",
+      "enum": "JunglePressurePlate",
+      "name_es": "Placa de presión de jungla",
+      "shape": "Thin",
+      "flags": 80,
+      "hardness": 0.5,
+      "tool": "None",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 89,
+      "texture_aliases": {
+        "top": "jungle_planks",
+        "side": "jungle_planks",
+        "bottom": "jungle_planks"
+      },
+      "sound": "wood",
+      "atlas": {
+        "top": 267,
+        "side": 268,
+        "bottom": 269
+      }
+    },
+    {
+      "id": 90,
+      "key": "spruce_pressure_plate",
+      "enum": "SprucePressurePlate",
+      "name_es": "Placa de presión de pícea",
+      "shape": "Thin",
+      "flags": 80,
+      "hardness": 0.5,
+      "tool": "None",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 90,
+      "texture_aliases": {
+        "top": "spruce_planks",
+        "side": "spruce_planks",
+        "bottom": "spruce_planks"
+      },
+      "sound": "wood",
+      "atlas": {
+        "top": 270,
+        "side": 271,
+        "bottom": 272
+      }
+    },
+    {
+      "id": 91,
+      "key": "redstone_ore",
+      "enum": "RedstoneOre",
+      "name_es": "Mena de redstone",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 3.0,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 91,
+      "texture_aliases": {
+        "top": "redstone_ore",
+        "side": "redstone_ore",
+        "bottom": "redstone_ore"
+      },
+      "sound": "stone",
+      "atlas": {
+        "top": 273,
+        "side": 274,
+        "bottom": 275
+      }
+    },
+    {
+      "id": 92,
+      "key": "lit_redstone_ore",
+      "enum": "LitRedstoneOre",
+      "name_es": "Mena de redstone encendida",
+      "shape": "Cube",
+      "flags": 99,
+      "hardness": 3.0,
+      "tool": "Pickaxe",
+      "light": 9,
+      "stack_limit": 64,
+      "drop_id": 91,
+      "texture_aliases": {
+        "top": "redstone_ore",
+        "side": "redstone_ore",
+        "bottom": "redstone_ore"
+      },
+      "sound": "stone",
+      "atlas": {
+        "top": 276,
+        "side": 277,
+        "bottom": 278
+      }
+    },
+    {
+      "id": 93,
+      "key": "unlit_redstone_torch",
+      "enum": "UnlitRedstoneTorch",
+      "name_es": "Antorcha de redstone apagada",
+      "shape": "Thin",
+      "flags": 112,
+      "hardness": 0.5,
+      "tool": "None",
+      "light": 14,
+      "stack_limit": 64,
+      "drop_id": 93,
+      "texture_aliases": {
+        "top": "redstone_torch_off",
+        "side": "redstone_torch_off",
+        "bottom": "redstone_torch_off"
+      },
+      "sound": "wood",
+      "atlas": {
+        "top": 279,
+        "side": 280,
+        "bottom": 281
+      }
+    },
+    {
+      "id": 94,
+      "key": "redstone_torch",
+      "enum": "RedstoneTorch",
+      "name_es": "Antorcha de redstone",
+      "shape": "Thin",
+      "flags": 112,
+      "hardness": 0.5,
+      "tool": "None",
+      "light": 14,
+      "stack_limit": 64,
+      "drop_id": 94,
+      "texture_aliases": {
+        "top": "redstone_torch_on",
+        "side": "redstone_torch_on",
+        "bottom": "redstone_torch_on"
+      },
+      "sound": "wood",
+      "atlas": {
+        "top": 282,
+        "side": 283,
+        "bottom": 284
+      }
+    },
+    {
+      "id": 95,
+      "key": "stone_button",
+      "enum": "StoneButton",
+      "name_es": "Botón de piedra",
+      "shape": "Thin",
+      "flags": 80,
+      "hardness": 0.5,
+      "tool": "None",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 95,
+      "texture_aliases": {
+        "top": "stone",
+        "side": "stone",
+        "bottom": "stone"
+      },
+      "sound": "stone",
+      "atlas": {
+        "top": 285,
+        "side": 286,
+        "bottom": 287
+      }
+    },
+    {
+      "id": 96,
+      "key": "snow_layer",
+      "enum": "SnowLayer",
+      "name_es": "Capa de nieve",
+      "shape": "Thin",
+      "flags": 80,
+      "hardness": 0.5,
+      "tool": "None",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 96,
+      "texture_aliases": {
+        "top": "snow",
+        "side": "snow",
+        "bottom": "snow"
+      },
+      "sound": "snow",
+      "atlas": {
+        "top": 288,
+        "side": 289,
+        "bottom": 290
+      }
+    },
+    {
+      "id": 97,
+      "key": "ice",
+      "enum": "Ice",
+      "name_es": "Hielo",
+      "shape": "Cube",
+      "flags": 69,
+      "hardness": 0.3,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 97,
+      "texture_aliases": {
+        "top": "ice",
+        "side": "ice",
+        "bottom": "ice"
+      },
+      "sound": "glass",
+      "atlas": {
+        "top": 291,
+        "side": 292,
+        "bottom": 293
+      }
+    },
+    {
+      "id": 98,
+      "key": "snow",
+      "enum": "Snow",
+      "name_es": "Bloque de nieve",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 98,
+      "texture_aliases": {
+        "top": "snow",
+        "side": "snow",
+        "bottom": "snow"
+      },
+      "sound": "snow",
+      "atlas": {
+        "top": 294,
+        "side": 295,
+        "bottom": 296
+      }
+    },
+    {
+      "id": 99,
+      "key": "cactus",
+      "enum": "Cactus",
+      "name_es": "Cactus",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 99,
+      "texture_aliases": {
+        "top": "cactus_top",
+        "side": "cactus_side",
+        "bottom": "cactus_bottom"
+      },
+      "sound": "cloth",
+      "atlas": {
+        "top": 297,
+        "side": 298,
+        "bottom": 299
+      }
+    },
+    {
+      "id": 100,
+      "key": "clay",
+      "enum": "Clay",
+      "name_es": "Arcilla",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 100,
+      "texture_aliases": {
+        "top": "clay",
+        "side": "clay",
+        "bottom": "clay"
+      },
+      "sound": "gravel",
+      "atlas": {
+        "top": 300,
+        "side": 301,
+        "bottom": 302
+      }
+    },
+    {
+      "id": 101,
+      "key": "reeds",
+      "enum": "Reeds",
+      "name_es": "Caña de azúcar",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 101,
+      "texture_aliases": {
+        "top": "reeds",
+        "side": "reeds",
+        "bottom": "reeds"
+      },
+      "sound": "grass",
+      "atlas": {
+        "top": 303,
+        "side": 304,
+        "bottom": 305
+      }
+    },
+    {
+      "id": 102,
+      "key": "kelp",
+      "enum": "Kelp",
+      "name_es": "Alga",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 102,
+      "texture_aliases": {
+        "top": "kelp_c",
+        "side": "kelp_a",
+        "bottom": "kelp_d"
+      },
+      "sound": "grass",
+      "atlas": {
+        "top": 306,
+        "side": 307,
+        "bottom": 308
+      }
+    },
+    {
+      "id": 103,
+      "key": "dried_kelp_block",
+      "enum": "DriedKelpBlock",
+      "name_es": "Bloque de alga seca",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 103,
+      "texture_aliases": {
+        "top": "dried_kelp_block_top",
+        "side": "dried_kelp_block_side_a",
+        "bottom": "dried_kelp_block_top"
+      },
+      "sound": "grass",
+      "atlas": {
+        "top": 309,
+        "side": 310,
+        "bottom": 311
+      }
+    },
+    {
+      "id": 104,
+      "key": "fence",
+      "enum": "Fence",
+      "name_es": "Valla",
+      "shape": "Fence",
+      "flags": 67,
+      "hardness": 2.0,
+      "tool": "Axe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 104,
+      "texture_aliases": {
+        "top": "planks",
+        "side": "planks",
+        "bottom": "planks"
+      },
+      "sound": "wood",
+      "atlas": {
+        "top": 312,
+        "side": 313,
+        "bottom": 314
+      }
+    },
+    {
+      "id": 105,
+      "key": "nether_brick_fence",
+      "enum": "NetherBrickFence",
+      "name_es": "Valla de ladrillos del Nether",
+      "shape": "Fence",
+      "flags": 67,
+      "hardness": 2.0,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 105,
+      "texture_aliases": {
+        "top": "nether_brick",
+        "side": "nether_brick",
+        "bottom": "nether_brick"
+      },
+      "sound": "stone",
+      "atlas": {
+        "top": 315,
+        "side": 316,
+        "bottom": 317
+      }
+    },
+    {
+      "id": 106,
+      "key": "pumpkin",
+      "enum": "Pumpkin",
+      "name_es": "Calabaza",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 106,
+      "texture_aliases": {
+        "top": "pumpkin_top",
+        "side": "pumpkin_side",
+        "bottom": "pumpkin_top"
+      },
+      "sound": "wood",
+      "atlas": {
+        "top": 318,
+        "side": 319,
+        "bottom": 320
+      }
+    },
+    {
+      "id": 107,
+      "key": "carved_pumpkin",
+      "enum": "CarvedPumpkin",
+      "name_es": "Calabaza tallada",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 107,
+      "texture_aliases": {
+        "top": "pumpkin_top",
+        "side": "pumpkin_side",
+        "bottom": "pumpkin_top"
+      },
+      "sound": "wood",
+      "atlas": {
+        "top": 321,
+        "side": 322,
+        "bottom": 323
+      }
+    },
+    {
+      "id": 108,
+      "key": "netherrack",
+      "enum": "Netherrack",
+      "name_es": "Roca del Nether",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 108,
+      "texture_aliases": {
+        "top": "netherrack",
+        "side": "netherrack",
+        "bottom": "netherrack"
+      },
+      "sound": "stone",
+      "atlas": {
+        "top": 324,
+        "side": 325,
+        "bottom": 326
+      }
+    },
+    {
+      "id": 109,
+      "key": "magma",
+      "enum": "Magma",
+      "name_es": "Bloque de magma",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 109,
+      "texture_aliases": {
+        "top": "magma",
+        "side": "magma",
+        "bottom": "magma"
+      },
+      "sound": "stone",
+      "atlas": {
+        "top": 327,
+        "side": 328,
+        "bottom": 329
+      }
+    },
+    {
+      "id": 110,
+      "key": "soul_sand",
+      "enum": "SoulSand",
+      "name_es": "Arena de almas",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 0.6,
+      "tool": "Shovel",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 110,
+      "texture_aliases": {
+        "top": "soul_sand",
+        "side": "soul_sand",
+        "bottom": "soul_sand"
+      },
+      "sound": "sand",
+      "atlas": {
+        "top": 330,
+        "side": 331,
+        "bottom": 332
+      }
+    },
+    {
+      "id": 111,
+      "key": "glowstone",
+      "enum": "Glowstone",
+      "name_es": "Piedra luminosa",
+      "shape": "Cube",
+      "flags": 99,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 15,
+      "stack_limit": 64,
+      "drop_id": 111,
+      "texture_aliases": {
+        "top": "glowstone",
+        "side": "glowstone",
+        "bottom": "glowstone"
+      },
+      "sound": "glass",
+      "atlas": {
+        "top": 333,
+        "side": 334,
+        "bottom": 335
+      }
+    },
+    {
+      "id": 112,
+      "key": "portal",
+      "enum": "Portal",
+      "name_es": "Portal del Nether",
+      "shape": "Thin",
+      "flags": 20,
+      "hardness": -1.0,
+      "tool": "None",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 0,
+      "texture_aliases": {
+        "top": "portal",
+        "side": "portal",
+        "bottom": "portal"
+      },
+      "sound": "glass",
+      "atlas": {
+        "top": 336,
+        "side": 337,
+        "bottom": 338
+      }
+    },
+    {
+      "id": 113,
+      "key": "lit_pumpkin",
+      "enum": "LitPumpkin",
+      "name_es": "Calabaza iluminada",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 106,
+      "texture_aliases": {
+        "top": "pumpkin_top",
+        "side": "pumpkin_side",
+        "bottom": "pumpkin_top"
+      },
+      "sound": "wood",
+      "atlas": {
+        "top": 339,
+        "side": 340,
+        "bottom": 341
+      }
+    },
+    {
+      "id": 114,
+      "key": "cake",
+      "enum": "Cake",
+      "name_es": "Pastel",
+      "shape": "Thin",
+      "flags": 67,
+      "hardness": 0.5,
+      "tool": "None",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 114,
+      "texture_aliases": {
+        "top": "cake_top",
+        "side": "cake_side",
+        "bottom": "cake_bottom"
+      },
+      "sound": "cloth",
+      "atlas": {
+        "top": 342,
+        "side": 343,
+        "bottom": 344
+      }
+    },
+    {
+      "id": 115,
+      "key": "unpowered_repeater",
+      "enum": "UnpoweredRepeater",
+      "name_es": "Repetidor apagado",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 115,
+      "texture_aliases": {
+        "top": "repeater_up",
+        "side": "repeater_floor",
+        "bottom": "repeater_floor"
+      },
+      "sound": "wood",
+      "atlas": {
+        "top": 345,
+        "side": 346,
+        "bottom": 347
+      }
+    },
+    {
+      "id": 116,
+      "key": "powered_repeater",
+      "enum": "PoweredRepeater",
+      "name_es": "Repetidor encendido",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 115,
+      "texture_aliases": {
+        "top": "repeater_up",
+        "side": "repeater_floor",
+        "bottom": "repeater_floor"
+      },
+      "sound": "wood",
+      "atlas": {
+        "top": 348,
+        "side": 349,
+        "bottom": 350
+      }
+    },
+    {
+      "id": 117,
+      "key": "invisibleBedrock",
+      "enum": "InvisibleBedrock",
+      "name_es": "Roca madre invisible",
+      "shape": "None",
+      "flags": 1,
+      "hardness": -1.0,
+      "tool": "None",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 0,
+      "texture_aliases": {
+        "top": "stone",
+        "side": "stone",
+        "bottom": "stone"
+      },
+      "sound": "",
+      "atlas": {
+        "top": 351,
+        "side": 352,
+        "bottom": 353
+      }
+    },
+    {
+      "id": 118,
+      "key": "barrier",
+      "enum": "Barrier",
+      "name_es": "Barrera",
+      "shape": "None",
+      "flags": 1,
+      "hardness": -1.0,
+      "tool": "None",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 0,
+      "texture_aliases": {
+        "top": "barrier",
+        "side": "barrier",
+        "bottom": "barrier"
+      },
+      "sound": "",
+      "atlas": {
+        "top": 354,
+        "side": 355,
+        "bottom": 356
+      }
+    },
+    {
+      "id": 119,
+      "key": "trapdoor",
+      "enum": "Trapdoor",
+      "name_es": "Trampilla",
+      "shape": "Trapdoor",
+      "flags": 67,
+      "hardness": 3.0,
+      "tool": "Axe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 119,
+      "texture_aliases": {
+        "top": "trapdoor",
+        "side": "trapdoor",
+        "bottom": "trapdoor"
+      },
+      "sound": "wood",
+      "atlas": {
+        "top": 357,
+        "side": 358,
+        "bottom": 359
+      }
+    },
+    {
+      "id": 120,
+      "key": "acacia_trapdoor",
+      "enum": "AcaciaTrapdoor",
+      "name_es": "Trampilla de acacia",
+      "shape": "Trapdoor",
+      "flags": 67,
+      "hardness": 3.0,
+      "tool": "Axe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 120,
+      "texture_aliases": {
+        "top": "acacia_trapdoor",
+        "side": "acacia_trapdoor",
+        "bottom": "acacia_trapdoor"
+      },
+      "sound": "wood",
+      "atlas": {
+        "top": 360,
+        "side": 361,
+        "bottom": 362
+      }
+    },
+    {
+      "id": 121,
+      "key": "birch_trapdoor",
+      "enum": "BirchTrapdoor",
+      "name_es": "Trampilla de abedul",
+      "shape": "Trapdoor",
+      "flags": 67,
+      "hardness": 3.0,
+      "tool": "Axe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 121,
+      "texture_aliases": {
+        "top": "birch_trapdoor",
+        "side": "birch_trapdoor",
+        "bottom": "birch_trapdoor"
+      },
+      "sound": "wood",
+      "atlas": {
+        "top": 363,
+        "side": 364,
+        "bottom": 365
+      }
+    },
+    {
+      "id": 122,
+      "key": "dark_oak_trapdoor",
+      "enum": "DarkOakTrapdoor",
+      "name_es": "Trampilla de roble oscuro",
+      "shape": "Trapdoor",
+      "flags": 67,
+      "hardness": 3.0,
+      "tool": "Axe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 122,
+      "texture_aliases": {
+        "top": "dark_oak_trapdoor",
+        "side": "dark_oak_trapdoor",
+        "bottom": "dark_oak_trapdoor"
+      },
+      "sound": "wood",
+      "atlas": {
+        "top": 366,
+        "side": 367,
+        "bottom": 368
+      }
+    },
+    {
+      "id": 123,
+      "key": "jungle_trapdoor",
+      "enum": "JungleTrapdoor",
+      "name_es": "Trampilla de jungla",
+      "shape": "Trapdoor",
+      "flags": 67,
+      "hardness": 3.0,
+      "tool": "Axe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 123,
+      "texture_aliases": {
+        "top": "jungle_trapdoor",
+        "side": "jungle_trapdoor",
+        "bottom": "jungle_trapdoor"
+      },
+      "sound": "wood",
+      "atlas": {
+        "top": 369,
+        "side": 370,
+        "bottom": 371
+      }
+    },
+    {
+      "id": 124,
+      "key": "spruce_trapdoor",
+      "enum": "SpruceTrapdoor",
+      "name_es": "Trampilla de pícea",
+      "shape": "Trapdoor",
+      "flags": 67,
+      "hardness": 3.0,
+      "tool": "Axe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 124,
+      "texture_aliases": {
+        "top": "spruce_trapdoor",
+        "side": "spruce_trapdoor",
+        "bottom": "spruce_trapdoor"
+      },
+      "sound": "wood",
+      "atlas": {
+        "top": 372,
+        "side": 373,
+        "bottom": 374
+      }
+    },
+    {
+      "id": 125,
+      "key": "monster_egg",
+      "enum": "MonsterEgg",
+      "name_es": "Piedra infestada",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 125,
+      "texture_aliases": {
+        "top": "monster_egg",
+        "side": "monster_egg",
+        "bottom": "monster_egg"
+      },
+      "sound": "",
+      "atlas": {
+        "top": 375,
+        "side": 376,
+        "bottom": 377
+      }
+    },
+    {
+      "id": 126,
+      "key": "stonebrick",
+      "enum": "Stonebrick",
+      "name_es": "Ladrillos de piedra",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 126,
+      "texture_aliases": {
+        "top": "stonebrick",
+        "side": "stonebrick",
+        "bottom": "stonebrick"
+      },
+      "sound": "stone",
+      "atlas": {
+        "top": 378,
+        "side": 379,
+        "bottom": 380
+      }
+    },
+    {
+      "id": 127,
+      "key": "brown_mushroom_block",
+      "enum": "BrownMushroomBlock",
+      "name_es": "Bloque de champiñón marrón",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 127,
+      "texture_aliases": {
+        "top": "mushroom_brown_top",
+        "side": "mushroom_brown_north",
+        "bottom": "mushroom_brown_bottom"
+      },
+      "sound": "wood",
+      "atlas": {
+        "top": 381,
+        "side": 382,
+        "bottom": 383
+      }
+    },
+    {
+      "id": 128,
+      "key": "red_mushroom_block",
+      "enum": "RedMushroomBlock",
+      "name_es": "Bloque de champiñón rojo",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 128,
+      "texture_aliases": {
+        "top": "mushroom_red_top",
+        "side": "mushroom_red_north",
+        "bottom": "mushroom_red_bottom"
+      },
+      "sound": "wood",
+      "atlas": {
+        "top": 384,
+        "side": 385,
+        "bottom": 386
+      }
+    },
+    {
+      "id": 129,
+      "key": "iron_bars",
+      "enum": "IronBars",
+      "name_es": "Barrotes de hierro",
+      "shape": "Pane",
+      "flags": 69,
+      "hardness": 0.3,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 129,
+      "texture_aliases": {
+        "top": "iron_bars",
+        "side": "iron_bars",
+        "bottom": "iron_bars"
+      },
+      "sound": "metal",
+      "atlas": {
+        "top": 387,
+        "side": 388,
+        "bottom": 389
+      }
+    },
+    {
+      "id": 130,
+      "key": "glass_pane",
+      "enum": "GlassPane",
+      "name_es": "Panel de cristal",
+      "shape": "Pane",
+      "flags": 69,
+      "hardness": 0.3,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 130,
+      "texture_aliases": {
+        "top": "glass",
+        "side": "glass",
+        "bottom": "glass"
+      },
+      "sound": "glass",
+      "atlas": {
+        "top": 390,
+        "side": 391,
+        "bottom": 392
+      }
+    },
+    {
+      "id": 131,
+      "key": "melon_block",
+      "enum": "MelonBlock",
+      "name_es": "Bloque de sandía",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 131,
+      "texture_aliases": {
+        "top": "melon_top",
+        "side": "melon_side",
+        "bottom": "melon_side"
+      },
+      "sound": "wood",
+      "atlas": {
+        "top": 393,
+        "side": 394,
+        "bottom": 395
+      }
+    },
+    {
+      "id": 132,
+      "key": "pumpkin_stem",
+      "enum": "PumpkinStem",
+      "name_es": "Tallo de calabaza",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 132,
+      "texture_aliases": {
+        "top": "pumpkin_stem",
+        "side": "pumpkin_stem",
+        "bottom": "pumpkin_stem"
+      },
+      "sound": "wood",
+      "atlas": {
+        "top": 396,
+        "side": 397,
+        "bottom": 398
+      }
+    },
+    {
+      "id": 133,
+      "key": "melon_stem",
+      "enum": "MelonStem",
+      "name_es": "Tallo de sandía",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 133,
+      "texture_aliases": {
+        "top": "melon_stem",
+        "side": "melon_stem",
+        "bottom": "melon_stem"
+      },
+      "sound": "wood",
+      "atlas": {
+        "top": 399,
+        "side": 400,
+        "bottom": 401
+      }
+    },
+    {
+      "id": 134,
+      "key": "vine",
+      "enum": "Vine",
+      "name_es": "Enredadera",
+      "shape": "Thin",
+      "flags": 80,
+      "hardness": 0.5,
+      "tool": "None",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 134,
+      "texture_aliases": {
+        "top": "vine",
+        "side": "vine",
+        "bottom": "vine"
+      },
+      "sound": "grass",
+      "atlas": {
+        "top": 402,
+        "side": 403,
+        "bottom": 404
+      }
+    },
+    {
+      "id": 135,
+      "key": "fence_gate",
+      "enum": "FenceGate",
+      "name_es": "Puerta de valla",
+      "shape": "Fence",
+      "flags": 67,
+      "hardness": 2.0,
+      "tool": "Axe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 135,
+      "texture_aliases": {
+        "top": "wood_oak",
+        "side": "wood_oak",
+        "bottom": "wood_oak"
+      },
+      "sound": "wood",
+      "atlas": {
+        "top": 405,
+        "side": 406,
+        "bottom": 407
+      }
+    },
+    {
+      "id": 136,
+      "key": "brick_stairs",
+      "enum": "BrickStairs",
+      "name_es": "Escaleras de ladrillo",
+      "shape": "Stairs",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 136,
+      "texture_aliases": {
+        "top": "brick",
+        "side": "brick",
+        "bottom": "brick"
+      },
+      "sound": "",
+      "atlas": {
+        "top": 408,
+        "side": 409,
+        "bottom": 410
+      }
+    },
+    {
+      "id": 137,
+      "key": "mycelium",
+      "enum": "Mycelium",
+      "name_es": "Micelio",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 137,
+      "texture_aliases": {
+        "top": "mycelium_top",
+        "side": "mycelium_side",
+        "bottom": "mycelium_bottom"
+      },
+      "sound": "grass",
+      "atlas": {
+        "top": 411,
+        "side": 412,
+        "bottom": 413
+      }
+    },
+    {
+      "id": 138,
+      "key": "waterlily",
+      "enum": "Waterlily",
+      "name_es": "Nenúfar",
+      "shape": "Thin",
+      "flags": 69,
+      "hardness": 0.5,
+      "tool": "None",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 138,
+      "texture_aliases": {
+        "top": "waterlily",
+        "side": "waterlily",
+        "bottom": "waterlily"
+      },
+      "sound": "grass",
+      "atlas": {
+        "top": 414,
+        "side": 415,
+        "bottom": 416
+      }
+    },
+    {
+      "id": 139,
+      "key": "brewing_stand",
+      "enum": "BrewingStand",
+      "name_es": "Soporte para pociones",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 139,
+      "texture_aliases": {
+        "top": "brewing_stand",
+        "side": "brewing_stand",
+        "bottom": "brewing_stand_base"
+      },
+      "sound": "stone",
+      "atlas": {
+        "top": 417,
+        "side": 418,
+        "bottom": 419
+      }
+    },
+    {
+      "id": 140,
+      "key": "cauldron",
+      "enum": "Cauldron",
+      "name_es": "Caldero",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 140,
+      "texture_aliases": {
+        "top": "cauldron_top",
+        "side": "cauldron_side",
+        "bottom": "cauldron_bottom"
+      },
+      "sound": "",
+      "atlas": {
+        "top": 420,
+        "side": 421,
+        "bottom": 422
+      }
+    },
+    {
+      "id": 141,
+      "key": "end_portal_frame",
+      "enum": "EndPortalFrame",
+      "name_es": "Marco del portal del End",
+      "shape": "Thin",
+      "flags": 84,
+      "hardness": 0.5,
+      "tool": "None",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 141,
+      "texture_aliases": {
+        "top": "endframe_top",
+        "side": "endframe_side",
+        "bottom": "endframe_bottom"
+      },
+      "sound": "glass",
+      "atlas": {
+        "top": 423,
+        "side": 424,
+        "bottom": 425
+      }
+    },
+    {
+      "id": 142,
+      "key": "end_portal",
+      "enum": "EndPortal",
+      "name_es": "Portal del End",
+      "shape": "Thin",
+      "flags": 20,
+      "hardness": -1.0,
+      "tool": "None",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 0,
+      "texture_aliases": {
+        "top": "end_portal",
+        "side": "end_portal",
+        "bottom": "end_portal"
+      },
+      "sound": "",
+      "atlas": {
+        "top": 426,
+        "side": 427,
+        "bottom": 428
+      }
+    },
+    {
+      "id": 143,
+      "key": "end_gateway",
+      "enum": "EndGateway",
+      "name_es": "Puerta de enlace del End",
+      "shape": "Thin",
+      "flags": 20,
+      "hardness": -1.0,
+      "tool": "None",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 0,
+      "texture_aliases": {
+        "top": "end_gateway",
+        "side": "end_gateway",
+        "bottom": "end_gateway"
+      },
+      "sound": "",
+      "atlas": {
+        "top": 429,
+        "side": 430,
+        "bottom": 431
+      }
+    },
+    {
+      "id": 144,
+      "key": "end_stone",
+      "enum": "EndStone",
+      "name_es": "Piedra del End",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 144,
+      "texture_aliases": {
+        "top": "end_stone",
+        "side": "end_stone",
+        "bottom": "end_stone"
+      },
+      "sound": "stone",
+      "atlas": {
+        "top": 432,
+        "side": 433,
+        "bottom": 434
+      }
+    },
+    {
+      "id": 145,
+      "key": "end_rod",
+      "enum": "EndRod",
+      "name_es": "Vara del End",
+      "shape": "Thin",
+      "flags": 99,
+      "hardness": 0.5,
+      "tool": "None",
+      "light": 14,
+      "stack_limit": 64,
+      "drop_id": 145,
+      "texture_aliases": {
+        "top": "end_rod",
+        "side": "end_rod",
+        "bottom": "end_rod"
+      },
+      "sound": "wood",
+      "atlas": {
+        "top": 435,
+        "side": 436,
+        "bottom": 437
+      }
+    },
+    {
+      "id": 146,
+      "key": "end_bricks",
+      "enum": "EndBricks",
+      "name_es": "Ladrillos del End",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 146,
+      "texture_aliases": {
+        "top": "end_bricks",
+        "side": "end_bricks",
+        "bottom": "end_bricks"
+      },
+      "sound": "stone",
+      "atlas": {
+        "top": 438,
+        "side": 439,
+        "bottom": 440
+      }
+    },
+    {
+      "id": 147,
+      "key": "redstone_lamp",
+      "enum": "RedstoneLamp",
+      "name_es": "Lámpara de redstone",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 147,
+      "texture_aliases": {
+        "top": "redstone_lamp_off",
+        "side": "redstone_lamp_off",
+        "bottom": "redstone_lamp_off"
+      },
+      "sound": "glass",
+      "atlas": {
+        "top": 441,
+        "side": 442,
+        "bottom": 443
+      }
+    },
+    {
+      "id": 148,
+      "key": "lit_redstone_lamp",
+      "enum": "LitRedstoneLamp",
+      "name_es": "Lámpara de redstone encendida",
+      "shape": "Cube",
+      "flags": 99,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 15,
+      "stack_limit": 64,
+      "drop_id": 147,
+      "texture_aliases": {
+        "top": "redstone_lamp_on",
+        "side": "redstone_lamp_on",
+        "bottom": "redstone_lamp_on"
+      },
+      "sound": "glass",
+      "atlas": {
+        "top": 444,
+        "side": 445,
+        "bottom": 446
+      }
+    },
+    {
+      "id": 149,
+      "key": "cocoa",
+      "enum": "Cocoa",
+      "name_es": "Cacao",
+      "shape": "Thin",
+      "flags": 80,
+      "hardness": 0.5,
+      "tool": "None",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 149,
+      "texture_aliases": {
+        "top": "cocoa",
+        "side": "cocoa",
+        "bottom": "cocoa"
+      },
+      "sound": "wood",
+      "atlas": {
+        "top": 447,
+        "side": 448,
+        "bottom": 449
+      }
+    },
+    {
+      "id": 150,
+      "key": "emerald_ore",
+      "enum": "EmeraldOre",
+      "name_es": "Mena de esmeralda",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 3.0,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 150,
+      "texture_aliases": {
+        "top": "emerald_ore",
+        "side": "emerald_ore",
+        "bottom": "emerald_ore"
+      },
+      "sound": "stone",
+      "atlas": {
+        "top": 450,
+        "side": 451,
+        "bottom": 452
+      }
+    },
+    {
+      "id": 151,
+      "key": "emerald_block",
+      "enum": "EmeraldBlock",
+      "name_es": "Bloque de esmeralda",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 5.0,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 151,
+      "texture_aliases": {
+        "top": "emerald_block",
+        "side": "emerald_block",
+        "bottom": "emerald_block"
+      },
+      "sound": "metal",
+      "atlas": {
+        "top": 453,
+        "side": 454,
+        "bottom": 455
+      }
+    },
+    {
+      "id": 152,
+      "key": "spruce_stairs",
+      "enum": "SpruceStairs",
+      "name_es": "Escaleras de pícea",
+      "shape": "Stairs",
+      "flags": 67,
+      "hardness": 2.0,
+      "tool": "Axe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 152,
+      "texture_aliases": {
+        "top": "wood_spruce",
+        "side": "wood_spruce",
+        "bottom": "wood_spruce"
+      },
+      "sound": "wood",
+      "atlas": {
+        "top": 456,
+        "side": 457,
+        "bottom": 458
+      }
+    },
+    {
+      "id": 153,
+      "key": "birch_stairs",
+      "enum": "BirchStairs",
+      "name_es": "Escaleras de abedul",
+      "shape": "Stairs",
+      "flags": 67,
+      "hardness": 2.0,
+      "tool": "Axe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 153,
+      "texture_aliases": {
+        "top": "wood_birch",
+        "side": "wood_birch",
+        "bottom": "wood_birch"
+      },
+      "sound": "wood",
+      "atlas": {
+        "top": 459,
+        "side": 460,
+        "bottom": 461
+      }
+    },
+    {
+      "id": 154,
+      "key": "jungle_stairs",
+      "enum": "JungleStairs",
+      "name_es": "Escaleras de jungla",
+      "shape": "Stairs",
+      "flags": 67,
+      "hardness": 2.0,
+      "tool": "Axe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 154,
+      "texture_aliases": {
+        "top": "wood_jungle",
+        "side": "wood_jungle",
+        "bottom": "wood_jungle"
+      },
+      "sound": "wood",
+      "atlas": {
+        "top": 462,
+        "side": 463,
+        "bottom": 464
+      }
+    },
+    {
+      "id": 155,
+      "key": "beacon",
+      "enum": "Beacon",
+      "name_es": "Faro",
+      "shape": "Cube",
+      "flags": 99,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 15,
+      "stack_limit": 64,
+      "drop_id": 155,
+      "texture_aliases": {
+        "top": "beacon_core",
+        "side": "beacon_shell",
+        "bottom": "beacon_base"
+      },
+      "sound": "glass",
+      "atlas": {
+        "top": 465,
+        "side": 466,
+        "bottom": 467
+      }
+    },
+    {
+      "id": 156,
+      "key": "conduit",
+      "enum": "Conduit",
+      "name_es": "Conducto",
+      "shape": "Cube",
+      "flags": 99,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 15,
+      "stack_limit": 64,
+      "drop_id": 156,
+      "texture_aliases": {
+        "top": "conduit",
+        "side": "conduit",
+        "bottom": "conduit"
+      },
+      "sound": "stone",
+      "atlas": {
+        "top": 468,
+        "side": 469,
+        "bottom": 470
+      }
+    },
+    {
+      "id": 157,
+      "key": "wooden_button",
+      "enum": "WoodenButton",
+      "name_es": "Botón de madera",
+      "shape": "Thin",
+      "flags": 80,
+      "hardness": 0.5,
+      "tool": "None",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 157,
+      "texture_aliases": {
+        "top": "planks",
+        "side": "planks",
+        "bottom": "planks"
+      },
+      "sound": "wood",
+      "atlas": {
+        "top": 471,
+        "side": 472,
+        "bottom": 473
+      }
+    },
+    {
+      "id": 158,
+      "key": "acacia_button",
+      "enum": "AcaciaButton",
+      "name_es": "Botón de acacia",
+      "shape": "Thin",
+      "flags": 80,
+      "hardness": 0.5,
+      "tool": "None",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 158,
+      "texture_aliases": {
+        "top": "acacia_planks",
+        "side": "acacia_planks",
+        "bottom": "acacia_planks"
+      },
+      "sound": "wood",
+      "atlas": {
+        "top": 474,
+        "side": 475,
+        "bottom": 476
+      }
+    },
+    {
+      "id": 159,
+      "key": "birch_button",
+      "enum": "BirchButton",
+      "name_es": "Botón de abedul",
+      "shape": "Thin",
+      "flags": 80,
+      "hardness": 0.5,
+      "tool": "None",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 159,
+      "texture_aliases": {
+        "top": "birch_planks",
+        "side": "birch_planks",
+        "bottom": "birch_planks"
+      },
+      "sound": "wood",
+      "atlas": {
+        "top": 477,
+        "side": 478,
+        "bottom": 479
+      }
+    },
+    {
+      "id": 160,
+      "key": "dark_oak_button",
+      "enum": "DarkOakButton",
+      "name_es": "Botón de roble oscuro",
+      "shape": "Thin",
+      "flags": 80,
+      "hardness": 0.5,
+      "tool": "None",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 160,
+      "texture_aliases": {
+        "top": "dark_oak_planks",
+        "side": "dark_oak_planks",
+        "bottom": "dark_oak_planks"
+      },
+      "sound": "wood",
+      "atlas": {
+        "top": 480,
+        "side": 481,
+        "bottom": 482
+      }
+    },
+    {
+      "id": 161,
+      "key": "jungle_button",
+      "enum": "JungleButton",
+      "name_es": "Botón de jungla",
+      "shape": "Thin",
+      "flags": 80,
+      "hardness": 0.5,
+      "tool": "None",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 161,
+      "texture_aliases": {
+        "top": "jungle_planks",
+        "side": "jungle_planks",
+        "bottom": "jungle_planks"
+      },
+      "sound": "wood",
+      "atlas": {
+        "top": 483,
+        "side": 484,
+        "bottom": 485
+      }
+    },
+    {
+      "id": 162,
+      "key": "spruce_button",
+      "enum": "SpruceButton",
+      "name_es": "Botón de pícea",
+      "shape": "Thin",
+      "flags": 80,
+      "hardness": 0.5,
+      "tool": "None",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 162,
+      "texture_aliases": {
+        "top": "spruce_planks",
+        "side": "spruce_planks",
+        "bottom": "spruce_planks"
+      },
+      "sound": "wood",
+      "atlas": {
+        "top": 486,
+        "side": 487,
+        "bottom": 488
+      }
+    },
+    {
+      "id": 163,
+      "key": "stone_brick_stairs",
+      "enum": "StoneBrickStairs",
+      "name_es": "Escaleras de ladrillos de piedra",
+      "shape": "Stairs",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 163,
+      "texture_aliases": {
+        "top": "stonebrick",
+        "side": "stonebrick",
+        "bottom": "stonebrick"
+      },
+      "sound": "",
+      "atlas": {
+        "top": 489,
+        "side": 490,
+        "bottom": 491
+      }
+    },
+    {
+      "id": 164,
+      "key": "nether_brick",
+      "enum": "NetherBrick",
+      "name_es": "Ladrillos del Nether",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 164,
+      "texture_aliases": {
+        "top": "nether_brick",
+        "side": "nether_brick",
+        "bottom": "nether_brick"
+      },
+      "sound": "stone",
+      "atlas": {
+        "top": 492,
+        "side": 493,
+        "bottom": 494
+      }
+    },
+    {
+      "id": 165,
+      "key": "nether_brick_stairs",
+      "enum": "NetherBrickStairs",
+      "name_es": "Escaleras de ladrillos del Nether",
+      "shape": "Stairs",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 165,
+      "texture_aliases": {
+        "top": "nether_brick",
+        "side": "nether_brick",
+        "bottom": "nether_brick"
+      },
+      "sound": "",
+      "atlas": {
+        "top": 495,
+        "side": 496,
+        "bottom": 497
+      }
+    },
+    {
+      "id": 166,
+      "key": "red_nether_brick",
+      "enum": "RedNetherBrick",
+      "name_es": "Ladrillos rojos del Nether",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 166,
+      "texture_aliases": {
+        "top": "red_nether_brick",
+        "side": "red_nether_brick",
+        "bottom": "red_nether_brick"
+      },
+      "sound": "stone",
+      "atlas": {
+        "top": 498,
+        "side": 499,
+        "bottom": 500
+      }
+    },
+    {
+      "id": 167,
+      "key": "nether_wart",
+      "enum": "NetherWart",
+      "name_es": "Verruga del Nether",
+      "shape": "CrossPlant",
+      "flags": 80,
+      "hardness": 0.0,
+      "tool": "None",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 167,
+      "texture_aliases": {
+        "top": "nether_wart",
+        "side": "nether_wart",
+        "bottom": "nether_wart"
+      },
+      "sound": "",
+      "atlas": {
+        "top": 501,
+        "side": 502,
+        "bottom": 503
+      }
+    },
+    {
+      "id": 168,
+      "key": "nether_wart_block",
+      "enum": "NetherWartBlock",
+      "name_es": "Bloque de verrugas del Nether",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 168,
+      "texture_aliases": {
+        "top": "nether_wart_block",
+        "side": "nether_wart_block",
+        "bottom": "nether_wart_block"
+      },
+      "sound": "wood",
+      "atlas": {
+        "top": 504,
+        "side": 505,
+        "bottom": 506
+      }
+    },
+    {
+      "id": 169,
+      "key": "enchanting_table",
+      "enum": "EnchantingTable",
+      "name_es": "Mesa de encantamientos",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 169,
+      "texture_aliases": {
+        "top": "enchanting_table_top",
+        "side": "enchanting_table_side",
+        "bottom": "enchanting_table_bottom"
+      },
+      "sound": "",
+      "atlas": {
+        "top": 507,
+        "side": 508,
+        "bottom": 509
+      }
+    },
+    {
+      "id": 170,
+      "key": "dropper",
+      "enum": "Dropper",
+      "name_es": "Soltador",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 170,
+      "texture_aliases": {
+        "top": "dropper_top",
+        "side": "dropper_side",
+        "bottom": "dropper_top"
+      },
+      "sound": "stone",
+      "atlas": {
+        "top": 510,
+        "side": 511,
+        "bottom": 512
+      }
+    },
+    {
+      "id": 171,
+      "key": "activator_rail",
+      "enum": "ActivatorRail",
+      "name_es": "Raíl activador",
+      "shape": "Thin",
+      "flags": 80,
+      "hardness": 0.5,
+      "tool": "None",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 171,
+      "texture_aliases": {
+        "top": "rail_activator_powered",
+        "side": "rail_activator",
+        "bottom": "rail_activator"
+      },
+      "sound": "metal",
+      "atlas": {
+        "top": 513,
+        "side": 514,
+        "bottom": 515
+      }
+    },
+    {
+      "id": 172,
+      "key": "sandstone_stairs",
+      "enum": "SandstoneStairs",
+      "name_es": "Escaleras de arenisca",
+      "shape": "Stairs",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 172,
+      "texture_aliases": {
+        "top": "sandstone_top",
+        "side": "sandstone_side",
+        "bottom": "sandstone_bottom"
+      },
+      "sound": "",
+      "atlas": {
+        "top": 516,
+        "side": 517,
+        "bottom": 518
+      }
+    },
+    {
+      "id": 173,
+      "key": "tripwire_hook",
+      "enum": "TripwireHook",
+      "name_es": "Gancho de cuerda",
+      "shape": "Thin",
+      "flags": 80,
+      "hardness": 0.5,
+      "tool": "None",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 173,
+      "texture_aliases": {
+        "top": "trip_wire_source",
+        "side": "trip_wire_source",
+        "bottom": "trip_wire_base"
+      },
+      "sound": "",
+      "atlas": {
+        "top": 519,
+        "side": 520,
+        "bottom": 521
+      }
+    },
+    {
+      "id": 174,
+      "key": "tripWire",
+      "enum": "TripWire",
+      "name_es": "Cable trampa",
+      "shape": "Thin",
+      "flags": 80,
+      "hardness": 0.5,
+      "tool": "None",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 174,
+      "texture_aliases": {
+        "top": "trip_wire",
+        "side": "trip_wire",
+        "bottom": "trip_wire"
+      },
+      "sound": "",
+      "atlas": {
+        "top": 522,
+        "side": 523,
+        "bottom": 524
+      }
+    },
+    {
+      "id": 175,
+      "key": "cobblestone_wall",
+      "enum": "CobblestoneWall",
+      "name_es": "Muro de roca",
+      "shape": "Fence",
+      "flags": 67,
+      "hardness": 2.0,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 175,
+      "texture_aliases": {
+        "top": "cobblestone_wall",
+        "side": "cobblestone_wall",
+        "bottom": "cobblestone_wall"
+      },
+      "sound": "",
+      "atlas": {
+        "top": 525,
+        "side": 526,
+        "bottom": 527
+      }
+    },
+    {
+      "id": 176,
+      "key": "flower_pot",
+      "enum": "FlowerPot",
+      "name_es": "Maceta",
+      "shape": "CrossPlant",
+      "flags": 80,
+      "hardness": 0.0,
+      "tool": "None",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 176,
+      "texture_aliases": {
+        "top": "flower_pot",
+        "side": "flower_pot",
+        "bottom": "flower_pot"
+      },
+      "sound": "",
+      "atlas": {
+        "top": 528,
+        "side": 529,
+        "bottom": 530
+      }
+    },
+    {
+      "id": 177,
+      "key": "carrots",
+      "enum": "Carrots",
+      "name_es": "Zanahorias",
+      "shape": "CrossPlant",
+      "flags": 80,
+      "hardness": 0.0,
+      "tool": "None",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 177,
+      "texture_aliases": {
+        "top": "carrots",
+        "side": "carrots",
+        "bottom": "carrots"
+      },
+      "sound": "grass",
+      "atlas": {
+        "top": 531,
+        "side": 532,
+        "bottom": 533
+      }
+    },
+    {
+      "id": 178,
+      "key": "potatoes",
+      "enum": "Potatoes",
+      "name_es": "Patatas",
+      "shape": "CrossPlant",
+      "flags": 80,
+      "hardness": 0.0,
+      "tool": "None",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 178,
+      "texture_aliases": {
+        "top": "potatoes",
+        "side": "potatoes",
+        "bottom": "potatoes"
+      },
+      "sound": "grass",
+      "atlas": {
+        "top": 534,
+        "side": 535,
+        "bottom": 536
+      }
+    },
+    {
+      "id": 179,
+      "key": "skull",
+      "enum": "Skull",
+      "name_es": "Calavera",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 179,
+      "texture_aliases": {
+        "top": "skull",
+        "side": "skull",
+        "bottom": "skull"
+      },
+      "sound": "stone",
+      "atlas": {
+        "top": 537,
+        "side": 538,
+        "bottom": 539
+      }
+    },
+    {
+      "id": 180,
+      "key": "anvil",
+      "enum": "Anvil",
+      "name_es": "Yunque",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 180,
+      "texture_aliases": {
+        "top": "anvil_top_damaged_x",
+        "side": "anvil_base",
+        "bottom": "anvil_base"
+      },
+      "sound": "anvil",
+      "atlas": {
+        "top": 540,
+        "side": 541,
+        "bottom": 542
+      }
+    },
+    {
+      "id": 181,
+      "key": "trapped_chest",
+      "enum": "TrappedChest",
+      "name_es": "Cofre trampa",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 181,
+      "texture_aliases": {
+        "top": "chest_inventory_top",
+        "side": "chest_inventory_side",
+        "bottom": "chest_inventory_top"
+      },
+      "sound": "wood",
+      "atlas": {
+        "top": 543,
+        "side": 544,
+        "bottom": 545
+      }
+    },
+    {
+      "id": 182,
+      "key": "light_weighted_pressure_plate",
+      "enum": "LightWeightedPressurePlate",
+      "name_es": "Placa de presión ligera",
+      "shape": "Thin",
+      "flags": 80,
+      "hardness": 0.5,
+      "tool": "None",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 182,
+      "texture_aliases": {
+        "top": "gold_block",
+        "side": "gold_block",
+        "bottom": "gold_block"
+      },
+      "sound": "metal",
+      "atlas": {
+        "top": 546,
+        "side": 547,
+        "bottom": 548
+      }
+    },
+    {
+      "id": 183,
+      "key": "heavy_weighted_pressure_plate",
+      "enum": "HeavyWeightedPressurePlate",
+      "name_es": "Placa de presión pesada",
+      "shape": "Thin",
+      "flags": 80,
+      "hardness": 0.5,
+      "tool": "None",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 183,
+      "texture_aliases": {
+        "top": "iron_block",
+        "side": "iron_block",
+        "bottom": "iron_block"
+      },
+      "sound": "metal",
+      "atlas": {
+        "top": 549,
+        "side": 550,
+        "bottom": 551
+      }
+    },
+    {
+      "id": 184,
+      "key": "unpowered_comparator",
+      "enum": "UnpoweredComparator",
+      "name_es": "Comparador apagado",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 184,
+      "texture_aliases": {
+        "top": "comparator_up",
+        "side": "comparator_stone_slab",
+        "bottom": "comparator_stone_slab"
+      },
+      "sound": "wood",
+      "atlas": {
+        "top": 552,
+        "side": 553,
+        "bottom": 554
+      }
+    },
+    {
+      "id": 185,
+      "key": "powered_comparator",
+      "enum": "PoweredComparator",
+      "name_es": "Comparador encendido",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 184,
+      "texture_aliases": {
+        "top": "comparator_up",
+        "side": "comparator_stone_slab",
+        "bottom": "comparator_stone_slab"
+      },
+      "sound": "wood",
+      "atlas": {
+        "top": 555,
+        "side": 556,
+        "bottom": 557
+      }
+    },
+    {
+      "id": 186,
+      "key": "daylight_detector",
+      "enum": "DaylightDetector",
+      "name_es": "Detector de luz solar",
+      "shape": "Thin",
+      "flags": 67,
+      "hardness": 0.5,
+      "tool": "None",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 186,
+      "texture_aliases": {
+        "top": "daylight_detector_top",
+        "side": "daylight_detector_side",
+        "bottom": "daylight_detector_side"
+      },
+      "sound": "wood",
+      "atlas": {
+        "top": 558,
+        "side": 559,
+        "bottom": 560
+      }
+    },
+    {
+      "id": 187,
+      "key": "redstone_block",
+      "enum": "RedstoneBlock",
+      "name_es": "Bloque de redstone",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 187,
+      "texture_aliases": {
+        "top": "redstone_block",
+        "side": "redstone_block",
+        "bottom": "redstone_block"
+      },
+      "sound": "stone",
+      "atlas": {
+        "top": 561,
+        "side": 562,
+        "bottom": 563
+      }
+    },
+    {
+      "id": 188,
+      "key": "structure_block",
+      "enum": "StructureBlock",
+      "name_es": "Bloque de estructura",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 188,
+      "texture_aliases": {
+        "top": "structure_block",
+        "side": "structure_block",
+        "bottom": "structure_block"
+      },
+      "sound": "",
+      "atlas": {
+        "top": 564,
+        "side": 565,
+        "bottom": 566
+      }
+    },
+    {
+      "id": 189,
+      "key": "structure_void",
+      "enum": "StructureVoid",
+      "name_es": "Vacío estructural",
+      "shape": "None",
+      "flags": 0,
+      "hardness": 0.0,
+      "tool": "None",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 0,
+      "texture_aliases": {
+        "top": "structure_void",
+        "side": "structure_void",
+        "bottom": "structure_void"
+      },
+      "sound": "",
+      "atlas": {
+        "top": 567,
+        "side": 568,
+        "bottom": 569
+      }
+    },
+    {
+      "id": 190,
+      "key": "quartz_ore",
+      "enum": "QuartzOre",
+      "name_es": "Mena de cuarzo",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 3.0,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 190,
+      "texture_aliases": {
+        "top": "quartz_ore",
+        "side": "quartz_ore",
+        "bottom": "quartz_ore"
+      },
+      "sound": "stone",
+      "atlas": {
+        "top": 570,
+        "side": 571,
+        "bottom": 572
+      }
+    },
+    {
+      "id": 191,
+      "key": "hopper",
+      "enum": "Hopper",
+      "name_es": "Tolva",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 191,
+      "texture_aliases": {
+        "top": "hopper_top",
+        "side": "hopper_outside",
+        "bottom": "hopper_inside"
+      },
+      "sound": "metal",
+      "atlas": {
+        "top": 573,
+        "side": 574,
+        "bottom": 575
+      }
+    },
+    {
+      "id": 192,
+      "key": "bone_block",
+      "enum": "BoneBlock",
+      "name_es": "Bloque de hueso",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 192,
+      "texture_aliases": {
+        "top": "bone_block_top",
+        "side": "bone_block_side",
+        "bottom": "bone_block_top"
+      },
+      "sound": "stone",
+      "atlas": {
+        "top": 576,
+        "side": 577,
+        "bottom": 578
+      }
+    },
+    {
+      "id": 193,
+      "key": "quartz_block",
+      "enum": "QuartzBlock",
+      "name_es": "Bloque de cuarzo",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 193,
+      "texture_aliases": {
+        "top": "quartz_block_top",
+        "side": "quartz_block_side",
+        "bottom": "quartz_block_bottom"
+      },
+      "sound": "stone",
+      "atlas": {
+        "top": 579,
+        "side": 580,
+        "bottom": 581
+      }
+    },
+    {
+      "id": 194,
+      "key": "quartz_stairs",
+      "enum": "QuartzStairs",
+      "name_es": "Escaleras de cuarzo",
+      "shape": "Stairs",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 194,
+      "texture_aliases": {
+        "top": "stair_quartz_block_top",
+        "side": "stair_quartz_block_side",
+        "bottom": "stair_quartz_block_bottom"
+      },
+      "sound": "",
+      "atlas": {
+        "top": 582,
+        "side": 583,
+        "bottom": 584
+      }
+    },
+    {
+      "id": 195,
+      "key": "purpur_block",
+      "enum": "PurpurBlock",
+      "name_es": "Bloque de púrpura",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 195,
+      "texture_aliases": {
+        "top": "purpur_block_top",
+        "side": "purpur_block_side",
+        "bottom": "purpur_block_bottom"
+      },
+      "sound": "stone",
+      "atlas": {
+        "top": 585,
+        "side": 586,
+        "bottom": 587
+      }
+    },
+    {
+      "id": 196,
+      "key": "purpur_stairs",
+      "enum": "PurpurStairs",
+      "name_es": "Escaleras de púrpura",
+      "shape": "Stairs",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 196,
+      "texture_aliases": {
+        "top": "stair_purpur_block",
+        "side": "stair_purpur_block",
+        "bottom": "stair_purpur_block"
+      },
+      "sound": "",
+      "atlas": {
+        "top": 588,
+        "side": 589,
+        "bottom": 590
+      }
+    },
+    {
+      "id": 197,
+      "key": "chorus_plant",
+      "enum": "ChorusPlant",
+      "name_es": "Planta de coro",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 197,
+      "texture_aliases": {
+        "top": "chorus_plant",
+        "side": "chorus_plant",
+        "bottom": "chorus_plant"
+      },
+      "sound": "stone",
+      "atlas": {
+        "top": 591,
+        "side": 592,
+        "bottom": 593
+      }
+    },
+    {
+      "id": 198,
+      "key": "chorus_flower",
+      "enum": "ChorusFlower",
+      "name_es": "Flor de coro",
+      "shape": "CrossPlant",
+      "flags": 80,
+      "hardness": 0.0,
+      "tool": "None",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 198,
+      "texture_aliases": {
+        "top": "chorus_flower",
+        "side": "chorus_flower",
+        "bottom": "chorus_flower"
+      },
+      "sound": "stone",
+      "atlas": {
+        "top": 594,
+        "side": 595,
+        "bottom": 596
+      }
+    },
+    {
+      "id": 199,
+      "key": "double_wooden_slab",
+      "enum": "DoubleWoodenSlab",
+      "name_es": "Doble losa de madera",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 2.0,
+      "tool": "Axe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 200,
+      "texture_aliases": {
+        "top": "planks",
+        "side": "planks",
+        "bottom": "planks"
+      },
+      "sound": "wood",
+      "atlas": {
+        "top": 597,
+        "side": 598,
+        "bottom": 599
+      }
+    },
+    {
+      "id": 200,
+      "key": "wooden_slab",
+      "enum": "WoodenSlab",
+      "name_es": "Losa de madera",
+      "shape": "Slab",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 200,
+      "texture_aliases": {
+        "top": "planks",
+        "side": "planks",
+        "bottom": "planks"
+      },
+      "sound": "wood",
+      "atlas": {
+        "top": 600,
+        "side": 601,
+        "bottom": 602
+      }
+    },
+    {
+      "id": 201,
+      "key": "stained_hardened_clay",
+      "enum": "StainedHardenedClay",
+      "name_es": "Terracota teñida",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 201,
+      "texture_aliases": {
+        "top": "stained_clay",
+        "side": "stained_clay",
+        "bottom": "stained_clay"
+      },
+      "sound": "stone",
+      "atlas": {
+        "top": 603,
+        "side": 604,
+        "bottom": 605
+      }
+    },
+    {
+      "id": 202,
+      "key": "leaves2",
+      "enum": "Leaves2",
+      "name_es": "Hojas II",
+      "shape": "Cube",
+      "flags": 69,
+      "hardness": 0.3,
+      "tool": "Shears",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 202,
+      "texture_aliases": {
+        "top": "leaves2",
+        "side": "leaves2",
+        "bottom": "leaves2"
+      },
+      "sound": "grass",
+      "atlas": {
+        "top": 606,
+        "side": 607,
+        "bottom": 608
+      }
+    },
+    {
+      "id": 203,
+      "key": "log2",
+      "enum": "Log2",
+      "name_es": "Tronco II",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 2.0,
+      "tool": "Axe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 203,
+      "texture_aliases": {
+        "top": "log_top2",
+        "side": "log_side2",
+        "bottom": "log_top2"
+      },
+      "sound": "wood",
+      "atlas": {
+        "top": 609,
+        "side": 610,
+        "bottom": 611
+      }
+    },
+    {
+      "id": 204,
+      "key": "acacia_stairs",
+      "enum": "AcaciaStairs",
+      "name_es": "Escaleras de acacia",
+      "shape": "Stairs",
+      "flags": 67,
+      "hardness": 2.0,
+      "tool": "Axe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 204,
+      "texture_aliases": {
+        "top": "wood_acacia",
+        "side": "wood_acacia",
+        "bottom": "wood_acacia"
+      },
+      "sound": "wood",
+      "atlas": {
+        "top": 612,
+        "side": 613,
+        "bottom": 614
+      }
+    },
+    {
+      "id": 205,
+      "key": "dark_oak_stairs",
+      "enum": "DarkOakStairs",
+      "name_es": "Escaleras de roble oscuro",
+      "shape": "Stairs",
+      "flags": 67,
+      "hardness": 2.0,
+      "tool": "Axe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 205,
+      "texture_aliases": {
+        "top": "wood_big_oak",
+        "side": "wood_big_oak",
+        "bottom": "wood_big_oak"
+      },
+      "sound": "wood",
+      "atlas": {
+        "top": 615,
+        "side": 616,
+        "bottom": 617
+      }
+    },
+    {
+      "id": 206,
+      "key": "slime",
+      "enum": "Slime",
+      "name_es": "Bloque de slime",
+      "shape": "Cube",
+      "flags": 69,
+      "hardness": 0.3,
+      "tool": "Shears",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 206,
+      "texture_aliases": {
+        "top": "slime_block",
+        "side": "slime_block",
+        "bottom": "slime_block"
+      },
+      "sound": "slime",
+      "atlas": {
+        "top": 618,
+        "side": 619,
+        "bottom": 620
+      }
+    },
+    {
+      "id": 207,
+      "key": "iron_trapdoor",
+      "enum": "IronTrapdoor",
+      "name_es": "Trampilla de hierro",
+      "shape": "Trapdoor",
+      "flags": 67,
+      "hardness": 3.0,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 207,
+      "texture_aliases": {
+        "top": "iron_trapdoor",
+        "side": "iron_trapdoor",
+        "bottom": "iron_trapdoor"
+      },
+      "sound": "metal",
+      "atlas": {
+        "top": 621,
+        "side": 622,
+        "bottom": 623
+      }
+    },
+    {
+      "id": 208,
+      "key": "hay_block",
+      "enum": "HayBlock",
+      "name_es": "Fardo de heno",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 2.0,
+      "tool": "Axe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 208,
+      "texture_aliases": {
+        "top": "hayblock_top",
+        "side": "hayblock_side",
+        "bottom": "hayblock_top"
+      },
+      "sound": "grass",
+      "atlas": {
+        "top": 624,
+        "side": 625,
+        "bottom": 626
+      }
+    },
+    {
+      "id": 209,
+      "key": "carpet",
+      "enum": "Carpet",
+      "name_es": "Alfombra",
+      "shape": "Thin",
+      "flags": 80,
+      "hardness": 0.5,
+      "tool": "None",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 209,
+      "texture_aliases": {
+        "top": "wool",
+        "side": "wool",
+        "bottom": "wool"
+      },
+      "sound": "cloth",
+      "atlas": {
+        "top": 627,
+        "side": 628,
+        "bottom": 629
+      }
+    },
+    {
+      "id": 210,
+      "key": "hardened_clay",
+      "enum": "HardenedClay",
+      "name_es": "Terracota",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 210,
+      "texture_aliases": {
+        "top": "hardened_clay",
+        "side": "hardened_clay",
+        "bottom": "hardened_clay"
+      },
+      "sound": "stone",
+      "atlas": {
+        "top": 630,
+        "side": 631,
+        "bottom": 632
+      }
+    },
+    {
+      "id": 211,
+      "key": "coal_block",
+      "enum": "CoalBlock",
+      "name_es": "Bloque de carbón",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 211,
+      "texture_aliases": {
+        "top": "coal_block",
+        "side": "coal_block",
+        "bottom": "coal_block"
+      },
+      "sound": "stone",
+      "atlas": {
+        "top": 633,
+        "side": 634,
+        "bottom": 635
+      }
+    },
+    {
+      "id": 212,
+      "key": "packed_ice",
+      "enum": "PackedIce",
+      "name_es": "Hielo compacto",
+      "shape": "Cube",
+      "flags": 69,
+      "hardness": 0.3,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 212,
+      "texture_aliases": {
+        "top": "ice_packed",
+        "side": "ice_packed",
+        "bottom": "ice_packed"
+      },
+      "sound": "glass",
+      "atlas": {
+        "top": 636,
+        "side": 637,
+        "bottom": 638
+      }
+    },
+    {
+      "id": 213,
+      "key": "blue_ice",
+      "enum": "BlueIce",
+      "name_es": "Hielo azul",
+      "shape": "Cube",
+      "flags": 69,
+      "hardness": 0.3,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 213,
+      "texture_aliases": {
+        "top": "blue_ice",
+        "side": "blue_ice",
+        "bottom": "blue_ice"
+      },
+      "sound": "glass",
+      "atlas": {
+        "top": 639,
+        "side": 640,
+        "bottom": 641
+      }
+    },
+    {
+      "id": 214,
+      "key": "dragon_egg",
+      "enum": "DragonEgg",
+      "name_es": "Huevo de dragón",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 214,
+      "texture_aliases": {
+        "top": "dragon_egg",
+        "side": "dragon_egg",
+        "bottom": "dragon_egg"
+      },
+      "sound": "stone",
+      "atlas": {
+        "top": 642,
+        "side": 643,
+        "bottom": 644
+      }
+    },
+    {
+      "id": 215,
+      "key": "double_plant",
+      "enum": "DoublePlant",
+      "name_es": "Planta alta",
+      "shape": "CrossPlant",
+      "flags": 80,
+      "hardness": 0.0,
+      "tool": "None",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 215,
+      "texture_aliases": {
+        "top": "double_plant_top",
+        "side": "sunflower_additional",
+        "bottom": "double_plant_bottom"
+      },
+      "sound": "grass",
+      "atlas": {
+        "top": 645,
+        "side": 646,
+        "bottom": 647
+      }
+    },
+    {
+      "id": 216,
+      "key": "daylight_detector_inverted",
+      "enum": "DaylightDetectorInverted",
+      "name_es": "Detector de luz solar invertido",
+      "shape": "Thin",
+      "flags": 67,
+      "hardness": 0.5,
+      "tool": "None",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 216,
+      "texture_aliases": {
+        "top": "daylight_detector_top",
+        "side": "daylight_detector_side",
+        "bottom": "daylight_detector_side"
+      },
+      "sound": "wood",
+      "atlas": {
+        "top": 648,
+        "side": 649,
+        "bottom": 650
+      }
+    },
+    {
+      "id": 217,
+      "key": "red_sandstone",
+      "enum": "RedSandstone",
+      "name_es": "Arenisca roja",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 0.6,
+      "tool": "Shovel",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 217,
+      "texture_aliases": {
+        "top": "redsandstone_top",
+        "side": "redsandstone_side",
+        "bottom": "redsandstone_bottom"
+      },
+      "sound": "stone",
+      "atlas": {
+        "top": 651,
+        "side": 652,
+        "bottom": 653
+      }
+    },
+    {
+      "id": 218,
+      "key": "red_sandstone_stairs",
+      "enum": "RedSandstoneStairs",
+      "name_es": "Escaleras de arenisca roja",
+      "shape": "Stairs",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 218,
+      "texture_aliases": {
+        "top": "redsandstone_side",
+        "side": "redsandstone_side",
+        "bottom": "redsandstone_side"
+      },
+      "sound": "",
+      "atlas": {
+        "top": 654,
+        "side": 655,
+        "bottom": 656
+      }
+    },
+    {
+      "id": 219,
+      "key": "double_stone_slab2",
+      "enum": "DoubleStoneSlab2",
+      "name_es": "Doble losa de piedra II",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 220,
+      "texture_aliases": {
+        "top": "stone_slab_top_2",
+        "side": "stone_slab_side_2",
+        "bottom": "stone_slab_bottom_2"
+      },
+      "sound": "stone",
+      "atlas": {
+        "top": 657,
+        "side": 658,
+        "bottom": 659
+      }
+    },
+    {
+      "id": 220,
+      "key": "stone_slab2",
+      "enum": "StoneSlab2",
+      "name_es": "Losa de piedra II",
+      "shape": "Slab",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 220,
+      "texture_aliases": {
+        "top": "stone_slab_top_2",
+        "side": "stone_slab_side_2",
+        "bottom": "stone_slab_bottom_2"
+      },
+      "sound": "stone",
+      "atlas": {
+        "top": 660,
+        "side": 661,
+        "bottom": 662
+      }
+    },
+    {
+      "id": 221,
+      "key": "spruce_fence_gate",
+      "enum": "SpruceFenceGate",
+      "name_es": "Puerta de valla de pícea",
+      "shape": "Fence",
+      "flags": 67,
+      "hardness": 2.0,
+      "tool": "Axe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 221,
+      "texture_aliases": {
+        "top": "wood_spruce",
+        "side": "wood_spruce",
+        "bottom": "wood_spruce"
+      },
+      "sound": "wood",
+      "atlas": {
+        "top": 663,
+        "side": 664,
+        "bottom": 665
+      }
+    },
+    {
+      "id": 222,
+      "key": "birch_fence_gate",
+      "enum": "BirchFenceGate",
+      "name_es": "Puerta de valla de abedul",
+      "shape": "Fence",
+      "flags": 67,
+      "hardness": 2.0,
+      "tool": "Axe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 222,
+      "texture_aliases": {
+        "top": "wood_birch",
+        "side": "wood_birch",
+        "bottom": "wood_birch"
+      },
+      "sound": "wood",
+      "atlas": {
+        "top": 666,
+        "side": 667,
+        "bottom": 668
+      }
+    },
+    {
+      "id": 223,
+      "key": "jungle_fence_gate",
+      "enum": "JungleFenceGate",
+      "name_es": "Puerta de valla de jungla",
+      "shape": "Fence",
+      "flags": 67,
+      "hardness": 2.0,
+      "tool": "Axe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 223,
+      "texture_aliases": {
+        "top": "wood_jungle",
+        "side": "wood_jungle",
+        "bottom": "wood_jungle"
+      },
+      "sound": "wood",
+      "atlas": {
+        "top": 669,
+        "side": 670,
+        "bottom": 671
+      }
+    },
+    {
+      "id": 224,
+      "key": "dark_oak_fence_gate",
+      "enum": "DarkOakFenceGate",
+      "name_es": "Puerta de valla de roble oscuro",
+      "shape": "Fence",
+      "flags": 67,
+      "hardness": 2.0,
+      "tool": "Axe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 224,
+      "texture_aliases": {
+        "top": "wood_big_oak",
+        "side": "wood_big_oak",
+        "bottom": "wood_big_oak"
+      },
+      "sound": "wood",
+      "atlas": {
+        "top": 672,
+        "side": 673,
+        "bottom": 674
+      }
+    },
+    {
+      "id": 225,
+      "key": "acacia_fence_gate",
+      "enum": "AcaciaFenceGate",
+      "name_es": "Puerta de valla de acacia",
+      "shape": "Fence",
+      "flags": 67,
+      "hardness": 2.0,
+      "tool": "Axe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 225,
+      "texture_aliases": {
+        "top": "wood_acacia",
+        "side": "wood_acacia",
+        "bottom": "wood_acacia"
+      },
+      "sound": "wood",
+      "atlas": {
+        "top": 675,
+        "side": 676,
+        "bottom": 677
+      }
+    },
+    {
+      "id": 226,
+      "key": "spruce_door",
+      "enum": "SpruceDoor",
+      "name_es": "Puerta de pícea",
+      "shape": "Door",
+      "flags": 67,
+      "hardness": 3.0,
+      "tool": "Axe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 226,
+      "texture_aliases": {
+        "top": "door_lower",
+        "side": "door_upper",
+        "bottom": "door_lower"
+      },
+      "sound": "wood",
+      "atlas": {
+        "top": 678,
+        "side": 679,
+        "bottom": 680
+      }
+    },
+    {
+      "id": 227,
+      "key": "birch_door",
+      "enum": "BirchDoor",
+      "name_es": "Puerta de abedul",
+      "shape": "Door",
+      "flags": 67,
+      "hardness": 3.0,
+      "tool": "Axe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 227,
+      "texture_aliases": {
+        "top": "door_lower",
+        "side": "door_upper",
+        "bottom": "door_lower"
+      },
+      "sound": "wood",
+      "atlas": {
+        "top": 681,
+        "side": 682,
+        "bottom": 683
+      }
+    },
+    {
+      "id": 228,
+      "key": "jungle_door",
+      "enum": "JungleDoor",
+      "name_es": "Puerta de jungla",
+      "shape": "Door",
+      "flags": 67,
+      "hardness": 3.0,
+      "tool": "Axe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 228,
+      "texture_aliases": {
+        "top": "door_lower",
+        "side": "door_upper",
+        "bottom": "door_lower"
+      },
+      "sound": "wood",
+      "atlas": {
+        "top": 684,
+        "side": 685,
+        "bottom": 686
+      }
+    },
+    {
+      "id": 229,
+      "key": "acacia_door",
+      "enum": "AcaciaDoor",
+      "name_es": "Puerta de acacia",
+      "shape": "Door",
+      "flags": 67,
+      "hardness": 3.0,
+      "tool": "Axe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 229,
+      "texture_aliases": {
+        "top": "door_lower",
+        "side": "door_upper",
+        "bottom": "door_lower"
+      },
+      "sound": "wood",
+      "atlas": {
+        "top": 687,
+        "side": 688,
+        "bottom": 689
+      }
+    },
+    {
+      "id": 230,
+      "key": "dark_oak_door",
+      "enum": "DarkOakDoor",
+      "name_es": "Puerta de roble oscuro",
+      "shape": "Door",
+      "flags": 67,
+      "hardness": 3.0,
+      "tool": "Axe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 230,
+      "texture_aliases": {
+        "top": "door_lower",
+        "side": "door_upper",
+        "bottom": "door_lower"
+      },
+      "sound": "wood",
+      "atlas": {
+        "top": 690,
+        "side": 691,
+        "bottom": 692
+      }
+    },
+    {
+      "id": 231,
+      "key": "grass_path",
+      "enum": "GrassPath",
+      "name_es": "Camino de hierba",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 0.6,
+      "tool": "Shovel",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 231,
+      "texture_aliases": {
+        "top": "grass_path_top",
+        "side": "grass_path_side",
+        "bottom": "dirt"
+      },
+      "sound": "grass",
+      "atlas": {
+        "top": 693,
+        "side": 694,
+        "bottom": 695
+      }
+    },
+    {
+      "id": 232,
+      "key": "frame",
+      "enum": "Frame",
+      "name_es": "Marco de objeto",
+      "shape": "Thin",
+      "flags": 80,
+      "hardness": 0.5,
+      "tool": "None",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 232,
+      "texture_aliases": {
+        "top": "itemframe_background",
+        "side": "itemframe_background",
+        "bottom": "itemframe_background"
+      },
+      "sound": "itemframe",
+      "atlas": {
+        "top": 696,
+        "side": 697,
+        "bottom": 698
+      }
+    },
+    {
+      "id": 233,
+      "key": "podzol",
+      "enum": "Podzol",
+      "name_es": "Podsol",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 233,
+      "texture_aliases": {
+        "top": "dirt_podzol_top",
+        "side": "dirt_podzol_side",
+        "bottom": "dirt_podzol_bottom"
+      },
+      "sound": "gravel",
+      "atlas": {
+        "top": 699,
+        "side": 700,
+        "bottom": 701
+      }
+    },
+    {
+      "id": 234,
+      "key": "beetroot",
+      "enum": "Beetroot",
+      "name_es": "Remolacha",
+      "shape": "CrossPlant",
+      "flags": 80,
+      "hardness": 0.0,
+      "tool": "None",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 234,
+      "texture_aliases": {
+        "top": "beetroot",
+        "side": "beetroot",
+        "bottom": "beetroot"
+      },
+      "sound": "wood",
+      "atlas": {
+        "top": 702,
+        "side": 703,
+        "bottom": 704
+      }
+    },
+    {
+      "id": 235,
+      "key": "stonecutter",
+      "enum": "Stonecutter",
+      "name_es": "Cortapiedras",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 235,
+      "texture_aliases": {
+        "top": "stonecutter_top",
+        "side": "stonecutter_side",
+        "bottom": "stonecutter_bottom"
+      },
+      "sound": "stone",
+      "atlas": {
+        "top": 705,
+        "side": 706,
+        "bottom": 707
+      }
+    },
+    {
+      "id": 236,
+      "key": "glowingobsidian",
+      "enum": "Glowingobsidian",
+      "name_es": "Obsidiana luminosa",
+      "shape": "Cube",
+      "flags": 99,
+      "hardness": 50.0,
+      "tool": "Pickaxe",
+      "light": 15,
+      "stack_limit": 64,
+      "drop_id": 236,
+      "texture_aliases": {
+        "top": "glowing_obsidian",
+        "side": "glowing_obsidian",
+        "bottom": "glowing_obsidian"
+      },
+      "sound": "stone",
+      "atlas": {
+        "top": 708,
+        "side": 709,
+        "bottom": 710
+      }
+    },
+    {
+      "id": 237,
+      "key": "netherreactor",
+      "enum": "Netherreactor",
+      "name_es": "Núcleo del reactor del Nether",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 237,
+      "texture_aliases": {
+        "top": "reactor_core",
+        "side": "reactor_core",
+        "bottom": "reactor_core"
+      },
+      "sound": "metal",
+      "atlas": {
+        "top": 711,
+        "side": 712,
+        "bottom": 713
+      }
+    },
+    {
+      "id": 238,
+      "key": "info_update",
+      "enum": "InfoUpdate",
+      "name_es": "Bloque técnico de actualización",
+      "shape": "None",
+      "flags": 0,
+      "hardness": 0.0,
+      "tool": "None",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 0,
+      "texture_aliases": {
+        "top": "missing_tile",
+        "side": "missing_tile",
+        "bottom": "missing_tile"
+      },
+      "sound": "gravel",
+      "atlas": {
+        "top": 714,
+        "side": 715,
+        "bottom": 716
+      }
+    },
+    {
+      "id": 239,
+      "key": "info_update2",
+      "enum": "InfoUpdate2",
+      "name_es": "Bloque técnico de actualización II",
+      "shape": "None",
+      "flags": 0,
+      "hardness": 0.0,
+      "tool": "None",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 0,
+      "texture_aliases": {
+        "top": "missing_tile",
+        "side": "missing_tile",
+        "bottom": "missing_tile"
+      },
+      "sound": "gravel",
+      "atlas": {
+        "top": 717,
+        "side": 718,
+        "bottom": 719
+      }
+    },
+    {
+      "id": 240,
+      "key": "movingBlock",
+      "enum": "MovingBlock",
+      "name_es": "Bloque en movimiento",
+      "shape": "None",
+      "flags": 0,
+      "hardness": 0.0,
+      "tool": "None",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 0,
+      "texture_aliases": {
+        "top": "missing_tile",
+        "side": "missing_tile",
+        "bottom": "missing_tile"
+      },
+      "sound": "",
+      "atlas": {
+        "top": 720,
+        "side": 721,
+        "bottom": 722
+      }
+    },
+    {
+      "id": 241,
+      "key": "observer",
+      "enum": "Observer",
+      "name_es": "Observador",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 241,
+      "texture_aliases": {
+        "top": "observer_top",
+        "side": "observer_north",
+        "bottom": "observer_bottom"
+      },
+      "sound": "metal",
+      "atlas": {
+        "top": 723,
+        "side": 724,
+        "bottom": 725
+      }
+    },
+    {
+      "id": 242,
+      "key": "reserved6",
+      "enum": "Reserved6",
+      "name_es": "Bloque reservado",
+      "shape": "None",
+      "flags": 0,
+      "hardness": 0.0,
+      "tool": "None",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 0,
+      "texture_aliases": {
+        "top": "missing_tile",
+        "side": "missing_tile",
+        "bottom": "missing_tile"
+      },
+      "sound": "",
+      "atlas": {
+        "top": 726,
+        "side": 727,
+        "bottom": 728
+      }
+    },
+    {
+      "id": 243,
+      "key": "fire",
+      "enum": "Fire",
+      "name_es": "Fuego",
+      "shape": "CrossPlant",
+      "flags": 52,
+      "hardness": 0.0,
+      "tool": "None",
+      "light": 15,
+      "stack_limit": 64,
+      "drop_id": 0,
+      "texture_aliases": {
+        "top": "fire_0",
+        "side": "fire_0",
+        "bottom": "fire_1"
+      },
+      "sound": "wood",
+      "atlas": {
+        "top": 729,
+        "side": 730,
+        "bottom": 731
+      }
+    },
+    {
+      "id": 244,
+      "key": "prismarine",
+      "enum": "Prismarine",
+      "name_es": "Prismarina",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 244,
+      "texture_aliases": {
+        "top": "prismarine",
+        "side": "prismarine",
+        "bottom": "prismarine"
+      },
+      "sound": "stone",
+      "atlas": {
+        "top": 732,
+        "side": 733,
+        "bottom": 734
+      }
+    },
+    {
+      "id": 245,
+      "key": "seaLantern",
+      "enum": "SeaLantern",
+      "name_es": "Linterna marina",
+      "shape": "Cube",
+      "flags": 99,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 15,
+      "stack_limit": 64,
+      "drop_id": 245,
+      "texture_aliases": {
+        "top": "sea_lantern",
+        "side": "sea_lantern",
+        "bottom": "sea_lantern"
+      },
+      "sound": "glass",
+      "atlas": {
+        "top": 735,
+        "side": 736,
+        "bottom": 737
+      }
+    },
+    {
+      "id": 246,
+      "key": "sea_pickle",
+      "enum": "SeaPickle",
+      "name_es": "Pepino de mar",
+      "shape": "CrossPlant",
+      "flags": 112,
+      "hardness": 0.0,
+      "tool": "None",
+      "light": 3,
+      "stack_limit": 64,
+      "drop_id": 246,
+      "texture_aliases": {
+        "top": "sea_pickle",
+        "side": "sea_pickle",
+        "bottom": "sea_pickle"
+      },
+      "sound": "slime",
+      "atlas": {
+        "top": 738,
+        "side": 739,
+        "bottom": 740
+      }
+    },
+    {
+      "id": 247,
+      "key": "turtle_egg",
+      "enum": "TurtleEgg",
+      "name_es": "Huevo de tortuga",
+      "shape": "Thin",
+      "flags": 67,
+      "hardness": 0.5,
+      "tool": "None",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 247,
+      "texture_aliases": {
+        "top": "turtle_egg",
+        "side": "turtle_egg",
+        "bottom": "turtle_egg"
+      },
+      "sound": "",
+      "atlas": {
+        "top": 741,
+        "side": 742,
+        "bottom": 743
+      }
+    },
+    {
+      "id": 248,
+      "key": "ender_chest",
+      "enum": "EnderChest",
+      "name_es": "Cofre de Ender",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 248,
+      "texture_aliases": {
+        "top": "ender_chest_inventory_top",
+        "side": "ender_chest_inventory_side",
+        "bottom": "ender_chest_inventory_top"
+      },
+      "sound": "",
+      "atlas": {
+        "top": 744,
+        "side": 745,
+        "bottom": 746
+      }
+    },
+    {
+      "id": 249,
+      "key": "stained_glass",
+      "enum": "StainedGlass",
+      "name_es": "Cristal teñido",
+      "shape": "Cube",
+      "flags": 69,
+      "hardness": 0.3,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 249,
+      "texture_aliases": {
+        "top": "stained_glass",
+        "side": "stained_glass",
+        "bottom": "stained_glass"
+      },
+      "sound": "glass",
+      "atlas": {
+        "top": 747,
+        "side": 748,
+        "bottom": 749
+      }
+    },
+    {
+      "id": 250,
+      "key": "stained_glass_pane",
+      "enum": "StainedGlassPane",
+      "name_es": "Panel de cristal teñido",
+      "shape": "Pane",
+      "flags": 69,
+      "hardness": 0.3,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 250,
+      "texture_aliases": {
+        "top": "stained_glass",
+        "side": "stained_glass",
+        "bottom": "stained_glass"
+      },
+      "sound": "glass",
+      "atlas": {
+        "top": 750,
+        "side": 751,
+        "bottom": 752
+      }
+    },
+    {
+      "id": 251,
+      "key": "shulker_box",
+      "enum": "ShulkerBox",
+      "name_es": "Caja de shulker",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 251,
+      "texture_aliases": {
+        "top": "shulker_box_top",
+        "side": "shulker_box_top",
+        "bottom": "shulker_box_top"
+      },
+      "sound": "stone",
+      "atlas": {
+        "top": 753,
+        "side": 754,
+        "bottom": 755
+      }
+    },
+    {
+      "id": 252,
+      "key": "undyed_shulker_box",
+      "enum": "UndyedShulkerBox",
+      "name_es": "Caja de shulker sin teñir",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 252,
+      "texture_aliases": {
+        "top": "undyed_shulker_box_top",
+        "side": "undyed_shulker_box_top",
+        "bottom": "undyed_shulker_box_top"
+      },
+      "sound": "stone",
+      "atlas": {
+        "top": 756,
+        "side": 757,
+        "bottom": 758
+      }
+    },
+    {
+      "id": 253,
+      "key": "command_block",
+      "enum": "CommandBlock",
+      "name_es": "Bloque de comandos",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 253,
+      "texture_aliases": {
+        "top": "command_block_conditional_side",
+        "side": "command_block_front",
+        "bottom": "command_block_conditional_side"
+      },
+      "sound": "metal",
+      "atlas": {
+        "top": 759,
+        "side": 760,
+        "bottom": 761
+      }
+    },
+    {
+      "id": 254,
+      "key": "repeating_command_block",
+      "enum": "RepeatingCommandBlock",
+      "name_es": "Bloque de comandos repetitivo",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 254,
+      "texture_aliases": {
+        "top": "command_block_repeating_conditional_side",
+        "side": "command_block_repeating_front",
+        "bottom": "command_block_repeating_conditional_side"
+      },
+      "sound": "metal",
+      "atlas": {
+        "top": 762,
+        "side": 763,
+        "bottom": 764
+      }
+    },
+    {
+      "id": 255,
+      "key": "chain_command_block",
+      "enum": "ChainCommandBlock",
+      "name_es": "Bloque de comandos en cadena",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 255,
+      "texture_aliases": {
+        "top": "command_block_chain_conditional_side",
+        "side": "command_block_chain_front",
+        "bottom": "command_block_chain_conditional_side"
+      },
+      "sound": "metal",
+      "atlas": {
+        "top": 765,
+        "side": 766,
+        "bottom": 767
+      }
+    },
+    {
+      "id": 256,
+      "key": "concrete",
+      "enum": "Concrete",
+      "name_es": "Hormigón",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 256,
+      "texture_aliases": {
+        "top": "concrete",
+        "side": "concrete",
+        "bottom": "concrete"
+      },
+      "sound": "stone",
+      "atlas": {
+        "top": 768,
+        "side": 769,
+        "bottom": 770
+      }
+    },
+    {
+      "id": 257,
+      "key": "concretePowder",
+      "enum": "ConcretePowder",
+      "name_es": "Polvo de hormigón",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 257,
+      "texture_aliases": {
+        "top": "concretePowder",
+        "side": "concretePowder",
+        "bottom": "concretePowder"
+      },
+      "sound": "sand",
+      "atlas": {
+        "top": 771,
+        "side": 772,
+        "bottom": 773
+      }
+    },
+    {
+      "id": 258,
+      "key": "black_glazed_terracotta",
+      "enum": "BlackGlazedTerracotta",
+      "name_es": "Terracota vidriada negra",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 258,
+      "texture_aliases": {
+        "top": "black_glazed_terracotta",
+        "side": "black_glazed_terracotta",
+        "bottom": "black_glazed_terracotta"
+      },
+      "sound": "stone",
+      "atlas": {
+        "top": 774,
+        "side": 775,
+        "bottom": 776
+      }
+    },
+    {
+      "id": 259,
+      "key": "blue_glazed_terracotta",
+      "enum": "BlueGlazedTerracotta",
+      "name_es": "Terracota vidriada azul",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 259,
+      "texture_aliases": {
+        "top": "blue_glazed_terracotta",
+        "side": "blue_glazed_terracotta",
+        "bottom": "blue_glazed_terracotta"
+      },
+      "sound": "stone",
+      "atlas": {
+        "top": 777,
+        "side": 778,
+        "bottom": 779
+      }
+    },
+    {
+      "id": 260,
+      "key": "brown_glazed_terracotta",
+      "enum": "BrownGlazedTerracotta",
+      "name_es": "Terracota vidriada marrón",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 260,
+      "texture_aliases": {
+        "top": "brown_glazed_terracotta",
+        "side": "brown_glazed_terracotta",
+        "bottom": "brown_glazed_terracotta"
+      },
+      "sound": "stone",
+      "atlas": {
+        "top": 780,
+        "side": 781,
+        "bottom": 782
+      }
+    },
+    {
+      "id": 261,
+      "key": "cyan_glazed_terracotta",
+      "enum": "CyanGlazedTerracotta",
+      "name_es": "Terracota vidriada cian",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 261,
+      "texture_aliases": {
+        "top": "cyan_glazed_terracotta",
+        "side": "cyan_glazed_terracotta",
+        "bottom": "cyan_glazed_terracotta"
+      },
+      "sound": "stone",
+      "atlas": {
+        "top": 783,
+        "side": 784,
+        "bottom": 785
+      }
+    },
+    {
+      "id": 262,
+      "key": "gray_glazed_terracotta",
+      "enum": "GrayGlazedTerracotta",
+      "name_es": "Terracota vidriada gris",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 262,
+      "texture_aliases": {
+        "top": "gray_glazed_terracotta",
+        "side": "gray_glazed_terracotta",
+        "bottom": "gray_glazed_terracotta"
+      },
+      "sound": "stone",
+      "atlas": {
+        "top": 786,
+        "side": 787,
+        "bottom": 788
+      }
+    },
+    {
+      "id": 263,
+      "key": "green_glazed_terracotta",
+      "enum": "GreenGlazedTerracotta",
+      "name_es": "Terracota vidriada verde",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 263,
+      "texture_aliases": {
+        "top": "green_glazed_terracotta",
+        "side": "green_glazed_terracotta",
+        "bottom": "green_glazed_terracotta"
+      },
+      "sound": "stone",
+      "atlas": {
+        "top": 789,
+        "side": 790,
+        "bottom": 791
+      }
+    },
+    {
+      "id": 264,
+      "key": "light_blue_glazed_terracotta",
+      "enum": "LightBlueGlazedTerracotta",
+      "name_es": "Terracota vidriada azul claro",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 264,
+      "texture_aliases": {
+        "top": "light_blue_glazed_terracotta",
+        "side": "light_blue_glazed_terracotta",
+        "bottom": "light_blue_glazed_terracotta"
+      },
+      "sound": "stone",
+      "atlas": {
+        "top": 792,
+        "side": 793,
+        "bottom": 794
+      }
+    },
+    {
+      "id": 265,
+      "key": "lime_glazed_terracotta",
+      "enum": "LimeGlazedTerracotta",
+      "name_es": "Terracota vidriada lima",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 265,
+      "texture_aliases": {
+        "top": "lime_glazed_terracotta",
+        "side": "lime_glazed_terracotta",
+        "bottom": "lime_glazed_terracotta"
+      },
+      "sound": "stone",
+      "atlas": {
+        "top": 795,
+        "side": 796,
+        "bottom": 797
+      }
+    },
+    {
+      "id": 266,
+      "key": "magenta_glazed_terracotta",
+      "enum": "MagentaGlazedTerracotta",
+      "name_es": "Terracota vidriada magenta",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 266,
+      "texture_aliases": {
+        "top": "magenta_glazed_terracotta",
+        "side": "magenta_glazed_terracotta",
+        "bottom": "magenta_glazed_terracotta"
+      },
+      "sound": "stone",
+      "atlas": {
+        "top": 798,
+        "side": 799,
+        "bottom": 800
+      }
+    },
+    {
+      "id": 267,
+      "key": "orange_glazed_terracotta",
+      "enum": "OrangeGlazedTerracotta",
+      "name_es": "Terracota vidriada naranja",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 267,
+      "texture_aliases": {
+        "top": "orange_glazed_terracotta",
+        "side": "orange_glazed_terracotta",
+        "bottom": "orange_glazed_terracotta"
+      },
+      "sound": "stone",
+      "atlas": {
+        "top": 801,
+        "side": 802,
+        "bottom": 803
+      }
+    },
+    {
+      "id": 268,
+      "key": "pink_glazed_terracotta",
+      "enum": "PinkGlazedTerracotta",
+      "name_es": "Terracota vidriada rosa",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 268,
+      "texture_aliases": {
+        "top": "pink_glazed_terracotta",
+        "side": "pink_glazed_terracotta",
+        "bottom": "pink_glazed_terracotta"
+      },
+      "sound": "stone",
+      "atlas": {
+        "top": 804,
+        "side": 805,
+        "bottom": 806
+      }
+    },
+    {
+      "id": 269,
+      "key": "purple_glazed_terracotta",
+      "enum": "PurpleGlazedTerracotta",
+      "name_es": "Terracota vidriada morada",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 269,
+      "texture_aliases": {
+        "top": "purple_glazed_terracotta",
+        "side": "purple_glazed_terracotta",
+        "bottom": "purple_glazed_terracotta"
+      },
+      "sound": "stone",
+      "atlas": {
+        "top": 807,
+        "side": 808,
+        "bottom": 809
+      }
+    },
+    {
+      "id": 270,
+      "key": "red_glazed_terracotta",
+      "enum": "RedGlazedTerracotta",
+      "name_es": "Terracota vidriada roja",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 270,
+      "texture_aliases": {
+        "top": "red_glazed_terracotta",
+        "side": "red_glazed_terracotta",
+        "bottom": "red_glazed_terracotta"
+      },
+      "sound": "stone",
+      "atlas": {
+        "top": 810,
+        "side": 811,
+        "bottom": 812
+      }
+    },
+    {
+      "id": 271,
+      "key": "silver_glazed_terracotta",
+      "enum": "SilverGlazedTerracotta",
+      "name_es": "Terracota vidriada gris claro",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 271,
+      "texture_aliases": {
+        "top": "silver_glazed_terracotta",
+        "side": "silver_glazed_terracotta",
+        "bottom": "silver_glazed_terracotta"
+      },
+      "sound": "stone",
+      "atlas": {
+        "top": 813,
+        "side": 814,
+        "bottom": 815
+      }
+    },
+    {
+      "id": 272,
+      "key": "white_glazed_terracotta",
+      "enum": "WhiteGlazedTerracotta",
+      "name_es": "Terracota vidriada blanca",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 272,
+      "texture_aliases": {
+        "top": "white_glazed_terracotta",
+        "side": "white_glazed_terracotta",
+        "bottom": "white_glazed_terracotta"
+      },
+      "sound": "stone",
+      "atlas": {
+        "top": 816,
+        "side": 817,
+        "bottom": 818
+      }
+    },
+    {
+      "id": 273,
+      "key": "yellow_glazed_terracotta",
+      "enum": "YellowGlazedTerracotta",
+      "name_es": "Terracota vidriada amarilla",
+      "shape": "Cube",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 273,
+      "texture_aliases": {
+        "top": "yellow_glazed_terracotta",
+        "side": "yellow_glazed_terracotta",
+        "bottom": "yellow_glazed_terracotta"
+      },
+      "sound": "stone",
+      "atlas": {
+        "top": 819,
+        "side": 820,
+        "bottom": 821
+      }
+    },
+    {
+      "id": 274,
+      "key": "frosted_ice",
+      "enum": "FrostedIce",
+      "name_es": "Hielo escarchado",
+      "shape": "Cube",
+      "flags": 69,
+      "hardness": 0.3,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 274,
+      "texture_aliases": {
+        "top": "frosted_ice",
+        "side": "frosted_ice",
+        "bottom": "frosted_ice"
+      },
+      "sound": "glass",
+      "atlas": {
+        "top": 822,
+        "side": 823,
+        "bottom": 824
+      }
+    },
+    {
+      "id": 275,
+      "key": "standing_banner",
+      "enum": "StandingBanner",
+      "name_es": "Estandarte",
+      "shape": "Door",
+      "flags": 67,
+      "hardness": 3.0,
+      "tool": "Axe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 275,
+      "texture_aliases": {
+        "top": "planks",
+        "side": "planks",
+        "bottom": "planks"
+      },
+      "sound": "wood",
+      "atlas": {
+        "top": 825,
+        "side": 826,
+        "bottom": 827
+      }
+    },
+    {
+      "id": 276,
+      "key": "wall_banner",
+      "enum": "WallBanner",
+      "name_es": "Estandarte de pared",
+      "shape": "Door",
+      "flags": 67,
+      "hardness": 3.0,
+      "tool": "Axe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 276,
+      "texture_aliases": {
+        "top": "planks",
+        "side": "planks",
+        "bottom": "planks"
+      },
+      "sound": "wood",
+      "atlas": {
+        "top": 828,
+        "side": 829,
+        "bottom": 830
+      }
+    },
+    {
+      "id": 277,
+      "key": "prismarine_stairs",
+      "enum": "PrismarineStairs",
+      "name_es": "Escaleras de prismarina",
+      "shape": "Stairs",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 277,
+      "texture_aliases": {
+        "top": "prismarine",
+        "side": "prismarine",
+        "bottom": "prismarine"
+      },
+      "sound": "stone",
+      "atlas": {
+        "top": 831,
+        "side": 832,
+        "bottom": 833
+      }
+    },
+    {
+      "id": 278,
+      "key": "dark_prismarine_stairs",
+      "enum": "DarkPrismarineStairs",
+      "name_es": "Escaleras de prismarina oscura",
+      "shape": "Stairs",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 278,
+      "texture_aliases": {
+        "top": "dark_prismarine",
+        "side": "dark_prismarine",
+        "bottom": "dark_prismarine"
+      },
+      "sound": "stone",
+      "atlas": {
+        "top": 834,
+        "side": 835,
+        "bottom": 836
+      }
+    },
+    {
+      "id": 279,
+      "key": "prismarine_bricks_stairs",
+      "enum": "PrismarineBricksStairs",
+      "name_es": "Escaleras de ladrillos de prismarina",
+      "shape": "Stairs",
+      "flags": 67,
+      "hardness": 1.5,
+      "tool": "Pickaxe",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 279,
+      "texture_aliases": {
+        "top": "prismarine_bricks",
+        "side": "prismarine_bricks",
+        "bottom": "prismarine_bricks"
+      },
+      "sound": "stone",
+      "atlas": {
+        "top": 837,
+        "side": 838,
+        "bottom": 839
+      }
+    },
+    {
+      "id": 280,
+      "key": "bubble_column",
+      "enum": "BubbleColumn",
+      "name_es": "Columna de burbujas",
+      "shape": "Fluid",
+      "flags": 12,
+      "hardness": 100.0,
+      "tool": "None",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 0,
+      "texture_aliases": {
+        "top": "bubble_column_up_top",
+        "side": "bubble_column_outer",
+        "bottom": "bubble_column_down_top"
+      },
+      "sound": "",
+      "atlas": {
+        "top": 840,
+        "side": 841,
+        "bottom": 842
+      }
+    },
+    {
+      "id": 281,
+      "key": "bamboo",
+      "enum": "Bamboo",
+      "name_es": "Bambú",
+      "shape": "Thin",
+      "flags": 67,
+      "hardness": 0.5,
+      "tool": "None",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 281,
+      "texture_aliases": {
+        "top": "bamboo_leaf",
+        "side": "bamboo_stem",
+        "bottom": "bamboo_sapling"
+      },
+      "sound": "bamboo",
+      "atlas": {
+        "top": 843,
+        "side": 844,
+        "bottom": 845
+      }
+    },
+    {
+      "id": 282,
+      "key": "bamboo_sapling",
+      "enum": "BambooSapling",
+      "name_es": "Brote de bambú",
+      "shape": "CrossPlant",
+      "flags": 80,
+      "hardness": 0.0,
+      "tool": "None",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 282,
+      "texture_aliases": {
+        "top": "bamboo_sapling",
+        "side": "bamboo_sapling",
+        "bottom": "bamboo_sapling"
+      },
+      "sound": "bamboo_sapling",
+      "atlas": {
+        "top": 846,
+        "side": 847,
+        "bottom": 848
+      }
+    },
+    {
+      "id": 283,
+      "key": "scaffolding",
+      "enum": "Scaffolding",
+      "name_es": "Andamio",
+      "shape": "Scaffolding",
+      "flags": 69,
+      "hardness": 0.5,
+      "tool": "None",
+      "light": 0,
+      "stack_limit": 64,
+      "drop_id": 283,
+      "texture_aliases": {
+        "top": "scaffolding",
+        "side": "scaffolding",
+        "bottom": "scaffolding"
+      },
+      "sound": "scaffolding",
+      "atlas": {
+        "top": 849,
+        "side": 850,
+        "bottom": 851
+      }
+    }
+  ]
+}
