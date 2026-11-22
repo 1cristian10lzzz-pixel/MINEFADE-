@@ -1,0 +1,162 @@
+name: Minefade 2.0.5 Phase 1 Android Build
+
+on:
+  push:
+    branches:
+      - minefade-2.0.5-phase1-stability
+
+permissions:
+  contents: write
+
+concurrency:
+  group: minefade-205-phase1
+  cancel-in-progress: false
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Phase 1 source
+        uses: actions/checkout@v4
+
+      - name: Apply Minefade 2.0.4 base patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          base64 --decode patches/minefade-phase6-7.patch.xz.b64 | xz -dc > /tmp/minefade-phase6-7.patch
+          git apply --check /tmp/minefade-phase6-7.patch
+          git apply /tmp/minefade-phase6-7.patch
+
+      - name: Apply Phase 1 stability patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat patches/minefade-phase1-stability/part-*.b64 > /tmp/phase1.patch.xz.b64
+          base64 --decode /tmp/phase1.patch.xz.b64 | xz -dc > /tmp/phase1.patch
+          git apply --check /tmp/phase1.patch
+          git apply /tmp/phase1.patch
+
+      - name: Set up Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android, armv7-linux-androideabi
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "9.6.0"
+
+      - name: Configure Android SDK and NDK
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDK_ROOT="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-/usr/local/lib/android/sdk}}"
+          test -d "$SDK_ROOT/cmdline-tools"
+          SDKMANAGER="$(find "$SDK_ROOT/cmdline-tools" -type f -name sdkmanager | sort -V | tail -n 1)"
+          test -n "$SDKMANAGER"
+          echo "ANDROID_HOME=$SDK_ROOT" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$SDK_ROOT" >> "$GITHUB_ENV"
+          echo "$SDK_ROOT/platform-tools" >> "$GITHUB_PATH"
+          yes | "$SDKMANAGER" --licenses >/dev/null || true
+          "$SDKMANAGER" --install \
+            "platform-tools" \
+            "platforms;android-36" \
+            "build-tools;36.0.0" \
+            "ndk;28.2.13676358" \
+            "cmake;3.22.1"
+
+      - name: Generate block catalogue and audio
+        working-directory: MinefadeNativeEngine
+        run: |
+          python3 tools/generate_block_catalog.py
+          python3 tools/generate_audio.py
+
+      - name: Run native and regression tests
+        working-directory: MinefadeNativeEngine
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash tests/run-world-tests.sh
+          python3 tests/test_block_catalog.py
+          python3 tests/test_audio_assets.py
+          python3 tests/test_mfmod_pack.py
+          python3 tests/test_shader_pack.py
+          python3 tests/test_android_startup_recovery.py
+          python3 tests/test_renderer_invariants.py
+          python3 tests/test_ambient_audio.py
+          python3 tests/test_phase_four_lan_controls.py
+          python3 tests/test_phase1_stability.py
+
+      - name: Build Android APK
+        working-directory: MinefadeNativeEngine
+        run: gradle --no-daemon --stacktrace :app:assembleDebug
+
+      - name: Verify installable APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK="MinefadeNativeEngine/app/build/outputs/apk/debug/app-debug.apk"
+          test -s "$APK"
+          unzip -t "$APK" >/dev/null
+          BUILD_TOOLS_DIR="$(find "${ANDROID_HOME}/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -n 1)"
+          "${BUILD_TOOLS_DIR}/apksigner" verify --verbose --print-certs "$APK"
+          "${BUILD_TOOLS_DIR}/aapt" dump badging "$APK" > /tmp/badging.txt
+          grep -F "package: name='com.minefade.nativeengine'" /tmp/badging.txt
+          grep -F "versionName='2.0.5'" /tmp/badging.txt
+          unzip -Z1 "$APK" | grep -Fx 'lib/arm64-v8a/libminefade_native.so'
+          unzip -Z1 "$APK" | grep -Fx 'lib/armeabi-v7a/libminefade_native.so'
+          ATLAS_BYTES="$(unzip -p "$APK" assets/textures/block_atlas.rgba | wc -c | tr -d ' ')"
+          test "$ATLAS_BYTES" = "1617408"
+          sha256sum "$APK"
+
+      - name: Upload Minefade 2.0.5 Phase 1 APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Minefade-2.0.5-Phase1-APK
+          path: MinefadeNativeEngine/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Publish Phase 1 prerelease
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: minefade-v2.0.5-phase1
+          name: Minefade 2.0.5 — Fase 1: estabilidad
+          draft: false
+          prerelease: true
+          files: MinefadeNativeEngine/app/build/outputs/apk/debug/app-debug.apk
+          body: |
+            Minefade 2.0.5 — Fase 1 de estabilidad.
+
+            Corrige geometría interna de formas compuestas, multitáctil por ID de puntero,
+            cancelación correcta de gestos, ajustes del HUD seguro, guardado antes de salir,
+            retorno al menú de mundos, controles básicos y tres perspectivas de cámara.
+
+            Compilación debug/prerelease. Requiere validación visual y de entrada en
+            dispositivos Android físicos antes de considerarse estable.
+
+      - name: Package Phase 1 source
+        shell: bash
+        run: |
+          set -euo pipefail
+          zip -r -q Minefade-2.0.5-source.zip . \
+            -x ".git/*" "*/.git/*" \
+               "*/build/*" "*/.gradle/*" "*/.cxx/*" \
+               "*/.externalNativeBuild/*" "*/intermediates/*" \
+               "*/outputs/*" "*/tmp/*" "*/target/*" "*/rust-target/*" \
+               "Minefade-2.0.5-source.zip"
+          test -s Minefade-2.0.5-source.zip
+
+      - name: Upload Phase 1 source
+        uses: actions/upload-artifact@v4
+        with:
+          name: Minefade-2.0.5-source
+          path: Minefade-2.0.5-source.zip
+          if-no-files-found: error
+          retention-days: 14
