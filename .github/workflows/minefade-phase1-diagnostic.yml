@@ -1,6 +1,9 @@
 name: Minefade Phase 1 Actions Diagnostic
 
 on:
+  pull_request:
+    branches:
+      - main
   push:
     branches:
       - minefade-2.0.5-phase1-stability
