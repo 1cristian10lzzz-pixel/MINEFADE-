@@ -1,6 +1,9 @@
 name: Minefade 2.0.5 Phase 1 Android Build
 
 on:
+  pull_request:
+    branches:
+      - main
   push:
     branches:
       - minefade-2.0.5-phase1-stability
